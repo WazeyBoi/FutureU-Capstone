@@ -8,7 +8,7 @@
 - Tigley, Aeron Raye V.
 
 ### Adviser
-- Dr. Leah V. Barbaso
+- Dr. Leah V. Barbaso, CCS
 
 ---
 
