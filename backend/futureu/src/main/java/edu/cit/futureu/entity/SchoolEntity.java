@@ -2,6 +2,8 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,14 +24,17 @@ public class SchoolEntity {
     private String virtualTourUrl;
 
     // One-to-many to Testimony
+    @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestimonyEntity> testimonies;
 
     // One-to-many to Accreditation
+    @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AccreditationEntity> accreditations;
 
     // One-to-many to SchoolProgram
+    @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SchoolProgramEntity> schoolPrograms;
 

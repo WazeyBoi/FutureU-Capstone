@@ -2,6 +2,8 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,6 +22,7 @@ public class ProgramEntity {
     private String description;
 
     // One-to-many to SchoolProgram
+    @JsonIgnore
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SchoolProgramEntity> schoolPrograms;
 
