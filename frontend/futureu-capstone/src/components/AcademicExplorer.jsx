@@ -65,9 +65,7 @@ const AcademicExplorer = () => {
             const schoolIds = response.data.map(
               (schoolProgram) => schoolProgram.school.schoolId
             );
-            const filtered = schools.filter((school) =>
-              schoolIds.includes(school.schoolId)
-            );
+            const filtered = response.data.map((schoolProgram) => schoolProgram.school);
             setFilteredSchools(filtered);
           } else {
             setFilteredSchools([]);
@@ -79,10 +77,12 @@ const AcademicExplorer = () => {
           setLoading(false);
         }
       };
-
+  
       fetchSchoolPrograms();
+    } else {
+      setFilteredSchools([]);
     }
-  }, [selectedProgram, schools]);
+  }, [selectedProgram]);
 
   const handleSchoolSelect = (school) => {
     if (selectedSchools.find((s) => s.schoolId === school.schoolId)) {
@@ -133,7 +133,7 @@ const AcademicExplorer = () => {
 
   if (showComparison) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6" style={{ border: 'solid' }}>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6" >
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">School Comparison</h1>
@@ -328,7 +328,7 @@ const AcademicExplorer = () => {
               {selectedSchools.length > 0 && (
                 <button
                   onClick={() => setShowComparison(true)}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm hover:shadow flex items-center"
+                  className="bg-indigo-600 text-black px-4 py-2 rounded-lg hover:bg-indigo-700 transition shadow-sm hover:shadow flex items-center"
                 >
                   <span>Compare</span>
                   <span className="ml-2 bg-white text-indigo-600 rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium">
@@ -344,52 +344,73 @@ const AcademicExplorer = () => {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-8">
           {/* Programs sidebar */}
-          <div className="w-full md:w-64 flex-shrink-0">
+          <div className="w-full md:w-65 flex-shrink-0 max-h-100 overflow-y-auto-hidden">
             <div className="bg-white rounded-xl shadow-sm p-5 sticky top-24">
-              <h2 className="text-gray-900 font-semibold text-lg mb-4 flex items-center">
+                <h2 className="text-gray-900 font-semibold text-lg mb-4 flex items-center">
                 <BookOpen className="w-5 h-5 mr-2 text-indigo-600" />
                 Programs
-              </h2>
-              
-              {loading && !selectedProgram ? (
+                </h2>
+
+                {/* Search Box for Programs */}
+                <div className="relative mb-4">
+                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <input
+                    type="text"
+                    placeholder="Search programs..."
+                    value={searchTerm} // Reuse the existing `searchTerm` state
+                    onChange={(e) => setSearchTerm(e.target.value)} // Update the search term in real time
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                />
+                </div>
+
+                {loading && !selectedProgram ? (
                 <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map(i => (
+                    {[1, 2, 3, 4, 5].map((i) => (
                     <div key={i} className="h-10 bg-gray-200 rounded-md animate-pulse"></div>
-                  ))}
+                    ))}
                 </div>
-              ) : error ? (
+                ) : error ? (
                 <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-start">
-                  <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-                  <p>{error}</p>
+                    <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
+                    <p>{error}</p>
                 </div>
-              ) : (
-                <div className="space-y-1">
-                  {programs.map((program) => (
+                ) : (
+                <div
+                className="space-y-1 overflow-y-auto"
+                style={{ maxHeight: '400px' }} // Set a fixed height for the scrollable area
+                >
+                {programs
+                    .filter((program) =>
+                    program.programName.toLowerCase().includes(searchTerm.toLowerCase())
+                    ) // Filter programs based on the search term
+                    .map((program) => (
                     <button
-                      key={program.programId}
-                      className={`block w-full text-left px-4 py-3 rounded-lg transition-all ${
+                        key={program.programId}
+                        className={`block w-full text-left px-4 py-3 rounded-lg transition-all ${
                         selectedProgram === program.programId
-                          ? 'bg-indigo-100 text-indigo-700 font-medium shadow-sm'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                      onClick={() => setSelectedProgram(program.programId)}
+                            ? 'bg-indigo-100 text-indigo-700 font-medium shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                        setSelectedProgram(program.programId); // Ensure the correct program ID is set
+                        }}
                     >
-                      <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                         <span>{program.programName}</span>
                         {selectedProgram === program.programId && (
-                          <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-5 h-5" />
                         )}
-                      </div>
+                        </div>
                     </button>
-                  ))}
+                    ))}
                 </div>
-              )}
+                )}
             </div>
-          </div>
+            </div>
 
           {/* Schools content */}
           <div className="flex-1">
-            <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
               <h1 className="text-2xl font-bold text-gray-900 mb-6">
                 {selectedProgram
                   ? `Schools Offering ${
@@ -397,7 +418,8 @@ const AcademicExplorer = () => {
                     }`
                   : 'Select a Program to View Schools'}
               </h1>
-              
+            </div>
+            <div className="bg-white rounded-xl shadow-sm p-6 max-h-96 overflow-y-auto">
               {loading && selectedProgram ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {[1, 2, 3, 4, 5, 6].map(i => (
