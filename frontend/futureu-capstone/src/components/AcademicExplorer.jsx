@@ -18,6 +18,9 @@ const AcademicExplorer = () => {
     sortBy: 'name'
   });
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [programSearchTerm, setProgramSearchTerm] = useState('');
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,17 +65,25 @@ const AcademicExplorer = () => {
             `/api/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
           );
           if (Array.isArray(response.data)) {
-            const schoolIds = response.data.map(
-              (schoolProgram) => schoolProgram.school.schoolId
-            );
             const filtered = response.data.map((schoolProgram) => schoolProgram.school);
-            setFilteredSchools(filtered);
+            // Check if we received empty data or no schools for this program
+            if (filtered.length === 0) {
+              // If no schools are returned for this program, show all schools instead
+              setFilteredSchools(schools);
+              console.log("No specific schools found for this program, showing all schools");
+            } else {
+              setFilteredSchools(filtered);
+            }
           } else {
-            setFilteredSchools([]);
+            // If response is not an array, show all schools
+            setFilteredSchools(schools);
+            console.log("Invalid response format, showing all schools");
           }
         } catch (error) {
-          setFilteredSchools([]);
-          setError('Failed to load schools for the selected program.');
+          console.error("Error fetching school programs:", error);
+          // On error, show all schools
+          setFilteredSchools(schools);
+          setError('Failed to load specific schools for the selected program. Showing all schools instead.');
         } finally {
           setLoading(false);
         }
@@ -82,7 +93,7 @@ const AcademicExplorer = () => {
     } else {
       setFilteredSchools([]);
     }
-  }, [selectedProgram]);
+  }, [selectedProgram, schools]);
 
   const handleSchoolSelect = (school) => {
     if (selectedSchools.find((s) => s.schoolId === school.schoolId)) {
@@ -129,6 +140,33 @@ const AcademicExplorer = () => {
     const baseDelay = 50;
     const delay = index * baseDelay;
     return `animate-fade-in-up animation-delay-${delay}`;
+  };
+
+  const handleMouseEnter = (school, e) => {
+    setHoveredSchool(school);
+    setTooltipVisible(true);
+    
+    // Calculate position to avoid tooltip going off screen
+    const rect = e.currentTarget.getBoundingClientRect();
+    const spaceOnRight = window.innerWidth - rect.right;
+    
+    // If not enough space on right, show tooltip on left
+    if (spaceOnRight < 300) {
+      setTooltipPosition({ 
+        x: rect.left - 280, 
+        y: rect.top 
+      });
+    } else {
+      setTooltipPosition({ 
+        x: rect.right + 10, 
+        y: rect.top 
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipVisible(false);
+    setHoveredSchool(null);
   };
 
   if (showComparison) {
@@ -357,8 +395,8 @@ const AcademicExplorer = () => {
                 <input
                     type="text"
                     placeholder="Search programs..."
-                    value={searchTerm} // Reuse the existing `searchTerm` state
-                    onChange={(e) => setSearchTerm(e.target.value)} // Update the search term in real time
+                    value={programSearchTerm}
+                    onChange={(e) => setProgramSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                 />
                 </div>
@@ -379,10 +417,11 @@ const AcademicExplorer = () => {
                 className="space-y-1 overflow-y-auto"
                 style={{ maxHeight: '400px' }} // Set a fixed height for the scrollable area
                 >
-                {programs
+                {programs.length > 0 ?
+                  programs
                     .filter((program) =>
-                    program.programName.toLowerCase().includes(searchTerm.toLowerCase())
-                    ) // Filter programs based on the search term
+                    program.programName.toLowerCase().includes(programSearchTerm.toLowerCase())
+                    )
                     .map((program) => (
                     <button
                         key={program.programId}
@@ -392,7 +431,7 @@ const AcademicExplorer = () => {
                             : 'text-gray-700 hover:bg-gray-50'
                         }`}
                         onClick={() => {
-                        setSelectedProgram(program.programId); // Ensure the correct program ID is set
+                        setSelectedProgram(program.programId);
                         }}
                     >
                         <div className="flex items-center justify-between">
@@ -402,7 +441,21 @@ const AcademicExplorer = () => {
                         )}
                         </div>
                     </button>
-                    ))}
+                    ))
+                  : (
+                    <div className="text-center py-4">
+                      <p className="text-gray-600">No programs found</p>
+                    </div>
+                  )}
+                  
+                  {programs.length > 0 && 
+                   programs.filter(program => 
+                     program.programName.toLowerCase().includes(programSearchTerm.toLowerCase())
+                   ).length === 0 && (
+                    <div className="text-center py-4">
+                      <p className="text-gray-600">No matching programs found</p>
+                    </div>
+                  )}
                 </div>
                 )}
             </div>
@@ -448,8 +501,8 @@ const AcademicExplorer = () => {
                             ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200'
                             : 'border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1'
                         }`}
-                        onMouseEnter={() => setHoveredSchool(school)}
-                        onMouseLeave={() => setHoveredSchool(null)}
+                        onMouseEnter={(e) => handleMouseEnter(school, e)}
+                        onMouseLeave={handleMouseLeave}
                         onClick={() => handleSchoolSelect(school)}
                       >
                         {isSelected && (
@@ -492,8 +545,14 @@ const AcademicExplorer = () => {
                           )}
                         </div>
                         
-                        {hoveredSchool?.schoolId === school.schoolId && (
-                          <div className="absolute z-20 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4 -mt-2 left-full ml-4">
+                        {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
+                          <div 
+                            className="fixed z-50 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4"
+                            style={{
+                              top: tooltipPosition.y + 'px',
+                              left: tooltipPosition.x + 'px'
+                            }}
+                          >
                             <h4 className="font-medium text-gray-900 mb-2">{school.name}</h4>
                             <p className="text-gray-600 mb-3">{school.description || 'No description available'}</p>
                             <div className="grid grid-cols-2 gap-2">
