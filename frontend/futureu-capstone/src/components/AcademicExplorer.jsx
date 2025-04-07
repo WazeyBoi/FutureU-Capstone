@@ -171,13 +171,13 @@ const AcademicExplorer = () => {
 
   if (showComparison) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6" >
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen h-screen w-full bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-y-auto" >
+        <div className="w-full px-4 h-full">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">School Comparison</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">School Comparison</h1>
             <button
               onClick={() => setShowComparison(false)}
-              className="bg-white text-gray-600 hover:text-gray-900 p-2 rounded-full shadow-sm transition-all hover:shadow"
+              className="bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white p-2 rounded-full shadow-sm transition-all hover:shadow"
               aria-label="Close comparison view"
             >
               <X className="w-6 h-6" />
@@ -263,11 +263,11 @@ const AcademicExplorer = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="h-screen w-full flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden">
       {/* Toast notification */}
       <div 
         id="toast" 
-        className="hidden fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg z-50 animate-slide-in-right"
+        className="hidden fixed top-4 right-4 bg-red-100 dark:bg-red-900 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded shadow-lg z-50 animate-slide-in-right"
       >
         <div className="flex items-center">
           <AlertCircle className="w-5 h-5 mr-2" />
@@ -275,11 +275,11 @@ const AcademicExplorer = () => {
         </div>
       </div>
       
-      <header className="bg-white shadow-sm sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 w-full">
+        <div className="w-full px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center text-indigo-600 font-semibold">
-              <div className="p-2 bg-indigo-100 rounded-full mr-3">
+            <div className="flex items-center text-indigo-600 dark:text-indigo-400 font-semibold">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-full mr-3">
                 <School className="w-6 h-6" />
               </div>
               <span className="text-xl">Academic Explorer</span>
@@ -293,7 +293,7 @@ const AcademicExplorer = () => {
                   placeholder="Search schools..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all"
                 />
               </div>
             </div>
@@ -302,15 +302,15 @@ const AcademicExplorer = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
-                  className="flex items-center bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+                  className="flex items-center bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition"
                 >
                   <Filter className="w-5 h-5 mr-2" />
                   Filters
                 </button>
                 
                 {showFilterMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg p-4 z-40">
-                    <h3 className="font-medium text-gray-900 mb-3">Filter Options</h3>
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-700 rounded-lg shadow-lg p-4 z-40">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-3">Filter Options</h3>
                     
                     <div className="mb-4">
                       <label className="flex items-center space-x-2 cursor-pointer">
@@ -328,7 +328,7 @@ const AcademicExplorer = () => {
                     </div>
                     
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Sort By</h4>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</h4>
                       <div className="space-y-2">
                         <label className="flex items-center space-x-2 cursor-pointer">
                           <input
@@ -379,13 +379,14 @@ const AcademicExplorer = () => {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Programs sidebar */}
-          <div className="w-full md:w-65 flex-shrink-0 max-h-100 overflow-y-auto-hidden">
-            <div className="bg-white rounded-xl shadow-sm p-5 sticky top-24">
-                <h2 className="text-gray-900 font-semibold text-lg mb-4 flex items-center">
-                <BookOpen className="w-5 h-5 mr-2 text-indigo-600" />
+      <main className="flex-1 w-full overflow-y-auto">
+        <div className="w-full px-4 py-6 h-full">
+          <div className="flex flex-col md:flex-row gap-8 h-full">
+            {/* Programs sidebar */}
+            <div className="w-full md:w-80 flex-shrink-0">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 sticky top-24">
+                <h2 className="text-gray-900 dark:text-white font-semibold text-lg mb-4 flex items-center">
+                <BookOpen className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" />
                 Programs
                 </h2>
 
@@ -397,7 +398,7 @@ const AcademicExplorer = () => {
                     placeholder="Search programs..."
                     value={programSearchTerm}
                     onChange={(e) => setProgramSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                    className="pl-10 pr-4 py-2 w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all"
                 />
                 </div>
 
@@ -461,128 +462,129 @@ const AcademicExplorer = () => {
             </div>
             </div>
 
-          {/* Schools content */}
-          <div className="flex-1">
-            <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-6">
-                {selectedProgram
-                  ? `Schools Offering ${
-                      programs.find((p) => p.programId === selectedProgram)?.programName
-                    }`
-                  : 'Select a Program to View Schools'}
-              </h1>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm p-6 max-h-96 overflow-y-auto">
-              {loading && selectedProgram ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="h-40 bg-gray-200 rounded-lg animate-pulse"></div>
-                  ))}
-                </div>
-              ) : filteredAndSearchedSchools.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="bg-gray-100 p-4 rounded-full inline-block mb-4">
-                    <Search className="w-8 h-8 text-gray-400" />
+            {/* Schools content */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {selectedProgram
+                    ? `Schools Offering ${
+                        programs.find((p) => p.programId === selectedProgram)?.programName
+                      }`
+                    : 'Select a Program to View Schools'}
+                </h1>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 flex-1 overflow-y-auto">
+                {loading && selectedProgram ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                      <div key={i} className="h-40 bg-gray-200 rounded-lg animate-pulse"></div>
+                    ))}
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No schools found</h3>
-                  <p className="text-gray-600">
-                    {searchTerm ? 'Try adjusting your search term or filters' : 'Select a program to view available schools'}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAndSearchedSchools.map((school, index) => {
-                    const isSelected = selectedSchools.find((s) => s.schoolId === school.schoolId);
-                    return (
-                      <div
-                        key={school.schoolId}
-                        className={`relative bg-white border rounded-xl transition-all duration-300 overflow-hidden ${getAnimationClass(index)} ${
-                          isSelected
-                            ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200'
-                            : 'border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1'
-                        }`}
-                        onMouseEnter={(e) => handleMouseEnter(school, e)}
-                        onMouseLeave={handleMouseLeave}
-                        onClick={() => handleSchoolSelect(school)}
-                      >
-                        {isSelected && (
-                          <div className="absolute top-2 right-2 bg-indigo-500 text-white p-1 rounded-full z-10">
-                            <Star className="w-4 h-4" />
-                          </div>
-                        )}
-                        
-                        <div className="p-5">
-                          <div className="flex items-center mb-4">
-                            <div className="p-2 bg-indigo-50 rounded-full mr-3">
-                              <School className="w-6 h-6 text-indigo-600" />
-                            </div>
-                            <h3 className="font-medium text-gray-900">{school.name}</h3>
-                          </div>
-                          
-                          <div className="flex items-start mb-3">
-                            <MapPin className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5" />
-                            <p className="text-gray-600">{school.location}</p>
-                          </div>
-                          
-                          {school.tuitionFee && (
-                            <div className="flex items-start mb-3">
-                              <Info className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5" />
-                              <p className="text-gray-600">Tuition: {school.tuitionFee}</p>
+                ) : filteredAndSearchedSchools.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="bg-gray-100 p-4 rounded-full inline-block mb-4">
+                      <Search className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No schools found</h3>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      {searchTerm ? 'Try adjusting your search term or filters' : 'Select a program to view available schools'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAndSearchedSchools.map((school, index) => {
+                      const isSelected = selectedSchools.find((s) => s.schoolId === school.schoolId);
+                      return (
+                        <div
+                          key={school.schoolId}
+                          className={`relative bg-white dark:bg-gray-700 border rounded-xl transition-all duration-300 overflow-hidden ${getAnimationClass(index)} ${
+                            isSelected
+                              ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200'
+                              : 'border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-1'
+                          }`}
+                          onMouseEnter={(e) => handleMouseEnter(school, e)}
+                          onMouseLeave={handleMouseLeave}
+                          onClick={() => handleSchoolSelect(school)}
+                        >
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 bg-indigo-500 text-white p-1 rounded-full z-10">
+                              <Star className="w-4 h-4" />
                             </div>
                           )}
                           
-                          {school.virtualTourUrl && (
-                            <a
-                              href={school.virtualTourUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mt-2 px-3 py-1 bg-indigo-50 rounded-lg"
-                              onClick={(e) => e.stopPropagation()}
+                          <div className="p-5">
+                            <div className="flex items-center mb-4">
+                              <div className="p-2 bg-indigo-50 rounded-full mr-3">
+                                <School className="w-6 h-6 text-indigo-600" />
+                              </div>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{school.name}</h3>
+                            </div>
+                            
+                            <div className="flex items-start mb-3">
+                              <MapPin className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5" />
+                              <p className="text-gray-600 dark:text-gray-300">{school.location}</p>
+                            </div>
+                            
+                            {school.tuitionFee && (
+                              <div className="flex items-start mb-3">
+                                <Info className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5" />
+                                <p className="text-gray-600 dark:text-gray-300">Tuition: {school.tuitionFee}</p>
+                              </div>
+                            )}
+                            
+                            {school.virtualTourUrl && (
+                              <a
+                                href={school.virtualTourUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center text-indigo-600 hover:text-indigo-800 mt-2 px-3 py-1 bg-indigo-50 rounded-lg"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="w-4 h-4 mr-2" />
+                                Virtual Tour
+                              </a>
+                            )}
+                          </div>
+                          
+                          {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
+                            <div 
+                              className="fixed z-50 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4"
+                              style={{
+                                top: tooltipPosition.y + 'px',
+                                left: tooltipPosition.x + 'px'
+                              }}
                             >
-                              <Globe className="w-4 h-4 mr-2" />
-                              Virtual Tour
-                            </a>
+                              <h4 className="font-medium text-gray-900 mb-2">{school.name}</h4>
+                              <p className="text-gray-600 mb-3">{school.description || 'No description available'}</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="bg-indigo-50 p-2 rounded-lg">
+                                  <p className="text-xs text-gray-500 mb-1">Tuition</p>
+                                  <p className="text-gray-700 font-medium">{school.tuitionFee || 'Not specified'}</p>
+                                </div>
+                                <div className="bg-indigo-50 p-2 rounded-lg">
+                                  <p className="text-xs text-gray-500 mb-1">Requirements</p>
+                                  <p className="text-gray-700 font-medium truncate">{school.admissionRequirements || 'Not specified'}</p>
+                                </div>
+                              </div>
+                              <div className="mt-3 flex justify-end gap-2">
+                                <button 
+                                  className="text-indigo-600 text-sm hover:text-indigo-800 font-medium"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSchoolSelect(school);
+                                  }}
+                                >
+                                  {isSelected ? 'Remove' : 'Add to Compare'}
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        
-                        {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
-                          <div 
-                            className="fixed z-50 w-72 bg-white border border-gray-200 rounded-lg shadow-xl p-4"
-                            style={{
-                              top: tooltipPosition.y + 'px',
-                              left: tooltipPosition.x + 'px'
-                            }}
-                          >
-                            <h4 className="font-medium text-gray-900 mb-2">{school.name}</h4>
-                            <p className="text-gray-600 mb-3">{school.description || 'No description available'}</p>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="bg-indigo-50 p-2 rounded-lg">
-                                <p className="text-xs text-gray-500 mb-1">Tuition</p>
-                                <p className="text-gray-700 font-medium">{school.tuitionFee || 'Not specified'}</p>
-                              </div>
-                              <div className="bg-indigo-50 p-2 rounded-lg">
-                                <p className="text-xs text-gray-500 mb-1">Requirements</p>
-                                <p className="text-gray-700 font-medium truncate">{school.admissionRequirements || 'Not specified'}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 flex justify-end gap-2">
-                              <button 
-                                className="text-indigo-600 text-sm hover:text-indigo-800 font-medium"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSchoolSelect(school);
-                                }}
-                              >
-                                {isSelected ? 'Remove' : 'Add to Compare'}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
