@@ -20,6 +20,17 @@ const Navigation = () => {
           {/* Navigation Links */}
           <div className="flex space-x-1">
             <Link
+              to="/user-landing-page"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/user-landing-page') 
+                  ? 'bg-[#f5fafc] text-white' // Changed text color to white
+                  : 'text-white hover:bg-gray-700'
+              }`}
+            >
+              Landing Page
+            </Link>
+            
+            <Link
               to="/academic-explorer"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive('/academic-explorer') 
@@ -39,6 +50,17 @@ const Navigation = () => {
               }`}
             >
               Accreditation Ratings
+            </Link>
+
+            <Link
+              to="/virtual-campus-tours"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname.includes('/virtual-campus-tours')
+                  ? 'bg-[#f5fafc] text-white' // Changed text color to white
+                  : 'text-white hover:bg-gray-700'
+              }`}
+            >
+              Virtual Campus Tours
             </Link>
           </div>
         </div>
