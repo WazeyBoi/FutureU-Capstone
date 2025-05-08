@@ -62,6 +62,17 @@ const Navigation = () => {
             >
               Virtual Campus Tours
             </Link>
+
+            <Link
+              to="/career-pathways"
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname.includes('/career-pathways')
+                  ? 'bg-[#f5fafc] text-white'
+                  : 'text-white hover:bg-gray-700'
+              }`}
+            >
+              Career Pathways
+            </Link>
           </div>
         </div>
       </div>
