@@ -4,8 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.persistence.CascadeType;
+import java.util.List;
 
 @Entity
+@Table(name = "user")
 public class UserEntity {
     
     @Id
@@ -21,6 +26,9 @@ public class UserEntity {
     private String address;
     private String contactNumber;
     private String role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AnswerEntity> answers;
 
     public UserEntity() {
     }
@@ -84,6 +92,14 @@ public class UserEntity {
     }
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public List<AnswerEntity> getAnswers() {
+        return answers;
+    }
+
+    public void setAnswers(List<AnswerEntity> answers) {
+        this.answers = answers;
     }
 
 }
