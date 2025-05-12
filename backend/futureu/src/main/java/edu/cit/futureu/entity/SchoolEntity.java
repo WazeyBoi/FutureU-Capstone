@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "school")
@@ -24,6 +25,9 @@ public class SchoolEntity {
     private String location;
     private String type;
     private String virtualTourUrl;
+    
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     // One-to-many to Testimony
     @JsonIgnore
@@ -82,6 +86,14 @@ public class SchoolEntity {
 
     public void setVirtualTourUrl(String virtualTourUrl) {
         this.virtualTourUrl = virtualTourUrl;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public List<TestimonyEntity> getTestimonies() {
