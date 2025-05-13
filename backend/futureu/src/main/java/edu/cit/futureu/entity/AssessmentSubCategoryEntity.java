@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -17,6 +19,9 @@ public class AssessmentSubCategoryEntity {
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId", nullable = false)
     private AssessmentCategoryEntity assessmentCategory;
+
+    @OneToMany(mappedBy = "assesssmentSubCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuizSubCategoryCategoryEntity> quizSubCategoryCategories;
 
     public AssessmentSubCategoryEntity() {}
 
