@@ -2,6 +2,10 @@ package edu.cit.futureu.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,10 +30,12 @@ public class AssessmentEntity {
     private String description;
 
     // One-to-many relationship with AssessmentCategory
+    @JsonBackReference
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssessmentCategoryEntity> categories;
 
     // One-to-many relationship with UserAssessment
+    @JsonBackReference
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAssessmentEntity> userAssessments;
 

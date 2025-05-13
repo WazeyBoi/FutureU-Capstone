@@ -2,6 +2,10 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,10 +24,12 @@ public class QuizSubCategoryCategoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int quizSubCategoryCategoryId;
 
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assesssmentSubCategory;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "quizSubCategoryCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionEntity> questions;
 
