@@ -21,6 +21,10 @@ public class QuestionEntity {
     @JoinColumn(name = "quizSubCategoryCategoryId", nullable = false)
     private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
 
+    @ManyToOne
+    @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
+    private AssessmentSubCategoryEntity assessmentSubCategory;
+
     private String questionText;
     private String category;
     private String difficultyLevel;
@@ -113,6 +117,14 @@ public class QuestionEntity {
 
     public void setChoices(List<ChoiceEntity> choices) {
         this.choices = choices;
+    }
+
+    public AssessmentSubCategoryEntity getAssessmentSubCategory() {
+        return assessmentSubCategory;
+    }
+
+    public void setAssessmentSubCategory(AssessmentSubCategoryEntity assessmentSubCategory) {
+        this.assessmentSubCategory = assessmentSubCategory;
     }
 
     
