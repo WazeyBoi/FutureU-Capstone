@@ -13,6 +13,8 @@ public class AssessmentSubCategoryEntity {
     private int assessmentSubCategoryId;
 
     private String subCategoryName;
+    
+    @Column(length = 1000)
     private String description;
 
     // Many-to-one relationship with AssessmentCategory

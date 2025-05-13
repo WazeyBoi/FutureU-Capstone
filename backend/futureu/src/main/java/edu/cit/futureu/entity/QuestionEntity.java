@@ -13,12 +13,12 @@ public class QuestionEntity {
 
     // Many-to-one relationship with AssessmentCategory
     @ManyToOne
-    @JoinColumn(name = "assessmentCategoryId", nullable = false)
+    @JoinColumn(name = "assessmentCategoryId")
     private AssessmentCategoryEntity assessmentCategory;
     
     // Add the relationship to QuizSubCategoryCategory
     @ManyToOne
-    @JoinColumn(name = "quizSubCategoryCategoryId", nullable = false)
+    @JoinColumn(name = "quizSubCategoryCategoryId")
     private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
 
     @ManyToOne
