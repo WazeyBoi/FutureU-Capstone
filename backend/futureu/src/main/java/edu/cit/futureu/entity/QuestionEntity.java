@@ -20,9 +20,13 @@ public class QuestionEntity {
     private String category;
     private String difficultyLevel;
     private String correctAnswer;
+    private String questionType;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
+
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChoiceEntity> choices;
 
     public QuestionEntity() {}
 
@@ -81,4 +85,22 @@ public class QuestionEntity {
     public void setAnswers(List<AnswerEntity> answers) {
         this.answers = answers;
     }
+
+    public String getQuestionType() {
+        return questionType;
+    }
+
+    public void setQuestionType(String questionType) {
+        this.questionType = questionType;
+    }
+
+    public List<ChoiceEntity> getChoices() {
+        return choices;
+    }
+
+    public void setChoices(List<ChoiceEntity> choices) {
+        this.choices = choices;
+    }
+
+    
 }
