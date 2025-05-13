@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import java.util.List;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -17,6 +19,12 @@ public class AssessmentSubCategoryEntity {
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId", nullable = false)
     private AssessmentCategoryEntity assessmentCategory;
+
+    @OneToMany(mappedBy = "assesssmentSubCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuizSubCategoryCategoryEntity> quizSubCategoryCategories;
+
+    @OneToMany(mappedBy = "assessmentSubCategory", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QuestionEntity> questions;
 
     public AssessmentSubCategoryEntity() {}
 
@@ -51,4 +59,22 @@ public class AssessmentSubCategoryEntity {
     public void setAssessmentCategory(AssessmentCategoryEntity assessmentCategory) {
         this.assessmentCategory = assessmentCategory;
     }
+
+    public List<QuizSubCategoryCategoryEntity> getQuizSubCategoryCategories() {
+        return quizSubCategoryCategories;
+    }
+
+    public void setQuizSubCategoryCategories(List<QuizSubCategoryCategoryEntity> quizSubCategoryCategories) {
+        this.quizSubCategoryCategories = quizSubCategoryCategories;
+    }
+
+    public List<QuestionEntity> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(List<QuestionEntity> questions) {
+        this.questions = questions;
+    }
+
+    
 }

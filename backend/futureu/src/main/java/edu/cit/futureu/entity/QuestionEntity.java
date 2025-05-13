@@ -15,14 +15,27 @@ public class QuestionEntity {
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId", nullable = false)
     private AssessmentCategoryEntity assessmentCategory;
+    
+    // Add the relationship to QuizSubCategoryCategory
+    @ManyToOne
+    @JoinColumn(name = "quizSubCategoryCategoryId", nullable = false)
+    private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
+
+    @ManyToOne
+    @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
+    private AssessmentSubCategoryEntity assessmentSubCategory;
 
     private String questionText;
     private String category;
     private String difficultyLevel;
     private String correctAnswer;
+    private String questionType;
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
+
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChoiceEntity> choices;
 
     public QuestionEntity() {}
 
@@ -40,6 +53,14 @@ public class QuestionEntity {
 
     public void setAssessmentCategory(AssessmentCategoryEntity assessmentCategory) {
         this.assessmentCategory = assessmentCategory;
+    }
+
+    public QuizSubCategoryCategoryEntity getQuizSubCategoryCategory() {
+        return quizSubCategoryCategory;
+    }
+
+    public void setQuizSubCategoryCategory(QuizSubCategoryCategoryEntity quizSubCategoryCategory) {
+        this.quizSubCategoryCategory = quizSubCategoryCategory;
     }
 
     public String getQuestionText() {
@@ -81,4 +102,30 @@ public class QuestionEntity {
     public void setAnswers(List<AnswerEntity> answers) {
         this.answers = answers;
     }
+
+    public String getQuestionType() {
+        return questionType;
+    }
+
+    public void setQuestionType(String questionType) {
+        this.questionType = questionType;
+    }
+
+    public List<ChoiceEntity> getChoices() {
+        return choices;
+    }
+
+    public void setChoices(List<ChoiceEntity> choices) {
+        this.choices = choices;
+    }
+
+    public AssessmentSubCategoryEntity getAssessmentSubCategory() {
+        return assessmentSubCategory;
+    }
+
+    public void setAssessmentSubCategory(AssessmentSubCategoryEntity assessmentSubCategory) {
+        this.assessmentSubCategory = assessmentSubCategory;
+    }
+
+    
 }
