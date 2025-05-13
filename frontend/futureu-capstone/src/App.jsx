@@ -6,6 +6,11 @@ import AccreditationSection from './components/AccreditationSection.jsx';
 import VirtualCampusToursPage from './components/VirtualCampusToursPage.jsx';
 import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
+import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
+import AssessmentCategories from './pages/AssessmentCategories.jsx';
+import Assessments from './pages/Assessments.jsx';
+import QuizSubCategories from './pages/QuizSubCategories.jsx';
+import Questions from './pages/Questions.jsx';
 import './App.css';
 
 function App() {
@@ -20,6 +25,11 @@ function App() {
             <Route path="/accreditation/:section" element={<AccreditationSection />} />
             <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
             <Route path="/user-landing-page" element={<UserLandingPage />} />
+            <Route path="/assessments" element={<Assessments />} />
+            <Route path="/assessment-categories" element={<AssessmentCategories />} />
+            <Route path="/assessment-subcategories" element={<AssessmentSubCategories />} />
+            <Route path="/quiz-subcategories" element={<QuizSubCategories />} />
+            <Route path="/questions" element={<Questions />} />
           </Routes>
         </div>
       </div>
