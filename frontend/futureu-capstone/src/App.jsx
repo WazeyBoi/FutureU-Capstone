@@ -12,6 +12,7 @@ import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
 import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
+import TakeAssessment from './pages/TakeAssessment.jsx';
 import './App.css';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/assessment-subcategories" element={<AssessmentSubCategories />} />
             <Route path="/quiz-subcategories" element={<QuizSubCategories />} />
             <Route path="/questions" element={<Questions />} />
+            <Route path="/take-assessment/:assessmentId" element={<TakeAssessment />} />
           </Routes>
         </div>
       </div>
