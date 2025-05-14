@@ -37,7 +37,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
   return (
     <div className="question-container">
       <div className="mb-5">
-        <h3 className="text-start text-lg font-medium text-gray-800 mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
+        <h3 className="text-start text-lg font-medium text-[#232D35] mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-[#1D63A1] shadow-sm">
           {question.questionText}
         </h3>
         
@@ -47,13 +47,13 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
             {question.difficultyLevel && (
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 question.difficultyLevel === 'EASY' ? 'bg-green-100 text-green-800' :
-                question.difficultyLevel === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                question.difficultyLevel === 'MEDIUM' ? 'bg-[#FFB71B]/20 text-[#FFB71B]/90' :
                 'bg-red-100 text-red-800'
               }`}>
                 {question.difficultyLevel}
               </span>
             )}
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1D63A1]/20 text-[#1D63A1]/90">
               {question.questionType || (isLikert ? 'Likert Scale' : '')}
             </span>
           </div>
@@ -73,15 +73,15 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
               <label 
                 className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   answer === choice.choiceId.toString() 
-                    ? 'bg-indigo-50 border-indigo-400 shadow-md' 
-                    : 'hover:bg-gray-50 border-gray-200 hover:border-gray-300'
+                    ? 'bg-[#1D63A1]/10 border-[#1D63A1] shadow-md' 
+                    : 'hover:bg-gray-50 border-gray-200 hover:border-[#1D63A1]/50'
                 }`}
               >
                 <div className="flex">
                   <div 
                     className={`flex-shrink-0 h-5 w-5 mt-1 rounded-full border-2 flex items-center justify-center ${
                       answer === choice.choiceId.toString() 
-                        ? 'border-indigo-500 bg-indigo-500' 
+                        ? 'border-[#1D63A1] bg-[#1D63A1]' 
                         : 'border-gray-300'
                     }`}
                   >
@@ -112,15 +112,15 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
       )}
       
       {isMultipleChoice && !hasChoices && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
+        <div className="bg-[#FFB71B]/10 border-l-4 border-[#FFB71B] p-4 rounded-md">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 text-[#FFB71B]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">This multiple choice question is missing its choices.</p>
+              <p className="text-sm text-[#232D35]">This multiple choice question is missing its choices.</p>
             </div>
           </div>
         </div>
@@ -133,7 +133,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-indigo-50 p-5 rounded-xl border border-indigo-100"
+            className="bg-[#1D63A1]/10 p-5 rounded-xl border border-[#1D63A1]/30"
           >
             <div className="grid grid-cols-5 gap-2">
               {scaleOptions.map(option => (
@@ -146,13 +146,13 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
                   <label 
                     className={`flex flex-col items-center cursor-pointer p-3 rounded-lg transition-all ${
                       answer === option.value 
-                        ? 'bg-indigo-100 border-2 border-indigo-500 shadow-md' 
-                        : 'hover:bg-indigo-100/50'
+                        ? 'bg-[#1D63A1]/20 border-2 border-[#1D63A1] shadow-md' 
+                        : 'hover:bg-[#1D63A1]/5'
                     }`}
                   >
                     <span className="text-3xl mb-2">{option.emoji}</span>
-                    <span className="text-xl font-bold mb-1 text-indigo-700">{option.value}</span>
-                    <span className="text-xs text-indigo-600">{option.label}</span>
+                    <span className="text-xl font-bold mb-1 text-[#1D63A1]">{option.value}</span>
+                    <span className="text-xs text-[#232D35]/80">{option.label}</span>
                     <input
                       type="radio"
                       name={`question-${question.questionId}`}
@@ -173,7 +173,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
       {!isMultipleChoice && !isLikert && (
         <div className="mt-2">
           <textarea
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1]"
             rows="4"
             placeholder="Enter your answer here..."
             value={answer || ''}

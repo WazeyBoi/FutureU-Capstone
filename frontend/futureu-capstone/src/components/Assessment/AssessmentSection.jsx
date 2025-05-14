@@ -48,13 +48,13 @@ const AssessmentSection = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-indigo-100 overflow-hidden flex flex-col h-full"
+      className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-[#1D63A1]/20 overflow-hidden flex flex-col h-full"
     >
       {/* Section header with improved responsiveness */}
       <div className="mb-6 border-b border-gray-200 pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-800 flex items-center mb-2 sm:mb-0">
-            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs sm:text-sm font-bold mr-2 flex-shrink-0">
+          <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
+            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1D63A1]/15 text-[#1D63A1] flex items-center justify-center text-xs sm:text-sm font-bold mr-2 flex-shrink-0">
               {currentSection + 1}
             </span>
             <span className="line-clamp-1">{title}</span>
@@ -75,28 +75,6 @@ const AssessmentSection = ({
           <div className="text-xs sm:text-sm text-gray-600 bg-gray-50 px-2 sm:px-3 py-1 rounded-full inline-flex">
             Question {currentQuestionIndex + 1} of {questions.length}
           </div>
-          {/* <div className="flex flex-wrap items-center gap-2 text-2xs sm:text-xs text-gray-500">
-            <div className="flex items-center">
-              <span className="font-medium text-indigo-700 whitespace-nowrap">Section:</span>
-              <div className="ml-1 w-16 sm:w-24 bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="bg-indigo-600 h-1.5 rounded-full" 
-                  style={{ width: `${sectionProgress}%` }}
-                ></div>
-              </div>
-              <span className="ml-1">{sectionProgress}%</span>
-            </div>
-            <div className="flex items-center">
-              <span className="font-medium text-indigo-700 whitespace-nowrap">Overall:</span>
-              <div className="ml-1 w-16 sm:w-24 bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className="bg-blue-600 h-1.5 rounded-full" 
-                  style={{ width: `${Math.round((totalQuestions.completed / totalQuestions.total) * 100)}%` }}
-                ></div>
-              </div>
-              <span className="ml-1">{Math.round((totalQuestions.completed / totalQuestions.total) * 100)}%</span>
-            </div>
-          </div> */}
         </div>
       </div>
 
@@ -109,7 +87,7 @@ const AssessmentSection = ({
                 initial={{ scale: 0, rotate: -10 }}
                 animate={{ scale: answers[currentQuestion.questionId] ? 1 : 0, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                className="bg-green-100 text-green-700 text-xs font-medium py-1 px-2 rounded shadow"
+                className="bg-[#FFB71B]/20 text-[#232D35] text-xs font-medium py-1 px-2 rounded shadow"
               >
                 {answers[currentQuestion.questionId] ? (
                   <span className="flex items-center">
@@ -136,19 +114,6 @@ const AssessmentSection = ({
             </motion.div>
           </div>
         )}
-
-        {/* Encouraging feedback when user answers */}
-        {/* {currentQuestion && answers[currentQuestion.questionId] && (
-          <motion.div
-            key={`feedback-${currentQuestion.questionId}`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 text-center"
-          >
-            <p className="text-sm text-indigo-600 font-medium">{getFeedbackMessage()}</p>
-          </motion.div>
-        )} */}
       </div>
 
       {/* Navigation buttons with improved responsiveness */}
@@ -161,7 +126,7 @@ const AssessmentSection = ({
           className={`px-3 sm:px-5 py-2 rounded-lg flex items-center space-x-1 text-sm ${
             currentQuestionIndex === 0 && isFirstSection
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
+              : 'bg-gray-100 text-[#232D35] hover:bg-gray-200 hover:shadow-sm'
           }`}
         >
           <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -175,7 +140,7 @@ const AssessmentSection = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNext}
-            className="px-3 sm:px-5 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-sm hover:shadow flex items-center font-medium text-sm"
+            className="px-3 sm:px-5 py-2 bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white rounded-lg shadow-sm hover:shadow flex items-center font-medium text-sm"
           >
             <span>Next</span>
             <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -189,8 +154,8 @@ const AssessmentSection = ({
             onClick={isLastSection ? onComplete : onNext}
             className={`px-3 sm:px-5 py-2 rounded-lg shadow-sm hover:shadow flex items-center font-medium text-sm ${
               isLastSection 
-                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700' 
-                : 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700'
+                ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] hover:from-[#FFB71B] hover:to-[#FFB71B]/70' 
+                : 'bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white hover:from-[#1D63A1]/90 hover:to-[#232D35]/90'
             }`}
           >
             {isLastSection ? (

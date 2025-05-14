@@ -421,13 +421,13 @@ const TakeAssessment = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="flex flex-col justify-center items-center h-screen bg-white">
         <div className="loader"></div>
         <motion.p 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-blue-600 font-medium mt-4"
+          className="text-[#1D63A1] font-medium mt-4"
         >
           Preparing your assessment journey...
         </motion.p>
@@ -594,7 +594,7 @@ const TakeAssessment = () => {
   };
   
   return (
-    <div className="max-w-7xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-blue-50 to-white min-h-screen flex flex-col">
+    <div className="max-w-7xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen flex flex-col">
       {/* Assessment Header - Better height utilization */}
       <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto">
         {/* Assessment Info Card - Making sure it fills available height */}
@@ -602,12 +602,12 @@ const TakeAssessment = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-indigo-100 grow h-full flex flex-col"
+          className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-[#1D63A1]/20 grow h-full flex flex-col"
         >
           <div className="flex flex-col sm:flex-row justify-between items-start h-auto">
             <div className="flex-1">
               <div className='w-100 mb-4'>
-                <h1 className="text-start text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-start text-2xl font-bold bg-gradient-to-r from-[#1D63A1] to-[#232D35] bg-clip-text text-transparent">
                   {assessment?.title || 'Assessment'}
                 </h1>              
               </div>
@@ -619,11 +619,11 @@ const TakeAssessment = () => {
               </div>
             </div>
             
-            <div className="mt-2 sm:mt-0 bg-indigo-50 px-4 py-2 rounded-full text-indigo-700 flex shadow-sm">
+            <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
               <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span className="text-sm font-medium ">
+              <span className="text-sm font-medium">
                 {timeRemaining 
                   ? `${Math.floor(timeRemaining / 60)}:${(timeRemaining % 60).toString().padStart(2, '0')}` 
                   : 'No time limit'
@@ -634,7 +634,7 @@ const TakeAssessment = () => {
           
           <div className="flex-grow flex flex-col justify-between">
             {/* Motivational message */}
-            <div className="text-start text-sm text-indigo-600 font-medium mb-4">
+            <div className="text-start text-sm text-[#1D63A1] font-medium mb-4">
               {getEncouragingMessage()}
             </div>
             
@@ -649,7 +649,7 @@ const TakeAssessment = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.round((totalQuestions.completed / totalQuestions.total) * 100)}%` }}
                   transition={{ duration: 0.5 }}
-                  className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600"
+                  className="h-2.5 rounded-full progress-bar-futureu"
                 ></motion.div>
               </div>
             </div>
@@ -661,34 +661,34 @@ const TakeAssessment = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-indigo-100 lg:w-1/3 flex flex-col"
+          className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
         >
-          <h4 className="font-medium text-gray-800 mb-3 text-sm flex items-center">
-            <svg className="w-5 h-5 mr-1 text-indigo-500 flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+          <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
+            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
               <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-grow">
-            <div className="bg-blue-50 p-3 rounded-lg border-2 border-blue-100 flex flex-col justify-center">
-              <div className="text-2xl font-bold text-blue-700">{totalQuestions.completed}</div>
-              <div className="text-xs text-blue-600">Questions Answered</div>
+            <div className="bg-[#1D63A1]/10 p-3 rounded-lg border-2 border-[#1D63A1]/20 flex flex-col justify-center">
+              <div className="text-2xl font-bold text-[#1D63A1]">{totalQuestions.completed}</div>
+              <div className="text-xs text-[#1D63A1]/80">Questions Answered</div>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg border-2 border-gray-100 flex flex-col justify-center">
-              <div className="text-2xl font-bold text-gray-700">{totalQuestions.total - totalQuestions.completed}</div>
-              <div className="text-xs text-gray-600">Questions Remaining</div>
+              <div className="text-2xl font-bold text-[#232D35]">{totalQuestions.total - totalQuestions.completed}</div>
+              <div className="text-xs text-[#232D35]/80">Questions Remaining</div>
             </div>
-            <div className="bg-green-50 p-3 rounded-lg border-2 border-green-100 flex flex-col justify-center">
-              <div className="text-2xl font-bold text-green-700">
+            <div className="bg-[#FFB71B]/10 p-3 rounded-lg border-2 border-[#FFB71B]/20 flex flex-col justify-center">
+              <div className="text-2xl font-bold text-[#FFB71B]">
                 {Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
-              <div className="text-xs text-green-600">Sections Completed</div>
+              <div className="text-xs text-[#FFB71B]/80">Sections Completed</div>
             </div>
-            <div className="bg-yellow-50 p-3 rounded-lg border-2 border-yellow-100 flex flex-col justify-center">
-              <div className="text-2xl font-bold text-yellow-700">
+            <div className="bg-[#FFB71B]/5 p-3 rounded-lg border-2 border-[#FFB71B]/10 flex flex-col justify-center">
+              <div className="text-2xl font-bold text-[#232D35]">
                 {sectionList.length - Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
-              <div className="text-xs text-yellow-600">Sections Remaining</div>
+              <div className="text-xs text-[#232D35]/80">Sections Remaining</div>
             </div>
           </div>
         </motion.div>
@@ -757,7 +757,7 @@ const TakeAssessment = () => {
                       [nextSectionId]: 0
                     });
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 shadow-md flex items-center space-x-2 font-medium"
+                  className="px-6 py-3 bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white rounded-lg hover:from-[#1D63A1]/90 hover:to-[#232D35]/90 shadow-md flex items-center space-x-2 font-medium"
                 >
                   <span>Next Section</span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -770,11 +770,11 @@ const TakeAssessment = () => {
                   whileTap={{ scale: 0.95 }}
                   onClick={handleComplete}
                   disabled={submitting}
-                  className={`px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow-md flex items-center space-x-2 font-medium ${submitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-green-600 hover:to-emerald-700'}`}
+                  className={`px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] rounded-lg shadow-md flex items-center space-x-2 font-medium ${submitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#FFB71B]/90 hover:to-[#FFB71B]/70'}`}
                 >
                   {submitting ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#232D35]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -798,10 +798,10 @@ const TakeAssessment = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 bg-white p-5 rounded-xl border border-indigo-100 shadow-md"
+            className="mt-6 bg-white p-5 rounded-xl border border-[#1D63A1]/20 shadow-md"
           >
-            <h3 className="text-sm font-medium text-gray-800 mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <h3 className="text-sm font-medium text-[#232D35] mb-3 flex items-center">
+              <svg className="w-5 h-5 mr-1 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Assessment Tips

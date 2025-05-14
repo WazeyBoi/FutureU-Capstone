@@ -4,9 +4,30 @@
   width: 22px;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: #1D63A1;  /* Updated: Changed from #F10C49 to #1D63A1 (blue) */
+  background: #1D63A1;  /* Updated to brand blue */
   animation: l10 1.5s infinite linear;
   margin: 30px auto;
+  position: relative;
+}
+
+/* Add pulsing effect around loader */
+.loader::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid #1D63A1;
+  opacity: 0.6;
+  animation: pulse 2s linear infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 0.2; }
+  100% { transform: scale(1); opacity: 0.6; }
 }
 
 @keyframes l10 {
@@ -37,4 +58,31 @@
   100%  {box-shadow: 
           0 -30px #FFB71B, calc(30px*0.707) calc(-30px*0.707) #232D35, 30px 0 #FFB71B, 0 0 #232D35,
           0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35}
+}
+
+/* For floating animation used in completion screen */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation-name: float;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+/* Add a unique branded progress bar animation */
+.progress-bar-futureu {
+  background: linear-gradient(-45deg, #1D63A1, #232D35, #1D63A1, #FFB71B);
+  background-size: 400% 400%;
+  animation: progress-bar-futureu-animation 3s ease infinite;
+}
+
+@keyframes progress-bar-futureu-animation {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
 }

@@ -163,15 +163,16 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     );
   };
 
+  // Update the colors in the section navigator component
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-3 sm:p-5 mb-4 border border-indigo-100 flex flex-col"
+      className="bg-white rounded-xl shadow-md p-3 sm:p-5 mb-4 border border-[#1D63A1]/20 flex flex-col"
     >
-      <div className="mb-3 text-sm font-medium text-gray-800 flex items-center">
-        <svg className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <div className="mb-3 text-sm font-medium text-[#232D35] flex items-center">
+        <svg className="w-5 h-5 mr-2 text-[#1D63A1] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
         <span className="truncate">Assessment Sections</span>
@@ -188,11 +189,14 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
           return (
             <div key={groupKey} className="border border-gray-200 rounded-lg overflow-hidden">
               <button 
-                className={`w-full px-3 py-2 flex justify-between items-center ${isOpen ? 'bg-indigo-50 text-indigo-800' : 'bg-gray-50 text-gray-700'} transition-colors duration-200`}
+                className={`w-full px-3 py-2 flex justify-between items-center ${
+                  isOpen 
+                    ? 'bg-[#232D35] text-gray-800' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-[#232D35]/10'
+                } transition-colors duration-200`}
                 onClick={() => toggleGroup(groupKey)}
               >
                 <div className="flex items-center">
-                  {/* <span className="mr-2 text-lg">{group.icon}</span> */}
                   <span className="text-start font-medium">{group.title}</span>
                 </div>
                 
@@ -202,8 +206,11 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                       <div 
                         style={{ width: `${group.completion}%` }} 
                         className={`h-full rounded-full ${
-                          group.completion === 100 ? 'bg-green-500' : 
-                          group.completion > 0 ? 'bg-yellow-500' : 'bg-gray-400'
+                          group.completion === 100 
+                            ? 'bg-[#FFB71B]' 
+                            : group.completion > 0 
+                              ? 'bg-[#1D63A1]' 
+                              : 'bg-gray-400'
                         }`}
                       ></div>
                     </div>
