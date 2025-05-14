@@ -37,7 +37,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
   return (
     <div className="question-container">
       <div className="mb-5">
-        <h3 className="text-lg font-medium text-gray-800 mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
+        <h3 className="text-start text-lg font-medium text-gray-800 mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
           {question.questionText}
         </h3>
         

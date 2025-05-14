@@ -138,7 +138,7 @@ const AssessmentSection = ({
         )}
 
         {/* Encouraging feedback when user answers */}
-        {currentQuestion && answers[currentQuestion.questionId] && (
+        {/* {currentQuestion && answers[currentQuestion.questionId] && (
           <motion.div
             key={`feedback-${currentQuestion.questionId}`}
             initial={{ opacity: 0, height: 0 }}
@@ -148,7 +148,7 @@ const AssessmentSection = ({
           >
             <p className="text-sm text-indigo-600 font-medium">{getFeedbackMessage()}</p>
           </motion.div>
-        )}
+        )} */}
       </div>
 
       {/* Navigation buttons with improved responsiveness */}

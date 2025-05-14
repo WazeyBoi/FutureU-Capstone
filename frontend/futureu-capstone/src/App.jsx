@@ -13,6 +13,7 @@ import Assessments from './pages/Assessments.jsx';
 import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
+import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 
 // Add these styles to App.css

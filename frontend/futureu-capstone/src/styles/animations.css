@@ -1,0 +1,40 @@
+/* Custom Animations */
+
+.loader {
+  width: 22px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #1D63A1;  /* Updated: Changed from #F10C49 to #1D63A1 (blue) */
+  animation: l10 1.5s infinite linear;
+  margin: 30px auto;
+}
+
+@keyframes l10 {
+  0%    {box-shadow: 
+          0 -30px #FFB71B, calc(30px*0.707) calc(-30px*0.707) #232D35, 30px 0 #FFB71B, 0 0 #232D35,
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35}
+  12.5% {box-shadow: 
+          0 0 #FFB71B, calc(30px*0.707) calc(-30px*0.707) #232D35, 30px 0 #FFB71B, calc(30px*0.707) calc(30px*0.707) #232D35,
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35}
+  25%   {box-shadow: 
+          0 0 #FFB71B, 0 0 #232D35, 30px 0 #FFB71B, calc(30px*0.707) calc(30px*0.707) #232D35,
+          0 30px #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35}
+  37.5% {box-shadow: 
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, calc(30px*0.707) calc(30px*0.707) #232D35,
+          0 30px #FFB71B, calc(-30px*0.707) calc(30px*0.707) #232D35, 0 0 #FFB71B, 0 0 #232D35}
+  50%   {box-shadow: 
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35,
+          0 30px #FFB71B, calc(-30px*0.707) calc(30px*0.707) #232D35, -30px 0 #FFB71B, 0 0 #232D35}
+  62.5% {box-shadow: 
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35,
+          0 0 #FFB71B, calc(-30px*0.707) calc(30px*0.707) #232D35, -30px 0 #FFB71B, calc(-30px*0.707) calc(-30px*0.707) #232D35}
+  75%   {box-shadow: 
+          0 -30px #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35,
+          0 0 #FFB71B, 0 0 #232D35, -30px 0 #FFB71B, calc(-30px*0.707) calc(-30px*0.707) #232D35}
+  87.5% {box-shadow: 
+          0 -30px #FFB71B, calc(30px*0.707) calc(-30px*0.707) #232D35, 0 0 #FFB71B, 0 0 #232D35,
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, calc(-30px*0.707) calc(-30px*0.707) #232D35}
+  100%  {box-shadow: 
+          0 -30px #FFB71B, calc(30px*0.707) calc(-30px*0.707) #232D35, 30px 0 #FFB71B, 0 0 #232D35,
+          0 0 #FFB71B, 0 0 #232D35, 0 0 #FFB71B, 0 0 #232D35}
+}

@@ -168,7 +168,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-3 sm:p-5 mb-4 border border-indigo-100 h-full flex flex-col"
+      className="bg-white rounded-xl shadow-md p-3 sm:p-5 mb-4 border border-indigo-100 flex flex-col"
     >
       <div className="mb-3 text-sm font-medium text-gray-800 flex items-center">
         <svg className="w-5 h-5 mr-2 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -421,23 +421,16 @@ const TakeAssessment = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-blue-500 mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="h-10 w-10 rounded-full bg-blue-100"></div>
-            </div>
-          </div>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-blue-600 font-medium mt-4"
-          >
-            Preparing your assessment journey...
-          </motion.p>
-        </div>
+      <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="loader"></div>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-blue-600 font-medium mt-4"
+        >
+          Preparing your assessment journey...
+        </motion.p>
       </div>
     );
   }
