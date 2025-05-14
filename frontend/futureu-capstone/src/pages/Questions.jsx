@@ -172,10 +172,10 @@ const Questions = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
           {/* Search */}
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+          <div className="lg:col-span-2 text-left">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
               Search Questions
-            </label>
+            </label> */}
             <div className="relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -206,9 +206,9 @@ const Questions = () => {
           
           {/* Category filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
               By Category
-            </label>
+            </label> */}
             <select
               value={filterCategory}
               onChange={(e) => {
@@ -228,9 +228,9 @@ const Questions = () => {
           
           {/* Sub-category filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
               By Sub-Category
-            </label>
+            </label> */}
             <select
               value={filterSubCategory}
               onChange={(e) => setFilterSubCategory(e.target.value)}
@@ -251,7 +251,7 @@ const Questions = () => {
           </div>
           
           {/* Difficulty filter */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               By Difficulty
             </label>
@@ -265,13 +265,13 @@ const Questions = () => {
               <option value="MEDIUM">Medium</option>
               <option value="HARD">Hard</option>
             </select>
-          </div>
+          </div> */}
           
           {/* Question type filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
               By Type
-            </label>
+            </label> */}
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -469,15 +469,15 @@ const Questions = () => {
               <div className="px-6 py-5">
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-6">
                   <div>
-                    <dt className="text-base font-medium text-gray-900 mb-2">Question</dt>
-                    <dd className="text-sm text-gray-900 p-4 bg-gray-50 rounded-md border border-gray-200 shadow-inner">
+                    {/* <dt className="text-base font-medium text-gray-900 mb-2">Question</dt> */}
+                    <dd className="text-start text-sm text-gray-900 p-4 bg-gray-50 rounded-md border border-gray-200 shadow-inner">
                       {selectedQuestion.questionText}
                     </dd>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
                     <div>
-                      <dt className="text-base font-medium text-gray-900 mb-2">Category Information</dt>
+                      <dt className="text-start text-base font-medium text-gray-900 mb-2">Category Information</dt>
                       <dd>
                         <ul className="border border-gray-200 rounded-md overflow-hidden">
                           <li className="pl-4 pr-4 py-3 bg-gray-50 border-b border-gray-200">
@@ -506,7 +506,7 @@ const Questions = () => {
                     
                     {questionChoices && questionChoices.length > 0 && (
                       <div>
-                        <dt className="text-base font-medium text-gray-900 mb-2">Choices</dt>
+                        <dt className="text-start text-base font-medium text-gray-900 mb-2">Choices</dt>
                         <dd>
                           <ul className="border border-gray-200 rounded-md divide-y divide-gray-200 overflow-hidden">
                             {questionChoices.map((choice, index) => (
@@ -527,7 +527,7 @@ const Questions = () => {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex-1 text-gray-900">
+                                <div className="flex-1 text-gray-900 text-start">
                                   {choice.choiceText}
                                 </div>
                                 {choice.correct && (
@@ -544,9 +544,9 @@ const Questions = () => {
                   </div>
                   
                   {selectedQuestion.correctAnswer && (
-                    <div className="mt-2">
-                      <dt className="text-sm font-medium text-gray-700">Correct Answer</dt>
-                      <dd className="mt-1 text-sm text-gray-900 pl-3 border-l-2 border-green-500">{selectedQuestion.correctAnswer}</dd>
+                    <div className="text-start">
+                      <dt className="text-sm font-medium text-gray-700 ml-4">Correct Answer</dt>
+                      <dd className="mt-1 text-sm text-gray-900 pl-3 border-l-5 border-green-500">{selectedQuestion.correctAnswer}</dd>
                     </div>
                   )}
                 </dl>
