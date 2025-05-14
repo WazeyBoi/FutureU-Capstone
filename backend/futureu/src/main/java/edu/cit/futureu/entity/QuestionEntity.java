@@ -3,6 +3,9 @@ package edu.cit.futureu.entity;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "question")
 public class QuestionEntity {
@@ -12,15 +15,18 @@ public class QuestionEntity {
     private int questionId;
 
     // Many-to-one relationship with AssessmentCategory
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId")
     private AssessmentCategoryEntity assessmentCategory;
     
     // Add the relationship to QuizSubCategoryCategory
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "quizSubCategoryCategoryId")
     private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
 
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assessmentSubCategory;
@@ -31,9 +37,11 @@ public class QuestionEntity {
     private String correctAnswer;
     private String questionType;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChoiceEntity> choices;
 
