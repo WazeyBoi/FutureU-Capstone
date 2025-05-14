@@ -144,8 +144,8 @@ const fadeAnimationStyle = `
       width: 100%;
     }
     to {
-      margin-left: 400px;
-      width: calc(100% - 400px);
+      margin-left: 384px;
+      width: calc(100% - 384px);
     }
   }
   
@@ -155,8 +155,8 @@ const fadeAnimationStyle = `
   
   @keyframes contentSlideBack {
     from {
-      margin-left: 400px;
-      width: calc(100% - 400px);
+      margin-left: 384px;
+      width: calc(100% - 384px);
     }
     to {
       margin-left: 0;
@@ -930,107 +930,113 @@ const getAnimationClass = (index) => {
       <main className="flex-1 w-full overflow-hidden flex">
         {/* Program Side Panel */}
         {showProgramSidePanel && (
-          <div className="h-full w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-md overflow-y-auto animate-slide-in">
-            <div className="p-5">
-              <div className="flex items-center justify-between mb-5">
+          <div className="h-full w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-md animate-slide-in"> {/* Changed from w-80 to w-96 */}
+            <div className="p-4 flex flex-col h-full"> {/* Increased padding from p-3 to p-4 */}
+              <div className="flex items-center justify-between mb-2"> {/* Increased margin bottom */}
                 <h3 className="text-lg font-bold text-[#2B3E4E] dark:text-white">Program Details</h3>
                 <button
                   onClick={() => setShowProgramSidePanel(false)}
-                  className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
+                  className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
                   aria-label="Close program panel"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                 </button>
-            </div>
+              </div>
               
               {loadingProgramDetails ? (
-                <div className="animate-pulse space-y-4">
+                <div className="animate-pulse space-y-3 flex-grow">
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
                     <div className="flex-1">
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
                       <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          </div>
-        </div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-8"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mt-4"></div>
                   <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
                 </div>
               ) : selectedProgramDetails ? (
-                <>
-                  <div className="mb-8 text-center border-b border-gray-200 dark:border-gray-700 pb-6">
-                    <div className="w-16 h-16 rounded-full bg-[#2B3E4E] flex items-center justify-center mx-auto mb-3">
-                      <BookOpen className="w-8 h-8 text-[#FFB71B]" />
+                <div className="flex flex-col h-full">
+                  {/* Program Header - More compact */}
+                  <div className="mb-6 text-center border-b border-gray-200 dark:border-gray-700 pb-5"> {/* Increased margin bottom and padding bottom */}
+                    <div className="w-20 h-20 rounded-full bg-[#2B3E4E] flex items-center justify-center mx-auto mb-3"> {/* Further increased size and margin */}
+                      <BookOpen className="w-10 h-10 text-[#FFB71B]" /> {/* Further increased icon size */}
                     </div>
-                    <div className="text-xs uppercase tracking-wider text-[#2B3E4E] dark:text-[#FFB71B] font-semibold mb-1">
+                    <div className="text-sm uppercase tracking-wider text-[#2B3E4E] dark:text-[#FFB71B] font-semibold"> {/* Increased text size */}
                       Academic Program
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-2 mb-2"> {/* Further increased text size */}
                       {selectedProgramDetails?.programName || 
-                       programs.find(p => p.programId === selectedProgram)?.programName || 
-                       "Loading..."}
-                </h2>
+                        programs.find(p => p.programId === selectedProgram)?.programName || 
+                        "Loading..."}
+                    </h2>
                   </div>
                   
-                  <div className="space-y-6 mb-2">
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
-                        <Info className="w-4 h-4 mr-2 text-[#FFB71B]" />
+                  {/* Program Content - Using less vertical space */}
+                  <div className="space-y-2 flex-grow"> {/* Further increased spacing between sections */}
+                    {/* Program Description Section - More compact */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700 shadow-sm"> {/* Increased padding */}
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-0 flex items-center"> {/* Increased margin bottom */}
+                        <Info className="w-4 h-4 mr-1.5 text-[#FFB71B]" />
                         Program Description
                       </h4>
-                      <div className="pl-6 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                          {selectedProgramDetails?.description || selectedProgramDetails?.programDescription || 
-                           "This program prepares students for careers in this field."}
-                        </p>
+                      <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
+                            {selectedProgramDetails?.description || selectedProgramDetails?.programDescription || 
+                              "This program prepares students for careers in this field."}
+                          </p>
                       </div>
-                </div>
-
-                    <div className="mb-6">
-                      <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    </div>
+                    
+                    {/* Career Opportunities Section - More compact */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-100 dark:border-gray-700 shadow-sm"> {/* Increased padding */}
+                      <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-1 flex items-center"> {/* Increased margin bottom */}
+                        <Compass className="w-4 h-4 mr-1.5 text-[#FFB71B]" />
+                        Career Opportunities
+                      </h4>
+                      <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
+                            {selectedProgramDetails?.careerOpportunities || 
+                              "Graduates of this program can pursue various career paths in related fields."}
+                          </p>
+                      </div>
+                    </div>
+                    
+                    {/* Available Schools Section - Positioned at bottom */}
+                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700 shadow-md mt-auto h-25"> {/* Changed from h-32 to h-36 for more height */}
+                      <div className="flex justify-between items-center">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-3">
-                            <School className="w-5 h-5 text-[#FFB71B]" />
-                  </div>
+                          <div className="w-16 h-16 rounded-full bg-[#FFB71B]/10 dark:bg-[#FFB71B]/20 flex items-center justify-center mr-3"> {/* Further increased size */}
+                            <School className="w-8 h-8 text-[#FFB71B]" /> {/* Further increased icon size */}
+                          </div>
                           <div>
                             <h4 className="text-sm font-semibold text-gray-800 dark:text-white">Available Schools</h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400">offering this program</p>
-                  </div>
-                            </div>
-                        <span className="text-3xl font-bold text-[#FFB71B]">{filteredAndSearchedSchools.length}</span>
+                          </div>
                         </div>
-                    </div>
-                    
-                    {/* Program Requirements Section (if available) */}
-                    {selectedProgramDetails?.requirements && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-800 dark:text-white mb-3 flex items-center">
-                          <BookOpen className="w-4 h-4 mr-2 text-[#FFB71B]" />
-                          Program Requirements
-                        </h4>
-                        <div className="pl-6 border-l-2 border-gray-200 dark:border-gray-700">
-                          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                            {selectedProgramDetails.requirements}
-                          </p>
+                        <div className="text-center">
+                          <span className="text-3xl font-bold text-[#FFB71B] block">{filteredAndSearchedSchools.length}</span> {/* Increased text size */}
+                          <span className="text-xs text-gray-500 dark:text-gray-400">schools</span>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </>
+                </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mx-auto flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-gray-400" />
+                <div className="text-center py-6 flex-grow flex flex-col items-center justify-center">
+                  <div className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-full mx-auto flex items-center justify-center mb-3">
+                    <BookOpen className="w-7 h-7 text-gray-400" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400">No program selected</p>
-                  </div>
-                )}
-              </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No program selected</p>
+                </div>
+              )}
             </div>
+          </div>
         )}
         
         <div className={`h-full overflow-hidden transition-all duration-300 ease-in-out px-6 py-6 ${
           showProgramsPanel ? 'animate-content-slide' : 'animate-content-slide-back'
-        } ${showProgramSidePanel ? 'ml-80 w-[calc(100%-20rem)]' : 'w-full'}`}>
+        } ${showProgramSidePanel ? 'ml-96 w-[calc(100%-24rem)]' : 'w-full'}`}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700 h-[calc(100vh-140px)] overflow-auto">
             {!selectedProgram && filteredSchools.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
@@ -1464,7 +1470,7 @@ const getAnimationClass = (index) => {
                   About the School
                 </h3>
                 <div className="max-h-[200px] overflow-y-auto pr-2">
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                     {selectedSchoolDetails.description || 'No description available for this school.'}
                   </p>
                 </div>
@@ -1476,11 +1482,11 @@ const getAnimationClass = (index) => {
                   <BookOpen className="w-5 h-5 mr-2" />
                   Programs Offered
                 </h3>
-                <p className="text-gray-700 dark:text-gray-300 flex items-center font-medium">
+                <p className="text-gray-700 dark:text-gray-300 flex items-center font-medium text-left">
                   <span className="text-2xl mr-2 text-[#FFB71B]">{schoolProgramCounts[selectedSchoolDetails.schoolId] || "0"}</span> 
                   Academic Programs Available
                 </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">
+                <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 text-left">
                   Select a program from the dropdown menu to see which schools offer it.
                 </p>
               </div>
