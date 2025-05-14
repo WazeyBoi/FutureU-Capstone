@@ -15,6 +15,22 @@ import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
 import './App.css';
 
+// Add these styles to App.css
+/*
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation-name: float;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+*/
+
 function App() {
   return (
     <Router>

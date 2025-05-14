@@ -1,31 +1,49 @@
 import React from 'react';
+import { motion } from 'framer-motion'; // Need to install: npm install framer-motion
 
 const QuestionItem = ({ question, answer, onAnswerChange }) => {
-  // Fix question type check - using "Multiple Choice" with space instead of underscore version
+  // Check question types
   const isMultipleChoice = question.questionType === 'Multiple Choice';
-  // Check for Likert type questions
   const isLikert = question.questionType === 'Likert' || question.isRiasecQuestion;
 
   // Define the 1-5 scale options for RIASEC questions (Likert scale)
   const scaleOptions = [
-    { value: "1", label: "Strongly Dislike" },
-    { value: "2", label: "Dislike" },
-    { value: "3", label: "Neutral" },
-    { value: "4", label: "Like" },
-    { value: "5", label: "Strongly Like" }
+    { value: "1", label: "Strongly Dislike", emoji: "😫" },
+    { value: "2", label: "Dislike", emoji: "🙁" },
+    { value: "3", label: "Neutral", emoji: "😐" },
+    { value: "4", label: "Like", emoji: "🙂" },
+    { value: "5", label: "Strongly Like", emoji: "😄" }
   ];
 
   // Check if multiple choice question has choices
   const hasChoices = isMultipleChoice && question.choices && question.choices.length > 0;
+  
+  // Animation variants
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   return (
     <div className="question-container">
-      <div className="mb-4">
-        <h3 className="text-lg font-medium text-gray-800 mb-2">{question.questionText}</h3>
+      <div className="mb-5">
+        <h3 className="text-lg font-medium text-gray-800 mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
+          {question.questionText}
+        </h3>
         
         {/* Question meta info - hide for RIASEC/Likert questions */}
         {!isLikert && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mt-3">
             {question.difficultyLevel && (
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 question.difficultyLevel === 'EASY' ? 'bg-green-100 text-green-800' :
@@ -43,23 +61,57 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
       </div>
 
       {/* Choices for multiple choice question */}
-      {hasChoices ? (
-        <div className="space-y-3">
-          {question.choices.map(choice => (
-            <label key={choice.choiceId} className="flex items-start p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors">
-              <input
-                type="radio"
-                name={`question-${question.questionId}`}
-                value={choice.choiceId.toString()}
-                checked={answer === choice.choiceId.toString()}
-                onChange={() => onAnswerChange(choice.choiceId.toString())}
-                className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="ml-3 text-gray-700">{choice.choiceText}</span>
-            </label>
+      {hasChoices && (
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-3"
+        >
+          {question.choices.map((choice, index) => (
+            <motion.div key={choice.choiceId} variants={item}>
+              <label 
+                className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  answer === choice.choiceId.toString() 
+                    ? 'bg-indigo-50 border-indigo-400 shadow-md' 
+                    : 'hover:bg-gray-50 border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex">
+                  <div 
+                    className={`flex-shrink-0 h-5 w-5 mt-1 rounded-full border-2 flex items-center justify-center ${
+                      answer === choice.choiceId.toString() 
+                        ? 'border-indigo-500 bg-indigo-500' 
+                        : 'border-gray-300'
+                    }`}
+                  >
+                    {answer === choice.choiceId.toString() && (
+                      <motion.div 
+                        initial={{ scale: 0 }} 
+                        animate={{ scale: 1 }}
+                        className="h-2 w-2 rounded-full bg-white"
+                      />
+                    )}
+                  </div>
+                  <input
+                    type="radio"
+                    name={`question-${question.questionId}`}
+                    value={choice.choiceId.toString()}
+                    checked={answer === choice.choiceId.toString()}
+                    onChange={() => onAnswerChange(choice.choiceId.toString())}
+                    className="sr-only"
+                  />
+                </div>
+                <div className="ml-3">
+                  <span className="text-gray-800">{choice.choiceText}</span>
+                </div>
+              </label>
+            </motion.div>
           ))}
-        </div>
-      ) : isMultipleChoice ? (
+        </motion.div>
+      )}
+      
+      {isMultipleChoice && !hasChoices && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -72,22 +124,35 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* RIASEC Scale question (1-5 rating) - Likert scale */}
       {isLikert && (
-        <div className="mt-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-2 bg-purple-50 p-4 rounded-lg">
-            <div className="flex justify-between w-full">
+        <div className="mt-6">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="bg-indigo-50 p-5 rounded-xl border border-indigo-100"
+          >
+            <div className="grid grid-cols-5 gap-2">
               {scaleOptions.map(option => (
-                <div key={option.value} className="text-center">
+                <motion.div 
+                  key={option.value} 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="text-center"
+                >
                   <label 
-                    className={`flex flex-col items-center cursor-pointer p-2 rounded-lg transition-colors ${
-                      answer === option.value ? 'bg-purple-100 border-2 border-purple-500' : 'hover:bg-purple-100'
+                    className={`flex flex-col items-center cursor-pointer p-3 rounded-lg transition-all ${
+                      answer === option.value 
+                        ? 'bg-indigo-100 border-2 border-indigo-500 shadow-md' 
+                        : 'hover:bg-indigo-100/50'
                     }`}
                   >
-                    <span className="text-2xl font-bold mb-1 text-purple-800">{option.value}</span>
-                    <span className="text-xs text-purple-700">{option.label}</span>
+                    <span className="text-3xl mb-2">{option.emoji}</span>
+                    <span className="text-xl font-bold mb-1 text-indigo-700">{option.value}</span>
+                    <span className="text-xs text-indigo-600">{option.label}</span>
                     <input
                       type="radio"
                       name={`question-${question.questionId}`}
@@ -97,10 +162,10 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
                       className="sr-only"
                     />
                   </label>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 
@@ -108,7 +173,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
       {!isMultipleChoice && !isLikert && (
         <div className="mt-2">
           <textarea
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             rows="4"
             placeholder="Enter your answer here..."
             value={answer || ''}
