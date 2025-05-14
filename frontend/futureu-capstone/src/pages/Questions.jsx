@@ -3,11 +3,13 @@ import questionService from '../services/questionService';
 import choiceService from '../services/choiceService';
 import assessmentCategoryService from '../services/assessmentCategoryService';
 import assessmentSubCategoryService from '../services/assessmentSubCategoryService';
+import quizSubCategoryCategoryService from '../services/quizSubCategoryCategoryService';
 
 const Questions = () => {
   const [questions, setQuestions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
+  const [quizSubCategories, setQuizSubCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -17,12 +19,16 @@ const Questions = () => {
   // Filter states
   const [filterCategory, setFilterCategory] = useState('');
   const [filterSubCategory, setFilterSubCategory] = useState('');
+  const [filterQuizSubCategory, setFilterQuizSubCategory] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [filterType, setFilterType] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
   // UI states
   const [categoryView, setCategoryView] = useState(true); // true: group by category, false: flat list
+
+  // Special sub-category IDs that should show quiz sub-category filter
+  const SPECIAL_SUBCATEGORY_IDS = ['1', '2']; // GSA and AT IDs
 
   useEffect(() => {
     fetchData();
@@ -44,6 +50,10 @@ const Questions = () => {
       const subCategoriesData = await assessmentSubCategoryService.getAllAssessmentSubCategories();
       setSubCategories(subCategoriesData);
       
+      // Fetch all quiz sub-categories
+      const quizSubCategoriesData = await quizSubCategoryCategoryService.getAllQuizSubCategories();
+      setQuizSubCategories(quizSubCategoriesData);
+      
       setLoading(false);
     } catch (err) {
       setError('Failed to load questions. Please try again later.');
@@ -51,6 +61,10 @@ const Questions = () => {
       console.error('Error fetching data:', err);
     }
   };
+
+  useEffect(() => {
+    setFilterQuizSubCategory('');
+  }, [filterSubCategory]);
 
   const handleQuestionClick = async (question) => {
     setSelectedQuestion(question);
@@ -80,6 +94,9 @@ const Questions = () => {
     const matchesSubCategory = !filterSubCategory || 
       (question.assessmentSubCategory && question.assessmentSubCategory.assessmentSubCategoryId.toString() === filterSubCategory);
     
+    const matchesQuizSubCategory = !filterQuizSubCategory || 
+      (question.quizSubCategoryCategory && question.quizSubCategoryCategory.quizSubCategoryCategoryId.toString() === filterQuizSubCategory);
+    
     const matchesDifficulty = !filterDifficulty || question.difficultyLevel === filterDifficulty;
     
     const matchesType = !filterType || question.questionType === filterType;
@@ -87,7 +104,7 @@ const Questions = () => {
     const matchesSearch = !searchTerm || 
       question.questionText.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesCategory && matchesSubCategory && matchesDifficulty && matchesType && matchesSearch;
+    return matchesCategory && matchesSubCategory && matchesQuizSubCategory && matchesDifficulty && matchesType && matchesSearch;
   });
 
   // Group questions by category for category view
@@ -173,9 +190,6 @@ const Questions = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
           {/* Search */}
           <div className="lg:col-span-2 text-left">
-            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Questions
-            </label> */}
             <div className="relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -206,14 +220,12 @@ const Questions = () => {
           
           {/* Category filter */}
           <div>
-            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
-              By Category
-            </label> */}
             <select
               value={filterCategory}
               onChange={(e) => {
                 setFilterCategory(e.target.value);
                 setFilterSubCategory('');
+                setFilterQuizSubCategory('');
               }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
             >
@@ -228,9 +240,6 @@ const Questions = () => {
           
           {/* Sub-category filter */}
           <div>
-            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
-              By Sub-Category
-            </label> */}
             <select
               value={filterSubCategory}
               onChange={(e) => setFilterSubCategory(e.target.value)}
@@ -250,28 +259,35 @@ const Questions = () => {
             </select>
           </div>
           
-          {/* Difficulty filter */}
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              By Difficulty
-            </label>
-            <select
-              value={filterDifficulty}
-              onChange={(e) => setFilterDifficulty(e.target.value)}
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-            >
-              <option value="">All Difficulties</option>
-              <option value="EASY">Easy</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HARD">Hard</option>
-            </select>
-          </div> */}
+          {/* Quiz Sub-Category filter - only show for specific sub-categories */}
+          {filterSubCategory && SPECIAL_SUBCATEGORY_IDS.includes(filterSubCategory) && (
+            <div>
+              <select
+                value={filterQuizSubCategory}
+                onChange={(e) => setFilterQuizSubCategory(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              >
+                <option value="">All Quiz Sub-Categories</option>
+                {quizSubCategories
+                  .filter(quizSub => 
+                    quizSub.assesssmentSubCategory && 
+                    quizSub.assesssmentSubCategory.assessmentSubCategoryId.toString() === filterSubCategory
+                  )
+                  .map(quizSubCategory => (
+                    <option 
+                      key={quizSubCategory.quizSubCategoryCategoryId} 
+                      value={quizSubCategory.quizSubCategoryCategoryId}
+                    >
+                      {quizSubCategory.quizSubCategoryCategoryName}
+                    </option>
+                  ))
+                }
+              </select>
+            </div>
+          )}
           
           {/* Question type filter */}
           <div>
-            {/* <label className="block text-sm font-medium text-gray-700 mb-1">
-              By Type
-            </label> */}
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -291,6 +307,7 @@ const Questions = () => {
             onClick={() => {
               setFilterCategory('');
               setFilterSubCategory('');
+              setFilterQuizSubCategory('');
               setFilterDifficulty('');
               setFilterType('');
               setSearchTerm('');
@@ -469,7 +486,6 @@ const Questions = () => {
               <div className="px-6 py-5">
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-6">
                   <div>
-                    {/* <dt className="text-base font-medium text-gray-900 mb-2">Question</dt> */}
                     <dd className="text-start text-sm text-gray-900 p-4 bg-gray-50 rounded-md border border-gray-200 shadow-inner">
                       {selectedQuestion.questionText}
                     </dd>
