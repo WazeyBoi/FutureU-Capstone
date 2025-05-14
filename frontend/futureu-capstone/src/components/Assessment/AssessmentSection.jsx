@@ -68,14 +68,14 @@ const AssessmentSection = ({
             </div>
           )}
         </div>
-        <p className="text-xs sm:text-sm text-gray-600 mt-1 sm:ml-10 line-clamp-2">{description}</p>
+        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 sm:ml-10 line-clamp-2">{description}</p>
         
         {/* Progress indicators with improved responsive layout */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-2">
           <div className="text-xs sm:text-sm text-gray-600 bg-gray-50 px-2 sm:px-3 py-1 rounded-full inline-flex">
             Question {currentQuestionIndex + 1} of {questions.length}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-2xs sm:text-xs text-gray-500">
+          {/* <div className="flex flex-wrap items-center gap-2 text-2xs sm:text-xs text-gray-500">
             <div className="flex items-center">
               <span className="font-medium text-indigo-700 whitespace-nowrap">Section:</span>
               <div className="ml-1 w-16 sm:w-24 bg-gray-200 rounded-full h-1.5">
@@ -96,7 +96,7 @@ const AssessmentSection = ({
               </div>
               <span className="ml-1">{Math.round((totalQuestions.completed / totalQuestions.total) * 100)}%</span>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

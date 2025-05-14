@@ -76,7 +76,7 @@ const TakeAssessment = () => {
         if (questionsData.gsa.scientificAbility.length) {
           initialSections.push({
             id: 'gsa-scientific',
-            title: 'GSA - Scientific Ability',
+            title: 'Scientific Ability',
             description: 'Test your scientific knowledge and reasoning abilities',
             questions: questionsData.gsa.scientificAbility
           });
@@ -86,7 +86,7 @@ const TakeAssessment = () => {
         if (questionsData.gsa.readingComprehension.length) {
           initialSections.push({
             id: 'gsa-reading',
-            title: 'GSA - Reading Comprehension',
+            title: 'Reading Comprehension',
             description: 'Assess your ability to understand and interpret written materials',
             questions: questionsData.gsa.readingComprehension
           });
@@ -96,7 +96,7 @@ const TakeAssessment = () => {
         if (questionsData.gsa.verbalAbility.length) {
           initialSections.push({
             id: 'gsa-verbal',
-            title: 'GSA - Verbal Ability',
+            title: 'Verbal Ability',
             description: 'Evaluate your command of language and verbal reasoning',
             questions: questionsData.gsa.verbalAbility
           });
@@ -106,7 +106,7 @@ const TakeAssessment = () => {
         if (questionsData.gsa.mathematicalAbility.length) {
           initialSections.push({
             id: 'gsa-math',
-            title: 'GSA - Mathematical Ability',
+            title: 'Mathematical Ability',
             description: 'Test your mathematical skills and numerical reasoning',
             questions: questionsData.gsa.mathematicalAbility
           });
@@ -116,7 +116,7 @@ const TakeAssessment = () => {
         if (questionsData.gsa.logicalReasoning.length) {
           initialSections.push({
             id: 'gsa-logical',
-            title: 'GSA - Logical Reasoning',
+            title: 'Logical Reasoning',
             description: 'Assess your ability to analyze and solve logical problems',
             questions: questionsData.gsa.logicalReasoning
           });
@@ -127,7 +127,7 @@ const TakeAssessment = () => {
         if (questionsData.academicTrack.stem.length) {
           initialSections.push({
             id: 'at-stem',
-            title: 'Academic Track - STEM',
+            title: 'STEM',
             description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
             questions: questionsData.academicTrack.stem
           });
@@ -137,7 +137,7 @@ const TakeAssessment = () => {
         if (questionsData.academicTrack.abm.length) {
           initialSections.push({
             id: 'at-abm',
-            title: 'Academic Track - ABM',
+            title: 'ABM',
             description: 'Accountancy, Business, and Management aptitude assessment',
             questions: questionsData.academicTrack.abm
           });
@@ -147,7 +147,7 @@ const TakeAssessment = () => {
         if (questionsData.academicTrack.humss.length) {
           initialSections.push({
             id: 'at-humss',
-            title: 'Academic Track - HUMSS',
+            title: 'HUMSS',
             description: 'Humanities and Social Sciences aptitude assessment',
             questions: questionsData.academicTrack.humss
           });
@@ -189,7 +189,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.realistic.length) {
           initialSections.push({
             id: 'interest-realistic',
-            title: 'Interest Area - Realistic',
+            title: 'Realistic',
             description: 'Evaluate your interest in practical, hands-on activities',
             questions: questionsData.interestAreas.realistic
           });
@@ -199,7 +199,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.investigative.length) {
           initialSections.push({
             id: 'interest-investigative',
-            title: 'Interest Area - Investigative',
+            title: 'Investigative',
             description: 'Assess your analytical and intellectual interests',
             questions: questionsData.interestAreas.investigative
           });
@@ -209,7 +209,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.artistic.length) {
           initialSections.push({
             id: 'interest-artistic',
-            title: 'Interest Area - Artistic',
+            title: 'Artistic',
             description: 'Evaluate your creative and artistic interests',
             questions: questionsData.interestAreas.artistic
           });
@@ -219,7 +219,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.social.length) {
           initialSections.push({
             id: 'interest-social',
-            title: 'Interest Area - Social',
+            title: 'Social',
             description: 'Assess your interest in helping and working with people',
             questions: questionsData.interestAreas.social
           });
@@ -229,7 +229,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.enterprising.length) {
           initialSections.push({
             id: 'interest-enterprising',
-            title: 'Interest Area - Enterprising',
+            title: 'Enterprising',
             description: 'Evaluate your leadership and persuasive abilities',
             questions: questionsData.interestAreas.enterprising
           });
@@ -239,7 +239,7 @@ const TakeAssessment = () => {
         if (questionsData.interestAreas.conventional.length) {
           initialSections.push({
             id: 'interest-conventional',
-            title: 'Interest Area - Conventional',
+            title: 'Conventional',
             description: 'Assess your interest in structured and organized activities',
             questions: questionsData.interestAreas.conventional
           });
@@ -813,7 +813,7 @@ const TakeAssessment = () => {
               </svg>
               Assessment Tips
             </h3>
-            <ul className="text-xs text-gray-600 space-y-2 pl-6 list-disc">
+            <ul className="text-start text-xs text-gray-600 space-y-2 pl-6 list-disc">
               <li>Answer all questions to the best of your ability.</li>
               <li>You can navigate between sections using the panel on the left.</li>
               <li>Your progress is automatically saved as you answer questions.</li>
