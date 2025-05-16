@@ -15,6 +15,7 @@ import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
+import PrivateRoute from './components/PrivateRoute';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 
@@ -43,18 +44,60 @@ function App() {
           <Routes>
             <Route path="/login" element={<StudentLogin />} />
             <Route path="/register" element={<StudentRegister />} />
-            <Route path="/academic-explorer" element={<AcademicExplorer />} />
-            <Route path="/accreditation" element={<AccreditationRatings />} />
-            <Route path="/accreditation/:section" element={<AccreditationSection />} />
+            {/* Public routes */}
             <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
             <Route path="/user-landing-page" element={<UserLandingPage />} />
-            <Route path="/career-pathways" element={<CareerPathways />} />
-            <Route path="/assessments" element={<Assessments />} />
-            <Route path="/assessment-categories" element={<AssessmentCategories />} />
-            <Route path="/assessment-subcategories" element={<AssessmentSubCategories />} />
-            <Route path="/quiz-subcategories" element={<QuizSubCategories />} />
-            <Route path="/questions" element={<Questions />} />
-            <Route path="/take-assessment/:assessmentId" element={<TakeAssessment />} />
+            {/* Protected routes */}
+            <Route path="/academic-explorer" element={
+              <PrivateRoute>
+                <AcademicExplorer />
+              </PrivateRoute>
+            } />
+            <Route path="/accreditation" element={
+              <PrivateRoute>
+                <AccreditationRatings />
+              </PrivateRoute>
+            } />
+            <Route path="/accreditation/:section" element={
+              <PrivateRoute>
+                <AccreditationSection />
+              </PrivateRoute>
+            } />
+            <Route path="/career-pathways" element={
+              <PrivateRoute>
+                <CareerPathways />
+              </PrivateRoute>
+            } />
+            <Route path="/assessments" element={
+              <PrivateRoute>
+                <Assessments />
+              </PrivateRoute>
+            } />
+            <Route path="/assessment-categories" element={
+              <PrivateRoute>
+                <AssessmentCategories />
+              </PrivateRoute>
+            } />
+            <Route path="/assessment-subcategories" element={
+              <PrivateRoute>
+                <AssessmentSubCategories />
+              </PrivateRoute>
+            } />
+            <Route path="/quiz-subcategories" element={
+              <PrivateRoute>
+                <QuizSubCategories />
+              </PrivateRoute>
+            } />
+            <Route path="/questions" element={
+              <PrivateRoute>
+                <Questions />
+              </PrivateRoute>
+            } />
+            <Route path="/take-assessment/:assessmentId" element={
+              <PrivateRoute>
+                <TakeAssessment />
+              </PrivateRoute>
+            } />
           </Routes>
         </div>
       </div>
