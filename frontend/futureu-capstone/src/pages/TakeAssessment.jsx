@@ -321,49 +321,15 @@ const TakeAssessment = () => {
   };
   
   // Navigation handlers
-  const handlePrevious = () => {
-    const currentSectionId = sectionList[currentSection].id;
-    const currentIndex = currentQuestionIndices[currentSectionId];
-    
-    if (currentIndex > 0) {
-      // Go to previous question in current section
-      setCurrentQuestionIndices({
-        ...currentQuestionIndices,
-        [currentSectionId]: currentIndex - 1
-      });
-    } else if (currentSection > 0) {
-      // Go to last question of previous section
-      const prevSectionId = sectionList[currentSection - 1].id;
-      const prevSectionLastIndex = sectionList[currentSection - 1].questions.length - 1;
-      
+  const handlePreviousSection = () => {
+    if (currentSection > 0) {
       setCurrentSection(currentSection - 1);
-      setCurrentQuestionIndices({
-        ...currentQuestionIndices,
-        [prevSectionId]: prevSectionLastIndex
-      });
     }
   };
   
-  const handleNext = () => {
-    const currentSectionId = sectionList[currentSection].id;
-    const currentIndex = currentQuestionIndices[currentSectionId];
-    const sectionQuestions = sectionList[currentSection].questions;
-    
-    if (currentIndex < sectionQuestions.length - 1) {
-      // Go to next question in current section
-      setCurrentQuestionIndices({
-        ...currentQuestionIndices,
-        [currentSectionId]: currentIndex + 1
-      });
-    } else if (currentSection < sectionList.length - 1) {
-      // Go to first question of next section
-      const nextSectionId = sectionList[currentSection + 1].id;
-      
+  const handleNextSection = () => {
+    if (currentSection < sectionList.length - 1) {
       setCurrentSection(currentSection + 1);
-      setCurrentQuestionIndices({
-        ...currentQuestionIndices,
-        [nextSectionId]: 0
-      });
     }
   };
   
@@ -578,8 +544,7 @@ const TakeAssessment = () => {
   
   const currentSectionData = sectionList[currentSection];
   const currentSectionId = currentSectionData.id;
-  const currentQuestionIndex = currentQuestionIndices[currentSectionId] || 0;
-  const sectionProgress = Math.round((currentQuestionIndex + 1) / currentSectionData.questions.length * 100);
+  const sectionProgress = sectionCompletion[currentSectionData.id] || 0;
   const totalQuestions = calculateProgress();
   
   // Generate encouraging message based on progress
@@ -710,7 +675,7 @@ const TakeAssessment = () => {
         <div className="lg:w-3/4 flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
-              key={`section-${currentSection}-question-${currentQuestionIndex}`}
+              key={`section-${currentSection}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -721,11 +686,10 @@ const TakeAssessment = () => {
                 title={currentSectionData.title}
                 description={currentSectionData.description}
                 questions={currentSectionData.questions}
-                currentQuestionIndex={currentQuestionIndex}
                 answers={userAnswers}
                 onAnswerChange={handleAnswerChange}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
+                onPrevious={handlePreviousSection}
+                onNext={handleNextSection}
                 onComplete={handleComplete}
                 isFirstSection={currentSection === 0}
                 isLastSection={currentSection === sectionList.length - 1}
@@ -736,62 +700,6 @@ const TakeAssessment = () => {
               />
             </motion.div>
           </AnimatePresence>
-          
-          {/* Buttons for submit/navigation */}
-          {currentQuestionIndex === currentSectionData.questions.length - 1 && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mt-4 flex justify-end"
-            >
-              {currentSection < sectionList.length - 1 ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    const nextSectionId = sectionList[currentSection + 1].id;
-                    setCurrentSection(currentSection + 1);
-                    setCurrentQuestionIndices({
-                      ...currentQuestionIndices,
-                      [nextSectionId]: 0
-                    });
-                  }}
-                  className="px-6 py-3 bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white rounded-lg hover:from-[#1D63A1]/90 hover:to-[#232D35]/90 shadow-md flex items-center space-x-2 font-medium"
-                >
-                  <span>Next Section</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </motion.button>
-              ) : (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleComplete}
-                  disabled={submitting}
-                  className={`px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] rounded-lg shadow-md flex items-center space-x-2 font-medium ${submitting ? 'opacity-50 cursor-not-allowed' : 'hover:from-[#FFB71B]/90 hover:to-[#FFB71B]/70'}`}
-                >
-                  {submitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#232D35]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Submitting...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Complete Assessment</span>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </>
-                  )}
-                </motion.button>
-              )}
-            </motion.div>
-          )}
           
           {/* Instructions and information */}
           <motion.div 
