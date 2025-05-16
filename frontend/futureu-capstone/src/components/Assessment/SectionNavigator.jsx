@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { Brain, GraduationCap, Compass, FileSpreadsheet, Wrench, Microscope, Palette, Users, TrendingUp, ClipboardList } from "lucide-react";
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCompletion }) => {
@@ -10,25 +11,25 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     const groups = {
       gsa: {
         title: "General Scholastic Aptitude",
-        icon: "📚",
+        icon: <Brain className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0
       },
       academic: {
         title: "Academic Tracks",
-        icon: "🎓",
+        icon: <GraduationCap className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0
       },
       other: {
         title: "Other Tracks",
-        icon: "🛠️",
+        icon: <Compass className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0
       },
       interest: {
         title: "RIASEC",
-        icon: "🌟",
+        icon: <Microscope className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0
       }
@@ -98,25 +99,25 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     let statusIcon;
     if (completion === 100) {
       statusIcon = (
-        <span className="bg-green-100 p-1 rounded-full flex-shrink-0">
-          <svg className="h-3.5 w-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        <span className="bg-green-200 p-1 rounded-full flex-shrink-0">
+          <svg className="h-3.5 w-3.5 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         </span>
       );
     } else if (completion > 0) {
       statusIcon = (
-        <span className="bg-yellow-100 p-1 rounded-full flex-shrink-0">
+        <span className="bg-yellow-100 p-1 rounded-full flex-shrink-0 border-2 border-yellow-300">
           <svg className="h-3.5 w-3.5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            {/* <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> */}
           </svg>
         </span>
       );
     } else {
       statusIcon = (
-        <span className="bg-gray-100 p-1 rounded-full flex-shrink-0">
+        <span className="bg-gray-100 p-1 rounded-full flex-shrink-0 border border-gray-200">
           <svg className="h-3.5 w-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            {/* <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> */}
           </svg>
         </span>
       );
@@ -128,34 +129,34 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
         onClick={() => onSectionChange(index)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className={`border w-full text-left px-2 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg flex items-center justify-between border ${
+        className={`w-full text-left px-2 py-2.5 text-xs sm:text-sm rounded-lg flex items-center justify-between ${
           isActive 
-            ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm' 
+            ? 'border-blue-300 bg-blue-50 text-blue-700 font-medium shadow-sm' 
             : completion === 100
               ? 'border-green-200 bg-green-50 text-green-700 hover:border-green-300'
               : completion > 0
                 ? 'border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-300'
                 : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-        }`}
+        } transition-all duration-200 mb-1.5`}
       >
         <div className="flex items-center space-x-1.5 min-w-0">
           {statusIcon}
-          <span className="truncate" title={section.title}>{section.title}</span>
+          <span className="truncate font-medium" title={section.title}>{section.title}</span>
         </div>
         
-        <div className="flex items-center flex-shrink-0 ml-1">
+        <div className="flex items-center flex-shrink-0 ml-auto">
           {completion === 100 ? (
-            <span className="text-green-600">
-              <svg className="h-4 w-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                {/* <path d="M5 13l4 4L19 7"></path> */}
-              </svg>
+            <span className="rounded-full p-1">
+              {/* <svg className="h-4 w-4 text-white" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+                <path d="M5 13l4 4L19 7"></path>
+              </svg> */}
             </span>
           ) : (
             <>
               <div className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div 
                   style={{ width: `${completion}%` }} 
-                  className="h-full rounded-full bg-yellow-500"
+                  className={`h-full rounded-full ${completion > 0 ? 'bg-yellow-500' : 'bg-gray-300'}`}
                 ></div>
               </div>
               <span className="ml-1 text-xs font-medium text-yellow-600">{completion}%</span>
@@ -172,58 +173,80 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-3 sm:p-5 mb-4 border border-[#1D63A1]/20 flex flex-col"
+      className="bg-white rounded-xl shadow-lg p-3 sm:p-5 mb-4 border border-[#1D63A1]/20 flex flex-col"
     >
-      <div className="mb-3 text-sm font-medium text-[#232D35] flex items-center">
+      <div className="mb-4 text-sm font-medium text-[#232D35] flex items-center border-b border-gray-200 pb-3">
         <svg className="w-5 h-5 mr-2 text-[#1D63A1] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
         <span className="truncate">Assessment Sections</span>
       </div>
       
-      <div className="text-xs space-y-2 flex-grow overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <div className="text-xs space-y-4 flex-grow overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {/* Map through section groups as accordions */}
         {Object.keys(sectionGroups).map(groupKey => {
           const group = sectionGroups[groupKey];
           if (group.sections.length === 0) return null;
           
           const isOpen = openGroup === groupKey;
+          const isCompleted = group.completion === 100;
           
           return (
-            <div key={groupKey} className="border border-gray-200 rounded-lg overflow-hidden">
+            <div key={groupKey} className={`rounded-lg overflow-hidden ${
+              isCompleted 
+                ? 'border-2 border-green-400 bg-green-50/30 shadow-md' 
+                : 'border border-gray-200 shadow-sm'
+            } transition-all duration-300`}>
               <button 
-                className={`w-full px-3 py-2 flex justify-between items-center ${
+                className={`w-full px-4 py-3 flex items-center transition-colors duration-200 ${
                   isOpen 
-                    ? 'bg-[#232D35] text-gray-800' 
-                    : 'bg-gray-50 text-gray-700 hover:bg-[#232D35]/10'
-                } transition-colors duration-200`}
+                    ? isCompleted
+                      ? 'bg-green-600 text-white'
+                      : 'bg-[#1D63A1] text-white' 
+                    : isCompleted
+                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                      : 'bg-gradient-to-r from-[#232D35]/5 to-[#1D63A1]/10 text-gray-700 hover:bg-[#232D35]/15'
+                }`}
                 onClick={() => toggleGroup(groupKey)}
               >
-                <div className=" flex items-center">
-                  <span className="text-start font-medium">{group.title}</span>
+                {/* Icon and title on the left */}
+                <div className="flex items-center">
+                  <span className={`mr-3 p-2 rounded-full ${isOpen ? 'bg-white/20' : 'bg-white'}`}>
+                    {group.icon}
+                  </span>
+                  <span className="text-black text-start font-medium">{group.title}</span>
                 </div>
                 
-                <div className="flex items-center mr-2">
-                  {group.completion === 100 ? (
-                    <span className="text-green-600">
-                      <svg className="h-5 w-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                        <path d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    </span>
-                  ) : (
-                    <>
-                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          style={{ width: `${group.completion}%` }} 
-                          className="h-full rounded-full bg-[#1D63A1]"
-                        ></div>
-                      </div>
-                      <span className="ml-1 text-xs">{group.completion}%</span>
-                    </>
-                  )}
-                </div>
+                {/* Flex spacer to push the remaining elements to the right */}
+                <div className="flex-grow"></div>
+                
+                {/* Completion badge on the right */}
+                {isCompleted && (
+                  <span className={`mr-3 text-xs px-2 py-0.5 font-medium text-green-700 rounded-md bg-green-100`}>
+                    Complete
+                  </span>
+                )}
+                
+                {/* Progress indicator (if not completed) */}
+                {!isCompleted && (
+                  <div className="flex items-center mr-2">
+                    <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        style={{ width: `${group.completion}%` }} 
+                        className={`h-full rounded-full ${
+                          group.completion > 75 ? 'bg-green-500' : 
+                          group.completion > 50 ? 'bg-blue-500' : 
+                          group.completion > 0 ? 'bg-yellow-500' : 'bg-gray-300'
+                        }`}
+                      ></div>
+                    </div>
+                    <span className={`ml-1 text-xs font-bold ${isOpen ? 'text-black' : ''}`}>{group.completion}%</span>
+                  </div>
+                )}
+                
+                {/* Dropdown arrow */}
                 <svg 
-                  className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} 
+                  className={`h-4 w-4 transition-transform duration-300 text-black ${isOpen ? 'transform rotate-180' : ''}`} 
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 20 20" 
                   fill="currentColor"
@@ -242,7 +265,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className="p-2 space-y-1.5 bg-white">
+                    <div className={`p-3 space-y-1.5 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}>
                       {group.sections.map((section, globalIndex) => {
                         const index = sections.findIndex(s => s.id === section.id);
                         return renderSection(section, index);

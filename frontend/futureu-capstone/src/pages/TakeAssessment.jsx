@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Need to install: npm install framer-motion
 import assessmentTakingService from '../services/assessmentTakingService';
@@ -28,7 +28,14 @@ const TakeAssessment = () => {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [sectionList, setSectionList] = useState([]);
   
-  // Timer logic
+  // New state for tracking elapsed time (in seconds)
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [startTime, setStartTime] = useState(null); // Initialize to null instead of Date.now()
+  
+  // Reference to the assessment section container
+  const sectionRef = useRef(null);
+  
+  // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
     let timer = null;
     
@@ -54,6 +61,50 @@ const TakeAssessment = () => {
     };
   }, [assessment, completed]);
   
+  // New effect for elapsed time counter - only start when loading is complete
+  useEffect(() => {
+    // Only start counting when loading is done and not completed
+    if (!loading && !completed) {
+      // Set the start time when loading completes
+      if (!startTime) {
+        setStartTime(Date.now());
+      }
+      
+      const elapsedTimer = setInterval(() => {
+        // Calculate elapsed time from start time
+        if (startTime) {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          setElapsedTime(elapsed);
+        }
+      }, 1000);
+      
+      // Clean up the timer when component unmounts or assessment completes
+      return () => {
+        clearInterval(elapsedTimer);
+      };
+    }
+  }, [loading, completed, startTime]);
+
+  // Format time as hh:mm:ss for elapsed time
+  const formatElapsedTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+  };
+  
+  // Existing format time function for countdown timer
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   // Load assessment data
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -257,6 +308,7 @@ const TakeAssessment = () => {
         setSectionCompletion(initialCompletion);
         
         setLoading(false);
+        // Start time will be set by the elapsed time effect when loading becomes false
       } catch (err) {
         setError('Failed to load assessment. Please try again later.');
         setLoading(false);
@@ -344,12 +396,24 @@ const TakeAssessment = () => {
   
   const handleSectionChange = (sectionIndex) => {
     setCurrentSection(sectionIndex);
+    
+    // Add scrolling behavior when changing sections
+    setTimeout(() => {
+      if (sectionRef.current) {
+        const yOffset = -20;
+        const y = sectionRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 100);
   };
   
   // Assessment completion
   const handleComplete = async () => {
     try {
       setSubmitting(true);
+      
+      // Track final elapsed time when completing the assessment
+      const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000);
       
       // Transform answers into the format expected by the backend
       const formattedAnswers = Object.keys(userAnswers).map(questionId => ({
@@ -593,16 +657,28 @@ const TakeAssessment = () => {
               </div>
             </div>
             
-            <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
-              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium">
-                {timeRemaining 
-                  ? `${Math.floor(timeRemaining / 60)}:${(timeRemaining % 60).toString().padStart(2, '0')}` 
-                  : 'No time limit'
-                }
-              </span>
+            <div className="flex flex-col gap-2">
+              {/* Elapsed time indicator - new element */}
+              <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-full text-[#1D63A1] flex shadow-sm">
+                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm font-medium">
+                  Time elapsed: {formatElapsedTime(elapsedTime)}
+                </span>
+              </div>
+              
+              {/* Remaining time (if applicable) */}
+              {timeRemaining && (
+                <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
+                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    Time remaining: {formatTime(timeRemaining)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           
@@ -688,6 +764,7 @@ const TakeAssessment = () => {
         <div className="lg:w-3/4 flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
+              ref={sectionRef}
               key={`section-${currentSection}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
