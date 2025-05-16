@@ -1,8 +1,8 @@
 import apiClient from './api';
-
+ 
 const USER_KEY = 'futureu_user';
 const TOKEN_KEY = 'futureu_token';
-
+ 
 class AuthService {
   async signin(email, password) {
     try {
@@ -22,7 +22,7 @@ class AuthService {
       throw error;
     }
   }
-
+ 
   async signup(signupData) {
     try {
       const response = await apiClient.post('/auth/signup', signupData);
@@ -32,13 +32,13 @@ class AuthService {
       throw error;
     }
   }
-
+ 
   signout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     // Optionally, redirect to login page or notify other parts of the app
   }
-
+ 
   getCurrentUser() {
     const userStr = localStorage.getItem(USER_KEY);
     if (userStr) {
@@ -46,19 +46,19 @@ class AuthService {
     }
     return null;
   }
-
+ 
   getToken() {
     return localStorage.getItem(TOKEN_KEY);
   }
-
+ 
   isAuthenticated() {
     return !!this.getToken();
   }
-
+ 
   getUserRole() {
     const user = this.getCurrentUser();
     return user ? user.role : null;
   }
 }
-
+ 
 export default new AuthService();

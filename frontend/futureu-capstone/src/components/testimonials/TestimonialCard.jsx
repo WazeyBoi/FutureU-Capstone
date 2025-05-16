@@ -2,6 +2,50 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { FaStar, FaQuoteLeft, FaQuoteRight, FaUserGraduate, FaUser, FaEdit, FaTrash } from 'react-icons/fa';
 
+// Import school images
+import citu_school_image from '../../assets/school_images/citu_school_image.jpg';
+import cdu_school_image from '../../assets/school_images/cdu_school_image.jpg';
+import cnu_school_image from '../../assets/school_images/cnu_school_image.jpg';
+import ctu_school_image from '../../assets/school_images/ctu_school_image.jpg';
+import swu_school_image from '../../assets/school_images/swu_school_image.jpg';
+import usc_school_image from '../../assets/school_images/usc_school_image.jpg';
+import usjr_school_image from '../../assets/school_images/usjr_school_image.jpg';
+import up_school_image from '../../assets/school_images/up_school_image.jpg';
+import uc_school_image from '../../assets/school_images/uc_school_image.jpg';
+import uv_school_image from '../../assets/school_images/uv_school_image.jpg';
+import iau_school_image from '../../assets/school_images/iau_school_image.jpg';
+
+// Create a mapping for school name detection to their background images
+const schoolBackgroundMap = {
+  "Cebu Institute of Technology": citu_school_image,
+  "Cebu Doctors'": cdu_school_image,
+  "Cebu Normal University": cnu_school_image,
+  "Cebu Technological University": ctu_school_image,
+  "Southwestern University": swu_school_image,
+  "University of San Carlos": usc_school_image,
+  "University of San Jose": usjr_school_image,
+  "University of the Philippines": up_school_image,
+  "University of Cebu": uc_school_image,
+  "University of the Visayas": uv_school_image,
+  "Indiana Aerospace University": iau_school_image,
+};
+
+// Function to get the school background based on name
+const getSchoolBackground = (schoolName) => {
+  if (!schoolName) return null;
+  
+  const normalizedName = schoolName.toLowerCase();
+  
+  // Check each key in our map to see if it's in the school name
+  for (const [key, background] of Object.entries(schoolBackgroundMap)) {
+    if (normalizedName.includes(key.toLowerCase())) {
+      return background;
+    }
+  }
+  
+  return null;
+};
+
 const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false }) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -40,6 +84,9 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
       onDelete(testimonial.id);
     }
   };
+  
+  // Get school background image
+  const schoolBackground = getSchoolBackground(testimonial.schoolName);
 
   return (
     <motion.div
@@ -47,6 +94,22 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
       whileHover="hover"
       className="bg-white rounded-xl shadow-md overflow-hidden"
     >
+      {/* School background header image */}
+      <div className="h-32 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
+        {schoolBackground ? (
+          <img 
+            src={schoolBackground} 
+            alt={`${testimonial.schoolName} campus`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+            <h3 className="text-xl font-bold text-white text-center px-4">{testimonial.schoolName}</h3>
+          </div>
+        )}
+      </div>
+      
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">

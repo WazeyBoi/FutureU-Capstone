@@ -82,6 +82,17 @@ const Navigation = () => {
                 </Link>
  
                 <Link
+                  to="/testimonials"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/testimonials')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Testimonials
+                </Link>
+ 
+                <Link
                   to="/career-pathways"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                     location.pathname.includes('/career-pathways')

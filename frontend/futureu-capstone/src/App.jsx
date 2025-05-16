@@ -7,6 +7,7 @@ import VirtualCampusToursPage from './components/VirtualCampusToursPage.jsx';
 import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
 import CareerPathways from './components/CareerPathways.jsx';
+import Testimonials from './components/Testimonials.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
@@ -73,6 +74,11 @@ function App() {
         <Route path="/accreditation/:section" element={
           <PrivateRoute>
             <AccreditationSection />
+          </PrivateRoute>
+        } />
+        <Route path="/testimonials" element={
+          <PrivateRoute>
+            <Testimonials />
           </PrivateRoute>
         } />
         <Route path="/career-pathways" element={
