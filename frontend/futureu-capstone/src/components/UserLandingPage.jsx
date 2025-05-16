@@ -154,11 +154,11 @@ const LandingPage = () => {
 
   return (
     <div className="w-full overflow-hidden bg-white">
-      {/* Hero Section */}
-      <div
+        {/* Hero Section */}
+        <div
         className="relative min-h-screen flex items-start pt-0 md:pt-10 justify-center bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${backgroundImage})` }}
-      >
+          style={{ backgroundImage: `url(${backgroundImage})` }}
+        >
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 to-gray-900/40"></div>
 
         <div className="container mx-auto px-6 relative z-10">
@@ -169,7 +169,7 @@ const LandingPage = () => {
                 style={{ fontSize: "4.5rem" }}
                 variants={fadeIn}
               >
-                Empowering <span className="text-yellow-500">Your</span>
+              Empowering <span className="text-yellow-500">Your</span>
               </motion.h1>
               <motion.h1 
                 className="font-bold leading-tight" 
@@ -185,17 +185,17 @@ const LandingPage = () => {
               </motion.p>
 
               <motion.div className="mt-10" variants={fadeIn}>
-                <Link to="/register">
+            <Link to="/register">
                   <motion.button
                     className="bg-yellow-500 !important text-black font-bold text-xl py-4 px-10 rounded-full hover:bg-yellow-400 transition duration-300 flex items-center"
                     style={{ backgroundColor: '#ffc107' }} 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    Start Your Path
+                Start Your Path
                     <FaArrowRight className="ml-3 text-xl" />
                   </motion.button>
-                </Link>
+            </Link>
               </motion.div>
             </motion.div>
 
@@ -205,9 +205,9 @@ const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <img
-                src={studentsImage}
-                alt="Group of students"
+            <img
+              src={studentsImage}
+              alt="Group of students"
                 className="w-full max-w-lg mx-auto rounded-lg shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500"
               />
             </motion.div>
@@ -222,10 +222,10 @@ const LandingPage = () => {
               d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
             ></path>
           </svg>
+          </div>
         </div>
-      </div>
 
-      {/* What is FutureU Section */}
+        {/* What is FutureU Section */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <motion.div
@@ -241,7 +241,7 @@ const LandingPage = () => {
                 <h2 className="text-3xl md:text-4xl font-bold leading-tight mb-6 text-gray-800">
                   An <span className="bg-yellow-500 text-black px-2 py-1 rounded">all-in-one decision-making hub</span>{" "}
                   for your college journey.
-                </h2>
+            </h2>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
                     to="#"
@@ -251,17 +251,17 @@ const LandingPage = () => {
                     <FaChevronRight className="ml-2" />
                   </Link>
                 </motion.div>
-              </div>
+          </div>
 
               <div className="md:w-1/2 bg-white p-8 md:p-12">
                 <ul className="space-y-5">
-                  {[
-                    "Suggests programs and schools based on your unique skills, interests, and career goals.",
-                    "Provides interactive assessments to align your academic choices with potential career pathways.",
-                    "Offers firsthand insights into campus life and academic quality from alumni and current students.",
-                    "Enables side-by-side comparisons of tuition fees, program details, location, and alumni feedback.",
-                    "Displays official CHED ratings and accreditations to ensure quality and credibility.",
-                  ].map((feature, index) => (
+              {[
+                "Suggests programs and schools based on your unique skills, interests, and career goals.",
+                "Provides interactive assessments to align your academic choices with potential career pathways.",
+                "Offers firsthand insights into campus life and academic quality from alumni and current students.",
+                "Enables side-by-side comparisons of tuition fees, program details, location, and alumni feedback.",
+                "Displays official CHED ratings and accreditations to ensure quality and credibility.",
+              ].map((feature, index) => (
                     <motion.li
                       key={index}
                       className="flex items-start"
@@ -281,10 +281,10 @@ const LandingPage = () => {
                       </span>
                       <p className="text-gray-700 font-medium">{feature}</p>
                     </motion.li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+              ))}
+            </ul>
+          </div>
+        </div>
           </motion.div>
         </div>
       </section>
@@ -334,25 +334,25 @@ const LandingPage = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <FaUserGraduate size={48} className="text-yellow-500" />,
-                title: "Personalized Guidance",
-                description: "Get tailored recommendations based on your strengths and goals.",
-              },
-              {
-                icon: <FaUsers size={48} className="text-yellow-500" />,
-                title: "Community Support",
-                description: "Connect with alumni and mentors to gain insights into your desired fields.",
-              },
-              {
-                icon: <FaChartLine size={48} className="text-yellow-500" />,
-                title: "Data-Driven Insights",
-                description: "Make confident choices with insights backed by data and real experiences.",
-              },
-            ].map((item, index) => (
+          {[
+            {
+              icon: <FaUserGraduate size={48} className="text-yellow-500" />,
+              title: "Personalized Guidance",
+              description: "Get tailored recommendations based on your strengths and goals.",
+            },
+            {
+              icon: <FaUsers size={48} className="text-yellow-500" />,
+              title: "Community Support",
+              description: "Connect with alumni and mentors to gain insights into your desired fields.",
+            },
+            {
+              icon: <FaChartLine size={48} className="text-yellow-500" />,
+              title: "Data-Driven Insights",
+              description: "Make confident choices with insights backed by data and real experiences.",
+            },
+          ].map((item, index) => (
               <motion.div
-                key={index}
+              key={index}
                 className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border border-gray-100"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -364,14 +364,14 @@ const LandingPage = () => {
                   <div className="bg-yellow-100 p-4 rounded-full mb-6">{item.icon}</div>
                   <h3 className="text-xl font-bold mb-4 text-gray-800">{item.title}</h3>
                   <p className="text-gray-600">{item.description}</p>
-                </div>
+              </div>
               </motion.div>
             ))}
-          </div>
+            </div>
         </div>
       </section>
 
-      {/* Subjects/Assessments Offered Section */}
+        {/* Subjects/Assessments Offered Section */}
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <motion.div
@@ -389,26 +389,26 @@ const LandingPage = () => {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <FaBriefcase size={48} className="text-yellow-500" />,
-                title: "Career Pathways",
-                description: "Explore the right career paths based on your unique strengths.",
+          {[
+            {
+              icon: <FaBriefcase size={48} className="text-yellow-500" />,
+              title: "Career Pathways",
+              description: "Explore the right career paths based on your unique strengths.",
                 link: "/career-paths",
-              },
-              {
-                icon: <FaSearch size={48} className="text-yellow-500" />,
-                title: "Program Finder",
-                description: "Discover the best college programs tailored to your goals.",
+            },
+            {
+              icon: <FaSearch size={48} className="text-yellow-500" />,
+              title: "Program Finder",
+              description: "Discover the best college programs tailored to your goals.",
                 link: "/programs",
-              },
-              {
-                icon: <FaClipboardList size={48} className="text-yellow-500" />,
-                title: "Assessments",
-                description: "Evaluate your skills and preferences with our assessments.",
+            },
+            {
+              icon: <FaClipboardList size={48} className="text-yellow-500" />,
+              title: "Assessments",
+              description: "Evaluate your skills and preferences with our assessments.",
                 link: "/assessments",
-              },
-            ].map((item, index) => (
+            },
+          ].map((item, index) => (
               <motion.div
                 key={index}
                 className="bg-white rounded-xl shadow-lg overflow-hidden"
@@ -518,7 +518,7 @@ const LandingPage = () => {
             <div className="flex justify-center mt-8">
               {testimonials.map((_, index) => (
                 <button
-                  key={index}
+              key={index}
                   onClick={() => setActiveTestimonial(index)}
                   className={`w-3 h-3 mx-2 rounded-full ${activeTestimonial === index ? "bg-yellow-500" : "bg-gray-300"}`}
                   aria-label={`Go to testimonial ${index + 1}`}
@@ -636,9 +636,9 @@ const LandingPage = () => {
                 <a key={index} href="#" className="text-gray-400 hover:text-yellow-500 transition-colors">
                   {platform}
                 </a>
-              ))}
-            </div>
-          </div>
+          ))}
+        </div>
+      </div>
         </div>
       </footer>
     </div>

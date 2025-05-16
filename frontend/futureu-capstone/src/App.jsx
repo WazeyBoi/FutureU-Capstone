@@ -19,7 +19,7 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
-
+ 
 // Add these styles to App.css
 /*
 @keyframes float {
@@ -27,7 +27,7 @@ import './App.css';
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
-
+ 
 .animate-float {
   animation-name: float;
   animation-duration: 3s;
@@ -35,7 +35,7 @@ import './App.css';
   animation-timing-function: ease-in-out;
 }
 */
-
+ 
 function App() {
   return (
     <Router>
@@ -43,7 +43,7 @@ function App() {
       <Routes>
         {/* Redirect root path to login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-        
+       
         {/* Public routes - with protection against authenticated access */}
         <Route path="/login" element={
           <PublicRoute>
@@ -55,7 +55,7 @@ function App() {
             <StudentRegister />
           </PublicRoute>
         } />
-        
+       
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
         <Route path="/user-landing-page" element={<UserLandingPage />} />
@@ -114,5 +114,5 @@ function App() {
     </Router>
   );
 }
-
+ 
 export default App;

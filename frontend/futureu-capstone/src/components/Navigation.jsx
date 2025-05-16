@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-
+ 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+ 
   useEffect(() => {
     // Check authentication status when component mounts or location changes
     setIsAuthenticated(authService.isAuthenticated());
   }, [location]);
-
+ 
   const handleLogout = () => {
     authService.signout();
     setIsAuthenticated(false);
     navigate('/user-landing-page');
   };
-
+ 
   const isActive = (path) => {
     return location.pathname === path;
   };
-
+ 
   return (
     <nav className="bg-[#111d24] border-b border-gray-700">
       <div className="container mx-auto px-4">
@@ -30,35 +30,35 @@ const Navigation = () => {
           <Link to="/user-landing-page" className="text-white text-xl font-semibold">
             FutureU
           </Link>
-
+ 
           {/* Navigation Links */}
           <div className="flex space-x-1">
             {/* Always visible links */}
             <Link
               to="/user-landing-page"
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/user-landing-page') 
+                isActive('/user-landing-page')
                   ? 'bg-[#f5fafc] text-white'
                   : 'text-white hover:bg-gray-700'
               }`}
             >
               Landing Page
             </Link>
-            
+           
             {/* Links that require authentication */}
             {isAuthenticated && (
               <>
                 <Link
                   to="/academic-explorer"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/academic-explorer') 
+                    isActive('/academic-explorer')
                       ? 'bg-[#f5fafc] text-white'
                       : 'text-white hover:bg-gray-700'
                   }`}
                 >
                   Academic Explorer
                 </Link>
-                
+               
                 <Link
                   to="/accreditation"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -69,7 +69,7 @@ const Navigation = () => {
                 >
                   Accreditation Ratings
                 </Link>
-
+ 
                 <Link
                   to="/virtual-campus-tours"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -80,7 +80,7 @@ const Navigation = () => {
                 >
                   Virtual Campus Tours
                 </Link>
-
+ 
                 <Link
                   to="/career-pathways"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -93,7 +93,7 @@ const Navigation = () => {
                 </Link>
               </>
             )}
-            
+           
             {/* Authentication buttons */}
             {isAuthenticated ? (
               <button
@@ -107,14 +107,14 @@ const Navigation = () => {
                 <Link
                   to="/login"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/login') 
+                    isActive('/login')
                       ? 'bg-[#f5fafc] text-white'
                       : 'bg-[#1D63A1] text-white hover:bg-[#1D63A1]/90'
                   }`}
                 >
                   Sign In
                 </Link>
-                
+               
                 <Link
                   to="/register"
                   className="ml-2 px-4 py-2 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-md transition-colors"
@@ -129,5 +129,5 @@ const Navigation = () => {
     </nav>
   );
 };
-
+ 
 export default Navigation;
