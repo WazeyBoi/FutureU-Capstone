@@ -7,6 +7,7 @@ import VirtualCampusToursPage from './components/VirtualCampusToursPage.jsx';
 import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
 import CareerPathways from './components/CareerPathways.jsx';
+import Testimonials from './components/Testimonials.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
@@ -45,6 +46,7 @@ function App() {
             <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
             <Route path="/user-landing-page" element={<UserLandingPage />} />
             <Route path="/career-pathways" element={<CareerPathways />} />
+            <Route path="/testimonials" element={<Testimonials />} />
             <Route path="/assessments" element={<Assessments />} />
             <Route path="/assessment-categories" element={<AssessmentCategories />} />
             <Route path="/assessment-subcategories" element={<AssessmentSubCategories />} />
