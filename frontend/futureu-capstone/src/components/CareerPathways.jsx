@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import apiClient from "../services/api"; // Adjust the import path as necessary
+import careerService from "../services/careerService"; // Adjust the import path as necessary
 
 const PAGE_SIZE = 10;
 
@@ -27,8 +29,8 @@ const CareerPathways = () => {
       setLoading(true);
       try {
         const [careersRes, schoolProgramsRes] = await Promise.all([
-          axios.get("/api/career/getAllCareers"),
-          axios.get("/api/schoolprogram/getAllSchoolPrograms"),
+          apiClient.get("/career/getAllCareers"),
+          apiClient.get("/schoolprogram/getAllSchoolPrograms"),
         ]);
         setCareers(careersRes.data);
         setSchoolPrograms(schoolProgramsRes.data);
@@ -68,20 +70,6 @@ const CareerPathways = () => {
       )
     : allPrograms;
 
-  // Filter schools based on selected program
-  const filteredSchools = selectedProgram
-    ? allSchools.filter((school) =>
-        schoolPrograms.some(
-          (sp) =>
-            sp.school.schoolId === school.schoolId &&
-            sp.program.programId === Number(selectedProgram)
-        )
-      )
-    : schoolSearch
-    ? allSchools.filter((s) =>
-        s.schoolName.toLowerCase().includes(schoolSearch.toLowerCase())
-      )
-    : allSchools;
 
   // Unique industries and job trends
   const industries = Array.from(new Set(careers.map((c) => c.industry).filter(Boolean)));
@@ -192,27 +180,44 @@ const CareerPathways = () => {
             {/* Program */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-semibold mb-4">Program</h2>
-              <input
-                type="text"
-                className="w-full mb-2 px-3 py-2 border border-gray-300 rounded text-sm"
-                placeholder="Search program..."
-                value={programSearch}
-                onChange={(e) => setProgramSearch(e.target.value)}
-              />
-              <select
-                className="w-full border border-gray-300 rounded-md text-sm px-3 py-2"
-                value={selectedProgram}
-                onChange={(e) => setSelectedProgram(e.target.value)}
-              >
-                <option value="">All Programs</option>
-                {filteredPrograms.map((program) => (
-                  <option key={program.programId} value={program.programId}>
-                    {program.programName}
-                  </option>
-                ))}
-              </select>
+              <div className="relative mb-2">
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                  placeholder="Search programs..."
+                  value={programSearch}
+                  onChange={(e) => setProgramSearch(e.target.value)}
+                />
+              </div>
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                <button
+                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${
+                    selectedProgram === "" ? "bg-yellow-100 text-yellow-800" : "hover:bg-gray-50"
+                  }`}
+                  onClick={() => setSelectedProgram("")}
+                >
+                  All Programs
+                </button>
+                {filteredPrograms
+                  .filter((program) =>
+                    program.programName.toLowerCase().includes(programSearch.toLowerCase())
+                  )
+                  .map((program) => (
+                    <button
+                      key={program.programId}
+                      className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 ${
+                        selectedProgram === String(program.programId)
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => setSelectedProgram(String(program.programId))}
+                    >
+                      {program.programName}
+                    </button>
+                  ))}
+              </div>
             </div>
-            {/* School */}
+            {/* School
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-semibold mb-4">School</h2>
               <input
@@ -234,7 +239,7 @@ const CareerPathways = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
             {/* Job Trend */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-semibold mb-4">Job Trend</h2>
@@ -564,48 +569,48 @@ const CareerPathways = () => {
             {/* Legend Section */}
             <div className="lg:w-full bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Legend</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
+                  <h4 class="text-md font-medium text-gray-800 mb-2">
                     Job Trend
                   </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
+                  <ul class="space-y-2">
+                    <li class="flex items-center">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
                         High Demand
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span class="text-sm text-gray-600">
                         Careers with strong job market growth
                       </span>
                     </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
+                    <li class="flex items-center">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
                         Growing
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span class="text-sm text-gray-600">
                         Careers with steady growth
                       </span>
                     </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
+                    <li class="flex items-center">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
                         Stable
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span class="text-sm text-gray-600">
                         Careers with consistent opportunities
                       </span>
                     </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
+                  <h4 class="text-md font-medium text-gray-800 mb-2">
                     Salary
                   </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
+                  <ul class="space-y-2">
+                    <li class="flex items-center">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
                         ₱
                       </span>
-                      <span className="text-sm text-gray-600">
+                      <span class="text-sm text-gray-600">
                         Estimated monthly salary (PHP)
                       </span>
                     </li>
