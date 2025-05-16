@@ -144,6 +144,51 @@ class AssessmentTakingService {
   }
 
   /**
+   * Save assessment progress
+   * @param {Object} progressData - The progress data to save
+   * @returns {Promise<Object>} - Save response
+   */
+  async saveProgress(progressData) {
+    try {
+      const response = await apiClient.post('/assessment-progress/save', progressData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Saving assessment progress');
+      throw error;
+    }
+  }
+  
+  /**
+   * Get in-progress assessments for a user
+   * @param {number} userId - The user ID
+   * @returns {Promise<Array>} - List of in-progress assessments
+   */
+  async getInProgressAssessments(userId) {
+    try {
+      const response = await apiClient.get(`/assessment-progress/in-progress/${userId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching in-progress assessments');
+      throw error;
+    }
+  }
+  
+  /**
+   * Get a specific assessment progress
+   * @param {number} userAssessmentId - The user assessment ID
+   * @returns {Promise<Object>} - Assessment progress data
+   */
+  async getAssessmentProgress(userAssessmentId) {
+    try {
+      const response = await apiClient.get(`/assessment-progress/${userAssessmentId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching assessment progress');
+      throw error;
+    }
+  }
+
+  /**
    * Centralized error handling
    * @param {Error} error - The error object
    * @param {string} context - Context where the error occurred

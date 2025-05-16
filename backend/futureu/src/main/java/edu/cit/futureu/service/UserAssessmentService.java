@@ -1,5 +1,6 @@
 package edu.cit.futureu.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,5 +51,43 @@ public class UserAssessmentService {
             return true;
         }
         return false;
+    }
+
+    // New methods for progress management
+    public List<UserAssessmentEntity> getUserAssessmentsByUserAndStatus(UserEntity user, String status) {
+        return userAssessmentRepository.findByUserAndStatus(user, status);
+    }
+    
+    public Optional<UserAssessmentEntity> findExistingInProgressAssessment(UserEntity user, AssessmentEntity assessment) {
+        List<UserAssessmentEntity> inProgressAssessments = 
+            userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
+        
+        return inProgressAssessments.isEmpty() ? Optional.empty() : Optional.of(inProgressAssessments.get(0));
+    }
+    
+    public UserAssessmentEntity saveAssessmentProgress(UserAssessmentEntity userAssessment, 
+                                                      Integer currentSectionIndex,
+                                                      Double progressPercentage,
+                                                      String savedAnswers,
+                                                      String savedSections,
+                                                      Integer timeSpentSeconds) {
+        
+        userAssessment.setStatus("IN_PROGRESS");
+        userAssessment.setLastSavedTime(LocalDateTime.now());
+        userAssessment.setCurrentSectionIndex(currentSectionIndex);
+        userAssessment.setProgressPercentage(progressPercentage);
+        userAssessment.setSavedAnswers(savedAnswers);
+        userAssessment.setSavedSections(savedSections);
+        userAssessment.setTimeSpentSeconds(timeSpentSeconds);
+        
+        return userAssessmentRepository.save(userAssessment);
+    }
+    
+    public UserAssessmentEntity completeAssessment(UserAssessmentEntity userAssessment, double score) {
+        userAssessment.setStatus("COMPLETED");
+        userAssessment.setScore(score);
+        userAssessment.setProgressPercentage(100.0);
+        
+        return userAssessmentRepository.save(userAssessment);
     }
 }
