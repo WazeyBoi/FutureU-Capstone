@@ -38,6 +38,9 @@ const AssessmentSection = ({
   // Calculate how many questions in this section have been answered
   const answeredQuestionsCount = questions.filter(q => answers[q.questionId]).length;
   const sectionCompletionPercentage = Math.round((answeredQuestionsCount / questions.length) * 100);
+  
+  // Check if all questions in this section have been answered
+  const allQuestionsAnswered = answeredQuestionsCount === questions.length;
 
   // Handle page changes
   const goToPage = (pageNumber) => {
@@ -158,96 +161,111 @@ const AssessmentSection = ({
         ))}
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination Controls - With Previous on left, Next on right, and counter centered */}
       <div className="flex justify-center items-center mb-6">
-        <nav className="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+        <nav className="w-full flex items-center justify-between" aria-label="Pagination">
+          {/* Previous page button - Left aligned */}
           <button
             onClick={goToPrevPage}
             disabled={currentPage === 1}
-            className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
-              currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+            className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${
+              currentPage === 1 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-white border border-gray-300 text-[#232D35] hover:bg-gray-50'
             }`}
           >
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
+            Previous
           </button>
           
-          {pageNumbers.map(number => (
-            <button
-              key={number}
-              onClick={() => goToPage(number)}
-              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                currentPage === number
-                  ? 'z-10 bg-[#1D63A1] border-[#1D63A1] text-white'
-                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              {number}
-            </button>
-          ))}
+          {/* Page indicator - Center aligned */}
+          <div className="flex-grow text-center">
+            <span className="text-sm text-[#1D63A1] font-medium bg-[#1D63A1]/10 px-4 py-2 rounded-md inline-block">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
           
+          {/* Next page button - Right aligned */}
           <button
             onClick={goToNextPage}
             disabled={currentPage === totalPages}
-            className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
-              currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+            className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${
+              currentPage === totalPages 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-white border border-gray-300 text-[#232D35] hover:bg-gray-50'
             }`}
           >
-            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            Next
+            <svg className="h-5 w-5 ml-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>
           </button>
         </nav>
       </div>
 
-      {/* Section Navigation buttons */}
-      <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onPrevious}
-          disabled={isFirstSection}
-          className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
-            isFirstSection
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-gray-100 text-[#232D35] hover:bg-gray-200'
-          }`}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Previous Section</span>
-        </motion.button>
-        
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={isLastSection ? onComplete : onNext}
-          disabled={answeredQuestionsCount === 0}
-          className={`px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 ${
-            isLastSection 
-              ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] hover:from-[#FFB71B] hover:to-[#FFB71B]/70' 
-              : 'bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white hover:from-[#1D63A1]/90 hover:to-[#232D35]/90'
-          } ${answeredQuestionsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {isLastSection ? (
-            <>
-              <span>Complete Assessment</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </>
-          ) : (
-            <>
-              <span>Next Section</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </>
-          )}
-        </motion.button>
-      </div>
+      {/* Section Navigation buttons - Only visible when ALL questions are answered */}
+      {allQuestionsAnswered && (
+        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onPrevious}
+            disabled={isFirstSection}
+            className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+              isFirstSection
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-gray-100 text-[#232D35] hover:bg-gray-200'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous Section</span>
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={isLastSection ? onComplete : onNext}
+            className={`px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 ${
+              isLastSection 
+                ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] hover:from-[#FFB71B] hover:to-[#FFB71B]/70' 
+                : 'bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white hover:from-[#1D63A1]/90 hover:to-[#232D35]/90'
+            }`}
+          >
+            {isLastSection ? (
+              <>
+                <span>Complete Assessment</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </>
+            ) : (
+              <>
+                <span>Next Section</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
+      
+      {/* Status indicator when not all questions are answered */}
+      {!allQuestionsAnswered && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <p className="text-center text-sm text-[#1D63A1]">
+            Please answer all {questions.length} questions in this section to proceed.
+            <span className="block mt-1 font-medium">
+              {answeredQuestionsCount} of {questions.length} answered
+              {answeredQuestionsCount > 0 && ` (${sectionCompletionPercentage}%)`}
+            </span>
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 };
