@@ -1493,18 +1493,7 @@ const getAnimationClass = (index) => {
               
               {/* Action buttons */}
               <div className="flex gap-4 flex-col sm:flex-row">
-                {selectedSchoolDetails.virtualTourUrl && (
-                  <a
-                    href={selectedSchoolDetails.virtualTourUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-3 px-6 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-white rounded-lg transition shadow-md hover:shadow-lg flex-1 font-medium flex items-center justify-center"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Globe className="w-5 h-5 mr-2 text-white" />
-                    <span className="text-white">Take Virtual Tour</span>
-                  </a>
-                )}
+                {/* Virtual tour button removed */}
                 <button
                   onClick={() => {
                     handleSchoolSelect(selectedSchoolDetails);
