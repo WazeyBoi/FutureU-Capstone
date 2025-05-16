@@ -329,7 +329,16 @@ const TakeAssessment = () => {
   
   const handleNextSection = () => {
     if (currentSection < sectionList.length - 1) {
+      // Get current and next section's group identifiers
+      const currentId = sectionList[currentSection].id;
+      const nextId = sectionList[currentSection + 1].id;
+      
+      // Move to the next section
       setCurrentSection(currentSection + 1);
+      
+      // No need to explicitly handle accordion opening here as the 
+      // SectionNavigator component will handle it through the useEffect
+      // when currentSection changes
     }
   };
   
@@ -614,7 +623,11 @@ const TakeAssessment = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.round((totalQuestions.completed / totalQuestions.total) * 100)}%` }}
                   transition={{ duration: 0.5 }}
-                  className="h-2.5 rounded-full progress-bar-futureu"
+                  className={`h-2.5 rounded-full ${
+                    totalQuestions.completed === totalQuestions.total 
+                      ? 'bg-green-500'  // Green when all questions are completed
+                      : 'progress-bar-futureu' // Default brand gradient
+                  }`}
                 ></motion.div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import QuestionItem from './QuestionItem';
 
@@ -20,7 +20,12 @@ const AssessmentSection = ({
 }) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const questionsPerPage = 5; // Show 3 questions per page
+  const questionsPerPage = 5; // Show 5 questions per page
+  
+  // Reference to the questions container for scrolling
+  const questionsContainerRef = useRef(null);
+  // New ref for the section header - better scroll target
+  const sectionHeaderRef = useRef(null);
   
   // Calculate pagination values
   const indexOfLastQuestion = currentPage * questionsPerPage;
@@ -42,20 +47,71 @@ const AssessmentSection = ({
   // Check if all questions in this section have been answered
   const allQuestionsAnswered = answeredQuestionsCount === questions.length;
 
-  // Handle page changes
+  // Handle page changes with improved scroll to top
   const goToPage = (pageNumber) => {
     setCurrentPage(pageNumber);
+    // More reliable scroll to top approach
+    setTimeout(() => {
+      if (sectionHeaderRef.current) {
+        const yOffset = -20; // Add a small offset from the top
+        const y = sectionHeaderRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
+      // More reliable scroll to top approach
+      setTimeout(() => {
+        if (sectionHeaderRef.current) {
+          const yOffset = -20; // Add a small offset from the top
+          const y = sectionHeaderRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
     }
   };
 
   const goToPrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
+      // More reliable scroll to top approach
+      setTimeout(() => {
+        if (sectionHeaderRef.current) {
+          const yOffset = -20; // Add a small offset from the top
+          const y = sectionHeaderRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  };
+
+  // Enhance the section navigation functions to scroll back to top
+  const handlePrevious = () => {
+    // Call the provided onPrevious function from props
+    onPrevious();
+    // Scroll to top of the section
+    if (sectionHeaderRef.current) {
+      setTimeout(() => {
+        const yOffset = -20;
+        const y = sectionHeaderRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }, 100);
+    }
+  };
+
+  const handleNext = () => {
+    // Call the provided onNext or onComplete function from props
+    isLastSection ? onComplete() : onNext();
+    // Scroll to top of the section
+    if (sectionHeaderRef.current) {
+      setTimeout(() => {
+        const yOffset = -20;
+        const y = sectionHeaderRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }, 100);
     }
   };
 
@@ -72,8 +128,8 @@ const AssessmentSection = ({
       transition={{ duration: 0.5 }}
       className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-[#1D63A1]/20 overflow-hidden flex flex-col"
     >
-      {/* Section header with improved responsiveness */}
-      <div className="mb-4 border-b border-gray-200 pb-4">
+      {/* Section header with improved responsiveness - add ref here */}
+      <div ref={sectionHeaderRef} className="mb-4 border-b border-gray-200 pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
             <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1D63A1]/15 text-[#1D63A1] flex items-center justify-center text-xs sm:text-sm font-bold mr-2 flex-shrink-0">
@@ -100,11 +156,21 @@ const AssessmentSection = ({
             </span>
             <div className="h-2 w-24 bg-gray-200 rounded-full ml-3 overflow-hidden">
               <div 
-                className="h-full bg-[#1D63A1]" 
+                className={`h-full ${
+                  sectionCompletionPercentage === 100 
+                    ? 'bg-green-500' // Green when section is fully completed
+                    : 'bg-[#1D63A1]' // Default brand blue otherwise
+                }`} 
                 style={{ width: `${sectionCompletionPercentage}%` }}
               ></div>
             </div>
-            <span className="text-xs font-medium text-gray-600 ml-2">{sectionCompletionPercentage}%</span>
+            <span className={`text-xs font-medium ml-2 ${
+              sectionCompletionPercentage === 100 
+                ? 'text-green-600' 
+                : 'text-gray-600'
+            }`}>
+              {sectionCompletionPercentage}%
+            </span>
           </div>
         </div>
       </div>
@@ -119,8 +185,8 @@ const AssessmentSection = ({
         </div>
       </div>
 
-      {/* Questions Display (Limited Height, No Scroll) */}
-      <div className="mb-4">
+      {/* Questions Display - keep existing ref */}
+      <div ref={questionsContainerRef} className="mb-4">
         {currentQuestions.map((question, index) => (
           <motion.div
             key={question.questionId}
@@ -211,7 +277,7 @@ const AssessmentSection = ({
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onPrevious}
+            onClick={handlePrevious} // Use our new handler
             disabled={isFirstSection}
             className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
               isFirstSection
@@ -228,7 +294,7 @@ const AssessmentSection = ({
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={isLastSection ? onComplete : onNext}
+            onClick={handleNext} // Use our new handler
             className={`px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 ${
               isLastSection 
                 ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] hover:from-[#FFB71B] hover:to-[#FFB71B]/70' 

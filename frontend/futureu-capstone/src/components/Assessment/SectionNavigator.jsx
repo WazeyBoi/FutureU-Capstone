@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCompletion }) => {
@@ -60,23 +60,30 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       groups[key].completion = Math.round(totalCompletion / groups[key].sections.length);
     });
     
-    // Find which group contains the current section
-    const currentSectionData = sections[currentSection];
-    if (currentSectionData) {
-      const id = currentSectionData.id;
-      if (id.startsWith('gsa-')) {
-        setOpenGroup(prevGroup => prevGroup === null ? 'gsa' : prevGroup);
-      } else if (id.startsWith('at-')) {
-        setOpenGroup(prevGroup => prevGroup === null ? 'academic' : prevGroup);
-      } else if (id.startsWith('track-')) {
-        setOpenGroup(prevGroup => prevGroup === null ? 'other' : prevGroup);
-      } else if (id.startsWith('interest-')) {
-        setOpenGroup(prevGroup => prevGroup === null ? 'interest' : prevGroup);
-      }
-    }
-    
     return groups;
   }, [sections, sectionCompletion, currentSection]);
+
+  // Detect section group changes and automatically open the correct accordion
+  useEffect(() => {
+    if (sections[currentSection]) {
+      const id = sections[currentSection].id;
+      let groupToOpen = null;
+      
+      if (id.startsWith('gsa-')) {
+        groupToOpen = 'gsa';
+      } else if (id.startsWith('at-')) {
+        groupToOpen = 'academic';
+      } else if (id.startsWith('track-')) {
+        groupToOpen = 'other';
+      } else if (id.startsWith('interest-')) {
+        groupToOpen = 'interest';
+      }
+      
+      if (groupToOpen) {
+        setOpenGroup(groupToOpen);
+      }
+    }
+  }, [currentSection, sections]);
 
   // Toggle accordion group
   const toggleGroup = (groupName) => {
@@ -121,7 +128,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
         onClick={() => onSectionChange(index)}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className={`w-full text-left px-2 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg flex items-center justify-between border ${
+        className={`border w-full text-left px-2 py-2 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg flex items-center justify-between border ${
           isActive 
             ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm' 
             : completion === 100
@@ -137,27 +144,23 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
         </div>
         
         <div className="flex items-center flex-shrink-0 ml-1">
-          <div className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              style={{ width: `${completion}%` }} 
-              className={`h-full rounded-full ${
-                completion === 100 
-                  ? 'bg-green-500' 
-                  : completion > 0 
-                    ? 'bg-yellow-500' 
-                    : 'bg-gray-400'
-              }`}
-            ></div>
-          </div>
-          <span className={`ml-1 text-xs font-medium ${
-            completion === 100 
-              ? 'text-green-600' 
-              : completion > 0 
-                ? 'text-yellow-600' 
-                : 'text-gray-500'
-          }`}>
-            {completion}%
-          </span>
+          {completion === 100 ? (
+            <span className="text-green-600">
+              <svg className="h-4 w-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                {/* <path d="M5 13l4 4L19 7"></path> */}
+              </svg>
+            </span>
+          ) : (
+            <>
+              <div className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  style={{ width: `${completion}%` }} 
+                  className="h-full rounded-full bg-yellow-500"
+                ></div>
+              </div>
+              <span className="ml-1 text-xs font-medium text-yellow-600">{completion}%</span>
+            </>
+          )}
         </div>
       </motion.button>
     );
@@ -196,35 +199,37 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                 } transition-colors duration-200`}
                 onClick={() => toggleGroup(groupKey)}
               >
-                <div className="flex items-center">
+                <div className=" flex items-center">
                   <span className="text-start font-medium">{group.title}</span>
                 </div>
                 
-                <div className="flex items-center">
-                  <div className="flex items-center mr-2">
-                    <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        style={{ width: `${group.completion}%` }} 
-                        className={`h-full rounded-full ${
-                          group.completion === 100 
-                            ? 'bg-[#FFB71B]' 
-                            : group.completion > 0 
-                              ? 'bg-[#1D63A1]' 
-                              : 'bg-gray-400'
-                        }`}
-                      ></div>
-                    </div>
-                    <span className="ml-1 text-xs">{group.completion}%</span>
-                  </div>
-                  <svg 
-                    className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    viewBox="0 0 20 20" 
-                    fill="currentColor"
-                  >
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                <div className="flex items-center mr-2">
+                  {group.completion === 100 ? (
+                    <span className="text-green-600">
+                      <svg className="h-5 w-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M5 13l4 4L19 7"></path>
+                      </svg>
+                    </span>
+                  ) : (
+                    <>
+                      <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          style={{ width: `${group.completion}%` }} 
+                          className="h-full rounded-full bg-[#1D63A1]"
+                        ></div>
+                      </div>
+                      <span className="ml-1 text-xs">{group.completion}%</span>
+                    </>
+                  )}
                 </div>
+                <svg 
+                  className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'transform rotate-180' : ''}`} 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                >
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
               </button>
               
               {/* Animated accordion content */}
