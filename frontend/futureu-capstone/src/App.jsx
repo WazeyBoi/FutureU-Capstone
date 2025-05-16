@@ -12,7 +12,25 @@ import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
 import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
+import TakeAssessment from './pages/TakeAssessment.jsx';
+import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
+
+// Add these styles to App.css
+/*
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation-name: float;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+*/
 
 function App() {
   return (
@@ -32,6 +50,7 @@ function App() {
             <Route path="/assessment-subcategories" element={<AssessmentSubCategories />} />
             <Route path="/quiz-subcategories" element={<QuizSubCategories />} />
             <Route path="/questions" element={<Questions />} />
+            <Route path="/take-assessment/:assessmentId" element={<TakeAssessment />} />
           </Routes>
         </div>
       </div>
