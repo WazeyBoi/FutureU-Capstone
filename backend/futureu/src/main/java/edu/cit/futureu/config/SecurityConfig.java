@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.http.HttpMethod; // Ensure this import is present
 import edu.cit.futureu.entity.Role; // Ensure this import is present
 import edu.cit.futureu.jwt.AuthEntryPointJwt;
 import edu.cit.futureu.jwt.AuthTokenFilter;
@@ -66,6 +67,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // For sign-in and sign-up
                 .requestMatchers("/api/test/**").permitAll() // For general API testing
+                .requestMatchers("/api/hello").permitAll() // Allow public access to hello endpoint
+                
+                // Allow public access to read-only school and program endpoints
+                .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/program/getAllPrograms").permitAll()
+                
                 // Restrict all other API endpoints to users with the "STUDENT" role
                 .requestMatchers("/api/school/**").hasAuthority(Role.STUDENT.name())
                 .requestMatchers("/api/program/**").hasAuthority(Role.STUDENT.name())

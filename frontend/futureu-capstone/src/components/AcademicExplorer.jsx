@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// import axios from 'axios'; // Remove this import
+import apiClient from '../services/api'; // Import the configured apiClient instead
 import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, StarOff, Filter, AlertCircle, Compass, Building } from 'lucide-react';
-import { useLocation } from "react-router-dom"; // Add this import
+import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
+import authService from '../services/authService'; // Import authService for auth checks
 
 // Import all logos
 import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
@@ -233,6 +235,15 @@ const AcademicExplorer = () => {
   const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
 
   const location = useLocation();
+  const navigate = useNavigate(); // Add this hook for navigation
+
+  // Check authentication status when component mounts
+  useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      // Redirect to login page if not authenticated
+      navigate('/login', { state: { from: location.pathname } });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -247,9 +258,10 @@ const AcademicExplorer = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Replace axios with apiClient which has the token interceptor
         const [programsResponse, schoolsResponse] = await Promise.all([
-          axios.get('/api/program/getAllPrograms'),
-          axios.get('/api/school/getAllSchools')
+          apiClient.get('/program/getAllPrograms'),
+          apiClient.get('/school/getAllSchools')
         ]);
         
         if (Array.isArray(programsResponse.data)) {
@@ -267,7 +279,7 @@ const AcademicExplorer = () => {
           
           // Fetch program counts for each school
           try {
-            const schoolProgramResponse = await axios.get('/api/schoolprogram/getAllSchoolPrograms');
+            const schoolProgramResponse = await apiClient.get('/schoolprogram/getAllSchoolPrograms');
             if (Array.isArray(schoolProgramResponse.data)) {
               // Count programs for each school
               const counts = {};
@@ -288,22 +300,31 @@ const AcademicExplorer = () => {
           setError('Failed to load schools. Please try again later.');
         }
       } catch (error) {
-        setError('Failed to load data. Please check your connection.');
+        console.error("Error fetching data:", error);
+        
+        // If unauthorized, redirect to login
+        if (error.response?.status === 401) {
+          authService.signout(); // Clear credentials
+          navigate('/login', { state: { from: location.pathname } });
+        }
+        
+        setError('Failed to load data. Please check your connection or login status.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (selectedProgram) {
       const fetchSchoolPrograms = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(
-            `/api/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
+          // Replace axios with apiClient
+          const response = await apiClient.get(
+            `/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
           );
           if (Array.isArray(response.data)) {
             const filtered = response.data.map((schoolProgram) => schoolProgram.school);
@@ -321,6 +342,12 @@ const AcademicExplorer = () => {
           }
       } catch (error) {
         console.error("Error fetching school programs:", error);
+          
+          if (error.response?.status === 401) {
+            authService.signout();
+            navigate('/login', { state: { from: location.pathname } });
+          }
+          
           setFilteredSchools(schools);
           setError('Failed to load specific schools for the selected program. Showing all schools instead.');
         } finally {
@@ -341,19 +368,24 @@ const AcademicExplorer = () => {
       setFilteredSchools([]);
       }
     }
-  }, [selectedProgram, schools, filterOptions.locationSearch]);
+  }, [selectedProgram, schools, filterOptions.locationSearch, navigate]);
 
   useEffect(() => {
     if (pendingProgramSelection) {
       setLoadingProgramDetails(true);
-      // Fetch program details from the backend
-      axios.get(`/api/program/getProgram/${pendingProgramSelection}`)
+      // Replace axios with apiClient
+      apiClient.get(`/program/getProgram/${pendingProgramSelection}`)
         .then(response => {
           console.log("Program details response:", response.data);
           setSelectedProgramDetails(response.data);
         })
         .catch(error => {
           console.error("Error fetching program details:", error);
+          
+          if (error.response?.status === 401) {
+            authService.signout();
+            navigate('/login', { state: { from: location.pathname } });
+          }
         })
         .finally(() => {
           setLoadingProgramDetails(false);
@@ -361,13 +393,13 @@ const AcademicExplorer = () => {
     } else {
       setSelectedProgramDetails(null);
     }
-  }, [pendingProgramSelection]);
+  }, [pendingProgramSelection, navigate]);
 
   // Add this effect to load program details when side panel is shown
   useEffect(() => {
     if (showProgramSidePanel && selectedProgram && !selectedProgramDetails) {
       setLoadingProgramDetails(true);
-      axios.get(`/api/program/getProgram/${selectedProgram}`)
+      apiClient.get(`/program/getProgram/${selectedProgram}`)
         .then(response => {
           setSelectedProgramDetails(response.data);
         })
@@ -1261,8 +1293,7 @@ const getAnimationClass = (index) => {
                                   className={`w-full py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium ${
                                     selectedSchools.find(s => s.schoolId === school.schoolId) ? 
                                     'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
-                                    : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`
-                                  }
+                                    : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSchoolSelect(school);
@@ -1516,8 +1547,7 @@ const getAnimationClass = (index) => {
                   className={`py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg flex-1 flex items-center justify-center font-medium
                     ${selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) 
                       ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
-                      : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`
-                  }
+                      : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                 >
                   {selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) ? (
                     <>

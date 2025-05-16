@@ -91,7 +91,9 @@ public class JwtUtil {
 
     public boolean validateJwtToken(String authToken) {
         try {
+            logger.info("Attempting to validate token: {}", authToken.substring(0, Math.min(10, authToken.length())) + "...");
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
+            logger.info("Token validation successful");
             return true;
         } catch (MalformedJwtException e) {
             logger.error("Invalid JWT token: {}", e.getMessage());
@@ -101,7 +103,24 @@ public class JwtUtil {
             logger.error("JWT token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
             logger.error("JWT claims string is empty: {}", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Unexpected error during token validation: {}", e.getMessage());
+            e.printStackTrace();
         }
         return false;
+    }
+
+    // Helper method for debugging
+    public void debugToken(String token) {
+        try {
+            Claims claims = getAllClaimsFromToken(token);
+            logger.info("Token Subject: {}", claims.getSubject());
+            logger.info("Token Role: {}", claims.get("role"));
+            logger.info("Token UserId: {}", claims.get("userId"));
+            logger.info("Token Expiration: {}", claims.getExpiration());
+            logger.info("Token IssuedAt: {}", claims.getIssuedAt());
+        } catch (Exception e) {
+            logger.error("Error parsing token: {}", e.getMessage());
+        }
     }
 }

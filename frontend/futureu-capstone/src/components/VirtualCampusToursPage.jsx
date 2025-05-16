@@ -291,7 +291,7 @@ const VirtualCampusToursPage = () => {
   // Render function for campus cards to avoid duplication
   const renderCampusCard = (campus, index) => (
     <motion.div
-      key={campus.name}
+      key={`${campus.name}-${index}`}
       variants={cardVariants}
       initial="hidden"
       animate="visible"
