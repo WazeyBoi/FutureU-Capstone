@@ -13,6 +13,8 @@ import Assessments from './pages/Assessments.jsx';
 import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
+import StudentRegister from './components/Authentication/StudentRegister.jsx';
+import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 
@@ -39,6 +41,8 @@ function App() {
         <Navigation />
         <div className="flex-1">
           <Routes>
+            <Route path="/login" element={<StudentLogin />} />
+            <Route path="/register" element={<StudentRegister />} />
             <Route path="/academic-explorer" element={<AcademicExplorer />} />
             <Route path="/accreditation" element={<AccreditationRatings />} />
             <Route path="/accreditation/:section" element={<AccreditationSection />} />
