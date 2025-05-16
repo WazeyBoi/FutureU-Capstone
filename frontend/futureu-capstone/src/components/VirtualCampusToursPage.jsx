@@ -11,6 +11,7 @@ const VirtualCampusToursPage = () => {
   const [realSchoolData, setRealSchoolData] = useState({});
   const [apiSchools, setApiSchools] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [enhancedCampuses, setEnhancedCampuses] = useState([]); // New state for enhanced campuses
 
   // Animation variants - simplified for smoother animations
   const fadeIn = {
@@ -240,27 +241,31 @@ const VirtualCampusToursPage = () => {
     setFilteredCampuses(sortedCampuses);
   }, []);
 
-  // Update campus data with real metadata if available
-  const enhancedCampuses = campuses.map(campus => {
-    const realData = realSchoolData[campus.name];
-    
-    if (realData) {
-      console.log(`Enhancing ${campus.name} with real data:`, realData);
+  // Update enhancedCampuses when realSchoolData changes
+  useEffect(() => {
+    const updatedCampuses = campuses.map(campus => {
+      const realData = realSchoolData[campus.name];
       
-      return {
-        ...campus,
-        location: realData.location || campus.location,
-        schoolType: realData.schoolType || campus.schoolType,
-        description: realData.description || campus.description
-      };
-    }
-    return campus;
-  });
+      if (realData) {
+        console.log(`Enhancing ${campus.name} with real data:`, realData);
+        
+        return {
+          ...campus,
+          location: realData.location || campus.location,
+          schoolType: realData.schoolType || campus.schoolType,
+          description: realData.description || campus.description
+        };
+      }
+      return campus;
+    });
+    
+    setEnhancedCampuses(updatedCampuses);
+  }, [realSchoolData]);
 
   // Log the enhanced campuses for debugging
   useEffect(() => {
     console.log("Enhanced campuses with real data:", enhancedCampuses);
-  }, [realSchoolData]);
+  }, [enhancedCampuses]);
 
   useEffect(() => {
     // Filter campuses based on search query and selected filters
@@ -277,7 +282,7 @@ const VirtualCampusToursPage = () => {
     );
     
     setFilteredCampuses(sortedFiltered);
-  }, [searchQuery, school, schoolType, realSchoolData, enhancedCampuses]);
+  }, [searchQuery, school, schoolType, enhancedCampuses]);
 
   const handleReset = () => {
     setSchool("");
@@ -291,7 +296,7 @@ const VirtualCampusToursPage = () => {
   // Render function for campus cards to avoid duplication
   const renderCampusCard = (campus, index) => (
     <motion.div
-      key={campus.name}
+      key={`${campus.name}-${index}`}
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -692,4 +697,3 @@ const VirtualCampusToursPage = () => {
 };
 
 export default VirtualCampusToursPage;
-

@@ -1,61 +1,64 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// import axios from 'axios'; // Remove this import
+import apiClient from '../services/api'; // Import the configured apiClient instead
 import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, StarOff, Filter, AlertCircle, Compass, Building } from 'lucide-react';
+import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
+import authService from '../services/authService'; // Import authService for auth checks
 
 // Import all logos
-import logo1 from '../assets/logos/1_logo.png';
-import logo2 from '../assets/logos/2_logo.png';
-import logo3 from '../assets/logos/3_logo.png';
-import logo4 from '../assets/logos/4_logo.png';
-import logo5 from '../assets/logos/5_logo.png';
-import logo6 from '../assets/logos/6_logo.png';
-import logo7 from '../assets/logos/7_logo.png';
-import logo8 from '../assets/logos/8_logo.png';
-import logo9 from '../assets/logos/9_logo.png';
-import logo10 from '../assets/logos/10_logo.png';
-import logo11 from '../assets/logos/11_logo.png';
+import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
+import citu_school_logo from '../assets/school_logos/citu_school_logo.png';
+import cnu_school_logo from '../assets/school_logos/cnu_school_logo.png';
+import ctu_school_logo from '../assets/school_logos/ctu_school_logo.png';
+import iau_school_logo from '../assets/school_logos/iau_school_logo.png';
+import swu_school_logo from '../assets/school_logos/swu_school_logo.png';
+import uc_school_logo from '../assets/school_logos/uc_school_logo.png';
+import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
+import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
+import up_school_logo from '../assets/school_logos/up_school_logo.png';
+import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
 
-// Import school backgrounds
-import citBackground from '../assets/backgrounds/CIT_BACKGROUND.jpg';
-import cebuDoctorsBackground from '../assets/backgrounds/cebu_doctors.jpg';
-import cebuNormalBackground from '../assets/backgrounds/cebu_normal.jpg';
-import cebuTechnologicalBackground from '../assets/backgrounds/cebu_technological.jpg';
-import southwesternPhinmaBackground from '../assets/backgrounds/southwestern_phinma.jpg';
-import universityOfSanCarlosBackground from '../assets/backgrounds/university_of_san_carlos.jpg';
-import universityOfSanJoseBackground from '../assets/backgrounds/university_of_san_jose.jpg';
-import universityOfThePhilippinesBackground from '../assets/backgrounds/university_of_the_philippines.jpg';
-import uvBackground from '../assets/backgrounds/uv.jpg';
+// Import school_images
+import citu_school_image from '../assets/school_images/citu_school_image.jpg';
+import cdu_school_image from '../assets/school_images/cdu_school_image.jpg';
+import cnu_school_image from '../assets/school_images/cnu_school_image.jpg';
+import ctu_school_image from '../assets/school_images/ctu_school_image.jpg';
+import swu_school_image from '../assets/school_images/swu_school_image.jpg';
+import usc_school_image from '../assets/school_images/usc_school_image.jpg';
+import usjr_school_image from '../assets/school_images/usjr_school_image.jpg';
+import up_school_image from '../assets/school_images/up_school_image.jpg';
+import uc_school_image from '../assets/school_images/uc_school_image.jpg';
+import uv_school_image from '../assets/school_images/uv_school_image.jpg';
+import iau_school_image from '../assets/school_images/iau_school_image.jpg';
 
 // Create a mapping of school IDs to logos
 const schoolLogos = {
-  1: logo1,
-  2: logo2,
-  3: logo3,
-  4: logo4,
-  5: logo5,
-  6: logo6,
-  7: logo7,
-  8: logo8,
-  9: logo9,
-  10: logo10,
-  11: logo11,
+  1: cdu_school_logo,
+  2: citu_school_logo,
+  3: cnu_school_logo,
+  4: ctu_school_logo,
+  5: iau_school_logo,
+  6: swu_school_logo,
+  7: uc_school_logo,
+  8: usc_school_logo,
+  9: usjr_school_logo,
+  10: up_school_logo,
+  11: uv_school_logo,
 };
 
 // Create a mapping for school name detection to their background images
 const schoolBackgroundMap = {
-  "Cebu Institute of Technology": citBackground,
-  "Cebu Doctors": cebuDoctorsBackground,
-  "Cebu Normal": cebuNormalBackground,
-  "Cebu Technological": cebuTechnologicalBackground,
-  "Southwestern": southwesternPhinmaBackground,
-  "PHINMA": southwesternPhinmaBackground,
-  "San Carlos": universityOfSanCarlosBackground,
-  "San Jose": universityOfSanJoseBackground,
-  "Recoletos": universityOfSanJoseBackground,
-  "Philippines": universityOfThePhilippinesBackground,
-  "University of Cebu": citBackground,
-  "University of Visayas": uvBackground,
-  "UV": uvBackground,
+  "Cebu Institute of Technology": citu_school_image,
+  "Cebu Doctors' University": cdu_school_image,
+  "Cebu Normal University": cnu_school_image,
+  "Cebu Technological University": ctu_school_image,
+  "Southwestern University": swu_school_image,
+  "University of San Carlos": usc_school_image,
+  "University of San Jose Recoletos": usjr_school_image,
+  "University of the Philippines Cebu": up_school_image,
+  "University of Cebu": uc_school_image,
+  "University of the Visayas": uv_school_image,
+  "Indiana Aerospace University": iau_school_image,
 };
 
 // Function to get the school background based on name
@@ -231,13 +234,34 @@ const AcademicExplorer = () => {
   const [showSchoolDetailsModal, setShowSchoolDetailsModal] = useState(false);
   const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
 
+  const location = useLocation();
+  const navigate = useNavigate(); // Add this hook for navigation
+
+  // Check authentication status when component mounts
+  useEffect(() => {
+    if (!authService.isAuthenticated()) {
+      // Redirect to login page if not authenticated
+      navigate('/login', { state: { from: location.pathname } });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const programId = params.get("programId");
+    if (programId) {
+      setSelectedProgram(Number(programId));
+      setShowProgramSidePanel(true);
+    }
+  }, [location.search]);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Replace axios with apiClient which has the token interceptor
         const [programsResponse, schoolsResponse] = await Promise.all([
-          axios.get('/api/program/getAllPrograms'),
-          axios.get('/api/school/getAllSchools')
+          apiClient.get('/program/getAllPrograms'),
+          apiClient.get('/school/getAllSchools')
         ]);
         
         if (Array.isArray(programsResponse.data)) {
@@ -255,7 +279,7 @@ const AcademicExplorer = () => {
           
           // Fetch program counts for each school
           try {
-            const schoolProgramResponse = await axios.get('/api/schoolprogram/getAllSchoolPrograms');
+            const schoolProgramResponse = await apiClient.get('/schoolprogram/getAllSchoolPrograms');
             if (Array.isArray(schoolProgramResponse.data)) {
               // Count programs for each school
               const counts = {};
@@ -276,22 +300,31 @@ const AcademicExplorer = () => {
           setError('Failed to load schools. Please try again later.');
         }
       } catch (error) {
-        setError('Failed to load data. Please check your connection.');
+        console.error("Error fetching data:", error);
+        
+        // If unauthorized, redirect to login
+        if (error.response?.status === 401) {
+          authService.signout(); // Clear credentials
+          navigate('/login', { state: { from: location.pathname } });
+        }
+        
+        setError('Failed to load data. Please check your connection or login status.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (selectedProgram) {
       const fetchSchoolPrograms = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(
-            `/api/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
+          // Replace axios with apiClient
+          const response = await apiClient.get(
+            `/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
           );
           if (Array.isArray(response.data)) {
             const filtered = response.data.map((schoolProgram) => schoolProgram.school);
@@ -309,6 +342,12 @@ const AcademicExplorer = () => {
           }
       } catch (error) {
         console.error("Error fetching school programs:", error);
+          
+          if (error.response?.status === 401) {
+            authService.signout();
+            navigate('/login', { state: { from: location.pathname } });
+          }
+          
           setFilteredSchools(schools);
           setError('Failed to load specific schools for the selected program. Showing all schools instead.');
         } finally {
@@ -329,19 +368,24 @@ const AcademicExplorer = () => {
       setFilteredSchools([]);
       }
     }
-  }, [selectedProgram, schools, filterOptions.locationSearch]);
+  }, [selectedProgram, schools, filterOptions.locationSearch, navigate]);
 
   useEffect(() => {
     if (pendingProgramSelection) {
       setLoadingProgramDetails(true);
-      // Fetch program details from the backend
-      axios.get(`/api/program/getProgram/${pendingProgramSelection}`)
+      // Replace axios with apiClient
+      apiClient.get(`/program/getProgram/${pendingProgramSelection}`)
         .then(response => {
           console.log("Program details response:", response.data);
           setSelectedProgramDetails(response.data);
         })
         .catch(error => {
           console.error("Error fetching program details:", error);
+          
+          if (error.response?.status === 401) {
+            authService.signout();
+            navigate('/login', { state: { from: location.pathname } });
+          }
         })
         .finally(() => {
           setLoadingProgramDetails(false);
@@ -349,13 +393,13 @@ const AcademicExplorer = () => {
     } else {
       setSelectedProgramDetails(null);
     }
-  }, [pendingProgramSelection]);
+  }, [pendingProgramSelection, navigate]);
 
   // Add this effect to load program details when side panel is shown
   useEffect(() => {
     if (showProgramSidePanel && selectedProgram && !selectedProgramDetails) {
       setLoadingProgramDetails(true);
-      axios.get(`/api/program/getProgram/${selectedProgram}`)
+      apiClient.get(`/program/getProgram/${selectedProgram}`)
         .then(response => {
           setSelectedProgramDetails(response.data);
         })
@@ -1249,8 +1293,7 @@ const getAnimationClass = (index) => {
                                   className={`w-full py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium ${
                                     selectedSchools.find(s => s.schoolId === school.schoolId) ? 
                                     'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
-                                    : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`
-                                  }
+                                    : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSchoolSelect(school);
@@ -1504,8 +1547,7 @@ const getAnimationClass = (index) => {
                   className={`py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg flex-1 flex items-center justify-center font-medium
                     ${selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) 
                       ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
-                      : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`
-                  }
+                      : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                 >
                   {selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) ? (
                     <>
