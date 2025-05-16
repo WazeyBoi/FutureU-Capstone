@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, StarOff, Filter, AlertCircle, Compass, Building } from 'lucide-react';
+import { useLocation } from "react-router-dom"; // Add this import
 
 // Import all logos
 import logo1 from '../assets/logos/1_logo.png';
@@ -230,6 +231,17 @@ const AcademicExplorer = () => {
   const [selectedSchoolDetails, setSelectedSchoolDetails] = useState(null);
   const [showSchoolDetailsModal, setShowSchoolDetailsModal] = useState(false);
   const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const programId = params.get("programId");
+    if (programId) {
+      setSelectedProgram(Number(programId));
+      setShowProgramSidePanel(true);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchData = async () => {
