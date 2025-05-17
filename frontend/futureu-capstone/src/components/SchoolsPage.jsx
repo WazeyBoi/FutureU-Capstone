@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-// import TestimonialForm from './TestimonialForm';
+import CesiumSchoolsGlobe from './CesiumSchoolsGlobe';
 
 // Example school data (replace with your real data or fetch from API)
 const schools = [
@@ -102,6 +102,7 @@ const SchoolsPage = () => {
   const [tileUrl, setTileUrl] = useState(tileOptions[0].url);
   const [tileAttribution, setTileAttribution] = useState(tileOptions[0].attribution);
   const [flyTo, setFlyTo] = useState(null);
+  const [viewMode, setViewMode] = useState("2d"); // "2d" for Leaflet, "3d" for Cesium
   const mapRef = useRef(null);
 
   // Cebu City center coordinates
@@ -115,100 +116,127 @@ const SchoolsPage = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[90vh] bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative">
-      {/* Map Section */}
-      <div className="w-full md:w-2/3 h-[400px] md:h-full flex items-center justify-center p-4 relative">
-        {/* Map Style Switcher */}
-        <select
-          className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white border border-gray-200 rounded-full px-4 py-2 shadow"
-          value={tileUrl}
-          onChange={handleTileChange}
+    <div>
+      <div className="flex justify-center mb-4">
+        <button
+          className={`px-4 py-2 rounded-l-full ${viewMode === "2d" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+          onClick={() => setViewMode("2d")}
         >
-          {tileOptions.map(opt => (
-            <option key={opt.name} value={opt.url}>{opt.name} Map</option>
-          ))}
-        </select>
-        <LocateButton mapRef={mapRef} />
-        <ResetViewButton mapRef={mapRef} center={cebuCenter} />
-        <div className="w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
-          <MapContainer
-            center={cebuCenter}
-            zoom={13}
-            style={{ height: "100%", width: "100%" }}
-            whenCreated={mapInstance => { mapRef.current = mapInstance; }}
-          >
-            <TileLayer
-              attribution={tileAttribution}
-              url={tileUrl}
-            />
-            {schools.map((school) => (
-              <React.Fragment key={school.id}>
-                <Marker
-                  position={[school.lat, school.lng]}
-                  icon={schoolIcon}
-                  eventHandlers={{
-                    click: () => {
-                      setSelectedSchool(school);
-                      setFlyTo([school.lat, school.lng]);
-                    },
-                  }}
+          2D Map
+        </button>
+        <button
+          className={`px-4 py-2 rounded-r-full ${viewMode === "3d" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
+          onClick={() => setViewMode("3d")}
+        >
+          3D Globe
+        </button>
+      </div>
+      <div style={{ height: "70vh" }}>
+        {viewMode === "2d" ? (
+          <div className="flex flex-col md:flex-row h-[90vh] bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative">
+            {/* Map Section */}
+            <div className="w-full md:w-2/3 h-[400px] md:h-full flex items-center justify-center p-4 relative">
+              {/* Map Style Switcher */}
+              <select
+                className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white border border-gray-200 rounded-full px-4 py-2 shadow"
+                value={tileUrl}
+                onChange={handleTileChange}
+              >
+                {tileOptions.map(opt => (
+                  <option key={opt.name} value={opt.url}>{opt.name} Map</option>
+                ))}
+              </select>
+              <LocateButton mapRef={mapRef} />
+              <ResetViewButton mapRef={mapRef} center={cebuCenter} />
+              <div className="w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
+                <MapContainer
+                  center={cebuCenter}
+                  zoom={13}
+                  style={{ height: "100%", width: "100%" }}
+                  whenCreated={mapInstance => { mapRef.current = mapInstance; }}
                 >
-                  <Popup>
-                    <div className="text-center">
-                      <strong className="block text-blue-800">{school.name}</strong>
-                      <button
-                        className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
-                        onClick={() => {
-                          setSelectedSchool(school);
-                          setFlyTo([school.lat, school.lng]);
+                  <TileLayer
+                    attribution={tileAttribution}
+                    url={tileUrl}
+                  />
+                  {schools.map((school) => (
+                    <React.Fragment key={school.id}>
+                      <Marker
+                        position={[school.lat, school.lng]}
+                        icon={schoolIcon}
+                        eventHandlers={{
+                          click: () => {
+                            setSelectedSchool(school);
+                            setFlyTo([school.lat, school.lng]);
+                          },
                         }}
                       >
-                        View Details
-                      </button>
-                    </div>
-                  </Popup>
-                  <Tooltip direction="top" offset={[0, -20]} opacity={0.9}>
-                    {school.name}
-                  </Tooltip>
-                </Marker>
-                {/* School Area Circle */}
-                <Circle
-                  center={[school.lat, school.lng]}
-                  radius={300}
-                  pathOptions={{ color: "#1D63A1", fillColor: "#1D63A1", fillOpacity: 0.1 }}
-                />
-              </React.Fragment>
-            ))}
-            {/* Fly to school when selected */}
-            {flyTo && <FlyToSchool position={flyTo} />}
-          </MapContainer>
-        </div>
-      </div>
-
-      {/* School Detail & Testimonial Section */}
-      <div className="w-full md:w-1/3 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-yellow-100 p-8">
-          {selectedSchool ? (
-            <div>
-              <h2 className="text-3xl font-extrabold mb-2 text-blue-900">{selectedSchool.name}</h2>
-              <p className="mb-4 text-gray-700">{selectedSchool.description}</p>
-              {/* Add more school details here */}
-              <hr className="my-6 border-yellow-200" />
-              <h3 className="text-xl font-semibold mb-2 text-yellow-600">Submit a Testimonial</h3>
-              {/* <TestimonialForm schoolId={selectedSchool.id} /> */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700 text-center">
-                Testimonial form coming soon!
+                        <Popup>
+                          <div className="text-center">
+                            <strong className="block text-blue-800">{school.name}</strong>
+                            <button
+                              className="mt-2 px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition"
+                              onClick={() => {
+                                setSelectedSchool(school);
+                                setFlyTo([school.lat, school.lng]);
+                              }}
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </Popup>
+                        <Tooltip direction="top" offset={[0, -20]} opacity={0.9}>
+                          {school.name}
+                        </Tooltip>
+                      </Marker>
+                      {/* School Area Circle */}
+                      <Circle
+                        center={[school.lat, school.lng]}
+                        radius={300}
+                        pathOptions={{ color: "#1D63A1", fillColor: "#1D63A1", fillOpacity: 0.1 }}
+                      />
+                    </React.Fragment>
+                  ))}
+                  {/* Fly to school when selected */}
+                  {flyTo && <FlyToSchool position={flyTo} />}
+                </MapContainer>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <svg className="w-16 h-16 mb-4 text-yellow-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.5v-17m0 0L7 7m5-3.5l5 3.5" />
-              </svg>
-              <span className="text-lg font-medium">Click a school marker to view details and submit a testimonial.</span>
+
+            {/* School Detail & Testimonial Section */}
+            <div className="w-full md:w-1/3 flex items-center justify-center p-4">
+              <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-yellow-100 p-8">
+                {selectedSchool ? (
+                  <div>
+                    <h2 className="text-3xl font-extrabold mb-2 text-blue-900">{selectedSchool.name}</h2>
+                    <p className="mb-4 text-gray-700">{selectedSchool.description}</p>
+                    {/* Add more school details here */}
+                    <hr className="my-6 border-yellow-200" />
+                    <h3 className="text-xl font-semibold mb-2 text-yellow-600">Submit a Testimonial</h3>
+                    {/* <TestimonialForm schoolId={selectedSchool.id} /> */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-700 text-center">
+                      Testimonial form coming soon!
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                    <svg className="w-16 h-16 mb-4 text-yellow-200" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.5v-17m0 0L7 7m5-3.5l5 3.5" />
+                    </svg>
+                    <span className="text-lg font-medium">Click a school marker to view details and submit a testimonial.</span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <CesiumSchoolsGlobe
+            schools={schools}
+            selectedSchool={selectedSchool}
+            setSelectedSchool={setSelectedSchool}
+            goTo2DMap={() => setViewMode("2d")}
+          />
+        )}
       </div>
     </div>
   );
