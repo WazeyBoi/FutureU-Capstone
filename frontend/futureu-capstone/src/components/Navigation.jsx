@@ -102,6 +102,17 @@ const Navigation = () => {
                 >
                   Career Pathways
                 </Link>
+
+                <Link
+                  to="/schools"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/schools')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Schools
+                </Link>
               </>
             )}
            

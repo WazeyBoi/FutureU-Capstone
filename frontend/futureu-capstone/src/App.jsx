@@ -20,6 +20,8 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
+import 'leaflet/dist/leaflet.css';
+import SchoolsPage from './components/SchoolsPage.jsx';
  
 // Add these styles to App.css
 /*
@@ -60,6 +62,7 @@ function App() {
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
         <Route path="/user-landing-page" element={<UserLandingPage />} />
+        <Route path="/schools" element={<SchoolsPage />} />
         {/* Protected routes */}
         <Route path="/academic-explorer" element={
           <PrivateRoute>
