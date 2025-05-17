@@ -1,383 +1,117 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+// Currently using mock data from schools.js
+import { schools } from "../data/schools";
+import GuideModal from "./accreditation/GuideModal";
+import SchoolsList from "./accreditation/SchoolsList";
+import StatsCards from "./accreditation/StatsCards";
+import FilterOptions from "./accreditation/FilterOptions";
+import ProgramsTab from "./accreditation/tabs/ProgramsTab";
+import StatisticsTab from "./accreditation/tabs/StatisticsTab";
+import AboutTab from "./accreditation/tabs/AboutTab";
+// Import the accreditation service
+import accreditationService from "../services/accreditationService";
 
 const AccreditationRatings = () => {
-  const schools = [
-    {
-      id: 1,
-      name: "University of San Jose-Recoletos",
-      totalAccredited: 24,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "PAASCU Level III Certified",
-        validUntil: "2028-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Computer Science",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COE",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Science in Information Technology",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "University of San Carlos (USC)",
-      totalAccredited: 30,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "PAASCU Level IV Certified",
-        validUntil: "2030-06-30",
-      },
-      programs: [
-        {
-          category: "Graduate Programs",
-          items: [
-            {
-              name: "Master of Business Administration",
-              accreditationStatus: "Level IV Accredited",
-              accreditingBody: "PAASCU",
-              recognition: "COE",
-              level: 4,
-            },
-            {
-              name: "Master of Science in Engineering",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 3,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "Cebu Normal University (CNU)",
-      totalAccredited: 18,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "AACCUP Level III Certified",
-        validUntil: "2027-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Nursing",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "AACCUP",
-              recognition: "COE",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Elementary Education",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "AACCUP",
-              recognition: "COD",
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 4,
-      name: "University of Cebu (UC)",
-      totalAccredited: 20,
-      institutionalStatus: {
-        autonomousStatus: "CHED Deregulated Status",
-        institutionalAccreditation: "PACUCOA Level II Certified",
-        validUntil: "2026-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Marine Engineering",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-            {
-              name: "Bachelor of Science in Criminology",
-              accreditationStatus: "Level I Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: null,
-              level: 1,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 5,
-      name: "Cebu Institute of Technology – University (CIT-U)",
-      totalAccredited: 22,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "PACUCOA Level III Certified",
-        validUntil: "2029-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Civil Engineering",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COE",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Science in Architecture",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 6,
-      name: "University of the Philippines Cebu (UP Cebu)",
-      totalAccredited: 15,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "UP System Certified",
-        validUntil: "2031-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Arts in Communication",
-              accreditationStatus: "Level IV Accredited",
-              accreditingBody: "UP System",
-              recognition: "COE",
-              level: 4,
-            },
-            {
-              name: "Bachelor of Science in Computer Science",
-              accreditationStatus: "Level IV Accredited",
-              accreditingBody: "UP System",
-              recognition: "COE",
-              level: 4,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 7,
-      name: "Cebu Technological University (CTU)",
-      totalAccredited: 25,
-      institutionalStatus: {
-        autonomousStatus: "CHED Autonomous Status",
-        institutionalAccreditation: "AACCUP Level III Certified",
-        validUntil: "2028-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Industrial Technology",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "AACCUP",
-              recognition: "COD",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Science in Agriculture",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "AACCUP",
-              recognition: null,
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 8,
-      name: "Southwestern University (SWU) PHINMA",
-      totalAccredited: 12,
-      institutionalStatus: {
-        autonomousStatus: "CHED Deregulated Status",
-        institutionalAccreditation: "PACUCOA Level II Certified",
-        validUntil: "2025-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Doctor of Dental Medicine",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COE",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Science in Pharmacy",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 9,
-      name: "Cebu Doctors' University (CDU)",
-      totalAccredited: 10,
-      institutionalStatus: {
-        autonomousStatus: "CHED Deregulated Status",
-        institutionalAccreditation: "PACUCOA Level II Certified",
-        validUntil: "2026-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Nursing",
-              accreditationStatus: "Level III Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COE",
-              level: 3,
-            },
-            {
-              name: "Bachelor of Science in Physical Therapy",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 10,
-      name: "University of the Visayas (UV)",
-      totalAccredited: 14,
-      institutionalStatus: {
-        autonomousStatus: "CHED Deregulated Status",
-        institutionalAccreditation: "PACUCOA Level II Certified",
-        validUntil: "2027-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Business Administration",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-            {
-              name: "Bachelor of Science in Hospitality Management",
-              accreditationStatus: "Level I Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: null,
-              level: 1,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: 11,
-      name: "Indiana Aerospace University",
-      totalAccredited: 8,
-      institutionalStatus: {
-        autonomousStatus: "CHED Deregulated Status",
-        institutionalAccreditation: "PACUCOA Level I Certified",
-        validUntil: "2025-12-31",
-      },
-      programs: [
-        {
-          category: "Undergraduate Programs",
-          items: [
-            {
-              name: "Bachelor of Science in Aerospace Engineering",
-              accreditationStatus: "Level II Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: "COD",
-              level: 2,
-            },
-            {
-              name: "Bachelor of Science in Aviation Technology",
-              accreditationStatus: "Level I Accredited",
-              accreditingBody: "PACUCOA",
-              recognition: null,
-              level: 1,
-            },
-          ],
-        },
-      ],
-    },
-  ];
-
+  // State declarations
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProgramType, setSelectedProgramType] = useState("");
-  const [selectedAccreditationLevel, setSelectedAccreditationLevel] =
-    useState("");
+  const [selectedAccreditationLevel, setSelectedAccreditationLevel] = useState("");
   const [selectedRecognition, setSelectedRecognition] = useState("");
+  const [activeTab, setActiveTab] = useState("programs");
+  const [showFilters, setShowFilters] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(false);
+  
+  // Animation states
+  const [pageLoaded, setPageLoaded] = useState(false);
+  const [heroAnimated, setHeroAnimated] = useState(false);
+  const [cardsAnimated, setCardsAnimated] = useState(false);
+  const [contentAnimated, setContentAnimated] = useState(false);
 
-  const getRecognitionBadgeColor = (recognition) => {
-    switch (recognition) {
-      case "COE":
-        return "bg-purple-600";
-      case "COD":
-        return "bg-blue-600";
-      default:
-        return "bg-gray-600";
+  // NOTE: For future implementation - Replace hard-coded data with API fetch
+  // Uncomment this code and remove the import { schools } when ready to use real data
+  /*
+  // Add these state variables at the top with the other state declarations
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchAccreditationData = async () => {
+      try {
+        setLoading(true);
+        // Use accreditationService instead of raw fetch
+        const data = await accreditationService.getAllAccreditationData();
+        setSchools(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching accreditation data:', error);
+        setError('Failed to load accreditation data. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    fetchAccreditationData();
+  }, []);
+
+  // Add this conditional rendering to handle loading and error states
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-800 border-r-transparent mb-4"></div>
+          <p className="text-gray-700">Loading accreditation data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center max-w-md">
+          <svg className="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+  */
+
+  // Trigger animations on component mount
+  useEffect(() => {
+    setPageLoaded(true);
+    
+    // Staggered animations
+    setTimeout(() => setHeroAnimated(true), 100);
+    setTimeout(() => setCardsAnimated(true), 400);
+    setTimeout(() => setContentAnimated(true), 700);
+  }, []);
+  
+  // Handle tab switching animation
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === "statistics") {
+      // Reset the animation state first
+      setStatsVisible(false);
+      // Then trigger animation after a small delay
+      setTimeout(() => {
+        setStatsVisible(true);
+      }, 100);
     }
   };
 
-  const getAccreditationLevelColor = (level) => {
-    switch (level) {
-      case 4:
-        return "bg-green-600";
-      case 3:
-        return "bg-teal-600";
-      case 2:
-        return "bg-blue-600";
-      case 1:
-        return "bg-indigo-600";
-      default:
-        return "bg-gray-600";
-    }
-  };
-
+  // Helper function to get all programs from a school
   const getAllPrograms = (school) => {
     return school.programs.flatMap((category) =>
       category.items.map((program) => ({
@@ -388,257 +122,178 @@ const AccreditationRatings = () => {
     );
   };
 
+  // Filter programs based on selected criteria
   const filteredPrograms = schools
     .flatMap((school) => getAllPrograms(school))
     .filter((program) => {
-      if (
-        selectedSchool !== null &&
-        program.schoolName !== schools[selectedSchool].name
-      )
+      if (selectedSchool !== null && program.schoolName !== schools[selectedSchool].name)
         return false;
-      if (
-        searchTerm &&
-        !program.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      if (searchTerm && !program.name.toLowerCase().includes(searchTerm.toLowerCase()))
         return false;
       if (selectedProgramType && program.category !== selectedProgramType)
         return false;
-      if (
-        selectedAccreditationLevel &&
-        program.level !== parseInt(selectedAccreditationLevel)
-      )
+      if (selectedAccreditationLevel && program.level !== parseInt(selectedAccreditationLevel))
         return false;
       if (selectedRecognition && program.recognition !== selectedRecognition)
         return false;
       return true;
     });
 
+  // Calculate statistics
+  const totalSchools = schools.length;
+  const coePrograms = filteredPrograms.filter(p => p.recognition === "COE").length;
+  const codPrograms = filteredPrograms.filter(p => p.recognition === "COD").length;
+  const totalPrograms = filteredPrograms.length;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Accreditation & Recognition Status
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Explore the quality assurance ratings of educational institutions
-          </p>
+      {/* Hero Section - Dark blue banner with text */}
+      <div className={`bg-slate-800 text-white py-12 px-6 relative overflow-hidden transition-all duration-700 ease-out transform ${heroAnimated ? 'opacity-100' : 'opacity-0 translate-y-[-20px]'}`}>
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold mb-2">Accreditation & Recognition Status</h1>
+          <p className="text-lg text-gray-300">Explore the quality assurance ratings of educational institutions</p>
         </div>
-      </header>
+        
+        {/* Wave shape at the bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 overflow-hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full h-auto">
+            <path fill="#f9fafb" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
+          </svg>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* Search bar */}
+      <div className={`max-w-7xl mx-auto px-4 py-6 -mt-2 relative z-10 flex gap-4 transition-all duration-700 ease-out ${heroAnimated ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="relative flex-grow">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            className="w-full pl-10 pr-4 py-3 border border-gray-100 rounded-full text-sm bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-100"
+            placeholder="Search programs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center space-x-2 bg-white text-gray-700 px-5 py-3 rounded-full border border-gray-100 shadow-md hover:bg-gray-50 text-sm focus:outline-none"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          <span>Filter</span>
+        </button>
+        
+        {/* Guide Button */}
+        <button
+          onClick={() => setShowGuideModal(true)}
+          className="flex items-center space-x-2 bg-white text-[#2B3E4E] px-5 py-3 rounded-full border border-gray-100 shadow-md hover:bg-gray-50 text-sm focus:outline-none transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>Guide</span>
+        </button>
+      </div>
+        
+      {/* Filter options */}
+      {showFilters && (
+        <FilterOptions
+          selectedProgramType={selectedProgramType}
+          setSelectedProgramType={setSelectedProgramType}
+          selectedAccreditationLevel={selectedAccreditationLevel}
+          setSelectedAccreditationLevel={setSelectedAccreditationLevel}
+          selectedRecognition={selectedRecognition}
+          setSelectedRecognition={setSelectedRecognition}
+        />
+      )}
+
+      {/* Guide Modal */}
+      {showGuideModal && <GuideModal onClose={() => setShowGuideModal(false)} />}
+
+      {/* Stats Cards */}
+      <StatsCards 
+        totalSchools={totalSchools}
+        coePrograms={coePrograms}
+        codPrograms={codPrograms}
+        totalPrograms={totalPrograms}
+        cardsAnimated={cardsAnimated}
+      />
+
+      {/* Main content area with tabs */}
+      <div className={`max-w-7xl mx-auto px-4 pb-16 transition-all duration-700 ease-out transform ${contentAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Schools List */}
-          <div className="lg:w-1/4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold mb-4">Schools</h2>
-              <div className="space-y-2">
-                {schools.map((school, index) => (
-                  <button
-                    key={school.id}
-                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors duration-200 ${
-                      selectedSchool === index
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "hover:bg-gray-50"
-                    }`}
-                    onClick={() =>
-                      setSelectedSchool(selectedSchool === index ? null : index)
-                    }
-                  >
-                    <div className="font-medium">{school.name}</div>
-                    <div className="text-sm text-gray-500">
-                      {school.totalAccredited} Programs
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          <SchoolsList 
+            schools={schools}
+            selectedSchool={selectedSchool}
+            setSelectedSchool={setSelectedSchool}
+            contentAnimated={contentAnimated}
+          />
 
           {/* Right Content */}
-          <div className="lg:w-3/4 flex flex-col gap-8">
-            {/* Programs Table */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex flex-wrap gap-4">
-                  <input
-                    type="text"
-                    className="block w-full lg:w-auto pl-3 pr-3 py-2 border border-gray-300 rounded-md text-sm"
-                    placeholder="Search programs..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <select
-                    className="border border-gray-300 rounded-md text-sm px-3 py-2"
-                    value={selectedProgramType}
-                    onChange={(e) => setSelectedProgramType(e.target.value)}
-                  >
-                    <option value="">All Program Types</option>
-                    <option value="Undergraduate Programs">Undergraduate</option>
-                    <option value="Graduate Programs">Graduate</option>
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-md text-sm px-3 py-2"
-                    value={selectedAccreditationLevel}
-                    onChange={(e) => setSelectedAccreditationLevel(e.target.value)}
-                  >
-                    <option value="">All Levels</option>
-                    <option value="4">Level IV</option>
-                    <option value="3">Level III</option>
-                    <option value="2">Level II</option>
-                    <option value="1">Level I</option>
-                  </select>
-                  <select
-                    className="border border-gray-300 rounded-md text-sm px-3 py-2"
-                    value={selectedRecognition}
-                    onChange={(e) => setSelectedRecognition(e.target.value)}
-                  >
-                    <option value="">All Recognitions</option>
-                    <option value="COE">COE</option>
-                    <option value="COD">COD</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        School & Program
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Recognition
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Accrediting Body
-                      </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPrograms.map((program, index) => (
-                      <tr
-                        key={index}
-                        className="hover:bg-gray-100 transition duration-200"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {program.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {program.schoolName}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {program.recognition ? (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRecognitionBadgeColor(
-                                program.recognition
-                              )} text-white`}
-                            >
-                              {program.recognition}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-gray-500">-</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-900">
-                            {program.accreditingBody}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAccreditationLevelColor(
-                              program.level
-                            )} text-white`}
-                          >
-                            {program.accreditationStatus}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <div className="lg:w-3/4">
+            {/* Tabs */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                <button
+                  onClick={() => handleTabChange("programs")}
+                  className={`${activeTab === "programs" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+                >
+                  Programs
+                </button>
+                <button
+                  onClick={() => handleTabChange("statistics")}
+                  className={`${activeTab === "statistics" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+                >
+                  Statistics
+                </button>
+                <button
+                  onClick={() => handleTabChange("about")}
+                  className={`${activeTab === "about" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+                >
+                  About Accreditation
+                </button>
+              </nav>
             </div>
 
-            {/* Legend Section */}
-            <div className="lg:w-full bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Legend</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
-                    Accreditation Levels
-                  </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
-                        IV
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Level IV - Highest level of accreditation
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-teal-600 text-white text-xs mr-2">
-                        III
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Level III - Well-established program quality
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
-                        II
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Level II - Demonstrated program quality
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-600 text-white text-xs mr-2">
-                        I
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Level I - Initial accreditation
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
-                    Recognition Types
-                  </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-600 text-white mr-2">
-                        COE
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Center of Excellence - Recognized by CHED for outstanding
-                        performance
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white mr-2">
-                        COD
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Center of Development - Recognized by CHED for potential
-                        excellence
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+            {/* Tab Content */}
+            <div className="mt-6">
+              {activeTab === "programs" && (
+                <ProgramsTab 
+                  filteredPrograms={filteredPrograms}
+                  contentAnimated={contentAnimated}
+                />
+              )}
+              
+              {activeTab === "statistics" && (
+                <StatisticsTab 
+                  filteredPrograms={filteredPrograms}
+                  statsVisible={statsVisible}
+                />
+              )}
+              
+              {activeTab === "about" && <AboutTab />}
             </div>
           </div>
         </div>
-      </main>
+      </div>
+
+      {/* Animation styling */}
+      <style jsx="true">{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };

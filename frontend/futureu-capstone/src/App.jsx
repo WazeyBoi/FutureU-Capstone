@@ -7,6 +7,7 @@ import VirtualCampusToursPage from './components/VirtualCampusToursPage.jsx';
 import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
 import CareerPathways from './components/CareerPathways.jsx';
+import Testimonials from './components/Testimonials.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
@@ -20,7 +21,9 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
-
+import 'leaflet/dist/leaflet.css';
+import SchoolsPage from './components/SchoolsPage.jsx';
+ 
 // Add these styles to App.css
 /*
 @keyframes float {
@@ -28,7 +31,7 @@ import './App.css';
   50% { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
-
+ 
 .animate-float {
   animation-name: float;
   animation-duration: 3s;
@@ -36,93 +39,96 @@ import './App.css';
   animation-timing-function: ease-in-out;
 }
 */
-
+ 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen flex flex-col">
-        <Navigation />
-        <div className="flex-1">
-          <Routes>
-            {/* Redirect root path to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            
-            {/* Public routes - with protection against authenticated access */}
-            <Route path="/login" element={
-              <PublicRoute>
-                <StudentLogin />
-              </PublicRoute>
-            } />
-            <Route path="/register" element={
-              <PublicRoute>
-                <StudentRegister />
-              </PublicRoute>
-            } />
-            
-            {/* Public routes */}
-            <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
-            <Route path="/user-landing-page" element={<UserLandingPage />} />
-            {/* Protected routes */}
-            <Route path="/academic-explorer" element={
-              <PrivateRoute>
-                <AcademicExplorer />
-              </PrivateRoute>
-            } />
-            <Route path="/accreditation" element={
-              <PrivateRoute>
-                <AccreditationRatings />
-              </PrivateRoute>
-            } />
-            <Route path="/accreditation/:section" element={
-              <PrivateRoute>
-                <AccreditationSection />
-              </PrivateRoute>
-            } />
-            <Route path="/career-pathways" element={
-              <PrivateRoute>
-                <CareerPathways />
-              </PrivateRoute>
-            } />
-            <Route path="/assessments" element={
-              <PrivateRoute>
-                <Assessments />
-              </PrivateRoute>
-            } />
-            <Route path="/assessment-categories" element={
-              <PrivateRoute>
-                <AssessmentCategories />
-              </PrivateRoute>
-            } />
-            <Route path="/assessment-subcategories" element={
-              <PrivateRoute>
-                <AssessmentSubCategories />
-              </PrivateRoute>
-            } />
-            <Route path="/quiz-subcategories" element={
-              <PrivateRoute>
-                <QuizSubCategories />
-              </PrivateRoute>
-            } />
-            <Route path="/questions" element={
-              <PrivateRoute>
-                <Questions />
-              </PrivateRoute>
-            } />
-            <Route path="/take-assessment/:assessmentId" element={
-              <PrivateRoute>
-                <TakeAssessment />
-              </PrivateRoute>
-            } />
-            <Route path="/assessment-dashboard" element={
-              <PrivateRoute>
-                <AssessmentDashboard />
-              </PrivateRoute>
-            } />
-          </Routes>
-        </div>
-      </div>
+
+      <Navigation />
+      <Routes>
+        {/* Redirect root path to login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+       
+        {/* Public routes - with protection against authenticated access */}
+        <Route path="/login" element={
+          <PublicRoute>
+            <StudentLogin />
+          </PublicRoute>
+        } />
+        <Route path="/register" element={
+          <PublicRoute>
+            <StudentRegister />
+          </PublicRoute>
+        } />
+       
+        {/* Public routes */}
+        <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
+        <Route path="/user-landing-page" element={<UserLandingPage />} />
+        <Route path="/schools" element={<SchoolsPage />} />
+        {/* Protected routes */}
+        <Route path="/academic-explorer" element={
+          <PrivateRoute>
+            <AcademicExplorer />
+          </PrivateRoute>
+        } />
+        <Route path="/accreditation" element={
+          <PrivateRoute>
+            <AccreditationRatings />
+          </PrivateRoute>
+        } />
+        <Route path="/accreditation/:section" element={
+          <PrivateRoute>
+            <AccreditationSection />
+          </PrivateRoute>
+        } />
+        <Route path="/testimonials" element={
+          <PrivateRoute>
+            <Testimonials />
+          </PrivateRoute>
+        } />
+        <Route path="/career-pathways" element={
+          <PrivateRoute>
+            <CareerPathways />
+          </PrivateRoute>
+        } />
+        <Route path="/assessments" element={
+          <PrivateRoute>
+            <Assessments />
+          </PrivateRoute>
+        } />
+        <Route path="/assessment-categories" element={
+          <PrivateRoute>
+            <AssessmentCategories />
+          </PrivateRoute>
+        } />
+        <Route path="/assessment-subcategories" element={
+          <PrivateRoute>
+            <AssessmentSubCategories />
+          </PrivateRoute>
+        } />
+        <Route path="/quiz-subcategories" element={
+          <PrivateRoute>
+            <QuizSubCategories />
+          </PrivateRoute>
+        } />
+        <Route path="/questions" element={
+          <PrivateRoute>
+            <Questions />
+          </PrivateRoute>
+        } />
+        <Route path="/take-assessment/:assessmentId" element={
+          <PrivateRoute>
+            <TakeAssessment />
+          </PrivateRoute>
+        } />
+        <Route path="/assessment-dashboard" element={
+          <PrivateRoute>
+            <AssessmentDashboard />
+          </PrivateRoute>
+        } />
+      </Routes>
     </Router>
   );
 }
-
+ 
 export default App;
