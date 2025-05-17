@@ -14,6 +14,7 @@ import Assessments from './pages/Assessments.jsx';
 import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
+import AssessmentDashboard from './pages/AssessmentDashboard.jsx';
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import PrivateRoute from './components/PrivateRoute';
@@ -42,6 +43,7 @@ import SchoolsPage from './components/SchoolsPage.jsx';
 function App() {
   return (
     <Router>
+
       <Navigation />
       <Routes>
         {/* Redirect root path to login */}
@@ -117,6 +119,11 @@ function App() {
         <Route path="/take-assessment/:assessmentId" element={
           <PrivateRoute>
             <TakeAssessment />
+          </PrivateRoute>
+        } />
+        <Route path="/assessment-dashboard" element={
+          <PrivateRoute>
+            <AssessmentDashboard />
           </PrivateRoute>
         } />
       </Routes>

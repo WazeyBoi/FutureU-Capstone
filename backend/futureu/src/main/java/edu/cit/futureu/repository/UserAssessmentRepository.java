@@ -13,4 +13,8 @@ import edu.cit.futureu.entity.AssessmentEntity;
 public interface UserAssessmentRepository extends JpaRepository<UserAssessmentEntity, Integer> {
     List<UserAssessmentEntity> findByUser(UserEntity user);
     List<UserAssessmentEntity> findByAssessment(AssessmentEntity assessment);
+    
+    // New methods for progress management
+    List<UserAssessmentEntity> findByUserAndStatus(UserEntity user, String status);
+    List<UserAssessmentEntity> findByUserAndAssessmentAndStatus(UserEntity user, AssessmentEntity assessment, String status);
 }

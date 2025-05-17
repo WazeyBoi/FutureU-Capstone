@@ -119,5 +119,4 @@ public class SchoolEntity {
     public void setSchoolPrograms(List<SchoolProgramEntity> schoolPrograms) {
         this.schoolPrograms = schoolPrograms;
     }
-
 }
