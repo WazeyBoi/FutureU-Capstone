@@ -28,7 +28,7 @@ public class AssessmentResultService {
         return assessmentResultRepository.findById(id);
     }
 
-    public List<AssessmentResultEntity> getAssessmentResultsByUserAssessment(UserAssessmentEntity userAssessment) {
+    public Optional<AssessmentResultEntity> getAssessmentResultsByUserAssessment(UserAssessmentEntity userAssessment) {
         return assessmentResultRepository.findByUserAssessment(userAssessment);
     }
 

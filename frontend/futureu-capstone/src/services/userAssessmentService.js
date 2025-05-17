@@ -78,9 +78,54 @@ class UserAssessmentService {
   }
 
   /**
-   * Save assessment progress
-   * @param {Object} progressData - Progress data to save
-   * @returns {Promise<Object>} - Saved progress response
+   * Create a new user assessment
+   * @param {Object} userAssessment - The user assessment object to create
+   * @returns {Promise<Object>} - Created user assessment data
+   */
+  async createUserAssessment(userAssessment) {
+    try {
+      const response = await apiClient.post('/userassessment/postUserAssessmentRecord', userAssessment);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Creating user assessment');
+      throw error;
+    }
+  }
+
+  /**
+   * Update a user assessment
+   * @param {Object} userAssessment - The user assessment to update
+   * @returns {Promise<Object>} - Updated user assessment data
+   */
+  async updateUserAssessment(userAssessment) {
+    try {
+      const response = await apiClient.put(`/userassessment/putUserAssessmentDetails?id=${userAssessment.userQuizAssessment}`, userAssessment);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Updating user assessment');
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a user assessment
+   * @param {number} id - The ID of the user assessment to delete
+   * @returns {Promise<string>} - Response message
+   */
+  async deleteUserAssessment(id) {
+    try {
+      const response = await apiClient.delete(`/userassessment/deleteUserAssessment/${id}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, `Deleting user assessment with ID ${id}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Save assessment progress for later resumption
+   * @param {Object} progressData - The assessment progress data
+   * @returns {Promise<Object>} - Saved progress data
    */
   async saveProgress(progressData) {
     try {
@@ -103,21 +148,64 @@ class UserAssessmentService {
       return response.data;
     } catch (error) {
       this.handleError(error, 'Fetching in-progress assessments');
+      return []; // Return empty array to prevent errors
+    }
+  }
+
+  /**
+   * Get specific assessment progress by ID
+   * @param {number} userAssessmentId - The user assessment ID
+   * @returns {Promise<Object>} - Assessment progress data
+   */
+  async getAssessmentProgress(userAssessmentId) {
+    try {
+      const response = await apiClient.get(`/assessment-progress/${userAssessmentId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching assessment progress data');
       throw error;
     }
   }
 
   /**
-   * Create a new user assessment
-   * @param {Object} userAssessment - The user assessment to create
-   * @returns {Promise<Object>} - Created user assessment data
+   * Submit a complete assessment for scoring
+   * @param {Object} submissionData - The complete assessment submission data
+   * @returns {Promise<Object>} - Assessment results
    */
-  async createUserAssessment(userAssessment) {
+  async submitCompletedAssessment(submissionData) {
     try {
-      const response = await apiClient.post('/userassessment/postUserAssessmentRecord', userAssessment);
+      // Using the new endpoint
+      const response = await apiClient.post('/userassessment/submit-completed', submissionData);
       return response.data;
     } catch (error) {
-      this.handleError(error, 'Creating user assessment');
+      // Enhanced error handling
+      let errorMessage = 'Error submitting assessment';
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        errorMessage = error.response.data?.message || 
+                      `Server error: ${error.response.status} - ${error.response.statusText}`;
+        console.error('Server error response:', error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        errorMessage = 'No response received from server. Check your network connection.';
+      }
+      this.handleError(error, `Submitting completed assessment: ${errorMessage}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get detailed assessment results by user assessment ID
+   * @param {number} userAssessmentId - The user assessment ID
+   * @returns {Promise<Object>} - Detailed assessment results
+   */
+  async getDetailedResults(userAssessmentId) {
+    try {
+      const response = await apiClient.get(`/assessment-results/${userAssessmentId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching detailed assessment results');
       throw error;
     }
   }

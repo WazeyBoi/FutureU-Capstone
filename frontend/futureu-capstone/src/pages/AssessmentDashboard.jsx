@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
+import authService from '../services/authService';
 
 const AssessmentDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -13,17 +14,28 @@ const AssessmentDashboard = () => {
   
   const navigate = useNavigate();
   
+  // Replace the getCurrentUserId function
+  const getCurrentUserId = () => {
+    return authService.getCurrentUserId() || 1; // Fallback to 1 during development
+  };
+  
   // Mock user ID - In a real app, get this from authentication context
-  const userId = 1;
+  const userId = getCurrentUserId();
   
   useEffect(() => {
     const fetchAssessments = async () => {
       try {
         setLoading(true);
         
-        // Fetch in-progress assessments
+        // Fetch in-progress assessments only for the current logged-in user
         const inProgressData = await assessmentTakingService.getInProgressAssessments(userId);
-        setInProgressAssessments(inProgressData);
+        
+        // Verify that all fetched assessments belong to the current user for extra security
+        const validInProgressAssessments = inProgressData.filter(
+          assessment => assessment.user.userId === userId
+        );
+        
+        setInProgressAssessments(validInProgressAssessments);
         
         // Fetch all assessments
         const allAssessments = await assessmentService.getAllAssessments();
@@ -37,7 +49,7 @@ const AssessmentDashboard = () => {
         setCompletedAssessments(completedData);
         
         // Filter for available (not started) assessments
-        const inProgressIds = inProgressData.map(a => a.assessment.assessmentId);
+        const inProgressIds = validInProgressAssessments.map(a => a.assessment.assessmentId);
         const availableData = allAssessments.filter(assessment => 
           !inProgressIds.includes(assessment.assessmentId)
         );

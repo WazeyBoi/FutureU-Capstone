@@ -33,10 +33,22 @@ class AuthService {
     }
   }
 
+  /**
+   * Clear all user-related data from local storage
+   * This is critical for security, especially for assessment progress
+   */
   signout() {
+    // Clean up all user-specific data to prevent access by next user
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    // Optionally, redirect to login page or notify other parts of the app
+    
+    // Remove any other user-specific data that might be in localStorage
+    // This is essential to prevent one user from accessing another's assessment progress
+    localStorage.removeItem('current_assessment');
+    localStorage.removeItem('assessment_progress');
+    
+    // Redirect to login page
+    window.location.href = '/login';
   }
 
   getCurrentUser() {
@@ -45,6 +57,15 @@ class AuthService {
       return JSON.parse(userStr);
     }
     return null;
+  }
+
+  /**
+   * Get the current user's ID
+   * @returns {number|null} - The current user's ID or null if not logged in
+   */
+  getCurrentUserId() {
+    const user = this.getCurrentUser();
+    return user ? user.id : null;
   }
 
   getToken() {

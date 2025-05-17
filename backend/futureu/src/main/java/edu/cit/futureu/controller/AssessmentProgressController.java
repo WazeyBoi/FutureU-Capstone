@@ -39,6 +39,19 @@ public class AssessmentProgressController {
         try {
             int userId = Integer.parseInt(payload.get("userId").toString());
             int assessmentId = Integer.parseInt(payload.get("assessmentId").toString());
+            
+            // Get authenticated user ID from security context
+            // int authenticatedUserId = getAuthenticatedUserId(); // Uncomment when auth is implemented
+            int authenticatedUserId = userId; // Temporary, remove when auth is implemented
+            
+            // Security check: Verify the user is saving their own progress
+            if (userId != authenticatedUserId) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Unauthorized: Cannot save progress for another user"), 
+                    HttpStatus.FORBIDDEN
+                );
+            }
+            
             int currentSectionIndex = Integer.parseInt(payload.get("currentSectionIndex").toString());
             double progressPercentage = Double.parseDouble(payload.get("progressPercentage").toString());
             String savedAnswers = payload.get("savedAnswers").toString();
@@ -76,8 +89,8 @@ public class AssessmentProgressController {
             }
             
             // Save progress with sections and elapsed time
-            userAssessment = userAssessmentService.saveAssessmentProgress(
-                userAssessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, elapsedTime);
+            userAssessment = userAssessmentService.saveProgress(
+                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, elapsedTime);
                 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Progress saved successfully");
@@ -95,6 +108,18 @@ public class AssessmentProgressController {
      */
     @GetMapping("/in-progress/{userId}")
     public ResponseEntity<List<UserAssessmentEntity>> getInProgressAssessments(@PathVariable int userId) {
+        // IMPORTANT: In a real implementation, get the authenticated user ID from the security context
+        // For now, we'll assume the passed userId is correct, but in production:
+        // int authenticatedUserId = SecurityContextHolder.getContext().getAuthentication().getPrincipal().getUserId();
+        int authenticatedUserId = userId; // REPLACE THIS with actual security context when implemented
+        
+        // Security check: Verify the user is requesting their own assessments
+        if (userId != authenticatedUserId) {
+            return new ResponseEntity<>(
+                HttpStatus.FORBIDDEN
+            );
+        }
+        
         Optional<UserEntity> userOpt = userService.getUserById(userId);
         if (!userOpt.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -102,7 +127,7 @@ public class AssessmentProgressController {
         
         List<UserAssessmentEntity> inProgressAssessments = 
             userAssessmentService.getUserAssessmentsByUserAndStatus(userOpt.get(), "IN_PROGRESS");
-            
+        
         return new ResponseEntity<>(inProgressAssessments, HttpStatus.OK);
     }
     
@@ -118,6 +143,29 @@ public class AssessmentProgressController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         
-        return new ResponseEntity<>(userAssessmentOpt.get(), HttpStatus.OK);
+        // Get authenticated user ID from security context
+        // int authenticatedUserId = getAuthenticatedUserId(); // Uncomment when auth is implemented
+        UserAssessmentEntity assessment = userAssessmentOpt.get();
+        int assessmentUserId = assessment.getUser().getUserId();
+        int authenticatedUserId = assessmentUserId; // Temporary, remove when auth is implemented
+        
+        // Security check: Verify the user is accessing their own assessment
+        if (assessmentUserId != authenticatedUserId) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        
+        return new ResponseEntity<>(assessment, HttpStatus.OK);
     }
+    
+    // Add this method when authentication is fully implemented
+    /*
+    private int getAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        return ((CustomUserDetails) userDetails).getUserId();
+    }
+    */
 }

@@ -4,8 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion'; // Need to install: npm
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
+import authService from '../services/authService';
 import AssessmentSection from '../components/assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
+
+// Replace the getCurrentUserId function
+const getCurrentUserId = () => {
+  const userId = authService.getCurrentUserId();
+  if (!userId) {
+    // If no user ID found, redirect to login page
+    window.location.href = '/login';
+    return null;
+  }
+  return userId;
+};
 
 const TakeAssessment = () => {
   const { assessmentId = "1" } = useParams();
@@ -117,12 +129,15 @@ const TakeAssessment = () => {
       try {
         setLoading(true);
         
+        // Get the current authenticated user ID
+        const userId = getCurrentUserId();
+        if (!userId) return; // Stop if no valid user
+        
         // First, fetch just the assessment details
         const assessmentData = await assessmentService.getAssessmentById(parseInt(assessmentId));
         setAssessment(assessmentData);
         
         // Check for existing progress BEFORE fetching/randomizing questions
-        const userId = 1; // Replace with actual user ID from auth context
         const inProgressAssessments = await userAssessmentService.getInProgressAssessments(userId);
         
         // Find if there's an in-progress assessment matching current assessment ID
@@ -133,6 +148,14 @@ const TakeAssessment = () => {
         let shouldLoadNewQuestions = true;
         
         if (existingProgress) {
+          // Double security check: Verify that this assessment belongs to the current user
+          if (existingProgress.user.userId !== userId) {
+            console.error("Security violation: Attempt to access another user's assessment");
+            setError("You cannot access another user's assessment progress.");
+            setLoading(false);
+            return;
+          }
+          
           // Ask user if they want to resume
           const wantToResume = window.confirm(
             "You have a saved progress for this assessment. Would you like to resume from where you left off?"
@@ -483,8 +506,20 @@ const TakeAssessment = () => {
         answer: userAnswers[questionId]
       }));
       
-      // Submit answers
-      await assessmentTakingService.submitAnswers(parseInt(assessmentId), formattedAnswers);
+      // Get the current logged-in user ID
+      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      
+      // Create submission payload including sections and elapsed time
+      const payload = {
+        userId: userId,
+        assessmentId: parseInt(assessmentId),
+        answers: formattedAnswers,
+        sections: JSON.stringify(sectionList),
+        elapsedTime: finalElapsedTime
+      };
+      
+      // Submit the complete assessment for scoring
+      const result = await userAssessmentService.submitCompletedAssessment(payload);
       
       // Show completion state
       setCompleted(true);
@@ -492,7 +527,7 @@ const TakeAssessment = () => {
       
       // Redirect to results after 5 seconds
       setTimeout(() => {
-        navigate(`/assessment-results/${assessmentId}`);
+        navigate(`/assessment-results/${result.userAssessmentId}`);
       }, 5000);
       
     } catch (err) {
@@ -512,9 +547,12 @@ const TakeAssessment = () => {
       const progress = calculateProgress();
       const progressPercentage = Math.round((progress.completed / progress.total) * 100);
       
+      // Get the current logged-in user ID
+      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      
       // Create payload with current state, including sections with questions and elapsed time
       const payload = {
-        userId: 1, // Replace with actual logged in user ID from your auth context
+        userId: userId,
         assessmentId: parseInt(assessmentId),
         currentSectionIndex: currentSection,
         progressPercentage: progressPercentage,
@@ -779,7 +817,7 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     Save & Exit
                   </>
@@ -847,7 +885,7 @@ const TakeAssessment = () => {
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
             <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>
