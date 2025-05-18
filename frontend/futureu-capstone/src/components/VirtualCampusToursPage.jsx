@@ -1,6 +1,62 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+import CesiumSchoolsGlobe from "./CesiumSchoolsGlobe";
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
+import citu_school_logo from '../assets/school_logos/citu_school_logo.png';
+import cnu_school_logo from '../assets/school_logos/cnu_school_logo.png';
+import ctu_school_logo from '../assets/school_logos/ctu_school_logo.png';
+import iau_school_logo from '../assets/school_logos/iau_school_logo.png';
+import swu_school_logo from '../assets/school_logos/swu_school_logo.png';
+import uc_school_logo from '../assets/school_logos/uc_school_logo.png';
+import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
+import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
+import up_school_logo from '../assets/school_logos/up_school_logo.png';
+import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
+
+const schoolIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/167/167707.png",
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
+
+const defaultMapCenter = [10.314906600288964, 123.92222881993207];
+const defaultMapZoom = 13;
+
+function FlyToSchool({ position, zoom }) {
+  const map = useMap();
+  React.useEffect(() => {
+    if (position && zoom) map.flyTo(position, zoom, { duration: 1.5 });
+  }, [position, zoom, map]);
+  return null;
+}
+
+const tileOptions = [
+  {
+    name: "Default",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+  },
+  {
+    name: "Topo",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> contributors'
+  },
+  {
+    name: "Dark",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution: '&copy; <a href="https://carto.com/">CartoDB</a>'
+  },
+  {
+    name: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: 'Tiles &copy; Esri'
+  }
+];
 
 const VirtualCampusToursPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -12,6 +68,14 @@ const VirtualCampusToursPage = () => {
   const [apiSchools, setApiSchools] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [enhancedCampuses, setEnhancedCampuses] = useState([]); // New state for enhanced campuses
+  const [viewMode, setViewMode] = useState("2d"); // "2d" for Leaflet, "3d" for Cesium
+  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [flyTo, setFlyTo] = useState(defaultMapCenter);
+  const [mapZoom, setMapZoom] = useState(defaultMapZoom);
+  const [tileUrl, setTileUrl] = useState(tileOptions[0].url);
+  const [tileAttribution, setTileAttribution] = useState(tileOptions[0].attribution);
+  const [schools, setSchools] = useState([]); // <-- use this for map markers
+  const mapRef = useRef(null);
 
   // Animation variants - simplified for smoother animations
   const fadeIn = {
@@ -360,6 +424,77 @@ const VirtualCampusToursPage = () => {
     </motion.div>
   );
 
+  const handleSchoolMarkerClick = (schoolObj) => {
+    setSelectedSchool(schoolObj);
+    setSchool(schoolObj.name);
+    setFlyTo([Number(schoolObj.latitude), Number(schoolObj.longitude)]);
+    setMapZoom(17); // Zoom in to school
+  };
+
+  const handleClearSchool = () => {
+    setSelectedSchool(null);
+    setSchool("");
+    setFlyTo(defaultMapCenter);
+    setMapZoom(defaultMapZoom);
+    if (mapRef.current) {
+      mapRef.current.setView(defaultMapCenter, defaultMapZoom, { animate: true });
+    }
+  };
+
+  const handleTileChange = (e) => {
+    const option = tileOptions.find(opt => opt.url === e.target.value);
+    setTileUrl(option.url);
+    setTileAttribution(option.attribution);
+  };
+
+  // Fetch schools from backend
+  useEffect(() => {
+    axios.get("/api/school/getAllSchools")
+      .then(res => {
+        setSchools(res.data);
+      })
+      .catch(err => {
+        console.error("Failed to fetch schools:", err);
+      });
+  }, []);
+
+  // School logo mapping (same as AcademicExplorer.jsx)
+  const schoolLogos = {
+    1: cdu_school_logo,
+    2: citu_school_logo,
+    3: cnu_school_logo,
+    4: ctu_school_logo,
+    5: iau_school_logo,
+    6: swu_school_logo,
+    7: uc_school_logo,
+    8: usc_school_logo,
+    9: usjr_school_logo,
+    10: up_school_logo,
+    11: uv_school_logo,
+  };
+
+  // Helper to create a custom marker icon with logo inside a pin
+  function getSchoolMarkerIcon(schoolId) {
+    const logo = schoolLogos[schoolId];
+    return L.divIcon({
+      className: 'custom-school-marker',
+      iconSize: [48, 56],
+      iconAnchor: [24, 56],
+      popupAnchor: [0, -56],
+      html: `
+        <div style="position: relative; width: 48px; height: 56px;">
+          <svg width="48" height="56" viewBox="0 0 48 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;z-index:1;">
+            <ellipse cx="24" cy="20" rx="18" ry="18" fill="#fff" stroke="#4285F4" stroke-width="3"/>
+            <path d="M24 55C24 55 42 35.5 42 20C42 9.50659 33.4934 1 23.9999 1C14.5066 1 6 9.50659 6 20C6 35.5 24 55 24 55Z" fill="#4285F4" stroke="#4285F4" stroke-width="2"/>
+          </svg>
+          <div style="position:absolute;top:6px;left:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#fff;z-index:2;">
+            ${logo ? `<img src="${logo}" alt="logo" style="width:44px;height:44px;object-fit:cover;" />` : ''}
+          </div>
+        </div>
+      `
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Wave */}
@@ -430,6 +565,186 @@ const VirtualCampusToursPage = () => {
         </div>
       </motion.div>
 
+      {/* --- MOVE THIS MAP SECTION UP, right after the hero section --- */}
+      <div className="flex justify-center mb-4 mt-4">
+        <button
+          className={`px-6 py-2 font-semibold rounded-l-full border transition-all duration-200 shadow-sm
+            ${viewMode === "2d"
+              ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white border-blue-700 shadow-lg scale-105 z-10"
+              : "bg-white text-blue-700 border-blue-400 hover:bg-blue-50"}
+          `}
+          onClick={() => setViewMode("2d")}
+        >
+          2D Map
+        </button>
+        <button
+          className={`px-6 py-2 font-semibold rounded-r-full border transition-all duration-200 shadow-sm
+            ${viewMode === "3d"
+              ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white border-blue-700 shadow-lg scale-105 z-10"
+              : "bg-white text-blue-700 border-blue-400 hover:bg-blue-50"}
+          `}
+          onClick={() => setViewMode("3d")}
+        >
+          3D Globe
+        </button>
+      </div>
+      <div className="flex flex-col md:flex-row h-[70vh] bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative max-w-7xl mx-auto rounded-3xl shadow-2xl border border-blue-100 mb-8">
+        {viewMode === "2d" ? (
+          <div className="w-full h-full flex items-center justify-center p-4 relative">
+            {/* Map Style Switcher */}
+            <select
+              className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white border border-gray-200 rounded-full px-4 py-2 shadow"
+              value={tileUrl}
+              onChange={handleTileChange}
+            >
+              {tileOptions.map(opt => (
+                <option key={opt.name} value={opt.url}>{opt.name} Map</option>
+              ))}
+            </select>
+            {/* Clear School Button */}
+            {selectedSchool && (
+              <button
+                onClick={handleClearSchool}
+                className="absolute top-6 right-6 z-[1000] bg-white border border-yellow-200 rounded-full px-4 py-2 shadow hover:bg-yellow-50 transition"
+              >
+                Clear School
+              </button>
+            )}
+            <div className="w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
+              <MapContainer
+                center={flyTo}
+                zoom={mapZoom}
+                style={{ height: "100%", width: "100%" }}
+                whenCreated={mapInstance => { mapRef.current = mapInstance; }}
+              >
+                <TileLayer
+                  attribution={tileAttribution}
+                  url={tileUrl}
+                />
+                {schools.map((schoolObj) => (
+                  <Marker
+                    key={schoolObj.schoolId}
+                    position={[Number(schoolObj.latitude), Number(schoolObj.longitude)]}
+                    icon={getSchoolMarkerIcon(schoolObj.schoolId)}
+                    eventHandlers={{
+                      click: () => handleSchoolMarkerClick(schoolObj),
+                    }}
+                  >
+                    {/*<Popup>
+                      <div className="text-center">
+                        <strong className="block text-blue-800">{schoolObj.name}</strong>
+                      </div>
+                    </Popup>*/}
+                    <Tooltip
+                      direction="top"
+                      offset={[0, -20]}
+                      opacity={1}
+                      className="custom-school-tooltip"
+                    >
+                      {schoolObj.name}
+                    </Tooltip>
+                  </Marker>
+                ))}
+                {/* Fly to school when selected */}
+                {flyTo && <FlyToSchool position={flyTo} zoom={mapZoom} />}
+              </MapContainer>
+            </div>
+          </div>
+        ) : (
+          <CesiumSchoolsGlobe
+            schools={schools
+              .map(s => ({
+                ...s,
+                latitude: Number(s.latitude),
+                longitude: Number(s.longitude)
+              }))
+              .filter(s =>
+                !isNaN(s.latitude) &&
+                !isNaN(s.longitude)
+              )
+            }
+            selectedSchool={selectedSchool}
+            setSelectedSchool={schoolObj => {
+              setSelectedSchool(schoolObj);
+              setSchool(schoolObj ? schoolObj.name : "");
+              setFlyTo(
+                schoolObj
+                  ? [Number(schoolObj.latitude), Number(schoolObj.longitude)]
+                  : null
+              );
+            }}
+            goTo2DMap={() => setViewMode("2d")}
+          />
+        )}
+        {/* School Details Section (always shown for both 2D and 3D) */}
+        <div className="w-full max-w-md bg-white rounded-r-3xl shadow-2xl border border-yellow-100 p-0 flex flex-col justify-center items-center">
+          {selectedSchool ? (
+            <div className="w-full flex flex-col items-center">
+              {/* Header with logo */}
+              <div className="w-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-tr-3xl rounded-tl-3xl flex flex-col items-center py-6 shadow">
+                <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg mb-2 border-4 border-blue-100">
+                  <img
+                    src={schoolLogos[selectedSchool.schoolId]}
+                    alt={selectedSchool.name}
+                    className="w-20 h-20 object-cover rounded-full"
+                    style={{ background: "#fff" }}
+                  />
+                </div>
+                <h2 className="text-2xl font-extrabold text-white drop-shadow mb-1 text-center">{selectedSchool.name}</h2>
+              </div>
+              {/* Details */}
+              <div className="w-full px-8 py-6 flex flex-col items-start">
+                <p className="mb-2 text-gray-700">
+                  <span className="font-semibold text-blue-700">Location:</span> {selectedSchool.location}
+                </p>
+                <p className="mb-2 text-gray-700">
+                  <span className="font-semibold text-blue-700">Type:</span> {selectedSchool.type}
+                </p>
+                {selectedSchool.schoolWebsiteUrl && (
+                  <p className="mb-2 text-gray-700">
+                    <span className="font-semibold text-blue-700">Website:</span>{" "}
+                    <a href={selectedSchool.schoolWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all">
+                      {selectedSchool.schoolWebsiteUrl}
+                    </a>
+                  </p>
+                )}
+                <p className="mb-2 text-gray-700">
+                  <span className="font-semibold text-blue-700">Rating:</span> {selectedSchool.averageRating ?? "N/A"}
+                </p>
+                <div className="w-full bg-blue-50 rounded-lg p-4 mt-2 mb-4 border border-blue-100">
+                  <p className="text-gray-700 text-sm">{selectedSchool.description}</p>
+                </div>
+                <button
+                  onClick={handleClearSchool}
+                  className="mt-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 rounded-full text-white font-semibold shadow transition self-center"
+                >
+                  Clear School
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
+              <svg
+                className="w-16 h-16 mb-4 text-yellow-200"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 20.5v-17m0 0L7 7m5-3.5l5 3.5"
+                />
+              </svg>
+              <span className="text-lg font-medium">
+                Click a school marker to view details.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Main Content - Conditionally show search results or featured tours */}
       <motion.div 
         initial={{ opacity: 0 }}
@@ -490,14 +805,7 @@ const VirtualCampusToursPage = () => {
                   className="text-center py-16"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <h3 className="mt-4 text-xl font-medium text-gray-600">
-                    No schools found matching "{searchQuery}"
-                  </h3>
-                  <p className="mt-2 text-gray-500">
-                    Try adjusting your search terms or filters
-                  </p>
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -692,6 +1000,24 @@ const VirtualCampusToursPage = () => {
           )}
         </AnimatePresence>
       </motion.div>
+      <style>
+        {`
+        .custom-school-marker {
+          filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+        }
+        .leaflet-tooltip.custom-school-tooltip {
+          background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+          color: #fff;
+          font-weight: 600;
+          border-radius: 12px;
+          box-shadow: 0 4px 16px rgba(37,99,235,0.12);
+          padding: 8px 18px;
+          border: none;
+          font-size: 1rem;
+          letter-spacing: 0.01em;
+        }
+        `}
+      </style>
     </div>
   );
 };
