@@ -127,6 +127,11 @@ function App() {
             <AssessmentDashboard />
           </PrivateRoute>
         } />
+          <Route path="/assessment-results/:userAssessmentId" element={
+            <PrivateRoute>
+              <AssessmentResults />
+            </PrivateRoute>
+          } />
       </Routes>
     </Router>
   );
