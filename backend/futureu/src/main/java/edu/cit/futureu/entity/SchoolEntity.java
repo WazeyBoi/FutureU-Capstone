@@ -1,18 +1,19 @@
 package edu.cit.futureu.entity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "school")
@@ -26,10 +27,18 @@ public class SchoolEntity {
     private String location;
     private String type;
     private String schoolWebsiteUrl;
-    private String virtualTourUrl;
     
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal longitude;
+
+    @Column(precision = 2, scale = 1)
+    private BigDecimal averageRating;
 
     // One-to-many to Testimony
     @JsonManagedReference(value = "school-testimony")
@@ -46,9 +55,7 @@ public class SchoolEntity {
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SchoolProgramEntity> schoolPrograms;
 
-    public SchoolEntity() {
-
-    }
+    public SchoolEntity() {}
 
     public int getSchoolId() {
         return schoolId;
@@ -82,20 +89,28 @@ public class SchoolEntity {
         this.type = type;
     }
 
-    public String getVirtualTourUrl() {
-        return virtualTourUrl;
-    }
-
-    public void setVirtualTourUrl(String virtualTourUrl) {
-        this.virtualTourUrl = virtualTourUrl;
-    }
-    
     public String getDescription() {
         return description;
     }
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
+    public BigDecimal getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(BigDecimal longitude) {
+        this.longitude = longitude;
     }
 
     public List<TestimonyEntity> getTestimonies() {
@@ -121,10 +136,20 @@ public class SchoolEntity {
     public void setSchoolPrograms(List<SchoolProgramEntity> schoolPrograms) {
         this.schoolPrograms = schoolPrograms;
     }
+
     public String getSchoolWebsiteUrl() {
         return schoolWebsiteUrl;
     }
+
     public void setSchoolWebsiteUrl(String schoolWebsiteUrl) {
         this.schoolWebsiteUrl = schoolWebsiteUrl;
+    }
+
+    public BigDecimal getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(BigDecimal averageRating) {
+       this.averageRating = averageRating;
     }
 }
