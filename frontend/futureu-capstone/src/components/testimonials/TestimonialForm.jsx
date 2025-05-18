@@ -1,29 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaStar, FaTimes } from 'react-icons/fa';
+import { FaTimes, FaStar } from 'react-icons/fa';
 import { createTestimonial, updateTestimonial } from '../../services/testimonialService';
+import authService from '../../services/authService';
+
+const StarRating = ({ rating, onRatingChange }) => {
+  const [hover, setHover] = useState(0);
+  
+  return (
+    <div className="flex items-center">
+      {[...Array(5)].map((_, index) => {
+        const ratingValue = index + 1;
+        
+        return (
+          <FaStar 
+            key={index}
+            className="cursor-pointer transition-colors duration-200"
+            color={ratingValue <= (hover || rating) ? "#FFB71B" : "#e4e5e9"}
+            size={30}
+            onClick={() => onRatingChange(ratingValue)}
+            onMouseEnter={() => setHover(ratingValue)}
+            onMouseLeave={() => setHover(0)}
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmitSuccess }) => {
   const initialFormState = {
-    id: null,
-    name: '',
-    type: 'student',
+    description: '',
     schoolId: '',
-    program: '',
-    gradYear: new Date().getFullYear(),
-    quote: '',
-    rating: 5
+    rating: 0,
   };
 
   const [formData, setFormData] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [hoverRating, setHoverRating] = useState(0);
 
   // If testimonialToEdit is provided, it means we're editing an existing testimonial
   useEffect(() => {
     if (testimonialToEdit) {
-      setFormData(testimonialToEdit);
+      setFormData({
+        ...testimonialToEdit,
+        // Ensure we have the correct structure
+        description: testimonialToEdit.description || '',
+        schoolId: testimonialToEdit.schoolId || testimonialToEdit.school?.schoolId || '',
+        rating: testimonialToEdit.rating || 0,
+      });
     } else {
       setFormData(initialFormState);
     }
@@ -36,8 +61,8 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
       [name]: value
     }));
   };
-
-  const handleRatingClick = (rating) => {
+  
+  const handleRatingChange = (rating) => {
     setFormData(prev => ({
       ...prev,
       rating
@@ -50,23 +75,62 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
     setError('');
 
     try {
-      let response;
+      // Get the current user from auth service
+      const currentUser = authService.getCurrentUser();
       
-      if (formData.id) {
-        // Update existing testimonial
-        response = await updateTestimonial(formData.id, formData);
-      } else {
-        // Create new testimonial
-        response = await createTestimonial(formData);
+      if (!currentUser || !currentUser.id) {
+        throw new Error('You must be logged in to submit a testimonial');
       }
+
+      // Prepare the data according to backend structure
+      const testimonialData = {
+        description: formData.description,
+        rating: formData.rating,  // Include rating data
+        // If we're editing, keep the ID
+        testimonyId: testimonialToEdit?.testimonyId, 
+        // Reference to School entity
+        school: {
+          schoolId: parseInt(formData.schoolId)
+        },
+        // Reference to User entity (student)
+        student: {
+          userId: currentUser.id
+        }
+      };
+
+      // Capture if we're creating or updating for the success message
+      const isNewTestimonial = !testimonialToEdit?.testimonyId || testimonialToEdit?.isNewTestimonial;
       
-      // Call the success callback with the response data
-      onSubmitSuccess(response.data || formData);
-      onClose();
-      setFormData(initialFormState);
+      try {
+        let response;
+        
+        if (testimonialToEdit?.testimonyId && !testimonialToEdit?.isNewTestimonial) {
+          // Update existing testimonial
+          response = await updateTestimonial(testimonialToEdit.testimonyId, testimonialData);
+        } else {
+          // Create new testimonial
+          response = await createTestimonial(testimonialData);
+        }
+        
+        // Call the success callback with the response data
+        onSubmitSuccess(response.data || testimonialData);
+        
+        // Since data is actually saved to the database even when we get errors later,
+        // we can close the form and reset it
+        onClose();
+        setFormData(initialFormState);
+        
+        // Show success message to the user
+        alert(isNewTestimonial ? 'Your review has been submitted successfully!' : 'Your review has been updated successfully!');
+        
+      } catch (apiError) {
+        // We might get API errors but the data might still be saved
+        console.error('API error during testimonial submission:', apiError);
+        setError('There was a problem completing your request. Please check if your review was saved.');
+      }
     } catch (err) {
       console.error('Error submitting testimonial:', err);
-      setError('Failed to submit your testimonial. Please try again later.');
+      setError(err.message || 'Failed to submit your testimonial. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -91,16 +155,32 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
         {/* Header with gradient */}
         <div className="flex justify-between items-center p-6 bg-[#2B3E4E] text-white sticky top-0 z-10 shadow-md">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-[#FFB71B]/20 flex items-center justify-center">
-              <FaStar className="text-[#FFB71B]" />
-            </div>
             <h2 className="text-xl font-bold">
-              {testimonialToEdit ? 'Edit Your Review' : 'Share Your Experience'}
+              {testimonialToEdit && !testimonialToEdit.isNewTestimonial ? 'Edit Your Review' : 'Share Your Experience'}
             </h2>
           </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: 'white',
+              color: '#FF4B4B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFF5F5';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = 'white';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
           >
             <FaTimes size={16} />
           </button>
@@ -118,52 +198,6 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
             )}
 
             <div className="mb-6">
-              <label htmlFor="name" className="block text-[#2B3E4E] font-medium mb-2 text-sm">Your Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all bg-white/50 shadow-sm"
-                placeholder="Enter your name"
-                required
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-[#2B3E4E] font-medium mb-2 text-sm">You are</label>
-              <div className="flex space-x-4">
-                <label className="inline-flex items-center relative">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="student"
-                    checked={formData.type === 'student'}
-                    onChange={handleChange}
-                    className="absolute opacity-0 h-0 w-0"
-                  />
-                  <span className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${formData.type === 'student' ? 'bg-[#2B3E4E] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    Current Student
-                  </span>
-                </label>
-                <label className="inline-flex items-center relative">
-                  <input
-                    type="radio"
-                    name="type"
-                    value="alumni"
-                    checked={formData.type === 'alumni'}
-                    onChange={handleChange}
-                    className="absolute opacity-0 h-0 w-0"
-                  />
-                  <span className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${formData.type === 'alumni' ? 'bg-[#2B3E4E] text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                    Alumni
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            <div className="mb-6">
               <label htmlFor="schoolId" className="block text-[#2B3E4E] font-medium mb-2 text-sm">School</label>
               <div className="relative">
                 <select
@@ -173,6 +207,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
                   onChange={handleChange}
                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] appearance-none bg-white shadow-sm pr-10"
                   required
+                  disabled={testimonialToEdit?.schoolId}
                 >
                   <option value="">Select a school</option>
                   {schools.map(school => (
@@ -189,81 +224,22 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
               </div>
             </div>
 
-            <div className="mb-6">
-              <label htmlFor="program" className="block text-[#2B3E4E] font-medium mb-2 text-sm">Program/Course</label>
-              <input
-                type="text"
-                id="program"
-                name="program"
-                value={formData.program}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all shadow-sm"
-                placeholder="e.g. Bachelor of Science in Computer Science"
-                required
-              />
-            </div>
-
-            <div className="mb-6">
-              <label htmlFor="gradYear" className="block text-[#2B3E4E] font-medium mb-2 text-sm">
-                {formData.type === 'alumni' ? 'Graduation Year' : 'Expected Graduation Year'}
-              </label>
-              <input
-                type="number"
-                id="gradYear"
-                name="gradYear"
-                value={formData.gradYear}
-                onChange={handleChange}
-                min="2000"
-                max="2030"
-                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all shadow-sm"
-                required
-              />
-            </div>
-
+            {/* Star Rating Component */}
             <div className="mb-6">
               <label className="block text-[#2B3E4E] font-medium mb-2 text-sm">Your Rating</label>
-              <div className="flex space-x-1 bg-gray-50 p-3 rounded-xl items-center">
-                <div className="flex space-x-1">
-                  {[1, 2, 3, 4, 5].map(rating => (
-                    <button
-                      key={rating}
-                      type="button"
-                      onMouseEnter={() => setHoverRating(rating)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => handleRatingClick(rating)}
-                      className="focus:outline-none transition-transform hover:scale-110 p-1"
-                    >
-                      <FaStar
-                        size={28}
-                        className={`${
-                          rating <= (hoverRating || formData.rating)
-                            ? 'text-[#FFB71B]'
-                            : 'text-gray-300'
-                        } transition-colors`}
-                      />
-                    </button>
-                  ))}
-                </div>
-                <div className="ml-3 text-[#2B3E4E] font-medium">
-                  {formData.rating === 1 && "Poor"}
-                  {formData.rating === 2 && "Fair"}
-                  {formData.rating === 3 && "Good"}
-                  {formData.rating === 4 && "Very Good"}
-                  {formData.rating === 5 && "Excellent"}
-                </div>
-              </div>
+              <StarRating rating={formData.rating} onRatingChange={handleRatingChange} />
             </div>
 
             <div className="mb-6">
-              <label htmlFor="quote" className="block text-[#2B3E4E] font-medium mb-2 text-sm">Your Review</label>
+              <label htmlFor="description" className="block text-[#2B3E4E] font-medium mb-2 text-sm">Your Review</label>
               <textarea
-                id="quote"
-                name="quote"
-                value={formData.quote}
+                id="description"
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                rows="4"
+                rows="6"
                 className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all shadow-sm"
-                placeholder="Tell us about your experience..."
+                placeholder="Tell us about your experience with this school..."
                 required
               ></textarea>
             </div>
@@ -275,7 +251,17 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 border border-gray-200 rounded-lg text-[#2B3E4E] hover:bg-gray-50 mr-4 font-medium transition-colors"
+            style={{
+              backgroundColor: '#2B3E4E',
+              color: 'white',
+              padding: '0.625rem 1.5rem',
+              borderRadius: '0.5rem',
+              marginRight: '1rem',
+              fontWeight: '500',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1b2d3d'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2B3E4E'}
           >
             Cancel
           </button>
@@ -283,7 +269,25 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
             type="submit"
             form="testimonial-form"
             disabled={loading}
-            className="px-6 py-2.5 bg-[#2B3E4E] hover:bg-[#2B3E4E]/90 text-white rounded-lg shadow-md hover:shadow-lg flex items-center font-medium transition-all"
+            style={{
+              backgroundColor: '#FFB71B',
+              color: 'white',
+              padding: '0.625rem 1.5rem',
+              borderRadius: '0.5rem',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#e09b00';
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFB71B';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            }}
           >
             {loading ? (
               <>
@@ -294,12 +298,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
                 Submitting...
               </>
             ) : (
-              <>
-                <span>{testimonialToEdit ? 'Update Review' : 'Submit Review'}</span>
-                <svg className="ml-2 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </>
+              <span>{testimonialToEdit && !testimonialToEdit.isNewTestimonial ? 'Update Review' : 'Submit Review'}</span>
             )}
           </button>
         </div>

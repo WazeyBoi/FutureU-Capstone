@@ -2,6 +2,9 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,8 +35,13 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
+    
+    @JsonManagedReference(value = "student-testimony")
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TestimonyEntity> testimonies;
 
     public UserEntity() {
     }
@@ -105,5 +113,13 @@ public class UserEntity {
 
     public void setAnswers(List<AnswerEntity> answers) {
         this.answers = answers;
+    }
+    
+    public List<TestimonyEntity> getTestimonies() {
+        return testimonies;
+    }
+    
+    public void setTestimonies(List<TestimonyEntity> testimonies) {
+        this.testimonies = testimonies;
     }
 }

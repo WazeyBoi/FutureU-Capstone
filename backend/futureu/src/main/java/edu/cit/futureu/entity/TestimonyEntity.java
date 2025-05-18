@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,14 +21,19 @@ public class TestimonyEntity {
     // Many-to-one relationship with School
     @ManyToOne
     @JoinColumn(name = "schoolId", nullable = false)
+    @JsonBackReference(value = "school-testimony")
     private SchoolEntity school;
 
     // Many-to-one relationship with User
     @ManyToOne
     @JoinColumn(name = "studentId", nullable = false)
+    @JsonBackReference(value = "student-testimony")
     private UserEntity student;
 
     private String description;
+    
+    // Rating field (1-5 stars)
+    private Integer rating;
 
     public TestimonyEntity() {
 
@@ -63,5 +70,12 @@ public class TestimonyEntity {
     public void setDescription(String description) {
         this.description = description;
     }
-
+    
+    public Integer getRating() {
+        return rating;
+    }
+    
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
 }

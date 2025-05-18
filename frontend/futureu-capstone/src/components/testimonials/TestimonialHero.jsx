@@ -31,9 +31,9 @@ const TestimonialHero = () => {
   ];
 
   return (
-    <div className="relative bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
-      <div className="absolute inset-0 bg-black opacity-50"></div>
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-24 sm:px-6 lg:px-8">
+    <div className="relative bg-[#0a1930] text-white">
+      <div className="absolute inset-0 bg-[url('/src/assets/pattern-bg.png')] opacity-10"></div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
         <div className="text-center">
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6"
@@ -75,7 +75,7 @@ const TestimonialHero = () => {
       </div>
       
       {/* Wave divider */}
-      <div className="absolute bottom-0 left-0 right-0">
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full">
           <path
             fill="#f9fafb" /* This should match your gray-50 background */
