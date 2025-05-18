@@ -18,8 +18,12 @@ import AssessmentDashboard from './pages/AssessmentDashboard.jsx';
 import AssessmentResults from './pages/AssessmentResults.jsx'; // Ensure this import exists
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
+import AdminLogin from './components/Admin/AdminLogin.jsx';
+import AdminDashboardTest from './components/Admin/AdminDashboardTest.jsx';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
+import AdminRoute from './components/AdminRoute';
+import Unauthorized from './components/Admin/Unauthorized.jsx';
 import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 import 'leaflet/dist/leaflet.css';
@@ -44,7 +48,6 @@ import SchoolsPage from './components/SchoolsPage.jsx';
 function App() {
   return (
     <Router>
-
       <Navigation />
       <Routes>
         {/* Redirect root path to login */}
@@ -61,7 +64,20 @@ function App() {
             <StudentRegister />
           </PublicRoute>
         } />
-       
+        
+        {/* Admin routes */}
+        <Route path="/admin-login" element={
+          <PublicRoute>
+            <AdminLogin />
+          </PublicRoute>
+        } />
+        <Route path="/admin-dashboard" element={
+          <AdminRoute>
+            <AdminDashboardTest />
+          </AdminRoute>
+        } />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
         <Route path="/user-landing-page" element={<UserLandingPage />} />

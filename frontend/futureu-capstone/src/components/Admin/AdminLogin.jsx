@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
-import { Mail, Lock, LogIn, AlertCircle, UserPlus } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Shield } from 'lucide-react';
 
-const StudentLogin = () => {
+const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,20 +17,21 @@ const StudentLogin = () => {
     setLoading(true);
     try {
       const userData = await authService.signin(email, password);
+      console.log("Login response:", userData); // Add this line
       
       // Check if user has admin role (case-insensitive)
       const role = authService.getUserRole();
-      
-      if (role && role.toUpperCase() === 'ADMIN') {
-        // If admin tries to use student login, show error and log them out
-        setError('Please use the Admin login page for administrator access.');
-        authService.signout(); // Log them out (but don't redirect)
+      console.log("User role:", role, "Type:", typeof role);
+
+      if (!role || role.toUpperCase() !== 'ADMIN') {
+        setError('Access denied. Admin privileges required.');
+        authService.signout(); 
         setLoading(false);
         return;
       }
       
-      // Student login successful - navigate to landing page
-      navigate('/user-landing-page');
+      // Navigate to admin dashboard
+      navigate('/admin-dashboard');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
@@ -47,8 +48,11 @@ const StudentLogin = () => {
         className="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#1D63A1] dark:text-blue-400 mt-8">Welcome Back!</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Sign in to continue your journey.</p>
+          <div className="flex justify-center">
+            <Shield className="h-12 w-12 text-[#1D63A1]" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#1D63A1] dark:text-blue-400 mt-4">Admin Portal</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Sign in with administrator credentials</p>
         </div>
 
         {error && (
@@ -80,7 +84,7 @@ const StudentLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] dark:bg-gray-700 dark:text-white transition-colors"
-                placeholder="you@example.com"
+                placeholder="admin@example.com"
               />
             </div>
           </div>
@@ -107,14 +111,6 @@ const StudentLogin = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <a href="#" className="font-medium text-[#1D63A1] hover:text-[#FFB71B] dark:text-blue-400 dark:hover:text-yellow-400">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
-
           <div>
             <motion.button
               type="submit"
@@ -131,17 +127,16 @@ const StudentLogin = () => {
               ) : (
                 <LogIn className="w-5 h-5 mr-2" />
               )}
-              Sign In
+              Sign In as Admin
             </motion.button>
           </div>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-[#1D63A1] hover:text-[#FFB71B] dark:text-blue-400 dark:hover:text-yellow-400 flex items-center justify-center mt-1">
-              <UserPlus className="w-4 h-4 mr-1" />
-              Sign Up Now
+            <Link to="/login" className="font-medium text-[#1D63A1] hover:text-[#FFB71B] dark:text-blue-400 dark:hover:text-yellow-400 flex items-center justify-center mt-1">
+              <LogIn className="w-4 h-4 mr-1" />
+              Back to Student Login
             </Link>
           </p>
         </div>
@@ -150,4 +145,4 @@ const StudentLogin = () => {
   );
 };
 
-export default StudentLogin;
+export default AdminLogin;

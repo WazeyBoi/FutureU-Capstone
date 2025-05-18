@@ -13,6 +13,7 @@ class AuthService {
           id: response.data.id,
           email: response.data.email,
           role: response.data.role,
+          firstName: response.data.firstName || 'Admin'
         };
         localStorage.setItem(USER_KEY, JSON.stringify(userData));
       }
@@ -80,7 +81,8 @@ class AuthService {
  
   getUserRole() {
     const user = this.getCurrentUser();
-    return user ? user.role : null;
+    const role = user ? user.role : null;
+    return role;
   }
 }
  
