@@ -3,8 +3,21 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Need to install: npm install framer-motion
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
+import userAssessmentService from '../services/userAssessmentService';
+import authService from '../services/authService';
 import AssessmentSection from '../components/assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
+
+// Replace the getCurrentUserId function
+const getCurrentUserId = () => {
+  const userId = authService.getCurrentUserId();
+  if (!userId) {
+    // If no user ID found, redirect to login page
+    window.location.href = '/login';
+    return null;
+  }
+  return userId;
+};
 
 const TakeAssessment = () => {
   const { assessmentId = "1" } = useParams();
@@ -34,6 +47,11 @@ const TakeAssessment = () => {
   
   // Reference to the assessment section container
   const sectionRef = useRef(null);
+  
+  // Add states for saving progress
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
@@ -105,210 +123,229 @@ const TakeAssessment = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Load assessment data
+  // Load assessment data with a check for existing progress first
   useEffect(() => {
     const fetchAssessment = async () => {
       try {
         setLoading(true);
         
-        // Fetch the assessment details
+        // Get the current authenticated user ID
+        const userId = getCurrentUserId();
+        if (!userId) return; // Stop if no valid user
+        
+        // First, fetch just the assessment details
         const assessmentData = await assessmentService.getAssessmentById(parseInt(assessmentId));
         setAssessment(assessmentData);
         
-        // Fetch and organize questions
-        const questionsData = await assessmentTakingService.loadAssessmentQuestions(parseInt(assessmentId));
-        setQuestions(questionsData);
+        // Check for existing progress BEFORE fetching/randomizing questions
+        const inProgressAssessments = await userAssessmentService.getInProgressAssessments(userId);
         
-        // Setup section list and initial question indices
-        const initialSections = [];
-        const initialIndices = {};
+        // Find if there's an in-progress assessment matching current assessment ID
+        const existingProgress = inProgressAssessments.find(
+          a => a.assessment.assessmentId.toString() === assessmentId
+        );
         
-        // GSA Sections
-        if (questionsData.gsa.scientificAbility.length) {
-          initialSections.push({
-            id: 'gsa-scientific',
-            title: 'Scientific Ability',
-            description: 'Test your scientific knowledge and reasoning abilities',
-            questions: questionsData.gsa.scientificAbility
-          });
-          initialIndices['gsa-scientific'] = 0;
+        let shouldLoadNewQuestions = true;
+        
+        if (existingProgress) {
+          // Double security check: Verify that this assessment belongs to the current user
+          if (existingProgress.user.userId !== userId) {
+            console.error("Security violation: Attempt to access another user's assessment");
+            setError("You cannot access another user's assessment progress.");
+            setLoading(false);
+            return;
+          }
+          
+          // Ask user if they want to resume
+          const wantToResume = window.confirm(
+            "You have a saved progress for this assessment. Would you like to resume from where you left off?"
+          );
+          
+          if (wantToResume) {
+            shouldLoadNewQuestions = false;
+            
+            // If we have saved sections with questions, use those instead of fetching new ones
+            if (existingProgress.savedSections) {
+              const savedSectionList = JSON.parse(existingProgress.savedSections);
+              setSectionList(savedSectionList);
+              
+              // Initialize section completion rates
+              const initialCompletion = {};
+              savedSectionList.forEach(section => {
+                initialCompletion[section.id] = 0;
+              });
+              setSectionCompletion(initialCompletion);
+            }
+            
+            // Set user answers
+            if (existingProgress.savedAnswers) {
+              setUserAnswers(JSON.parse(existingProgress.savedAnswers));
+            }
+            
+            // Set current section
+            if (existingProgress.currentSectionIndex !== null) {
+              setCurrentSection(existingProgress.currentSectionIndex);
+            }
+            
+            // Set the saved elapsed time if available
+            if (existingProgress.timeSpentSeconds) {
+              setElapsedTime(existingProgress.timeSpentSeconds);
+              // Set a new start time based on the saved elapsed time
+              setStartTime(Date.now() - (existingProgress.timeSpentSeconds * 1000));
+            }
+          }
         }
         
-        if (questionsData.gsa.readingComprehension.length) {
-          initialSections.push({
-            id: 'gsa-reading',
-            title: 'Reading Comprehension',
-            description: 'Assess your ability to understand and interpret written materials',
-            questions: questionsData.gsa.readingComprehension
+        // Only fetch and create new questions if needed
+        if (shouldLoadNewQuestions) {
+          // Fetch and organize questions - this involves randomization
+          const questionsData = await assessmentTakingService.loadAssessmentQuestions(parseInt(assessmentId));
+          setQuestions(questionsData);
+          
+          // Setup section list and initial question indices
+          const initialSections = [];
+          const initialIndices = {};
+          
+          // GSA Sections
+          if (questionsData.gsa.scientificAbility.length) {
+            initialSections.push({
+              id: 'gsa-scientific',
+              title: 'Scientific Ability',
+              description: 'Test your scientific knowledge and reasoning abilities',
+              questions: questionsData.gsa.scientificAbility
+            });
+            initialIndices['gsa-scientific'] = 0;
+          }
+          
+          if (questionsData.gsa.readingComprehension.length) {
+            initialSections.push({
+              id: 'gsa-reading',
+              title: 'Reading Comprehension',
+              description: 'Assess your ability to understand and interpret written materials',
+              questions: questionsData.gsa.readingComprehension
+            });
+            initialIndices['gsa-reading'] = 0;
+          }
+          
+          if (questionsData.gsa.verbalAbility.length) {
+            initialSections.push({
+              id: 'gsa-verbal',
+              title: 'Verbal Ability',
+              description: 'Evaluate your command of language and verbal reasoning',
+              questions: questionsData.gsa.verbalAbility
+            });
+            initialIndices['gsa-verbal'] = 0;
+          }
+          
+          if (questionsData.gsa.mathematicalAbility.length) {
+            initialSections.push({
+              id: 'gsa-math',
+              title: 'Mathematical Ability',
+              description: 'Test your mathematical skills and numerical reasoning',
+              questions: questionsData.gsa.mathematicalAbility
+            });
+            initialIndices['gsa-math'] = 0;
+          }
+          
+          if (questionsData.gsa.logicalReasoning.length) {
+            initialSections.push({
+              id: 'gsa-logical',
+              title: 'Logical Reasoning',
+              description: 'Assess your ability to analyze and solve logical problems',
+              questions: questionsData.gsa.logicalReasoning
+            });
+            initialIndices['gsa-logical'] = 0;
+          }
+          
+          // Academic Track Sections
+          if (questionsData.academicTrack.stem.length) {
+            initialSections.push({
+              id: 'at-stem',
+              title: 'STEM',
+              description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
+              questions: questionsData.academicTrack.stem
+            });
+            initialIndices['at-stem'] = 0;
+          }
+          
+          if (questionsData.academicTrack.abm.length) {
+            initialSections.push({
+              id: 'at-abm',
+              title: 'ABM',
+              description: 'Accountancy, Business, and Management aptitude assessment',
+              questions: questionsData.academicTrack.abm
+            });
+            initialIndices['at-abm'] = 0;
+          }
+          
+          if (questionsData.academicTrack.humss.length) {
+            initialSections.push({
+              id: 'at-humss',
+              title: 'HUMSS',
+              description: 'Humanities and Social Sciences aptitude assessment',
+              questions: questionsData.academicTrack.humss
+            });
+            initialIndices['at-humss'] = 0;
+          }
+          
+          // Other Track Sections
+          if (questionsData.otherTracks.techVoc.length) {
+            initialSections.push({
+              id: 'track-tech',
+              title: 'Techno-Vocational Livelihood',
+              description: 'Assess your aptitude for technical and vocational fields',
+              questions: questionsData.otherTracks.techVoc
+            });
+            initialIndices['track-tech'] = 0;
+          }
+          
+          if (questionsData.otherTracks.sports.length) {
+            initialSections.push({
+              id: 'track-sports',
+              title: 'Sports Track',
+              description: 'Evaluate your sports aptitude and interests',
+              questions: questionsData.otherTracks.sports
+            });
+            initialIndices['track-sports'] = 0;
+          }
+          
+          if (questionsData.otherTracks.artsDesign.length) {
+            initialSections.push({
+              id: 'track-arts',
+              title: 'Arts & Design Track',
+              description: 'Assess your creative abilities and artistic aptitude',
+              questions: questionsData.otherTracks.artsDesign
+            });
+            initialIndices['track-arts'] = 0;
+          }
+          
+          // RIASEC Combined Section - Now as a single section instead of individual subsections
+          if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
+            initialSections.push({
+              id: 'interest-combined',
+              title: 'Interest Assessment',
+              description: 'Assess your personal interests and preferences in various activities',
+              questions: questionsData.interestAreas,
+              questionsPerPage: 7, // Set to display 7 questions per page for RIASEC
+              isRiasecSection: true // Marker that this is a RIASEC section
+            });
+            initialIndices['interest-combined'] = 0;
+          }
+          
+          setSectionList(initialSections);
+          setCurrentQuestionIndices(initialIndices);
+          
+          // Initialize section completion rates
+          const initialCompletion = {};
+          initialSections.forEach(section => {
+            initialCompletion[section.id] = 0;
           });
-          initialIndices['gsa-reading'] = 0;
+          setSectionCompletion(initialCompletion);
         }
-        
-        if (questionsData.gsa.verbalAbility.length) {
-          initialSections.push({
-            id: 'gsa-verbal',
-            title: 'Verbal Ability',
-            description: 'Evaluate your command of language and verbal reasoning',
-            questions: questionsData.gsa.verbalAbility
-          });
-          initialIndices['gsa-verbal'] = 0;
-        }
-        
-        if (questionsData.gsa.mathematicalAbility.length) {
-          initialSections.push({
-            id: 'gsa-math',
-            title: 'Mathematical Ability',
-            description: 'Test your mathematical skills and numerical reasoning',
-            questions: questionsData.gsa.mathematicalAbility
-          });
-          initialIndices['gsa-math'] = 0;
-        }
-        
-        if (questionsData.gsa.logicalReasoning.length) {
-          initialSections.push({
-            id: 'gsa-logical',
-            title: 'Logical Reasoning',
-            description: 'Assess your ability to analyze and solve logical problems',
-            questions: questionsData.gsa.logicalReasoning
-          });
-          initialIndices['gsa-logical'] = 0;
-        }
-        
-        // Academic Track Sections
-        if (questionsData.academicTrack.stem.length) {
-          initialSections.push({
-            id: 'at-stem',
-            title: 'STEM',
-            description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
-            questions: questionsData.academicTrack.stem
-          });
-          initialIndices['at-stem'] = 0;
-        }
-        
-        if (questionsData.academicTrack.abm.length) {
-          initialSections.push({
-            id: 'at-abm',
-            title: 'ABM',
-            description: 'Accountancy, Business, and Management aptitude assessment',
-            questions: questionsData.academicTrack.abm
-          });
-          initialIndices['at-abm'] = 0;
-        }
-        
-        if (questionsData.academicTrack.humss.length) {
-          initialSections.push({
-            id: 'at-humss',
-            title: 'HUMSS',
-            description: 'Humanities and Social Sciences aptitude assessment',
-            questions: questionsData.academicTrack.humss
-          });
-          initialIndices['at-humss'] = 0;
-        }
-        
-        // Other Track Sections
-        if (questionsData.otherTracks.techVoc.length) {
-          initialSections.push({
-            id: 'track-tech',
-            title: 'Techno-Vocational Livelihood',
-            description: 'Assess your aptitude for technical and vocational fields',
-            questions: questionsData.otherTracks.techVoc
-          });
-          initialIndices['track-tech'] = 0;
-        }
-        
-        if (questionsData.otherTracks.sports.length) {
-          initialSections.push({
-            id: 'track-sports',
-            title: 'Sports Track',
-            description: 'Evaluate your sports aptitude and interests',
-            questions: questionsData.otherTracks.sports
-          });
-          initialIndices['track-sports'] = 0;
-        }
-        
-        if (questionsData.otherTracks.artsDesign.length) {
-          initialSections.push({
-            id: 'track-arts',
-            title: 'Arts & Design Track',
-            description: 'Assess your creative abilities and artistic aptitude',
-            questions: questionsData.otherTracks.artsDesign
-          });
-          initialIndices['track-arts'] = 0;
-        }
-        
-        // Interest Areas Sections
-        if (questionsData.interestAreas.realistic.length) {
-          initialSections.push({
-            id: 'interest-realistic',
-            title: 'Realistic',
-            description: 'Evaluate your interest in practical, hands-on activities',
-            questions: questionsData.interestAreas.realistic
-          });
-          initialIndices['interest-realistic'] = 0;
-        }
-        
-        if (questionsData.interestAreas.investigative.length) {
-          initialSections.push({
-            id: 'interest-investigative',
-            title: 'Investigative',
-            description: 'Assess your analytical and intellectual interests',
-            questions: questionsData.interestAreas.investigative
-          });
-          initialIndices['interest-investigative'] = 0;
-        }
-        
-        if (questionsData.interestAreas.artistic.length) {
-          initialSections.push({
-            id: 'interest-artistic',
-            title: 'Artistic',
-            description: 'Evaluate your creative and artistic interests',
-            questions: questionsData.interestAreas.artistic
-          });
-          initialIndices['interest-artistic'] = 0;
-        }
-        
-        if (questionsData.interestAreas.social.length) {
-          initialSections.push({
-            id: 'interest-social',
-            title: 'Social',
-            description: 'Assess your interest in helping and working with people',
-            questions: questionsData.interestAreas.social
-          });
-          initialIndices['interest-social'] = 0;
-        }
-        
-        if (questionsData.interestAreas.enterprising.length) {
-          initialSections.push({
-            id: 'interest-enterprising',
-            title: 'Enterprising',
-            description: 'Evaluate your leadership and persuasive abilities',
-            questions: questionsData.interestAreas.enterprising
-          });
-          initialIndices['interest-enterprising'] = 0;
-        }
-        
-        if (questionsData.interestAreas.conventional.length) {
-          initialSections.push({
-            id: 'interest-conventional',
-            title: 'Conventional',
-            description: 'Assess your interest in structured and organized activities',
-            questions: questionsData.interestAreas.conventional
-          });
-          initialIndices['interest-conventional'] = 0;
-        }
-        
-        setSectionList(initialSections);
-        setCurrentQuestionIndices(initialIndices);
-        
-        // Initialize section completion rates
-        const initialCompletion = {};
-        initialSections.forEach(section => {
-          initialCompletion[section.id] = 0;
-        });
-        setSectionCompletion(initialCompletion);
         
         setLoading(false);
         // Start time will be set by the elapsed time effect when loading becomes false
+        
       } catch (err) {
         setError('Failed to load assessment. Please try again later.');
         setLoading(false);
@@ -421,8 +458,20 @@ const TakeAssessment = () => {
         answer: userAnswers[questionId]
       }));
       
-      // Submit answers
-      await assessmentTakingService.submitAnswers(parseInt(assessmentId), formattedAnswers);
+      // Get the current logged-in user ID
+      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      
+      // Create submission payload including sections and elapsed time
+      const payload = {
+        userId: userId,
+        assessmentId: parseInt(assessmentId),
+        answers: formattedAnswers,
+        sections: JSON.stringify(sectionList),
+        elapsedTime: finalElapsedTime
+      };
+      
+      // Submit the complete assessment for scoring
+      const result = await userAssessmentService.submitCompletedAssessment(payload);
       
       // Show completion state
       setCompleted(true);
@@ -430,7 +479,7 @@ const TakeAssessment = () => {
       
       // Redirect to results after 5 seconds
       setTimeout(() => {
-        navigate(`/assessment-results/${assessmentId}`);
+        navigate(`/assessment-results/${result.userAssessmentId}`);
       }, 5000);
       
     } catch (err) {
@@ -440,6 +489,51 @@ const TakeAssessment = () => {
     }
   };
   
+  // Add function to save progress and exit
+  const handleSaveAndExit = async () => {
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+      
+      // Calculate progress percentage
+      const progress = calculateProgress();
+      const progressPercentage = Math.round((progress.completed / progress.total) * 100);
+      
+      // Get the current logged-in user ID
+      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      
+      // Create payload with current state, including sections with questions and elapsed time
+      const payload = {
+        userId: userId,
+        assessmentId: parseInt(assessmentId),
+        currentSectionIndex: currentSection,
+        progressPercentage: progressPercentage,
+        savedAnswers: JSON.stringify(userAnswers),
+        // Add the complete section list with questions to ensure the same questions 
+        // and order are presented when the user resumes
+        savedSections: JSON.stringify(sectionList),
+        // Include elapsed time in seconds
+        elapsedTime: elapsedTime
+      };
+      
+      // Call API to save progress using the service
+      const response = await userAssessmentService.saveProgress(payload);
+      
+      setIsSaving(false);
+      setShowSaveConfirmation(true);
+      
+      // Redirect after confirmation is closed or automatically after a delay
+      setTimeout(() => {
+        navigate('/assessment-dashboard');
+      }, 3000);
+      
+    } catch (err) {
+      setIsSaving(false);
+      setSaveError('Failed to save progress. Please try again.');
+      console.error('Error saving progress:', err);
+    }
+  };
+
   // Safety confirmation before leaving
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -658,7 +752,31 @@ const TakeAssessment = () => {
             </div>
             
             <div className="flex flex-col gap-2">
-              {/* Elapsed time indicator - new element */}
+              {/* Save & Exit button - New element */}
+              <button
+                onClick={handleSaveAndExit}
+                disabled={isSaving}
+                className="mt-2 sm:mt-0 px-4 py-2 bg-[#FFB71B] text-[#232D35] rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#232D35]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Save & Exit
+                  </>
+                )}
+              </button>
+              
+              {/* Elapsed time indicator */}
               <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-full text-[#1D63A1] flex shadow-sm">
                 <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -718,8 +836,8 @@ const TakeAssessment = () => {
           className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
-            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>
@@ -814,6 +932,45 @@ const TakeAssessment = () => {
           </motion.div>
         </div>
       </div>
+      
+      {/* Save Confirmation Dialog */}
+      {showSaveConfirmation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto p-6">
+            {saveError ? (
+              <>
+                <h3 className="text-lg font-medium text-red-700 mb-3">Error Saving Progress</h3>
+                <p className="text-gray-600 mb-4">{saveError}</p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setShowSaveConfirmation(false)}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Save Progress & Exit</h3>
+                <p className="text-gray-600 mb-4">
+                  {isSaving 
+                    ? 'Saving your progress...' 
+                    : 'Your progress has been saved successfully! You can resume this assessment later.'}
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => navigate('/assessment-dashboard')}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none"
+                  >
+                    Go to Dashboard
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

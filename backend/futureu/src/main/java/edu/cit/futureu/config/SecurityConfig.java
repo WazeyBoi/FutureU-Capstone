@@ -84,7 +84,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/question/**").hasAuthority(Role.STUDENT.name())
                 .requestMatchers("/api/answer/**").hasAuthority(Role.STUDENT.name())
                 .requestMatchers("/api/userassessment/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/assessmentresult/**").hasAuthority(Role.STUDENT.name())
+                .requestMatchers("/api/assessment-results/**").hasAuthority(Role.STUDENT.name())
                 .requestMatchers("/api/recommendation/**").hasAuthority(Role.STUDENT.name())
                 .requestMatchers("/api/user/**").hasAuthority(Role.STUDENT.name()) // User-specific data, excluding /api/auth
                 .requestMatchers("/api/quizSubCategoryCategory/**").hasAuthority(Role.STUDENT.name()) // Added based on your project structure

@@ -6,15 +6,6 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
   const isMultipleChoice = question.questionType === 'Multiple Choice';
   const isLikert = question.questionType === 'Likert' || question.isRiasecQuestion;
 
-  // Define the 1-5 scale options for RIASEC questions (Likert scale)
-  const scaleOptions = [
-    { value: "1", label: "Strongly Dislike", emoji: "😫" },
-    { value: "2", label: "Dislike", emoji: "🙁" },
-    { value: "3", label: "Neutral", emoji: "😐" },
-    { value: "4", label: "Like", emoji: "🙂" },
-    { value: "5", label: "Strongly Like", emoji: "😄" }
-  ];
-
   // Check if multiple choice question has choices
   const hasChoices = isMultipleChoice && question.choices && question.choices.length > 0;
   
@@ -126,7 +117,7 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
         </div>
       )}
 
-      {/* RIASEC Scale question (1-5 rating) - Likert scale */}
+      {/* RIASEC Binary Agree/Disagree question (replacing 5-point scale) */}
       {isLikert && (
         <div className="mt-6">
           <motion.div 
@@ -135,35 +126,90 @@ const QuestionItem = ({ question, answer, onAnswerChange }) => {
             transition={{ duration: 0.5 }}
             className="bg-[#1D63A1]/10 p-5 rounded-xl border border-[#1D63A1]/30"
           >
-            <div className="grid grid-cols-5 gap-2">
-              {scaleOptions.map(option => (
-                <motion.div 
-                  key={option.value} 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="text-center"
+            <div className="grid grid-cols-2 gap-4">
+              {/* Agree Option */}
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <label 
+                  className={`flex flex-col items-center justify-center cursor-pointer p-4 h-24 rounded-lg transition-all ${
+                    answer === "agree" 
+                      ? 'bg-green-100 border-2 border-green-500 shadow-md' 
+                      : 'bg-white hover:bg-green-50 border border-gray-200 hover:border-green-300'
+                  }`}
                 >
-                  <label 
-                    className={`flex flex-col items-center cursor-pointer p-3 rounded-lg transition-all ${
-                      answer === option.value 
-                        ? 'bg-[#1D63A1]/20 border-2 border-[#1D63A1] shadow-md' 
-                        : 'hover:bg-[#1D63A1]/5'
-                    }`}
-                  >
-                    <span className="text-3xl mb-2">{option.emoji}</span>
-                    <span className="text-xl font-bold mb-1 text-[#1D63A1]">{option.value}</span>
-                    <span className="text-xs text-[#232D35]/80">{option.label}</span>
-                    <input
-                      type="radio"
-                      name={`question-${question.questionId}`}
-                      value={option.value}
-                      checked={answer === option.value}
-                      onChange={() => onAnswerChange(option.value)}
-                      className="sr-only"
-                    />
-                  </label>
-                </motion.div>
-              ))}
+                  <div className="flex items-center justify-center mb-2">
+                    <div 
+                      className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                        answer === "agree" 
+                          ? 'border-green-500 bg-green-500' 
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {answer === "agree" && (
+                        <motion.div 
+                          initial={{ scale: 0 }} 
+                          animate={{ scale: 1 }}
+                          className="h-2 w-2 rounded-full bg-white"
+                        />
+                      )}
+                    </div>
+                    <span className="text-xl font-bold">Agree</span>
+                  </div>
+                  <span className="text-green-700 text-center text-sm">I agree with this statement</span>
+                  <input
+                    type="radio"
+                    name={`question-${question.questionId}`}
+                    value="agree"
+                    checked={answer === "agree"}
+                    onChange={() => onAnswerChange("agree")}
+                    className="sr-only"
+                  />
+                </label>
+              </motion.div>
+              
+              {/* Disagree Option */}
+              <motion.div 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <label 
+                  className={`flex flex-col items-center justify-center cursor-pointer p-4 h-24 rounded-lg transition-all ${
+                    answer === "disagree" 
+                      ? 'bg-red-100 border-2 border-red-500 shadow-md' 
+                      : 'bg-white hover:bg-red-50 border border-gray-200 hover:border-red-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <div 
+                      className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center mr-2 ${
+                        answer === "disagree" 
+                          ? 'border-red-500 bg-red-500' 
+                          : 'border-gray-300'
+                      }`}
+                    >
+                      {answer === "disagree" && (
+                        <motion.div 
+                          initial={{ scale: 0 }} 
+                          animate={{ scale: 1 }}
+                          className="h-2 w-2 rounded-full bg-white"
+                        />
+                      )}
+                    </div>
+                    <span className="text-xl font-bold">Disagree</span>
+                  </div>
+                  <span className="text-red-700 text-center text-sm">I disagree with this statement</span>
+                  <input
+                    type="radio"
+                    name={`question-${question.questionId}`}
+                    value="disagree"
+                    checked={answer === "disagree"}
+                    onChange={() => onAnswerChange("disagree")}
+                    className="sr-only"
+                  />
+                </label>
+              </motion.div>
             </div>
           </motion.div>
         </div>

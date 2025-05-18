@@ -60,14 +60,7 @@ class AssessmentTakingService {
           sports: this.filterAndRandomize(allQuestions, 4, null, 15),
           artsDesign: this.filterAndRandomize(allQuestions, 5, null, 15),
         },
-        interestAreas: {
-          realistic: this.filterAndRandomize(allQuestions, 6, null, 10),
-          investigative: this.filterAndRandomize(allQuestions, 7, null, 10),
-          artistic: this.filterAndRandomize(allQuestions, 8, null, 10),
-          social: this.filterAndRandomize(allQuestions, 9, null, 10),
-          enterprising: this.filterAndRandomize(allQuestions, 10, null, 10),
-          conventional: this.filterAndRandomize(allQuestions, 11, null, 10),
-        }
+        interestAreas: this.createCombinedRiasecQuestions(allQuestions, riasecSubCategoryIds, 60) // Single combined RIASEC section
       };
       
       return organizedQuestions;
@@ -75,6 +68,53 @@ class AssessmentTakingService {
       this.handleError(error, 'Loading assessment questions');
       throw error;
     }
+  }
+
+  /**
+   * Create a unified, shuffled array of RIASEC questions
+   * @param {Array} questions - All questions 
+   * @param {Array} riasecSubCategoryIds - Array of RIASEC subcategory IDs (6-11)
+   * @param {number} limit - Maximum number of questions to include
+   * @returns {Array} - Shuffled array of RIASEC questions
+   */
+  createCombinedRiasecQuestions(questions, riasecSubCategoryIds, limit) {
+    // Filter out all RIASEC questions from the pool
+    const riasecQuestions = questions.filter(q => 
+      q.assessmentSubCategory && 
+      riasecSubCategoryIds.includes(q.assessmentSubCategory.assessmentSubCategoryId)
+    );
+    
+    // Make sure all questions are marked as RIASEC
+    riasecQuestions.forEach(q => {
+      q.isRiasecQuestion = true;
+      q.questionType = 'Likert';
+      
+      // Add a hidden field to track which RIASEC type this question belongs to (for scoring)
+      q.riasecType = this.getRiasecTypeFromSubcategoryId(q.assessmentSubCategory.assessmentSubCategoryId);
+    });
+    
+    // Shuffle all RIASEC questions together
+    const shuffled = [...riasecQuestions].sort(() => Math.random() - 0.5);
+    
+    // Take only the number needed, or all if not enough
+    return shuffled.slice(0, limit);
+  }
+
+  /**
+   * Get RIASEC type name from subcategory ID
+   * @param {number} subcategoryId - The subcategory ID
+   * @returns {string} - RIASEC type name
+   */
+  getRiasecTypeFromSubcategoryId(subcategoryId) {
+    const riasecTypes = {
+      6: 'realistic',
+      7: 'investigative',
+      8: 'artistic',
+      9: 'social',
+      10: 'enterprising',
+      11: 'conventional'
+    };
+    return riasecTypes[subcategoryId] || 'unknown';
   }
 
   /**
@@ -139,6 +179,51 @@ class AssessmentTakingService {
       return response.data;
     } catch (error) {
       this.handleError(error, 'Submitting assessment answers');
+      throw error;
+    }
+  }
+
+  /**
+   * Save assessment progress
+   * @param {Object} progressData - The progress data to save
+   * @returns {Promise<Object>} - Save response
+   */
+  async saveProgress(progressData) {
+    try {
+      const response = await apiClient.post('/assessment-progress/save', progressData);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Saving assessment progress');
+      throw error;
+    }
+  }
+  
+  /**
+   * Get in-progress assessments for a user
+   * @param {number} userId - The user ID
+   * @returns {Promise<Array>} - List of in-progress assessments
+   */
+  async getInProgressAssessments(userId) {
+    try {
+      const response = await apiClient.get(`/assessment-progress/in-progress/${userId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching in-progress assessments');
+      throw error;
+    }
+  }
+  
+  /**
+   * Get a specific assessment progress
+   * @param {number} userAssessmentId - The user assessment ID
+   * @returns {Promise<Object>} - Assessment progress data
+   */
+  async getAssessmentProgress(userAssessmentId) {
+    try {
+      const response = await apiClient.get(`/assessment-progress/${userAssessmentId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching assessment progress');
       throw error;
     }
   }
