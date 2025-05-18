@@ -21,6 +21,7 @@ import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserEntity;
 import edu.cit.futureu.entity.AssessmentEntity;
 import edu.cit.futureu.entity.QuestionEntity;
+import edu.cit.futureu.entity.ChoiceEntity;
 import edu.cit.futureu.repository.UserAssessmentRepository;
 import edu.cit.futureu.repository.UserAssessmentSectionResultRepository;
 import edu.cit.futureu.repository.AssessmentResultRepository;
@@ -43,6 +44,9 @@ public class UserAssessmentService {
     
     @Autowired
     private ObjectMapper objectMapper;
+    
+    @Autowired
+    private ChoiceService choiceService; // Add this for accessing choice information
 
     /**
      * Create a new user assessment record
@@ -226,6 +230,9 @@ public class UserAssessmentService {
             int correctAnswers = 0;
             double rawScore = 0.0;
             
+            // Special tracking for RIASEC scores (how many "agree" responses per interest area)
+            Map<String, Integer> riasecAgreeResponses = new HashMap<>();
+            
             // Score each question in the section
             for (Map<String, Object> question : sectionQuestions) {
                 Integer questionId = (Integer) question.get("questionId");
@@ -237,28 +244,64 @@ public class UserAssessmentService {
                 // Skip if no answer was provided
                 if (userAnswer == null) continue;
                 
-                // For RIASEC/Likert questions, score is based on rating value or binary responses
+                // For RIASEC/Likert questions - handle as agree/disagree
                 if ("Likert".equals(questionType) || Boolean.TRUE.equals(question.get("isRiasecQuestion"))) {
                     // Get the RIASEC type for scoring purposes
                     String riasecType = (String) question.get("riasecType");
                     
                     // Now handle the agree/disagree format
                     if ("agree".equals(userAnswer)) {
-                        // For "agree" responses, add a full point (1.0)
+                        // For "agree" responses, add 1 point
                         rawScore += 1.0;
                         correctAnswers++;
+                        
+                        // Track agree responses by RIASEC type
+                        if (riasecType != null) {
+                            riasecAgreeResponses.put(riasecType, 
+                                riasecAgreeResponses.getOrDefault(riasecType, 0) + 1);
+                        }
                     } else if ("disagree".equals(userAnswer)) {
                         // For "disagree" responses, add no points but count as answered
                         correctAnswers++;
                     }
                 } 
-                // For other question types, check against correct answer in database
+                // For multiple-choice questions, check the isCorrect attribute of the selected choice
+                else if ("Multiple Choice".equals(questionType)) {
+                    try {
+                        // Fetch the question entity to get its choices
+                        Optional<QuestionEntity> questionEntity = questionRepository.findById(questionId);
+                        if (questionEntity.isPresent()) {
+                            QuestionEntity q = questionEntity.get();
+                            
+                            // Parse the choiceId from the userAnswer
+                            int choiceId = Integer.parseInt(userAnswer);
+                            
+                            // Get all choices for this question
+                            List<ChoiceEntity> choices = choiceService.getChoicesByQuestion(q);
+                            
+                            // Find the selected choice
+                            Optional<ChoiceEntity> selectedChoice = choices.stream()
+                                .filter(c -> c.getChoiceId() == choiceId)
+                                .findFirst();
+                            
+                            // Check if the selected choice is correct
+                            if (selectedChoice.isPresent() && selectedChoice.get().isCorrect()) {
+                                correctAnswers++;
+                                rawScore += 1.0; // Each correct answer is worth 1 point
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        // Log the error but continue processing other questions
+                        System.err.println("Error processing answer for question " + questionId + ": " + e.getMessage());
+                    }
+                }
+                // For other question types like True/False
                 else {
                     Optional<QuestionEntity> questionEntity = questionRepository.findById(questionId);
                     if (questionEntity.isPresent() && 
                         userAnswer.equals(questionEntity.get().getCorrectAnswer())) {
                         correctAnswers++;
-                        rawScore++;
+                        rawScore += 1.0;
                     }
                 }
             }
@@ -276,6 +319,11 @@ public class UserAssessmentService {
             scoreDetails.put("correctAnswers", correctAnswers);
             scoreDetails.put("rawScore", rawScore);
             scoreDetails.put("percentageScore", percentageScore);
+            
+            // Add RIASEC agree counts if this is an interest section
+            if (sectionType.equals("INTEREST") && !riasecAgreeResponses.isEmpty()) {
+                scoreDetails.put("riasecAgreeResponses", riasecAgreeResponses);
+            }
             
             sectionScores.put(sectionId, scoreDetails);
         }
@@ -507,49 +555,44 @@ public class UserAssessmentService {
             result.setOtherTrackScore(otTotal / otCount);
         }
         
-        // Set Interest Area scores
-        double iaTotal = 0;
-        int iaCount = 0;
+        // Extract RIASEC scores from interest sections
+        Map<String, Integer> combinedRiasecAgreeResponses = new HashMap<>();
         
-        if (scoreBySection.containsKey("interest-realistic")) {
-            result.setRealisticScore(scoreBySection.get("interest-realistic"));
-            iaTotal += scoreBySection.get("interest-realistic");
-            iaCount++;
+        // Collect all RIASEC agree responses from interest sections
+        for (Map.Entry<String, Map<String, Object>> entry : sectionScores.entrySet()) {
+            String sectionType = (String) entry.getValue().get("sectionType");
+            if ("INTEREST".equals(sectionType)) {
+                @SuppressWarnings("unchecked")
+                Map<String, Integer> riasecAgreeResponses = 
+                    (Map<String, Integer>) entry.getValue().get("riasecAgreeResponses");
+                
+                if (riasecAgreeResponses != null) {
+                    // Combine counts from different sections
+                    for (Map.Entry<String, Integer> countEntry : riasecAgreeResponses.entrySet()) {
+                        String riasecType = countEntry.getKey();
+                        Integer count = countEntry.getValue();
+                        combinedRiasecAgreeResponses.put(riasecType, 
+                            combinedRiasecAgreeResponses.getOrDefault(riasecType, 0) + count);
+                    }
+                }
+            }
         }
         
-        if (scoreBySection.containsKey("interest-investigative")) {
-            result.setInvestigativeScore(scoreBySection.get("interest-investigative"));
-            iaTotal += scoreBySection.get("interest-investigative");
-            iaCount++;
-        }
+        // Set RIASEC scores - each subsection score is simply the count of "agree" responses
+        // (out of 7 possible statements for each RIASEC type)
+        result.setRealisticScore((double) combinedRiasecAgreeResponses.getOrDefault("realistic", 0));
+        result.setInvestigativeScore((double) combinedRiasecAgreeResponses.getOrDefault("investigative", 0));
+        result.setArtisticScore((double) combinedRiasecAgreeResponses.getOrDefault("artistic", 0));
+        result.setSocialScore((double) combinedRiasecAgreeResponses.getOrDefault("social", 0));
+        result.setEnterprisingScore((double) combinedRiasecAgreeResponses.getOrDefault("enterprising", 0));
+        result.setConventionalScore((double) combinedRiasecAgreeResponses.getOrDefault("conventional", 0));
         
-        if (scoreBySection.containsKey("interest-artistic")) {
-            result.setArtisticScore(scoreBySection.get("interest-artistic"));
-            iaTotal += scoreBySection.get("interest-artistic");
-            iaCount++;
-        }
-        
-        if (scoreBySection.containsKey("interest-social")) {
-            result.setSocialScore(scoreBySection.get("interest-social"));
-            iaTotal += scoreBySection.get("interest-social");
-            iaCount++;
-        }
-        
-        if (scoreBySection.containsKey("interest-enterprising")) {
-            result.setEnterprisingScore(scoreBySection.get("interest-enterprising"));
-            iaTotal += scoreBySection.get("interest-enterprising");
-            iaCount++;
-        }
-        
-        if (scoreBySection.containsKey("interest-conventional")) {
-            result.setConventionalScore(scoreBySection.get("interest-conventional"));
-            iaTotal += scoreBySection.get("interest-conventional");
-            iaCount++;
-        }
-        
-        if (iaCount > 0) {
-            result.setInterestAreaScore(iaTotal / iaCount);
-        }
+        // Calculate total RIASEC score as a percentage of total possible points
+        // (assuming 7 questions per type × 6 types = 42 total possible points)
+        int totalAgreeCount = combinedRiasecAgreeResponses.values().stream().mapToInt(Integer::intValue).sum();
+        double maxPossibleScore = 42.0; // 7 questions × 6 RIASEC types
+        double riasecPercentageScore = (totalAgreeCount / maxPossibleScore) * 100;
+        result.setInterestAreaScore(riasecPercentageScore);
         
         // Save the assessment result
         assessmentResultRepository.save(result);
