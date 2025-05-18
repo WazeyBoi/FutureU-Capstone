@@ -11,50 +11,41 @@ const AssessmentDashboard = () => {
   const [inProgressAssessments, setInProgressAssessments] = useState([]);
   const [completedAssessments, setCompletedAssessments] = useState([]);
   const [availableAssessments, setAvailableAssessments] = useState([]);
-  
+
   const navigate = useNavigate();
-  
-  // Replace the getCurrentUserId function
+
   const getCurrentUserId = () => {
     return authService.getCurrentUserId() || 1; // Fallback to 1 during development
   };
-  
-  // Mock user ID - In a real app, get this from authentication context
+
   const userId = getCurrentUserId();
-  
+
   useEffect(() => {
     const fetchAssessments = async () => {
       try {
         setLoading(true);
-        
-        // Fetch in-progress assessments only for the current logged-in user
+
         const inProgressData = await assessmentTakingService.getInProgressAssessments(userId);
-        
-        // Verify that all fetched assessments belong to the current user for extra security
+
         const validInProgressAssessments = inProgressData.filter(
           assessment => assessment.user.userId === userId
         );
-        
+
         setInProgressAssessments(validInProgressAssessments);
-        
-        // Fetch all assessments
+
         const allAssessments = await assessmentService.getAllAssessments();
-        
-        // Filter for completed assessments
+
         const completedData = allAssessments.filter(assessment => {
-          // Check if user has completed this assessment
-          // This would be better with a specific API endpoint
           return false; // Replace with actual logic
         });
         setCompletedAssessments(completedData);
-        
-        // Filter for available (not started) assessments
+
         const inProgressIds = validInProgressAssessments.map(a => a.assessment.assessmentId);
-        const availableData = allAssessments.filter(assessment => 
+        const availableData = allAssessments.filter(assessment =>
           !inProgressIds.includes(assessment.assessmentId)
         );
         setAvailableAssessments(availableData);
-        
+
         setLoading(false);
       } catch (err) {
         setError('Failed to load assessments. Please try again later.');
@@ -62,34 +53,34 @@ const AssessmentDashboard = () => {
         console.error('Error fetching assessments:', err);
       }
     };
-    
+
     fetchAssessments();
   }, [userId]);
-  
+
   const handleContinueAssessment = (assessmentId) => {
     navigate(`/take-assessment/${assessmentId}`);
   };
-  
+
   const handleStartAssessment = (assessmentId) => {
     navigate(`/take-assessment/${assessmentId}`);
   };
-  
+
   const handleViewResults = (assessmentId) => {
     navigate(`/assessment-results/${assessmentId}`);
   };
-  
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center h-screen bg-white">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1D63A1]"></div>
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,53 +95,70 @@ const AssessmentDashboard = () => {
       </div>
     );
   }
-  
+
   return (
-    <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Assessment Dashboard</h1>
-        <p className="mt-4 text-lg text-gray-500">Continue your educational journey or start something new</p>
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/5 to-white min-h-screen">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-[#1D63A1] to-[#232D35] bg-clip-text text-transparent">
+          Assessment Dashboard
+        </h1>
+        <p className="mt-4 text-lg text-[#232D35]/70">
+          Continue your educational journey or start something new
+        </p>
       </div>
-      
+
       {/* In Progress Assessments */}
-      <div className="mb-10">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Continue Your Progress</h2>
-        
+      <div className="mb-12">
+        <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center">
+          <svg className="w-5 h-5 mr-2 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+          </svg>
+          Continue Your Progress
+        </h2>
+
         {inProgressAssessments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {inProgressAssessments.map((assessment) => (
-              <motion.div 
+              <motion.div
                 key={assessment.userQuizAssessment}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-lg shadow-md overflow-hidden border border-yellow-200"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-md overflow-hidden border border-[#FFB71B]/30"
               >
-                <div className="p-4 border-b border-yellow-100 bg-yellow-50">
-                  <h3 className="text-lg font-semibold text-gray-900">{assessment.assessment.title}</h3>
-                  <p className="text-sm text-gray-500">{assessment.assessment.description}</p>
+                <div className="p-5 border-b border-[#FFB71B]/20 bg-gradient-to-r from-[#FFB71B]/10 to-[#FFB71B]/5">
+                  <h3 className="text-lg font-semibold text-[#232D35]">{assessment.assessment.title}</h3>
+                  <p className="text-sm text-[#232D35]/70 mt-1">{assessment.assessment.description}</p>
                 </div>
-                
-                <div className="p-4">
-                  <div className="mb-3">
+
+                <div className="p-5">
+                  <div className="mb-4">
                     <div className="flex justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-700">Progress</span>
-                      <span className="text-xs font-medium text-blue-600">{assessment.progressPercentage}%</span>
+                      <span className="text-xs font-medium text-[#232D35]/80">Progress</span>
+                      <span className="text-xs font-bold text-[#1D63A1]">{assessment.progressPercentage}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${assessment.progressPercentage}%` }}></div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="h-2.5 rounded-full bg-gradient-to-r from-[#1D63A1] to-[#1D63A1]/80"
+                        style={{ width: `${assessment.progressPercentage}%` }}
+                      ></div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center text-xs text-gray-500 mb-4">
-                    <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                  <div className="flex items-center text-xs text-[#232D35]/60 mb-5">
+                    <svg className="mr-1.5 h-4 w-4 text-[#1D63A1]/80" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Last saved: {new Date(assessment.lastSavedTime).toLocaleString()}
                   </div>
-                  
+
                   <button
                     onClick={() => handleContinueAssessment(assessment.assessment.assessmentId)}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-md font-medium transition-colors"
+                    className="w-full bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#232D35] py-2.5 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
                   >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                     Continue Assessment
                   </button>
                 </div>
@@ -158,38 +166,47 @@ const AssessmentDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 bg-gray-50 rounded-lg">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-12 bg-[#232D35]/5 rounded-xl border border-[#232D35]/10">
+            <svg className="mx-auto h-12 w-12 text-[#232D35]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No in-progress assessments</h3>
-            <p className="mt-1 text-sm text-gray-500">Start a new assessment to begin your journey!</p>
+            <h3 className="mt-2 text-sm font-medium text-[#232D35]/80">No in-progress assessments</h3>
+            <p className="mt-1 text-sm text-[#232D35]/60">Start a new assessment to begin your journey!</p>
           </div>
         )}
       </div>
-      
+
       {/* Available Assessments */}
-      <div className="mb-10">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Available Assessments</h2>
-        
+      <div className="mb-12">
+        <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center">
+          <svg className="w-5 h-5 mr-2 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Available Assessments
+        </h2>
+
         {availableAssessments.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {availableAssessments.map((assessment) => (
-              <motion.div 
+              <motion.div
                 key={assessment.assessmentId}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-lg shadow-md overflow-hidden border border-blue-100"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-md overflow-hidden border border-[#1D63A1]/20"
               >
-                <div className="p-4 border-b border-blue-50 bg-blue-50">
-                  <h3 className="text-lg font-semibold text-gray-900">{assessment.title}</h3>
-                  <p className="text-sm text-gray-500">{assessment.description}</p>
+                <div className="p-5 border-b border-[#1D63A1]/20 bg-gradient-to-r from-[#1D63A1]/10 to-[#1D63A1]/5">
+                  <h3 className="text-lg font-semibold text-[#232D35]">{assessment.title}</h3>
+                  <p className="text-sm text-[#232D35]/70 mt-1">{assessment.description}</p>
                 </div>
-                
-                <div className="p-4">
+
+                <div className="p-5">
                   <button
                     onClick={() => handleStartAssessment(assessment.assessmentId)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition-colors"
+                    className="w-full bg-gradient-to-r from-[#1D63A1] to-[#232D35] hover:from-[#1D63A1]/90 hover:to-[#232D35]/90 text-white py-2.5 px-4 rounded-lg font-medium transition-all flex items-center justify-center"
                   >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
                     Start Assessment
                   </button>
                 </div>
@@ -197,39 +214,51 @@ const AssessmentDashboard = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-500">No assessments available at this time.</p>
+          <div className="text-center py-12 bg-[#232D35]/5 rounded-xl border border-[#232D35]/10">
+            <p className="text-sm text-[#232D35]/60">No assessments available at this time.</p>
           </div>
         )}
       </div>
-      
+
       {/* Completed Assessments */}
       {completedAssessments.length > 0 && (
         <div>
-          <h2 className="text-xl font-bold text-gray-800 mb-4 pb-2 border-b">Completed Assessments</h2>
-          
+          <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center">
+            <svg className="w-5 h-5 mr-2 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Completed Assessments
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {completedAssessments.map((assessment) => (
-              <motion.div 
+              <motion.div
                 key={assessment.assessmentId}
-                whileHover={{ scale: 1.03 }}
-                className="bg-white rounded-lg shadow-md overflow-hidden border border-green-200"
+                whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-md overflow-hidden border border-green-300"
               >
-                <div className="p-4 border-b border-green-100 bg-green-50">
-                  <h3 className="text-lg font-semibold text-gray-900">{assessment.title}</h3>
-                  <p className="text-sm text-gray-500">{assessment.description}</p>
+                <div className="p-5 border-b border-green-200 bg-gradient-to-r from-green-50 to-green-100/50">
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-lg font-semibold text-[#232D35]">{assessment.title}</h3>
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">Completed</span>
+                  </div>
+                  <p className="text-sm text-[#232D35]/70 mt-1">{assessment.description}</p>
                 </div>
-                
-                <div className="p-4">
+
+                <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium text-gray-700">Score:</span>
+                    <span className="text-sm font-medium text-[#232D35]/80">Overall Score:</span>
                     <span className="text-sm font-bold text-green-600">85%</span>
                   </div>
-                  
+
                   <button
                     onClick={() => handleViewResults(assessment.assessmentId)}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md font-medium transition-colors"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 px-4 rounded-lg font-medium transition-colors flex items-center justify-center"
                   >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
                     View Results
                   </button>
                 </div>
