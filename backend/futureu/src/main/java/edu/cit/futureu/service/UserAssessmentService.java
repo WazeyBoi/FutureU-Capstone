@@ -237,15 +237,19 @@ public class UserAssessmentService {
                 // Skip if no answer was provided
                 if (userAnswer == null) continue;
                 
-                // For RIASEC/Likert questions, score is based on rating value
+                // For RIASEC/Likert questions, score is based on rating value or binary responses
                 if ("Likert".equals(questionType) || Boolean.TRUE.equals(question.get("isRiasecQuestion"))) {
-                    try {
-                        double rating = Double.parseDouble(userAnswer);
-                        rawScore += rating;
-                        // Each Likert question contributes its rating to "correct" answers
+                    // Get the RIASEC type for scoring purposes
+                    String riasecType = (String) question.get("riasecType");
+                    
+                    // Now handle the agree/disagree format
+                    if ("agree".equals(userAnswer)) {
+                        // For "agree" responses, add a full point (1.0)
+                        rawScore += 1.0;
                         correctAnswers++;
-                    } catch (NumberFormatException e) {
-                        // Invalid rating, don't add to score
+                    } else if ("disagree".equals(userAnswer)) {
+                        // For "disagree" responses, add no points but count as answered
+                        correctAnswers++;
                     }
                 } 
                 // For other question types, check against correct answer in database

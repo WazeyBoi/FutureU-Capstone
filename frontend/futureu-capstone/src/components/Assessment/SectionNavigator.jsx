@@ -28,7 +28,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
         completion: 0
       },
       interest: {
-        title: "RIASEC",
+        title: "Interest Assessment (RIASEC)",
         icon: <Microscope className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0

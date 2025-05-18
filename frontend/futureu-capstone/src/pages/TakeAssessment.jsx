@@ -319,65 +319,17 @@ const TakeAssessment = () => {
             initialIndices['track-arts'] = 0;
           }
           
-          // Interest Areas Sections
-          if (questionsData.interestAreas.realistic.length) {
+          // RIASEC Combined Section - Now as a single section instead of individual subsections
+          if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
             initialSections.push({
-              id: 'interest-realistic',
-              title: 'Realistic',
-              description: 'Evaluate your interest in practical, hands-on activities',
-              questions: questionsData.interestAreas.realistic
+              id: 'interest-combined',
+              title: 'Interest Assessment',
+              description: 'Assess your personal interests and preferences in various activities',
+              questions: questionsData.interestAreas,
+              questionsPerPage: 7, // Set to display 7 questions per page for RIASEC
+              isRiasecSection: true // Marker that this is a RIASEC section
             });
-            initialIndices['interest-realistic'] = 0;
-          }
-          
-          if (questionsData.interestAreas.investigative.length) {
-            initialSections.push({
-              id: 'interest-investigative',
-              title: 'Investigative',
-              description: 'Assess your analytical and intellectual interests',
-              questions: questionsData.interestAreas.investigative
-            });
-            initialIndices['interest-investigative'] = 0;
-          }
-          
-          if (questionsData.interestAreas.artistic.length) {
-            initialSections.push({
-              id: 'interest-artistic',
-              title: 'Artistic',
-              description: 'Evaluate your creative and artistic interests',
-              questions: questionsData.interestAreas.artistic
-            });
-            initialIndices['interest-artistic'] = 0;
-          }
-          
-          if (questionsData.interestAreas.social.length) {
-            initialSections.push({
-              id: 'interest-social',
-              title: 'Social',
-              description: 'Assess your interest in helping and working with people',
-              questions: questionsData.interestAreas.social
-            });
-            initialIndices['interest-social'] = 0;
-          }
-          
-          if (questionsData.interestAreas.enterprising.length) {
-            initialSections.push({
-              id: 'interest-enterprising',
-              title: 'Enterprising',
-              description: 'Evaluate your leadership and persuasive abilities',
-              questions: questionsData.interestAreas.enterprising
-            });
-            initialIndices['interest-enterprising'] = 0;
-          }
-          
-          if (questionsData.interestAreas.conventional.length) {
-            initialSections.push({
-              id: 'interest-conventional',
-              title: 'Conventional',
-              description: 'Assess your interest in structured and organized activities',
-              questions: questionsData.interestAreas.conventional
-            });
-            initialIndices['interest-conventional'] = 0;
+            initialIndices['interest-combined'] = 0;
           }
           
           setSectionList(initialSections);
@@ -885,7 +837,7 @@ const TakeAssessment = () => {
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
             <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>

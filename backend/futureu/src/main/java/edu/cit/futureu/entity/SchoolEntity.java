@@ -24,6 +24,7 @@ public class SchoolEntity {
     private String name;
     private String location;
     private String type;
+    private String schoolWebsiteUrl;
     private String virtualTourUrl;
     
     @Column(columnDefinition = "TEXT")
@@ -118,5 +119,11 @@ public class SchoolEntity {
 
     public void setSchoolPrograms(List<SchoolProgramEntity> schoolPrograms) {
         this.schoolPrograms = schoolPrograms;
+    }
+    public String getSchoolWebsiteUrl() {
+        return schoolWebsiteUrl;
+    }
+    public void setSchoolWebsiteUrl(String schoolWebsiteUrl) {
+        this.schoolWebsiteUrl = schoolWebsiteUrl;
     }
 }

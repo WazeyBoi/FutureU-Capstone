@@ -20,7 +20,8 @@ const AssessmentSection = ({
 }) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const questionsPerPage = 5; // Show 5 questions per page
+  // Check if this is a RIASEC section - if so, use 7 questions per page, otherwise 5
+  const questionsPerPage = questions.length > 0 && questions[0].isRiasecQuestion ? 7 : 5;
   
   // Reference to the questions container for scrolling
   const questionsContainerRef = useRef(null);
@@ -179,6 +180,11 @@ const AssessmentSection = ({
       <div className="flex justify-between items-center mb-4 px-1">
         <div className="text-sm text-gray-500">
           Showing questions {indexOfFirstQuestion + 1}-{Math.min(indexOfLastQuestion, questions.length)} of {questions.length}
+          {questions.length > 0 && questions[0].isRiasecQuestion && (
+            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+              Interest Assessment
+            </span>
+          )}
         </div>
         <div className="text-sm text-[#1D63A1]">
           Page {currentPage} of {totalPages}
