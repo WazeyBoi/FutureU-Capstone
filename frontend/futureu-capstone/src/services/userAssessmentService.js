@@ -211,6 +211,31 @@ class UserAssessmentService {
   }
 
   /**
+   * Get assessment results for a specific user assessment
+   * @param {number} userAssessmentId - The user assessment ID
+   * @returns {Promise<Object>} - Assessment results data
+   */
+  async getAssessmentResults(userAssessmentId) {
+    try {
+      const response = await apiClient.get(`/assessment-results/user-assessment/${userAssessmentId}`);
+      return response.data;
+    } catch (error) {
+      // If token expired (401), try to refresh the token and retry the request
+      if (error.response && error.response.status === 401) {
+        const refreshed = await authService.refreshToken();
+        if (refreshed) {
+          // Retry the request with the new token
+          const response = await apiClient.get(`/assessment-results/user-assessment/${userAssessmentId}`);
+          return response.data;
+        }
+      }
+      
+      this.handleError(error, 'Fetching assessment results');
+      throw error;
+    }
+  }
+
+  /**
    * Centralized error handling
    * @param {Error} error - The error object
    * @param {string} context - Context where the error occurred

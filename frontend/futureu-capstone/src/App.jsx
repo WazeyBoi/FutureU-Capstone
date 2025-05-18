@@ -14,6 +14,7 @@ import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
 import AssessmentDashboard from './pages/AssessmentDashboard.jsx';
+import AssessmentResults from './pages/AssessmentResults.jsx'; // Ensure this import exists
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import PrivateRoute from './components/PrivateRoute';
@@ -116,6 +117,12 @@ function App() {
             <Route path="/assessment-dashboard" element={
               <PrivateRoute>
                 <AssessmentDashboard />
+              </PrivateRoute>
+            } />
+            {/* Add the missing route for assessment results */}
+            <Route path="/assessment-results/:userAssessmentId" element={
+              <PrivateRoute>
+                <AssessmentResults />
               </PrivateRoute>
             } />
           </Routes>

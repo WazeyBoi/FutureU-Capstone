@@ -3,6 +3,9 @@ package edu.cit.futureu.entity;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,6 +34,7 @@ public class UserAssessmentEntity {
     private double score;
 
     // Many-to-one relationship with Assessment
+    @JsonManagedReference
     @ManyToOne
     @JoinColumn(name = "assessmentId", nullable = false)
     private AssessmentEntity assessment;
@@ -50,6 +54,7 @@ public class UserAssessmentEntity {
     @Column(columnDefinition = "LONGTEXT")
     private String savedSections;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "userAssessment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssessmentResultEntity> assessmentResults;
 

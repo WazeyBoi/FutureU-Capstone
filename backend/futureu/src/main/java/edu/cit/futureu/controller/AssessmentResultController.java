@@ -1,100 +1,87 @@
 package edu.cit.futureu.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
+import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
-import edu.cit.futureu.repository.AssessmentResultRepository;
-import edu.cit.futureu.repository.UserAssessmentRepository;
-import edu.cit.futureu.repository.UserAssessmentSectionResultRepository;
+import edu.cit.futureu.service.UserAssessmentService;
+import edu.cit.futureu.service.AssessmentResultService;
+
+import java.util.*;
 
 @RestController
-@RequestMapping(method=RequestMethod.GET, path="/api/assessment-results")
+@RequestMapping("/api/assessment-results")
 public class AssessmentResultController {
 
     @Autowired
-    private AssessmentResultRepository assessmentResultRepository;
+    private UserAssessmentService userAssessmentService;
     
     @Autowired
-    private UserAssessmentRepository userAssessmentRepository;
-    
-    @Autowired
-    private UserAssessmentSectionResultRepository sectionResultRepository;
-    
+    private AssessmentResultService assessmentResultService;
+
     /**
-     * Get detailed assessment results by user assessment ID
+     * Get results for a specific user assessment
      */
-    @GetMapping("/{userAssessmentId}")
-    public ResponseEntity<?> getDetailedResults(@PathVariable int userAssessmentId) {
+    @GetMapping("/user-assessment/{userAssessmentId}")
+    public ResponseEntity<?> getAssessmentResultsByUserAssessment(@PathVariable int userAssessmentId) {
         try {
-            // Check if the user assessment exists
-            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentRepository.findById(userAssessmentId);
+            // Get the user assessment
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
             if (!userAssessmentOpt.isPresent()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "User assessment not found"));
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
             }
             
             UserAssessmentEntity userAssessment = userAssessmentOpt.get();
             
-            // Get overall result
-            Optional<AssessmentResultEntity> resultOpt = assessmentResultRepository.findByUserAssessment(userAssessment);
-            if (!resultOpt.isPresent()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Assessment result not found"));
+            // Check if the assessment is completed
+            if (!"COMPLETED".equals(userAssessment.getStatus())) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment is not yet completed", 
+                           "code", "BAD_REQUEST"),
+                    HttpStatus.BAD_REQUEST
+                );
             }
             
-            AssessmentResultEntity result = resultOpt.get();
+            // Get the main assessment result
+            Optional<AssessmentResultEntity> resultOpt = assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            
+            if (!resultOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment result not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
             
             // Get section results
-            List<UserAssessmentSectionResultEntity> sectionResults = sectionResultRepository.findByUserAssessment(userAssessment);
+            List<UserAssessmentSectionResultEntity> sectionResults = 
+                userAssessmentService.getSectionResultsForAssessment(userAssessment);
             
-            // Organize section results by type
-            Map<String, List<UserAssessmentSectionResultEntity>> resultsByType = new HashMap<>();
-            
-            for (UserAssessmentSectionResultEntity sectionResult : sectionResults) {
-                String type = sectionResult.getSectionType();
-                resultsByType.computeIfAbsent(type, k -> new java.util.ArrayList<>()).add(sectionResult);
-            }
-            
-            // Build response
+            // Compile the response with all result data
             Map<String, Object> response = new HashMap<>();
-            response.put("userAssessmentId", userAssessmentId);
-            response.put("assessmentId", userAssessment.getAssessment().getAssessmentId());
-            response.put("assessmentTitle", userAssessment.getAssessment().getTitle());
-            response.put("userId", userAssessment.getUser().getUserId());
-            // response.put("userName", userAssessment.getUser().getUsername());
-            response.put("completionDate", userAssessment.getDateTaken());
-            response.put("timeSpentSeconds", userAssessment.getTimeSpentSeconds());
+            response.put("userAssessment", userAssessment);
+            response.put("assessmentResult", resultOpt.get());
+            response.put("sectionResults", sectionResults);
             
-            // Overall scores
-            Map<String, Object> overallScores = new HashMap<>();
-            overallScores.put("overallScore", result.getOverallScore());
-            overallScores.put("gsaScore", result.getGsaScore());
-            overallScores.put("academicTrackScore", result.getAcademicTrackScore());
-            overallScores.put("otherTrackScore", result.getOtherTrackScore());
-            overallScores.put("interestAreaScore", result.getInterestAreaScore());
-            
-            response.put("overallScores", overallScores);
-            response.put("sectionResults", resultsByType);
-            
-            return ResponseEntity.ok(response);
+            return new ResponseEntity<>(response, HttpStatus.OK);
             
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", e.getMessage()));
+            e.printStackTrace();
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to retrieve assessment results", 
+                       "message", e.getMessage(),
+                       "code", "SERVER_ERROR"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
         }
     }
 }
