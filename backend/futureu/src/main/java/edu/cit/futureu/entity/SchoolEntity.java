@@ -3,6 +3,7 @@ package edu.cit.futureu.entity;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -30,7 +31,7 @@ public class SchoolEntity {
     private String description;
 
     // One-to-many to Testimony
-    @JsonIgnore
+    @JsonManagedReference(value = "school-testimony")
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestimonyEntity> testimonies;
 
