@@ -3,6 +3,7 @@ package edu.cit.futureu.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
@@ -14,11 +15,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Ensure this import is present
 
-import org.springframework.http.HttpMethod; // Ensure this import is present
-import edu.cit.futureu.entity.Role; // Ensure this import is present
-import edu.cit.futureu.jwt.AuthEntryPointJwt;
+import edu.cit.futureu.jwt.AuthEntryPointJwt; // Ensure this import is present
 import edu.cit.futureu.jwt.AuthTokenFilter;
 import edu.cit.futureu.service.UserDetailsServiceImpl;
 
@@ -73,23 +72,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/program/getAllPrograms").permitAll()
                 
-                // Restrict all other API endpoints to users with the "STUDENT" role
-                .requestMatchers("/api/school/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/program/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/career/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/accreditation/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/schoolprogram/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/testimony/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/assessment/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/question/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/answer/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/userassessment/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/assessment-results/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/recommendation/**").hasAuthority(Role.STUDENT.name())
-                .requestMatchers("/api/user/**").hasAuthority(Role.STUDENT.name()) // User-specific data, excluding /api/auth
-                .requestMatchers("/api/quizSubCategoryCategory/**").hasAuthority(Role.STUDENT.name()) // Added based on your project structure
-                .requestMatchers("/api/choice/**").hasAuthority(Role.STUDENT.name()) // Added based on your project structure
-                .anyRequest().authenticated() // All other requests must be authenticated
+                // All other API endpoints require authentication (regardless of role)
+                .anyRequest().authenticated()
             );
 
         http.authenticationProvider(authenticationProvider());

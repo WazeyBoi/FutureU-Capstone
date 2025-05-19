@@ -6,10 +6,12 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
  
   useEffect(() => {
-    // Check authentication status when component mounts or location changes
+    // Check authentication status and role when component mounts or location changes
     setIsAuthenticated(authService.isAuthenticated());
+    setUserRole(authService.getUserRole());
   }, [location]);
  
   const handleLogout = () => {
@@ -27,27 +29,65 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
-          <Link to="/user-landing-page" className="text-white text-xl font-semibold">
-            FutureU
+          <Link to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} className="text-white text-xl font-semibold">
+            FutureU {userRole === 'ADMIN' && <span className="text-[#FFB71B] text-sm ml-2">Admin</span>}
           </Link>
  
           {/* Navigation Links */}
           <div className="flex space-x-1">
-            {/* Always visible links */}
-            <Link
-              to="/user-landing-page"
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                isActive('/user-landing-page')
-                  ? 'bg-[#f5fafc] text-white'
-                  : 'text-white hover:bg-gray-700'
-              }`}
-            >
-              Landing Page
-            </Link>
-           
-            {/* Links that require authentication */}
-            {isAuthenticated && (
+            {/* Admin-specific navigation */}
+            {isAuthenticated && userRole === 'ADMIN' && (
               <>
+                <Link
+                  to="/admin-dashboard"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/admin-dashboard')
+                      ? 'bg-[#FFB71B] text-[#2B3E4E]'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                
+                {/* Add other admin-specific links here */}
+                <Link
+                  to="/assessment-categories"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/assessment')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Assessment Management
+                </Link>
+                
+                <Link
+                  to="/questions"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/questions')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Questions
+                </Link>
+              </>
+            )}
+            
+            {/* Student/Regular user navigation */}
+            {isAuthenticated && userRole !== 'ADMIN' && (
+              <>
+                <Link
+                  to="/user-landing-page"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/user-landing-page')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Home
+                </Link>
+                
                 <Link
                   to="/academic-explorer"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -58,60 +98,33 @@ const Navigation = () => {
                 >
                   Academic Explorer
                 </Link>
-               
+                
+                {/* Other student-specific links... */}
                 <Link
-                  to="/accreditation"
+                  to="/assessment-dashboard"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/accreditation')
+                    location.pathname.includes('/assessment')
                       ? 'bg-[#f5fafc] text-white'
                       : 'text-white hover:bg-gray-700'
                   }`}
                 >
-                  Accreditation Ratings
+                  Assessments
                 </Link>
- 
+              </>
+            )}
+            
+            {/* Public links (not logged in) */}
+            {!isAuthenticated && (
+              <>
                 <Link
-                  to="/virtual-campus-tours"
+                  to="/user-landing-page"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/virtual-campus-tours')
+                    isActive('/user-landing-page')
                       ? 'bg-[#f5fafc] text-white'
                       : 'text-white hover:bg-gray-700'
                   }`}
                 >
-                  Virtual Campus Tours
-                </Link>
- 
-                <Link
-                  to="/testimonials"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/testimonials')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
-                  }`}
-                >
-                  Testimonials
-                </Link>
- 
-                <Link
-                  to="/career-pathways"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/career-pathways')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
-                  }`}
-                >
-                  Career Pathways
-                </Link>
-
-                <Link
-                  to="/schools"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/schools')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
-                  }`}
-                >
-                  Schools
+                  Home
                 </Link>
               </>
             )}
