@@ -17,11 +17,9 @@ const AdminLogin = () => {
     setLoading(true);
     try {
       const userData = await authService.signin(email, password);
-      console.log("Login response:", userData); // Add this line
       
       // Check if user has admin role (case-insensitive)
       const role = authService.getUserRole();
-      console.log("User role:", role, "Type:", typeof role);
 
       if (!role || role.toUpperCase() !== 'ADMIN') {
         setError('Access denied. Admin privileges required.');

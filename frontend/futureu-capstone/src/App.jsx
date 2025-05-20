@@ -28,23 +28,8 @@ import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 import 'leaflet/dist/leaflet.css';
 import SchoolsPage from './components/SchoolsPage.jsx';
- 
-// Add these styles to App.css
-/*
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
- 
-.animate-float {
-  animation-name: float;
-  animation-duration: 3s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
-}
-*/
- 
+// Add any other admin CRUD components you need
+
 function App() {
   return (
     <Router>
@@ -148,9 +133,122 @@ function App() {
               <AssessmentResults />
             </PrivateRoute>
           } />
+        
+        {/* Admin CRUD Routes */}
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <div>User Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        {/* Add routes for all other admin tools */}
+        <Route path="/admin/testimony" element={
+          <AdminRoute>
+            <div>Testimony Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/school" element={
+          <AdminRoute>
+            <div>School Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/school-program" element={
+          <AdminRoute>
+            <div>School-Program Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/program" element={
+          <AdminRoute>
+            <div>Program Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/accreditation" element={
+          <AdminRoute>
+            <div>Accreditation Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/career" element={
+          <AdminRoute>
+            <div>Career Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/recommendation" element={
+          <AdminRoute>
+            <div>Recommendation Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-result" element={
+          <AdminRoute>
+            <div>Assessment-Result Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/answer" element={
+          <AdminRoute>
+            <div>Answer Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/question" element={
+          <AdminRoute>
+            <div>Question Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/choice" element={
+          <AdminRoute>
+            <div>Choice Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/user-assessment" element={
+          <AdminRoute>
+            <div>User-Assessment Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment" element={
+          <AdminRoute>
+            <div>Assessment Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/user-assessment-section-result" element={
+          <AdminRoute>
+            <div>User-Assessment-Section-Result Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-category" element={
+          <AdminRoute>
+            <div>Assessment-Category Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-sub-category" element={
+          <AdminRoute>
+            <div>Assessment-Sub-Category Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/quiz-sub-category" element={
+          <AdminRoute>
+            <div>Quiz-Sub-Category Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        {/* For any route that doesn't match */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
 }
- 
+
 export default App;

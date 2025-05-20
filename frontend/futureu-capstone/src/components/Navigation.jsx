@@ -49,28 +49,6 @@ const Navigation = () => {
                   Dashboard
                 </Link>
                 
-                {/* Add other admin-specific links here */}
-                <Link
-                  to="/assessment-categories"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/assessment')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
-                  }`}
-                >
-                  Assessment Management
-                </Link>
-                
-                <Link
-                  to="/questions"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname.includes('/questions')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
-                  }`}
-                >
-                  Questions
-                </Link>
               </>
             )}
             
