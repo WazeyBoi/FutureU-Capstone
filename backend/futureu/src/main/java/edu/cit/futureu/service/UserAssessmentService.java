@@ -169,6 +169,17 @@ public class UserAssessmentService {
         userAssessment.setProgressPercentage(100.0);
         userAssessment.setTimeSpentSeconds(timeSpentSeconds);
         
+        // Set the dateCompleted field
+        LocalDateTime now = LocalDateTime.now();
+        userAssessment.setDateCompleted(now);
+        
+        // Calculate attempt number if this is a new attempt
+        if (userAssessment.getAttemptNo() == 0) {
+            // Count existing completed attempts for this user and assessment
+            long existingAttempts = userAssessmentRepository.countByUserAndAssessmentAndStatus(user, assessment, "COMPLETED");
+            userAssessment.setAttemptNo((int) existingAttempts + 1);
+        }
+        
         // Parse sections data
         List<Map<String, Object>> sections = objectMapper.readValue(sectionsJson, 
                                             new TypeReference<List<Map<String, Object>>>(){});

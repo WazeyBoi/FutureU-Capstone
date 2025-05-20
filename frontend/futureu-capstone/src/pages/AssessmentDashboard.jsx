@@ -379,9 +379,9 @@ const AssessmentDashboard = () => {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {attempts.map((attempt, index) => (
-                          <tr key={attempt.userAssessmentId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <tr key={attempt.userQuizAssessment} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {attempts.length - index}
+                              {attempt.attemptNo || 'N/A'}
                             </td>
                             <td className="text-left px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {formatDate(attempt.dateCompleted)}

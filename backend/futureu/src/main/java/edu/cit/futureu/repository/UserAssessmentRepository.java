@@ -17,4 +17,7 @@ public interface UserAssessmentRepository extends JpaRepository<UserAssessmentEn
     // New methods for progress management
     List<UserAssessmentEntity> findByUserAndStatus(UserEntity user, String status);
     List<UserAssessmentEntity> findByUserAndAssessmentAndStatus(UserEntity user, AssessmentEntity assessment, String status);
+    
+    // New method to count completed attempts
+    long countByUserAndAssessmentAndStatus(UserEntity user, AssessmentEntity assessment, String status);
 }
