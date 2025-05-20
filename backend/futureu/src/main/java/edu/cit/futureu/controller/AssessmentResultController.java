@@ -10,6 +10,7 @@ import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 import edu.cit.futureu.service.UserAssessmentService;
 import edu.cit.futureu.service.AssessmentResultService;
+import edu.cit.futureu.service.GeminiAIService;
 
 import java.util.*;
 
@@ -22,6 +23,9 @@ public class AssessmentResultController {
     
     @Autowired
     private AssessmentResultService assessmentResultService;
+    
+    @Autowired
+    private GeminiAIService geminiAIService;
 
     /**
      * Get results for a specific user assessment
@@ -78,6 +82,66 @@ public class AssessmentResultController {
             e.printStackTrace();
             return new ResponseEntity<>(
                 Map.of("error", "Failed to retrieve assessment results", 
+                       "message", e.getMessage(),
+                       "code", "SERVER_ERROR"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+    
+    /**
+     * Get AI-generated program recommendations based on assessment results
+     */
+    @GetMapping("/ai-recommendations/{userAssessmentId}")
+    public ResponseEntity<?> getAIProgramRecommendations(@PathVariable int userAssessmentId) {
+        try {
+            // Get the user assessment
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            
+            // Check if the assessment is completed
+            if (!"COMPLETED".equals(userAssessment.getStatus())) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment is not yet completed", 
+                           "code", "BAD_REQUEST"),
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+            
+            // Get the main assessment result
+            Optional<AssessmentResultEntity> resultOpt = assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            
+            if (!resultOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment result not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            // Get section results
+            List<UserAssessmentSectionResultEntity> sectionResults = 
+                userAssessmentService.getSectionResultsForAssessment(userAssessment);
+            
+            // Generate AI recommendations
+            Map<String, Object> aiRecommendations = 
+                geminiAIService.generateProgramRecommendations(resultOpt.get(), sectionResults);
+            
+            return new ResponseEntity<>(aiRecommendations, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to generate AI recommendations", 
                        "message", e.getMessage(),
                        "code", "SERVER_ERROR"),
                 HttpStatus.INTERNAL_SERVER_ERROR
