@@ -236,6 +236,35 @@ class UserAssessmentService {
   }
 
   /**
+   * Get assessments for a user and filter for completed ones
+   * @param {number} userId - The user ID
+   * @returns {Promise<Array>} - List of completed assessments
+   */
+  async getCompletedAssessments(userId) {
+    try {
+      // Use the existing endpoint to get all user assessments
+      const response = await apiClient.get(`/userassessment/getUserAssessmentsByUser/${userId}`);
+      
+      // Filter for assessments with a status of "COMPLETED"
+      // Adjust the status check based on your actual data structure
+      return response.data.filter(assessment => assessment.status === "COMPLETED");
+    } catch (error) {
+      // If token expired (401), try to refresh the token and retry the request
+      if (error.response && error.response.status === 401) {
+        const refreshed = await authService.refreshToken();
+        if (refreshed) {
+          // Retry the request with the new token
+          const response = await apiClient.get(`/userassessment/getUserAssessmentsByUser/${userId}`);
+          return response.data.filter(assessment => assessment.status === "COMPLETED");
+        }
+      }
+      
+      this.handleError(error, 'Fetching completed assessments');
+      throw error;
+    }
+  }
+
+  /**
    * Centralized error handling
    * @param {Error} error - The error object
    * @param {string} context - Context where the error occurred
