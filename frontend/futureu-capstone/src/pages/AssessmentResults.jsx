@@ -259,13 +259,13 @@ const AssessmentResults = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="col-span-2">
-            <h2 className="text-xl font-bold text-[#232D35] mb-2">
+            <h2 className="text-left text-xl font-bold text-[#232D35] mb-2">
               {results?.userAssessment?.assessment?.title || 'FutureU Assessment'}
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-left text-gray-600 mb-4">
               {results?.userAssessment?.assessment?.description || 'Comprehensive assessment to help guide your academic and career choices'}
             </p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex gap-10 text-sm">
               <div>
                 <p className="text-gray-500">Completed on:</p>
                 <p className="font-medium text-[#232D35]">{formatDate(results?.userAssessment?.dateCompleted)}</p>
@@ -380,9 +380,9 @@ const AssessmentResults = () => {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {results.sectionResults?.map((section, index) => (
                         <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{section.sectionName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.sectionType}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{section.sectionName}</td>
+                          <td className="text-left px-6 py-4 whitespace-nowrap text-sm text-gray-500">{section.sectionType}</td>
+                          <td className="text-left px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span className={`font-semibold ${getScoreColor(section.percentageScore)}`}>
                               {section.percentageScore?.toFixed(1)}%
                             </span>
@@ -456,9 +456,11 @@ const AssessmentResults = () => {
               className="grid grid-cols-1 lg:grid-cols-2 gap-8"
             >
               <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
-                <h3 className="text-lg font-semibold text-[#232D35] mb-4">Your RIASEC Profile</h3>
-                <div className="aspect-w-1 aspect-h-1 w-full h-[300px]">
-                  {generateRiasecRadarData() && <Radar data={generateRiasecRadarData()} />}
+                {/* <h3 className="text-lg font-semibold text-[#232D35] mb-4">Your RIASEC Profile</h3> */}
+                <div className='flex justify-center items-center'>
+                  <div className="w-[400px] h-[400px]">
+                    {generateRiasecRadarData() && <Radar data={generateRiasecRadarData()} options={{ responsive: true, maintainAspectRatio: true }} />}
+                  </div>
                 </div>
               </div>
               
@@ -468,15 +470,15 @@ const AssessmentResults = () => {
                   <div key={index} className="mb-4 p-4 bg-[#1D63A1]/5 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-bold text-[#232D35]">{type.name} ({type.code})</h4>
-                      <span className="text-sm font-semibold text-[#1D63A1]">{type.score.toFixed(1)}%</span>
+                      <span className="text-lefttext-sm font-semibold text-[#1D63A1]">{type.score.toFixed(1)}%</span>
                     </div>
-                    <p className="text-sm text-gray-600">{type.description}</p>
+                    <p className="text-left text-sm text-gray-600">{type.description}</p>
                   </div>
                 ))}
                 
                 <div className="mt-6">
                   <h4 className="font-semibold text-[#232D35] mb-2">What is RIASEC?</h4>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-left text-sm text-gray-600">
                     The RIASEC model, developed by psychologist John Holland, categorizes people and work environments into six types: 
                     Realistic, Investigative, Artistic, Social, Enterprising, and Conventional. Your results indicate which types align most 
                     closely with your interests and preferences, which can help guide career and educational choices.
@@ -492,7 +494,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Realistic</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.realisticScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "doers" who enjoy working with tools, machines, and objects. They typically prefer practical, hands-on problems and solutions.
                     </p>
                   </div>
@@ -501,7 +503,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Investigative</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.investigativeScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "thinkers" who enjoy analytical, intellectual, and scientific activities. They tend to be curious and precise.
                     </p>
                   </div>
@@ -510,7 +512,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Artistic</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.artisticScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "creators" who value self-expression, aesthetics, and independence. They tend to be creative, original, and unconventional.
                     </p>
                   </div>
@@ -519,7 +521,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Social</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.socialScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "helpers" who enjoy working with people and helping others. They tend to be friendly, cooperative, and supportive.
                     </p>
                   </div>
@@ -528,7 +530,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Enterprising</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.enterprisingScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "persuaders" who enjoy leading, selling, and influencing others. They tend to be assertive, ambitious, and energetic.
                     </p>
                   </div>
@@ -537,7 +539,7 @@ const AssessmentResults = () => {
                       <h4 className="font-semibold text-[#232D35]">Conventional</h4>
                       <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.conventionalScore}/7</span>
                     </div>
-                    <p className="text-xs text-gray-600">
+                    <p className="text-left text-xs text-gray-600">
                       These are "organizers" who enjoy working with data, numbers, and details. They tend to be orderly, careful, and efficient.
                     </p>
                   </div>
@@ -554,7 +556,7 @@ const AssessmentResults = () => {
               className="space-y-8"
             >
               <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
-                <h3 className="text-lg font-semibold text-[#232D35] mb-4">Academic Track Comparison</h3>
+                <h3 className="text-lg font-semibold text-[#232D35] mb-4">Tracks Comparison</h3>
                 <div className="h-[400px]">
                   {generateAcademicTracksData() && <Bar 
                     data={generateAcademicTracksData()} 
@@ -573,7 +575,7 @@ const AssessmentResults = () => {
                         x: {
                           title: {
                             display: true,
-                            text: 'Academic Tracks'
+                            text: 'Tracks'
                           }
                         }
                       }
@@ -590,10 +592,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.stemScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Science, Technology, Engineering, and Mathematics strand prepares students for college courses like Engineering, Computer Studies, Natural Sciences, and Mathematics.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Strong analytical skills, mathematical aptitude, scientific reasoning</p>
                     <p><span className="font-semibold">Career paths:</span> Engineer, Scientist, Programmer, Mathematician, Researcher</p>
                   </div>
@@ -606,10 +608,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.abmScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Accountancy, Business, and Management strand prepares students for college courses like Business Administration, Accountancy, Management, and Finance.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Financial literacy, analytical thinking, organizational skills</p>
                     <p><span className="font-semibold">Career paths:</span> Accountant, Entrepreneur, Manager, Financial Analyst, Marketing Professional</p>
                   </div>
@@ -622,10 +624,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.humssScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Humanities and Social Sciences strand prepares students for college courses like Language, Liberal Arts, Communication, Social Sciences, Education, and Law.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Strong communication skills, critical thinking, cultural awareness</p>
                     <p><span className="font-semibold">Career paths:</span> Lawyer, Psychologist, Teacher, Writer, Social Worker, Journalist</p>
                   </div>
@@ -638,10 +640,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.tvlScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Technical-Vocational-Livelihood track prepares students for post-secondary courses or employment in fields of technology and vocational work.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Technical skills, practical knowledge, hands-on abilities</p>
                     <p><span className="font-semibold">Career paths:</span> Technician, Chef, Automotive Specialist, Electronics Expert, IT Support</p>
                   </div>
@@ -656,10 +658,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.sportsTrackScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Sports track prepares students for careers in fitness, sports coaching, athletic training, and physical education.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Physical aptitude, leadership, team coordination</p>
                     <p><span className="font-semibold">Career paths:</span> Athlete, Coach, Sports Scientist, Physical Therapist, Fitness Trainer</p>
                   </div>
@@ -672,10 +674,10 @@ const AssessmentResults = () => {
                       {results.assessmentResult?.artsDesignTrackScore?.toFixed(1)}%
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-left text-sm text-gray-600 mb-4">
                     The Arts and Design track prepares students for careers in visual arts, performing arts, animation, fashion design, and other creative fields.
                   </p>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-left text-xs text-gray-500">
                     <p><span className="font-semibold">Strengths needed:</span> Creativity, artistic vision, aesthetic sensibility</p>
                     <p><span className="font-semibold">Career paths:</span> Artist, Designer, Animator, Photographer, Musician, Architect</p>
                   </div>
@@ -706,8 +708,8 @@ const AssessmentResults = () => {
                 </div>
               </div>
               
-              <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
-                <h3 className="text-lg font-semibold text-[#232D35] mb-4">Next Steps</h3>
+              <div className="text-left bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
+                <h3 className="text-center text-lg font-semibold text-[#232D35] mb-4">Next Steps</h3>
                 <div className="space-y-4">
                   <div className="flex">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#1D63A1]/20 flex items-center justify-center">
@@ -791,7 +793,7 @@ const AssessmentResults = () => {
           className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] rounded-lg hover:from-[#FFB71B]/90 hover:to-[#FFB71B]/70 transition-colors"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
           </svg>
           Print Results
         </button>
