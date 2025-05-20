@@ -37,6 +37,7 @@ import CRUD_Career from './components/Admin/CRUD_Career.jsx';
 import CRUD_Testimony from './components/Admin/CRUD_Testimony.jsx';
 import CRUD_Assessment from './components/Admin/CRUD_Assessment.jsx';
 import CRUD_AssessmentCategory from './components/Admin/CRUD_AssessmentCategory.jsx';
+import CRUD_UserAssessment from './components/Admin/CRUD_UserAssessment.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -213,7 +214,7 @@ function App() {
         
         <Route path="/admin/user-assessment" element={
           <AdminRoute>
-            <div>User-Assessment Management (Coming Soon)</div>
+            <CRUD_UserAssessment />
           </AdminRoute>
         } />
         
