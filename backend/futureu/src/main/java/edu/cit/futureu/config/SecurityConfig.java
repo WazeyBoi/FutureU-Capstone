@@ -73,6 +73,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/program/getAllPrograms").permitAll()
                 
                 // All other API endpoints require authentication (regardless of role)
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             );
 

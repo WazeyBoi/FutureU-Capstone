@@ -28,6 +28,7 @@ import './styles/animations.css'; // Import the animations CSS file
 import './App.css';
 import 'leaflet/dist/leaflet.css';
 import SchoolsPage from './components/SchoolsPage.jsx';
+import CRUD_School from './components/Admin/CRUD_School.jsx'; // Add this import
 // Add any other admin CRUD components you need
 
 function App() {
@@ -51,7 +52,7 @@ function App() {
         } />
         
         {/* Admin routes */}
-        <Route path="/admin-login" element={
+        <Route path="/admin/login" element={
           <PublicRoute>
             <AdminLogin />
           </PublicRoute>
@@ -150,7 +151,7 @@ function App() {
         
         <Route path="/admin/school" element={
           <AdminRoute>
-            <div>School Management (Coming Soon)</div>
+            <CRUD_School />
           </AdminRoute>
         } />
         
