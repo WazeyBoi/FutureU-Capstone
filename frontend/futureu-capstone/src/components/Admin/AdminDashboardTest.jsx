@@ -32,7 +32,7 @@ const AdminDashboardTest = () => {
         navigate('/admin/school');
         break;
       case 'School-Program':
-        navigate('/admin/school-program');
+        navigate('/admin/schoolprogram');
         break;
       case 'Program':
         navigate('/admin/program');

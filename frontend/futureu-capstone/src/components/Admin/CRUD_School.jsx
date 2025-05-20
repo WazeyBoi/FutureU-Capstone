@@ -228,6 +228,25 @@ const CRUD_School = () => {
   
   const totalPages = Math.ceil(filteredSchools.length / rowsPerPage);
   
+  // Add this helper function after your state declarations
+  const getPaginationRange = (current, totalPages) => {
+    const MAX_VISIBLE_PAGES = 5;
+    let start = Math.max(0, current - Math.floor(MAX_VISIBLE_PAGES / 2));
+    let end = Math.min(totalPages - 1, start + MAX_VISIBLE_PAGES - 1);
+    
+    // Adjust start if we're near the end
+    if (end - start + 1 < MAX_VISIBLE_PAGES) {
+      start = Math.max(0, end - MAX_VISIBLE_PAGES + 1);
+    }
+    
+    const range = [];
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+    
+    return range;
+  };
+  
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-12">
@@ -353,31 +372,70 @@ const CRUD_School = () => {
         <div className="text-sm text-gray-700 dark:text-gray-300">
           Showing {filteredSchools.length > 0 ? page * rowsPerPage + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredSchools.length)} of {filteredSchools.length} schools
         </div>
-        <div className="flex space-x-1">
-          <button
-            onClick={() => handleChangePage(Math.max(0, page - 1))}
-            disabled={page === 0}
-            className={`px-3 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-          >
-            Previous
-          </button>
-          {[...Array(totalPages).keys()].map((pageNum) => (
+        
+        {totalPages > 0 && (
+          <div className="flex space-x-1 items-center">
+            {/* First page button */}
             <button
-              key={pageNum}
-              onClick={() => handleChangePage(pageNum)}
-              className={`px-3 py-1 rounded ${pageNum === page ? 'bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              onClick={() => handleChangePage(0)}
+              disabled={page === 0}
+              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              title="First page"
             >
-              {pageNum + 1}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
-          <button
-            onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
-            disabled={page >= totalPages - 1}
-            className={`px-3 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-          >
-            Next
-          </button>
-        </div>
+            
+            {/* Previous page button */}
+            <button
+              onClick={() => handleChangePage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              title="Previous page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            {/* Page numbers */}
+            {getPaginationRange(page, totalPages).map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => handleChangePage(pageNum)}
+                className={`px-3 py-1 rounded ${pageNum === page ? 'bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              >
+                {pageNum + 1}
+              </button>
+            ))}
+            
+            {/* Next page button */}
+            <button
+              onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
+              disabled={page >= totalPages - 1}
+              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              title="Next page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+            
+            {/* Last page button */}
+            <button
+              onClick={() => handleChangePage(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              title="Last page"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
+        
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-700 dark:text-gray-300">Rows per page:</span>
           <select

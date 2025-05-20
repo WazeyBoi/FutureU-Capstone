@@ -1,54 +1,115 @@
 import React, { useState, useEffect } from 'react';
+import adminSchoolProgramService from '../../services/adminSchoolProgramService';
+import adminSchoolService from '../../services/adminSchoolService';
 import adminProgramService from '../../services/adminProgramService';
+import adminAccreditationService from '../../services/adminAccreditationService';
 
-const CRUD_Program = () => {
+const CRUD_SchoolProgram = () => {
+  const [schoolPrograms, setSchoolPrograms] = useState([]);
+  const [schools, setSchools] = useState([]);
   const [programs, setPrograms] = useState([]);
+  const [accreditations, setAccreditations] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedSchoolProgram, setSelectedSchoolProgram] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    programName: '',
-    description: ''
+    schoolId: '',
+    programId: '',
+    accredId: ''
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [programToDelete, setProgramToDelete] = useState(null);
+  const [schoolProgramToDelete, setSchoolProgramToDelete] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredPrograms, setFilteredPrograms] = useState([]);
+  const [filteredSchoolPrograms, setFilteredSchoolPrograms] = useState([]);
+  const [filterType, setFilterType] = useState('school'); // 'school', 'program', or 'accreditation'
+  const [filterValue, setFilterValue] = useState('');
 
-  // Fetch programs on component mount
+  // Fetch data on component mount
   useEffect(() => {
+    fetchSchoolPrograms();
+    fetchSchools();
     fetchPrograms();
+    fetchAccreditations();
   }, []);
 
   // Apply filters when search query changes
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredPrograms(programs);
+    if (searchQuery.trim() === '' && filterValue === '') {
+      setFilteredSchoolPrograms(schoolPrograms);
     } else {
-      const filtered = programs.filter(program => 
-        program.programName.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredPrograms(filtered);
+      let filtered = [...schoolPrograms];
+      
+      // Apply text search if provided
+      if (searchQuery.trim() !== '') {
+        filtered = filtered.filter(sp => 
+          (sp.school && sp.school.name && sp.school.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (sp.program && sp.program.programName && sp.program.programName.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+      }
+      
+      // Apply dropdown filter if selected
+      if (filterValue !== '') {
+        if (filterType === 'school') {
+          filtered = filtered.filter(sp => sp.school && sp.school.schoolId === parseInt(filterValue));
+        } else if (filterType === 'program') {
+          filtered = filtered.filter(sp => sp.program && sp.program.programId === parseInt(filterValue));
+        } else if (filterType === 'accreditation') {
+          if (filterValue === 'none') {
+            filtered = filtered.filter(sp => !sp.accreditation);
+          } else {
+            filtered = filtered.filter(sp => sp.accreditation && sp.accreditation.accredId === parseInt(filterValue));
+          }
+        }
+      }
+      
+      setFilteredSchoolPrograms(filtered);
     }
-  }, [searchQuery, programs]);
+  }, [searchQuery, filterType, filterValue, schoolPrograms]);
+
+  const fetchSchoolPrograms = async () => {
+    setLoading(true);
+    try {
+      const data = await adminSchoolProgramService.getAllSchoolPrograms();
+      setSchoolPrograms(data);
+      setFilteredSchoolPrograms(data);
+      setError(null);
+    } catch (error) {
+      setError('Failed to fetch school programs');
+      console.error('Error fetching school programs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSchools = async () => {
+    try {
+      const data = await adminSchoolService.getAllSchools();
+      setSchools(data);
+    } catch (error) {
+      console.error('Error fetching schools:', error);
+    }
+  };
 
   const fetchPrograms = async () => {
-    setLoading(true);
     try {
       const data = await adminProgramService.getAllPrograms();
       setPrograms(data);
-      setFilteredPrograms(data);
-      setError(null);
     } catch (error) {
-      setError('Failed to fetch programs');
       console.error('Error fetching programs:', error);
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchAccreditations = async () => {
+    try {
+      const data = await adminAccreditationService.getAllAccreditations();
+      setAccreditations(data);
+    } catch (error) {
+      console.error('Error fetching accreditations:', error);
     }
   };
 
@@ -62,26 +123,28 @@ const CRUD_Program = () => {
 
   const handleAddClick = () => {
     setFormData({
-      programName: '',
-      description: ''
+      schoolId: '',
+      programId: '',
+      accredId: ''
     });
     setIsEditing(false);
-    setSelectedProgram(null);
+    setSelectedSchoolProgram(null);
     setIsModalVisible(true);
   };
 
-  const handleEditClick = (program) => {
-    setSelectedProgram(program);
+  const handleEditClick = (schoolProgram) => {
+    setSelectedSchoolProgram(schoolProgram);
     setFormData({
-      programName: program.programName || '',
-      description: program.description || ''
+      schoolId: schoolProgram.school ? schoolProgram.school.schoolId : '',
+      programId: schoolProgram.program ? schoolProgram.program.programId : '',
+      accredId: schoolProgram.accreditation ? schoolProgram.accreditation.accredId : ''
     });
     setIsEditing(true);
     setIsModalVisible(true);
   };
 
-  const handleDeleteClick = (program) => {
-    setProgramToDelete(program);
+  const handleDeleteClick = (schoolProgram) => {
+    setSchoolProgramToDelete(schoolProgram);
     setDeleteConfirmOpen(true);
   };
 
@@ -91,22 +154,22 @@ const CRUD_Program = () => {
 
   const cancelDelete = () => {
     setDeleteConfirmOpen(false);
-    setProgramToDelete(null);
+    setSchoolProgramToDelete(null);
   };
 
   const confirmDelete = async () => {
-    if (!programToDelete) return;
+    if (!schoolProgramToDelete) return;
     
     setLoading(true);
     try {
-      await adminProgramService.deleteProgram(programToDelete.programId);
-      fetchPrograms(); // Refresh the list
-      setSuccess('Program deleted successfully');
+      await adminSchoolProgramService.deleteSchoolProgram(schoolProgramToDelete.schoolProgramId);
+      fetchSchoolPrograms(); // Refresh the list
+      setSuccess('School Program mapping deleted successfully');
       setDeleteConfirmOpen(false);
-      setProgramToDelete(null);
+      setSchoolProgramToDelete(null);
     } catch (error) {
-      console.error('Error deleting program:', error);
-      setError('Failed to delete program. Please try again later.');
+      console.error('Error deleting school program:', error);
+      setError('Failed to delete school program. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -114,30 +177,42 @@ const CRUD_Program = () => {
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.programName || !formData.description) {
-      setError('Program name and description are required');
+    if (!formData.schoolId || !formData.programId) {
+      setError('School and Program are required');
       return;
     }
     
     setLoading(true);
     try {
+      const schoolProgramData = {
+        school: {
+          schoolId: parseInt(formData.schoolId)
+        },
+        program: {
+          programId: parseInt(formData.programId)
+        },
+        accreditation: formData.accredId ? {
+          accredId: parseInt(formData.accredId)
+        } : null
+      };
+      
       if (isEditing) {
-        // Update existing program
-        await adminProgramService.updateProgram(selectedProgram.programId, {
-          ...formData,
-          programId: selectedProgram.programId
+        // Update existing school program
+        await adminSchoolProgramService.updateSchoolProgram(selectedSchoolProgram.schoolProgramId, {
+          ...schoolProgramData,
+          schoolProgramId: selectedSchoolProgram.schoolProgramId
         });
-        setSuccess('Program updated successfully');
+        setSuccess('School Program mapping updated successfully');
       } else {
-        // Create new program
-        await adminProgramService.createProgram(formData);
-        setSuccess('Program created successfully');
+        // Create new school program
+        await adminSchoolProgramService.createSchoolProgram(schoolProgramData);
+        setSuccess('School Program mapping created successfully');
       }
-      fetchPrograms(); // Refresh the list
+      fetchSchoolPrograms(); // Refresh the list
       setIsModalVisible(false);
     } catch (error) {
-      console.error('Error saving program:', error);
-      setError(`Failed to ${isEditing ? 'update' : 'create'} program. Please try again later.`);
+      console.error('Error saving school program:', error);
+      setError(`Failed to ${isEditing ? 'update' : 'create'} school program. Please try again later.`);
     } finally {
       setLoading(false);
     }
@@ -148,35 +223,25 @@ const CRUD_Program = () => {
     setPage(newPage);
   };
 
+  // Handle filter change
+  const handleFilterTypeChange = (e) => {
+    setFilterType(e.target.value);
+    setFilterValue('');
+  };
+
+  const handleFilterValueChange = (e) => {
+    setFilterValue(e.target.value);
+  };
+
   // Calculate pagination
-  const paginatedPrograms = filteredPrograms.slice(
+  const paginatedSchoolPrograms = filteredSchoolPrograms.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
 
-  const totalPages = Math.ceil(filteredPrograms.length / rowsPerPage);
+  const totalPages = Math.ceil(filteredSchoolPrograms.length / rowsPerPage);
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      fetchPrograms();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Assuming there's a search method in your service
-      const response = await adminProgramService.searchPrograms(searchQuery);
-      setFilteredPrograms(response);
-      setError(null);
-    } catch (err) {
-      console.error('Error searching programs:', err);
-      setError('Failed to search programs. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add this helper function after your state declarations
+  // Helper function to get pagination range
   const getPaginationRange = (current, totalPages) => {
     const MAX_VISIBLE_PAGES = 5;
     let start = Math.max(0, current - Math.floor(MAX_VISIBLE_PAGES / 2));
@@ -198,24 +263,22 @@ const CRUD_Program = () => {
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">Program Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">School Programs Management</h1>
         <div className="w-24 h-1 bg-yellow-500 dark:bg-yellow-400"></div>
       </div>
       
-      {/* Search and Add Section */}
+      {/* Search and Filter Section */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="flex-grow">
           <div className="relative">
             <input
               type="text"
               className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
-              placeholder="Search programs..."
+              placeholder="Search school or program..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
             <button
-              onClick={handleSearch}
               className="absolute right-0 top-0 h-full px-4 bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 rounded-r-md hover:bg-[#1D63A1]/90 dark:hover:bg-[#FFB71B]/90"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -224,6 +287,42 @@ const CRUD_Program = () => {
             </button>
           </div>
         </div>
+        
+        {/* Filter Dropdown */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <select
+            value={filterType}
+            onChange={handleFilterTypeChange}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
+          >
+            <option value="school">Filter by School</option>
+            <option value="program">Filter by Program</option>
+            <option value="accreditation">Filter by Accreditation</option>
+          </select>
+          
+          <select
+            value={filterValue}
+            onChange={handleFilterValueChange}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
+          >
+            <option value="">All</option>
+            {filterType === 'school' && schools.map(school => (
+              <option key={school.schoolId} value={school.schoolId}>{school.name}</option>
+            ))}
+            {filterType === 'program' && programs.map(program => (
+              <option key={program.programId} value={program.programId}>{program.programName}</option>
+            ))}
+            {filterType === 'accreditation' && (
+              <>
+                <option value="none">No Accreditation</option>
+                {accreditations.map(accred => (
+                  <option key={accred.accredId} value={accred.accredId}>{accred.title}</option>
+                ))}
+              </>
+            )}
+          </select>
+        </div>
+        
         <button
           onClick={handleAddClick}
           className="inline-flex items-center px-4 py-2 bg-[#FFB71B] dark:bg-[#1D63A1] text-white dark:text-gray-100 rounded-md hover:bg-[#FFB71B]/90 dark:hover:bg-[#1D63A1]/90 transition-colors shadow-md"
@@ -231,47 +330,55 @@ const CRUD_Program = () => {
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Add Program
+          Add School Program
         </button>
       </div>
       
-      {/* Programs Table */}
+      {/* School Programs Table */}
       <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 text-left">
                 <th className="px-6 py-3 font-semibold">ID</th>
-                <th className="px-6 py-3 font-semibold">Program Name</th>
-                <th className="px-6 py-3 font-semibold">Description</th>
+                <th className="px-6 py-3 font-semibold">School</th>
+                <th className="px-6 py-3 font-semibold">Program</th>
+                <th className="px-6 py-3 font-semibold">Accreditation</th>
                 <th className="px-6 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {loading && !filteredPrograms.length ? (
+              {loading && !filteredSchoolPrograms.length ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center">
+                  <td colSpan={5} className="px-6 py-4 text-center">
                     <div className="flex justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1] dark:border-[#FFB71B]"></div>
                     </div>
                   </td>
                 </tr>
-              ) : filteredPrograms.length === 0 ? (
+              ) : filteredSchoolPrograms.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                    No programs found
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                    No school program mappings found
                   </td>
                 </tr>
               ) : (
-                paginatedPrograms.map((program) => (
-                  <tr key={program.programId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4">{program.programId}</td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{program.programName}</td>
-                    <td className="px-6 py-4 truncate max-w-xs">{program.description}</td>
+                paginatedSchoolPrograms.map((schoolProgram) => (
+                  <tr key={schoolProgram.schoolProgramId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-6 py-4">{schoolProgram.schoolProgramId}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
+                      {schoolProgram.school?.name || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4">
+                      {schoolProgram.program?.programName || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4">
+                      {schoolProgram.accreditation?.title || 'None'}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleEditClick(program)}
+                          onClick={() => handleEditClick(schoolProgram)}
                           className="p-1 text-[#1D63A1] dark:text-[#FFB71B] hover:bg-[#1D63A1]/10 dark:hover:bg-[#FFB71B]/10 rounded"
                           title="Edit"
                         >
@@ -280,7 +387,7 @@ const CRUD_Program = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(program)}
+                          onClick={() => handleDeleteClick(schoolProgram)}
                           className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                           title="Delete"
                         >
@@ -301,7 +408,7 @@ const CRUD_Program = () => {
       {/* Pagination */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-700 dark:text-gray-300">
-          Showing {filteredPrograms.length > 0 ? page * rowsPerPage + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredPrograms.length)} of {filteredPrograms.length} programs
+          Showing {filteredSchoolPrograms.length > 0 ? page * rowsPerPage + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredSchoolPrograms.length)} of {filteredSchoolPrograms.length} school program mappings
         </div>
         
         {totalPages > 0 && (
@@ -367,7 +474,7 @@ const CRUD_Program = () => {
           </div>
         )}
         
-        {/* Add rows per page selector if desired */}
+        {/* Add rows per page selector */}
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-700 dark:text-gray-300">Rows per page:</span>
           <select
@@ -387,37 +494,66 @@ const CRUD_Program = () => {
         </div>
       </div>
       
-      {/* Add/Edit Program Dialog */}
+      {/* Add/Edit School Program Dialog */}
       {isModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit Program' : 'Add New Program'}</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit School Program' : 'Add New School Program'}</h3>
             </div>
             <div className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Program Name *</label>
-                  <input
-                    type="text"
-                    name="programName"
-                    value={formData.programName}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">School *</label>
+                  <select
+                    name="schoolId"
+                    value={formData.schoolId}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
                     required
-                  />
+                  >
+                    <option value="">Select a school</option>
+                    {schools.map(school => (
+                      <option key={school.schoolId} value={school.schoolId}>
+                        {school.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Program *</label>
+                  <select
+                    name="programId"
+                    value={formData.programId}
                     onChange={handleInputChange}
-                    rows="4"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
                     required
-                  ></textarea>
+                  >
+                    <option value="">Select a program</option>
+                    {programs.map(program => (
+                      <option key={program.programId} value={program.programId}>
+                        {program.programName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Accreditation (Optional)</label>
+                  <select
+                    name="accredId"
+                    value={formData.accredId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
+                  >
+                    <option value="">None</option>
+                    {accreditations.map(accred => (
+                      <option key={accred.accredId} value={accred.accredId}>
+                        {accred.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -454,7 +590,7 @@ const CRUD_Program = () => {
             </div>
             <div className="p-6">
               <p className="text-gray-700">
-                Are you sure you want to delete the program "{programToDelete?.programName}"? This action cannot be undone.
+                Are you sure you want to delete the mapping between school "{schoolProgramToDelete?.school?.name}" and program "{schoolProgramToDelete?.program?.programName}"? This action cannot be undone.
               </p>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
@@ -540,4 +676,4 @@ const CRUD_Program = () => {
   );
 };
 
-export default CRUD_Program;
+export default CRUD_SchoolProgram;
