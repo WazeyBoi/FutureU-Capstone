@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.cit.futureu.entity.Role;
 import edu.cit.futureu.entity.SchoolEntity;
 import edu.cit.futureu.entity.TestimonyEntity;
 import edu.cit.futureu.entity.UserEntity;
@@ -78,6 +79,28 @@ public class TestimonyController {
         }
         
         return false;
+    }
+    
+    /**
+     * Check if the current user is the owner of a testimony or an admin
+     * @param testimonyId The ID of the testimony to check
+     * @return True if the current user is the owner or an admin, false otherwise
+     */
+    private boolean isTestimonyOwnerOrAdmin(int testimonyId) {
+        UserEntity currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return false;
+        }
+
+        // Check if the user has an admin role
+        if (currentUser.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        // Check if the user is the owner of the testimony
+        Optional<TestimonyEntity> testimony = testimonyService.getTestimonyById(testimonyId);
+        return testimony.isPresent() && testimony.get().getStudent() != null &&
+               testimony.get().getStudent().getUserId() == currentUser.getUserId();
     }
     
     /**
@@ -167,29 +190,29 @@ public class TestimonyController {
         return ResponseEntity.ok(Collections.emptyList());
     }
     
-    // UPDATE - Added authorization check
+    // UPDATE - Added admin check
     @PutMapping(value = "/putTestimonyDetails", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> putTestimonyDetails(@RequestParam int testimonyId, @RequestBody TestimonyEntity newTestimonyDetails) {
-        // Check if the current user is the owner of the testimony
-        if (!isTestimonyOwner(testimonyId)) {
+        // Check if the current user is the owner or an admin
+        if (!isTestimonyOwnerOrAdmin(testimonyId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You can only update your own testimonials");
+                    .body("You can only update your own testimonials or must be an admin");
         }
-        
+
         newTestimonyDetails.setTestimonyId(testimonyId);
         TestimonyEntity updatedTestimony = testimonyService.updateTestimony(newTestimonyDetails);
         return ResponseEntity.ok(updatedTestimony);
     }
     
-    // DELETE - Added authorization check
+    // DELETE - Added admin check
     @DeleteMapping("/deleteTestimonyDetails/{testimonyId}")
     public ResponseEntity<?> deleteTestimony(@PathVariable int testimonyId) {
-        // Check if the current user is the owner of the testimony
-        if (!isTestimonyOwner(testimonyId)) {
+        // Check if the current user is the owner or an admin
+        if (!isTestimonyOwnerOrAdmin(testimonyId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("You can only delete your own testimonials");
+                    .body("You can only delete your own testimonials or must be an admin");
         }
-        
+
         boolean deleted = testimonyService.deleteTestimony(testimonyId);
         if (deleted) {
             return ResponseEntity.ok("Testimony with ID " + testimonyId + " successfully deleted");
