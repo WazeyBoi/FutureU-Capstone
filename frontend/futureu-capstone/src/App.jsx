@@ -15,7 +15,7 @@ import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
 import AssessmentDashboard from './pages/AssessmentDashboard.jsx';
-import AssessmentResults from './pages/AssessmentResults.jsx'; // Ensure this import exists
+import AssessmentResults from './pages/AssessmentResults.jsx'; 
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import AdminLogin from './components/Admin/AdminLogin.jsx';
@@ -24,11 +24,12 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminRoute from './components/AdminRoute';
 import Unauthorized from './components/Admin/Unauthorized.jsx';
-import './styles/animations.css'; // Import the animations CSS file
+import './styles/animations.css'; 
 import './App.css';
 import 'leaflet/dist/leaflet.css';
 import SchoolsPage from './components/SchoolsPage.jsx';
-import CRUD_School from './components/Admin/CRUD_School.jsx'; // Add this import
+import CRUD_School from './components/Admin/CRUD_School.jsx';
+import CRUD_Program from './components/Admin/CRUD_Program.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -155,15 +156,15 @@ function App() {
           </AdminRoute>
         } />
         
-        <Route path="/admin/school-program" element={
+        <Route path="/admin/program" element={
           <AdminRoute>
-            <div>School-Program Management (Coming Soon)</div>
+            <CRUD_Program />
           </AdminRoute>
         } />
         
-        <Route path="/admin/program" element={
+        <Route path="/admin/school-program" element={
           <AdminRoute>
-            <div>Program Management (Coming Soon)</div>
+            <div>School-Program Management (Coming Soon)</div>
           </AdminRoute>
         } />
         
