@@ -23,17 +23,17 @@ public class ProgramEntity {
     private String programName;
     private String description;
 
-    // One-to-many to SchoolProgram
+    // One-to-many to SchoolProgram remains unchanged
     @JsonIgnore
-    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL)
     private List<SchoolProgramEntity> schoolPrograms;
 
+    // Replace direct one-to-many with many-to-many via CareerProgramEntity
     @JsonIgnore
-    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CareerEntity> careers;
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL)
+    private List<CareerProgramEntity> programCareers;
 
     public ProgramEntity() {
-
     }
 
     public int getProgramId() {
@@ -67,6 +67,12 @@ public class ProgramEntity {
     public void setSchoolPrograms(List<SchoolProgramEntity> schoolPrograms) {
         this.schoolPrograms = schoolPrograms;
     }
-
     
+    public List<CareerProgramEntity> getProgramCareers() {
+        return programCareers;
+    }
+    
+    public void setProgramCareers(List<CareerProgramEntity> programCareers) {
+        this.programCareers = programCareers;
+    }
 }

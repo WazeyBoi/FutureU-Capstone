@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,15 +18,11 @@ public class AccreditationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int accredId;
 
-    // Many-to-one relationship with School
+    // Many-to-one relationship with SchoolProgram
     @ManyToOne
-    @JoinColumn(name = "schoolId", nullable = false)
-    private SchoolEntity school;
-    
-    // Many-to-one relationship with Program
-    @ManyToOne
-    @JoinColumn(name = "program_id")
-    private ProgramEntity program;
+    @JoinColumn(name = "school_program_id")
+    @JsonBackReference
+    private SchoolProgramEntity schoolProgram;
 
     private String title;
     private String description;
@@ -44,20 +42,12 @@ public class AccreditationEntity {
         this.accredId = accredId;
     }
 
-    public SchoolEntity getSchool() {
-        return school;
+    public SchoolProgramEntity getSchoolProgram() {
+        return schoolProgram;
     }
 
-    public void setSchool(SchoolEntity school) {
-        this.school = school;
-    }
-    
-    public ProgramEntity getProgram() {
-        return program;
-    }
-
-    public void setProgram(ProgramEntity program) {
-        this.program = program;
+    public void setSchoolProgram(SchoolProgramEntity schoolProgram) {
+        this.schoolProgram = schoolProgram;
     }
 
     public String getTitle() {

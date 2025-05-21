@@ -7,8 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import edu.cit.futureu.entity.AccreditationEntity;
-import edu.cit.futureu.entity.ProgramEntity;
-import edu.cit.futureu.entity.SchoolEntity;
+import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.repository.AccreditationRepository;
 
 @Service
@@ -31,16 +30,8 @@ public class AccreditationService {
         return accreditationRepository.findById(id);
     }
     
-    public List<AccreditationEntity> getAccreditationsBySchool(SchoolEntity school) {
-        return accreditationRepository.findBySchool(school);
-    }
-    
-    public List<AccreditationEntity> getAccreditationsByProgram(ProgramEntity program) {
-        return accreditationRepository.findByProgram(program);
-    }
-    
-    public List<AccreditationEntity> getAccreditationsBySchoolAndProgram(SchoolEntity school, ProgramEntity program) {
-        return accreditationRepository.findBySchoolAndProgram(school, program);
+    public List<AccreditationEntity> getAccreditationsBySchoolProgram(SchoolProgramEntity schoolProgram) {
+        return accreditationRepository.findBySchoolProgram(schoolProgram);
     }
     
     public List<AccreditationEntity> searchAccreditationsByTitle(String title) {

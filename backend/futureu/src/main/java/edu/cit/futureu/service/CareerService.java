@@ -2,12 +2,15 @@ package edu.cit.futureu.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import edu.cit.futureu.entity.CareerEntity;
+import edu.cit.futureu.entity.CareerProgramEntity;
 import edu.cit.futureu.entity.ProgramEntity;
+import edu.cit.futureu.repository.CareerProgramRepository;
 import edu.cit.futureu.repository.CareerRepository;
 
 @Service
@@ -15,6 +18,9 @@ public class CareerService {
 
     @Autowired
     private CareerRepository careerRepository;
+    
+    @Autowired
+    private CareerProgramRepository careerProgramRepository;
     
     // Create operations
     public CareerEntity createCareer(CareerEntity career) {
@@ -30,8 +36,12 @@ public class CareerService {
         return careerRepository.findById(id);
     }
     
+    // Updated to use the many-to-many relationship
     public List<CareerEntity> getCareersByProgram(ProgramEntity program) {
-        return careerRepository.findByProgram(program);
+        List<CareerProgramEntity> associations = careerProgramRepository.findByProgram(program);
+        return associations.stream()
+            .map(CareerProgramEntity::getCareer)
+            .collect(Collectors.toList());
     }
     
     public List<CareerEntity> searchCareersByTitle(String title) {
@@ -46,8 +56,12 @@ public class CareerService {
         return careerRepository.findByJobTrendContainingIgnoreCase(jobTrend);
     }
     
-    public List<CareerEntity> filterCareersBySalaryRange(double minSalary, double maxSalary) {
-        return careerRepository.findBySalaryBetween(minSalary, maxSalary);
+    public List<CareerEntity> filterCareersBySalary(String salary) {
+        return careerRepository.findBySalaryContainingIgnoreCase(salary);
+    }
+    
+    public List<CareerEntity> filterCareersByDescription(String description) {
+        return careerRepository.findByCareerDescriptionContainingIgnoreCase(description);
     }
     
     // Update operations

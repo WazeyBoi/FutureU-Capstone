@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import apiClient from "../services/api"; // Adjust the import path as necessary
-import careerService from "../services/careerService"; // Adjust the import path as necessary
+import apiClient from "../services/api";
+import careerService from "../services/careerService";
 
 const PAGE_SIZE = 10;
 
 const CareerPathways = () => {
   const [careers, setCareers] = useState([]);
   const [schoolPrograms, setSchoolPrograms] = useState([]);
+  const [programs, setPrograms] = useState([]);
+  const [careerPrograms, setCareerPrograms] = useState({});  // Store programs by career ID
   const [selectedIndustry, setSelectedIndustry] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
   const [selectedSchool, setSelectedSchool] = useState("");
@@ -16,6 +17,7 @@ const CareerPathways = () => {
   const [programSearch, setProgramSearch] = useState("");
   const [schoolSearch, setSchoolSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal states
@@ -27,15 +29,45 @@ const CareerPathways = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      setError(null);
       try {
+        // Fetch all programs first to ensure we have the complete program list
+        const programsRes = await apiClient.get("/program/getAllPrograms");
+        setPrograms(programsRes.data || []);
+        
+        // Then fetch careers and school programs
         const [careersRes, schoolProgramsRes] = await Promise.all([
           apiClient.get("/career/getAllCareers"),
           apiClient.get("/schoolprogram/getAllSchoolPrograms"),
         ]);
-        setCareers(careersRes.data);
-        setSchoolPrograms(schoolProgramsRes.data);
+        
+        if (careersRes.data) {
+          const careersData = careersRes.data;
+          setCareers(careersData);
+          
+          // Fetch programs for each career using the dedicated endpoint
+          const programsByCareer = {};
+          await Promise.all(
+            careersData.map(async (career) => {
+              try {
+                const programsResponse = await apiClient.get(`/careerprogram/getProgramsByCareer/${career.careerId}`);
+                programsByCareer[career.careerId] = programsResponse.data || [];
+              } catch (err) {
+                console.error(`Failed to fetch programs for career ID ${career.careerId}:`, err);
+                programsByCareer[career.careerId] = [];
+              }
+            })
+          );
+          
+          setCareerPrograms(programsByCareer);
+        }
+        
+        if (schoolProgramsRes.data) {
+          setSchoolPrograms(schoolProgramsRes.data);
+        }
       } catch (err) {
-        // handle error
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -43,54 +75,107 @@ const CareerPathways = () => {
     fetchData();
   }, []);
 
-  // Derive unique programs and schools from schoolPrograms
-  const allPrograms = Array.from(
-    new Map(
-      schoolPrograms.map((sp) => [sp.program.programId, sp.program])
-    ).values()
-  );
-  const allSchools = Array.from(
-    new Map(
-      schoolPrograms.map((sp) => [sp.school.schoolId, sp.school])
-    ).values()
-  );
+  // Helper function to get programs for a career
+  const getProgramsForCareer = (career) => {
+    if (!career || !career.careerId) return [];
+    
+    // Get programs from our dedicated careerPrograms state
+    return careerPrograms[career.careerId] || [];
+  };
 
-  // Filter programs based on selected school
-  const filteredPrograms = selectedSchool
-    ? allPrograms.filter((program) =>
+  // Helper function to check if career has a specific program
+  const careerHasProgram = (career, programId) => {
+    if (!career || !career.careerId) return false;
+    const programs = careerPrograms[career.careerId] || [];
+    return programs.some(p => p.programId === parseInt(programId));
+  };
+
+  // Derive unique programs from all careers and the programs endpoint
+  const allPrograms = React.useMemo(() => {
+    const programMap = new Map();
+    
+    // Add programs from programs API
+    programs.forEach(program => {
+      if (program && program.programId) {
+        programMap.set(program.programId, program);
+      }
+    });
+    
+    // Add programs from careerPrograms mapping
+    Object.values(careerPrograms).forEach(programList => {
+      programList.forEach(program => {
+        if (program && program.programId) {
+          programMap.set(program.programId, program);
+        }
+      });
+    });
+    
+    return Array.from(programMap.values());
+  }, [programs, careerPrograms]);
+
+  // Derive unique schools from schoolPrograms
+  const allSchools = React.useMemo(() => {
+    return Array.from(
+      new Map(
+        schoolPrograms
+          .filter(sp => sp && sp.school)
+          .map((sp) => [sp.school.schoolId, sp.school])
+      ).values()
+    );
+  }, [schoolPrograms]);
+
+  // Filter programs based on selected school and search term
+  const filteredPrograms = React.useMemo(() => {
+    if (selectedSchool) {
+      return allPrograms.filter((program) =>
         schoolPrograms.some(
           (sp) =>
+            sp && sp.program && sp.school &&
             sp.program.programId === program.programId &&
             sp.school.schoolId === Number(selectedSchool)
         )
-      )
-    : programSearch
-    ? allPrograms.filter((p) =>
+      );
+    }
+    
+    if (programSearch) {
+      return allPrograms.filter((p) =>
         p.programName.toLowerCase().includes(programSearch.toLowerCase())
-      )
-    : allPrograms;
-
+      );
+    }
+    
+    return allPrograms;
+  }, [selectedSchool, programSearch, allPrograms, schoolPrograms]);
 
   // Unique industries and job trends
   const industries = Array.from(new Set(careers.map((c) => c.industry).filter(Boolean)));
   const jobTrends = Array.from(new Set(careers.map((c) => c.jobTrend).filter(Boolean)));
 
   // Filtering logic for careers
-  const filteredCareers = careers.filter((career) => {
-    const matchesIndustry = !selectedIndustry || career.industry === selectedIndustry;
-    const matchesProgram = !selectedProgram || (career.program && career.program.programId === Number(selectedProgram));
-    const matchesSchool =
-      !selectedSchool ||
-      (career.program &&
-        schoolPrograms.some(
-          (sp) =>
-            sp.program.programId === career.program.programId &&
-            sp.school.schoolId === Number(selectedSchool)
-        ));
-    const matchesJobTrend = !selectedJobTrend || career.jobTrend === selectedJobTrend;
-    const matchesSearch = !searchTerm || career.careerTitle.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesIndustry && matchesProgram && matchesSchool && matchesJobTrend && matchesSearch;
-  });
+  const filteredCareers = React.useMemo(() => {
+    return careers.filter((career) => {
+      const matchesIndustry = !selectedIndustry || career.industry === selectedIndustry;
+      
+      const matchesProgram = !selectedProgram || careerHasProgram(career, selectedProgram);
+      
+      const matchesSchool =
+        !selectedSchool ||
+        getProgramsForCareer(career).some(program => 
+          schoolPrograms.some(
+            (sp) =>
+              sp && sp.program && sp.school &&
+              sp.program.programId === program.programId &&
+              sp.school.schoolId === Number(selectedSchool)
+          )
+        );
+        
+      const matchesJobTrend = !selectedJobTrend || career.jobTrend === selectedJobTrend;
+      
+      const matchesSearch = !searchTerm || 
+        (career.careerTitle && career.careerTitle.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+      return matchesIndustry && matchesProgram && matchesSchool && matchesJobTrend && matchesSearch;
+    });
+  }, [careers, selectedIndustry, selectedProgram, selectedSchool, selectedJobTrend, searchTerm, schoolPrograms, careerPrograms]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredCareers.length / PAGE_SIZE);
@@ -113,12 +198,20 @@ const CareerPathways = () => {
     return range;
   }
 
-  // Get schools offering the selected career's program
+  // Get schools offering the selected career's programs
   const getSchoolsForCareer = (career) => {
-    if (!career?.program) return [];
+    if (!career) return [];
+    
+    const careerProgs = getProgramsForCareer(career);
+    const programIds = careerProgs.map(p => p.programId);
+    
     return schoolPrograms
-      .filter((sp) => sp.program.programId === career.program.programId)
-      .map((sp) => sp.school);
+      .filter((sp) => sp && sp.program && sp.school && programIds.includes(sp.program.programId))
+      .map((sp) => sp.school)
+      // Remove duplicates
+      .filter((school, index, self) => 
+        index === self.findIndex((s) => s.schoolId === school.schoolId)
+      );
   };
 
   // Helper to get a school background (reuse logic from AcademicExplorer)
@@ -126,6 +219,7 @@ const CareerPathways = () => {
     "Cebu Institute of Technology": "path/to/citBackground.jpg",
     // ...add your mappings here...
   };
+  
   const getSchoolBackground = (schoolName) => {
     if (!schoolName) return null;
     const normalizedName = schoolName.toLowerCase();
@@ -136,6 +230,44 @@ const CareerPathways = () => {
     }
     return null;
   };
+
+  // Format program names with commas
+  const formatProgramsDisplay = (career) => {
+    const programs = getProgramsForCareer(career);
+    if (!programs || programs.length === 0) return "N/A";
+    
+    if (programs.length === 1) {
+      return programs[0].programName;
+    }
+    
+    return `${programs[0].programName} + ${programs.length - 1} more`;
+  };
+  
+  // Get all program names as a comma-separated string (for modal display)
+  const getAllProgramNames = (career) => {
+    const programs = getProgramsForCareer(career);
+    if (!programs || programs.length === 0) return "N/A";
+    
+    return programs.map(p => p.programName).join(", ");
+  };
+
+  // Handle error display if needed
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-700 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-yellow-500 text-black py-2 px-4 rounded-lg hover:bg-yellow-400 transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,6 +309,7 @@ const CareerPathways = () => {
                 ))}
               </div>
             </div>
+            
             {/* Program */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-semibold mb-4">Program</h2>
@@ -217,29 +350,7 @@ const CareerPathways = () => {
                   ))}
               </div>
             </div>
-            {/* School
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="text-lg font-semibold mb-4">School</h2>
-              <input
-                type="text"
-                className="w-full mb-2 px-3 py-2 border border-gray-300 rounded text-sm"
-                placeholder="Search school..."
-                value={schoolSearch}
-                onChange={(e) => setSchoolSearch(e.target.value)}
-              />
-              <select
-                className="w-full border border-gray-300 rounded-md text-sm px-3 py-2"
-                value={selectedSchool}
-                onChange={(e) => setSelectedSchool(e.target.value)}
-              >
-                <option value="">All Schools</option>
-                {filteredSchools.map((school) => (
-                  <option key={school.schoolId} value={school.schoolId}>
-                    {school.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
+            
             {/* Job Trend */}
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-semibold mb-4">Job Trend</h2>
@@ -256,6 +367,7 @@ const CareerPathways = () => {
                 ))}
               </select>
             </div>
+            
             {/* Clear Filters */}
             <button
               className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded mt-2"
@@ -288,7 +400,8 @@ const CareerPathways = () => {
                 Showing {filteredCareers.length} result{filteredCareers.length !== 1 ? "s" : ""}
               </span>
             </div>
-            {/* Table and Pagination (keep your existing code here) */}
+            
+            {/* Table */}
             <div className="bg-white rounded-lg shadow">
               <div className="p-4 border-b border-gray-200 flex flex-wrap gap-4 items-center">
                 <input
@@ -352,15 +465,21 @@ const CareerPathways = () => {
                               setShowCareerModal(true);
                             }}
                           >
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap truncate">{career.careerTitle}</td>
-                            <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap truncate">{career.industry}</td>
+                            <td className="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap truncate">
+                              {career.careerTitle}
+                            </td>
                             <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap truncate">
-                              {career.program ? career.program.programName : "N/A"}
+                              {career.industry}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap truncate">
+                              {getAllProgramNames(career)}
                             </td>
                             <td className="px-6 py-4 text-sm text-yellow-600 font-bold whitespace-nowrap truncate">
-                              ₱{career.salary?.toLocaleString()}
+                              {career.salary ? `₱${career.salary}` : 'N/A'}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap truncate">{career.jobTrend}</td>
+                            <td className="px-6 py-4 text-sm text-gray-700 whitespace-nowrap truncate">
+                              {career.jobTrend}
+                            </td>
                           </tr>
                         ))
                       )}
@@ -368,6 +487,7 @@ const CareerPathways = () => {
                   </table>
                 )}
               </div>
+              
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 py-4">
@@ -450,17 +570,27 @@ const CareerPathways = () => {
                         <div className="text-base text-gray-800">{selectedCareer.industry}</div>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="text-xs text-gray-500 font-semibold mb-1">Program</div>
-                        <div className="text-base text-gray-800">{selectedCareer.program?.programName || "N/A"}</div>
+                        <div className="text-xs text-gray-500 font-semibold mb-1">Programs</div>
+                        <div className="text-base text-gray-800">
+                          {getAllProgramNames(selectedCareer)}
+                        </div>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="text-xs text-gray-500 font-semibold mb-1">Salary</div>
-                        <div className="text-base text-yellow-600 font-bold">₱{selectedCareer.salary?.toLocaleString()}</div>
+                        <div className="text-base text-yellow-600 font-bold">
+                          {selectedCareer.salary ? `₱${selectedCareer.salary}` : 'N/A'}
+                        </div>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-4">
                         <div className="text-xs text-gray-500 font-semibold mb-1">Job Trend</div>
                         <div className="text-base text-gray-800">{selectedCareer.jobTrend}</div>
                       </div>
+                      {selectedCareer.careerDescription && (
+                        <div className="bg-gray-50 rounded-lg p-4 sm:col-span-2">
+                          <div className="text-xs text-gray-500 font-semibold mb-1">Description</div>
+                          <div className="text-base text-gray-800">{selectedCareer.careerDescription}</div>
+                        </div>
+                      )}
                     </div>
                     {/* Action Button */}
                     <div className="flex justify-center mt-4">
@@ -473,95 +603,103 @@ const CareerPathways = () => {
                       </button>
                     </div>
                   </div>
-                  {/* Schools Modal */}
-{showSchoolsModal && selectedCareer && (
-  <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full relative border border-gray-200 animate-fade-in-up overflow-hidden">
-      <button
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-100 p-2 rounded-full shadow"
-        onClick={() => setShowSchoolsModal(false)}
-        aria-label="Close"
-      >
-        &times;
-      </button>
-      <div className="h-52 bg-[#2B3E4E] relative overflow-hidden w-full">
-        {getSchoolsForCareer(selectedCareer)[0]?.name && getSchoolBackground(getSchoolsForCareer(selectedCareer)[0]?.name) ? (
-          <img
-            src={getSchoolBackground(getSchoolsForCareer(selectedCareer)[0]?.name)}
-            alt="School background"
-            className="w-full h-full object-cover object-center opacity-40"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-[#2B3E4E] opacity-90"></div>
-        )}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="px-6 py-3 text-center">
-            <h2 className="text-white text-3xl font-bold text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}>
-              Schools Offering {selectedCareer.program?.programName}
-            </h2>
-          </div>
-        </div>
-      </div>
-      <div className="px-8 pb-8 relative">
-        <ul className="space-y-8 max-h-[420px] overflow-y-auto pt-12">
-          {getSchoolsForCareer(selectedCareer).length === 0 ? (
-            <li className="text-gray-500">No schools found for this program.</li>
-          ) : (
-            getSchoolsForCareer(selectedCareer).map((school) => (
-              <li key={school.schoolId} className="relative bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col md:flex-row gap-6 mb-4">
-                <div className="absolute -top-12 left-8 w-24 h-24">
-                  <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden p-1">
-                    <span className="text-4xl font-bold text-[#2B3E4E]">{school.name[0]}</span>
-                  </div>
                 </div>
-                <div className="flex-1 pt-8 md:pt-0 md:pl-32">
-                  <h3 className="font-bold text-xl text-[#2B3E4E] mb-2">{school.name}</h3>
-                  <div className="flex flex-wrap gap-4 mb-2">
-                    <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      {school.location}
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m10-5h3a1 1 0 011 1v4a1 1 0 01-1 1h-3m-10 0v6a1 1 0 001 1h8a1 1 0 001-1v-6m-10 0h10" /></svg>
-                      {school.type}
+              </div>
+            )}
+            
+            {/* Schools Modal */}
+            {showSchoolsModal && selectedCareer && (
+              <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full relative border border-gray-200 animate-fade-in-up overflow-hidden">
+                  <button
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-100 p-2 rounded-full shadow"
+                    onClick={() => setShowSchoolsModal(false)}
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                  <div className="h-52 bg-[#2B3E4E] relative overflow-hidden w-full">
+                    {getSchoolsForCareer(selectedCareer)[0]?.name && getSchoolBackground(getSchoolsForCareer(selectedCareer)[0]?.name) ? (
+                      <img
+                        src={getSchoolBackground(getSchoolsForCareer(selectedCareer)[0]?.name)}
+                        alt="School background"
+                        className="w-full h-full object-cover object-center opacity-40"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#2B3E4E] opacity-90"></div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="px-6 py-3 text-center">
+                        <h2 className="text-white text-3xl font-bold text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}>
+                          Schools Offering {selectedCareer.careerPrograms && selectedCareer.careerPrograms.length > 0 ? 
+                            getProgramsForCareer(selectedCareer).map(p => p.programName).join(", ") : 
+                            "Related Programs"}
+                        </h2>
+                      </div>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-4 mb-3">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m0 0H3" /></svg>
-                      About the School
-                    </h4>
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {school.description || 'No description available for this school.'}
-                    </p>
+                  <div className="px-8 pb-8 relative">
+                    <ul className="space-y-8 max-h-[420px] overflow-y-auto pt-12">
+                      {getSchoolsForCareer(selectedCareer).length === 0 ? (
+                        <li className="text-gray-500">No schools found for this program.</li>
+                      ) : (
+                        getSchoolsForCareer(selectedCareer).map((school) => (
+                          <li key={school.schoolId} className="relative bg-white rounded-xl shadow-lg border border-gray-100 p-6 flex flex-col md:flex-row gap-6 mb-4">
+                            <div className="absolute -top-12 left-8 w-24 h-24">
+                              <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden p-1">
+                                <span className="text-4xl font-bold text-[#2B3E4E]">{school.name[0]}</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 pt-8 md:pt-0 md:pl-32">
+                              <h3 className="font-bold text-xl text-[#2B3E4E] mb-2">{school.name}</h3>
+                              <div className="flex flex-wrap gap-4 mb-2">
+                                <div className="flex items-center text-gray-600">
+                                  <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                  {school.location}
+                                </div>
+                                <div className="flex items-center text-gray-600">
+                                  <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m10-5h3a1 1 0 011 1v4a1 1 0 01-1 1h-3m-10 0v6a1 1 0 001 1h8a1 1 0 001-1v-6m-10 0h10" /></svg>
+                                  {school.type}
+                                </div>
+                              </div>
+                              <div className="bg-gray-50 rounded-lg p-4 mb-3">
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                  <svg className="w-5 h-5 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m0 0H3" /></svg>
+                                  About the School
+                                </h4>
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                  {school.description || 'No description available for this school.'}
+                                </p>
+                              </div>
+                            </div>
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                    {/* View All Button */}
+                    <div className="mt-8 flex justify-end gap-4">
+                      <button
+                        className="py-3 px-6 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] rounded-lg transition shadow-md hover:shadow-lg font-medium flex items-center justify-center"
+                        onClick={() => {
+                          const programId = selectedCareer.careerPrograms && 
+                                           selectedCareer.careerPrograms.length > 0 ? 
+                                           selectedCareer.careerPrograms[0].program.programId : null;
+                          if (programId) {
+                            window.location.href = `/academic-explorer?programId=${programId}`;
+                          }
+                        }}
+                      >
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        View All in Academic Explorer
+                      </button>
+                      <button
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded"
+                        onClick={() => setShowSchoolsModal(false)}
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
-        {/* View All Button */}
-        <div className="mt-8 flex justify-end gap-4">
-          <button
-            className="py-3 px-6 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] rounded-lg transition shadow-md hover:shadow-lg font-medium flex items-center justify-center"
-            onClick={() => {
-              window.location.href = `/academic-explorer?programId=${selectedCareer.program?.programId}`;
-            }}
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            View All in Academic Explorer
-          </button>
-          <button
-            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded"
-            onClick={() => setShowSchoolsModal(false)}
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
                 </div>
               </div>
             )}
@@ -569,48 +707,48 @@ const CareerPathways = () => {
             {/* Legend Section */}
             <div className="lg:w-full bg-white rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Legend</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 class="text-md font-medium text-gray-800 mb-2">
+                  <h4 className="text-md font-medium text-gray-800 mb-2">
                     Job Trend
                   </h4>
-                  <ul class="space-y-2">
-                    <li class="flex items-center">
-                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
                         High Demand
                       </span>
-                      <span class="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600">
                         Careers with strong job market growth
                       </span>
                     </li>
-                    <li class="flex items-center">
-                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
+                    <li className="flex items-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
                         Growing
                       </span>
-                      <span class="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600">
                         Careers with steady growth
                       </span>
                     </li>
-                    <li class="flex items-center">
-                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
+                    <li className="flex items-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
                         Stable
                       </span>
-                      <span class="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600">
                         Careers with consistent opportunities
                       </span>
                     </li>
                   </ul>
                 </div>
                 <div>
-                  <h4 class="text-md font-medium text-gray-800 mb-2">
+                  <h4 className="text-md font-medium text-gray-800 mb-2">
                     Salary
                   </h4>
-                  <ul class="space-y-2">
-                    <li class="flex items-center">
-                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
+                  <ul className="space-y-2">
+                    <li className="flex items-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
                         ₱
                       </span>
-                      <span class="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600">
                         Estimated monthly salary (PHP)
                       </span>
                     </li>

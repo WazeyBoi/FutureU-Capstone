@@ -1,11 +1,16 @@
 package edu.cit.futureu.entity;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -26,10 +31,10 @@ public class SchoolProgramEntity {
     @JoinColumn(name = "programId", nullable = false)
     private ProgramEntity program;
 
-    // Many-to-one relationship with Accreditation
-    @ManyToOne
-    @JoinColumn(name = "accredId")
-    private AccreditationEntity accreditation;
+    // One-to-many relationship with Accreditation
+    @OneToMany(mappedBy = "schoolProgram")
+    @JsonManagedReference
+    private List<AccreditationEntity> accreditations;
 
     public SchoolProgramEntity() {
 
@@ -59,13 +64,11 @@ public class SchoolProgramEntity {
         this.program = program;
     }
 
-    public AccreditationEntity getAccreditation() {
-        return accreditation;
+    public List<AccreditationEntity> getAccreditations() {
+        return accreditations;
     }
 
-    public void setAccreditation(AccreditationEntity accreditation) {
-        this.accreditation = accreditation;
+    public void setAccreditations(List<AccreditationEntity> accreditations) {
+        this.accreditations = accreditations;
     }
-
-    
 }
