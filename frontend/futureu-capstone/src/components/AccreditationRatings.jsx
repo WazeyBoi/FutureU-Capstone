@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-// Currently using mock data from schools.js
-import { schools } from "../data/schools";
+// Remove hardcoded data import
+// import { schools } from "../data/schools";
 import GuideModal from "./accreditation/GuideModal";
 import SchoolsList from "./accreditation/SchoolsList";
 import StatsCards from "./accreditation/StatsCards";
@@ -10,6 +10,8 @@ import StatisticsTab from "./accreditation/tabs/StatisticsTab";
 import AboutTab from "./accreditation/tabs/AboutTab";
 // Import the accreditation service
 import accreditationService from "../services/accreditationService";
+import { Link } from 'react-router-dom';
+import authService from "../services/authService";
 
 const AccreditationRatings = () => {
   // State declarations
@@ -22,6 +24,7 @@ const AccreditationRatings = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
+  const [showAccreditedOnly, setShowAccreditedOnly] = useState(false);
   
   // Animation states
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -29,25 +32,43 @@ const AccreditationRatings = () => {
   const [cardsAnimated, setCardsAnimated] = useState(false);
   const [contentAnimated, setContentAnimated] = useState(false);
 
-  // NOTE: For future implementation - Replace hard-coded data with API fetch
-  // Uncomment this code and remove the import { schools } when ready to use real data
-  /*
-  // Add these state variables at the top with the other state declarations
+  // Add state for real data
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
+  const [usingMockData, setUsingMockData] = useState(false);
 
+  // Fetch data useEffect - needs to be before animation useEffect for consistent hooks order
   useEffect(() => {
     const fetchAccreditationData = async () => {
       try {
         setLoading(true);
-        // Use accreditationService instead of raw fetch
+        
+        // Check authentication status
+        const isLoggedIn = authService.isAuthenticated();
+        setIsAuthenticated(isLoggedIn);
+        
+        // Use accreditationService to fetch real data
         const data = await accreditationService.getAllAccreditationData();
         setSchools(data);
+        
+        // Check if we're using mock data as fallback
+        if (!isLoggedIn && data.length > 0) {
+          setUsingMockData(true);
+        }
+        
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching accreditation data:', error);
-        setError('Failed to load accreditation data. Please try again later.');
+        console.error('Error fetching accreditation data:', error.response ? error.response.data : error.message);
+        
+        // Check if it's an authentication error
+        if (error.response && error.response.status === 401) {
+          setError('Authentication required. Please log in to view accreditation data.');
+        } else {
+          setError('Failed to load accreditation data. Please try again later.');
+        }
+        
         setLoading(false);
       }
     };
@@ -55,7 +76,17 @@ const AccreditationRatings = () => {
     fetchAccreditationData();
   }, []);
 
-  // Add this conditional rendering to handle loading and error states
+  // Trigger animations on component mount - this must ALWAYS be here in this order
+  useEffect(() => {
+    setPageLoaded(true);
+    
+    // Staggered animations
+    setTimeout(() => setHeroAnimated(true), 100);
+    setTimeout(() => setCardsAnimated(true), 400);
+    setTimeout(() => setContentAnimated(true), 700);
+  }, []);
+  
+  // Add conditional rendering for loading and error states
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -76,27 +107,37 @@ const AccreditationRatings = () => {
           </svg>
           <h2 className="text-xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md transition-colors"
-          >
-            Try Again
-          </button>
+          
+          {error.includes('Authentication') ? (
+            <div className="mt-4 mb-6">
+              <p className="text-sm text-gray-600 mb-3">
+                You need to be logged in to view accreditation data.
+              </p>
+              <Link 
+                to="/login"
+                className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-md transition-colors block mb-2"
+              >
+                Log In
+              </Link>
+              <Link 
+                to="/register"
+                className="text-slate-600 hover:text-slate-800 transition-colors text-sm"
+              >
+                Don't have an account? Sign up
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-md transition-colors"
+            >
+              Try Again
+            </button>
+          )}
         </div>
       </div>
     );
   }
-  */
-
-  // Trigger animations on component mount
-  useEffect(() => {
-    setPageLoaded(true);
-    
-    // Staggered animations
-    setTimeout(() => setHeroAnimated(true), 100);
-    setTimeout(() => setCardsAnimated(true), 400);
-    setTimeout(() => setContentAnimated(true), 700);
-  }, []);
   
   // Handle tab switching animation
   const handleTabChange = (tab) => {
@@ -136,6 +177,8 @@ const AccreditationRatings = () => {
         return false;
       if (selectedRecognition && program.recognition !== selectedRecognition)
         return false;
+      if (showAccreditedOnly && (!program.level || program.level === 0))
+        return false;
       return true;
     });
 
@@ -147,6 +190,31 @@ const AccreditationRatings = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Authentication warning banner */}
+      {usingMockData && (
+        <div className="bg-yellow-50 border-b border-yellow-200">
+          <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm text-yellow-700">
+                You're viewing demo data. <Link to="/login" className="font-medium underline">Log in</Link> to see real accreditation information.
+              </p>
+            </div>
+            <button 
+              className="text-yellow-400 hover:text-yellow-500"
+              onClick={() => setUsingMockData(false)}
+            >
+              <span className="sr-only">Dismiss</span>
+              <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Hero Section - Dark blue banner with text */}
       <div className={`bg-slate-800 text-white py-12 px-6 relative overflow-hidden transition-all duration-700 ease-out transform ${heroAnimated ? 'opacity-100' : 'opacity-0 translate-y-[-20px]'}`}>
         <div className="max-w-7xl mx-auto">
@@ -209,6 +277,8 @@ const AccreditationRatings = () => {
           setSelectedAccreditationLevel={setSelectedAccreditationLevel}
           selectedRecognition={selectedRecognition}
           setSelectedRecognition={setSelectedRecognition}
+          showAccreditedOnly={showAccreditedOnly}
+          setShowAccreditedOnly={setShowAccreditedOnly}
         />
       )}
 

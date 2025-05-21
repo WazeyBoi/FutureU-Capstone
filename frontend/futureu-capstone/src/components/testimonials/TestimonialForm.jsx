@@ -61,7 +61,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
       [name]: value
     }));
   };
-  
+
   const handleRatingChange = (rating) => {
     setFormData(prev => ({
       ...prev,
@@ -100,25 +100,25 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
 
       // Capture if we're creating or updating for the success message
       const isNewTestimonial = !testimonialToEdit?.testimonyId || testimonialToEdit?.isNewTestimonial;
+
+    try {
+      let response;
       
-      try {
-        let response;
-        
         if (testimonialToEdit?.testimonyId && !testimonialToEdit?.isNewTestimonial) {
-          // Update existing testimonial
+        // Update existing testimonial
           response = await updateTestimonial(testimonialToEdit.testimonyId, testimonialData);
-        } else {
-          // Create new testimonial
+      } else {
+        // Create new testimonial
           response = await createTestimonial(testimonialData);
-        }
-        
-        // Call the success callback with the response data
+      }
+      
+      // Call the success callback with the response data
         onSubmitSuccess(response.data || testimonialData);
         
         // Since data is actually saved to the database even when we get errors later,
         // we can close the form and reset it
-        onClose();
-        setFormData(initialFormState);
+      onClose();
+      setFormData(initialFormState);
         
         // Show success message to the user
         alert(isNewTestimonial ? 'Your review has been submitted successfully!' : 'Your review has been updated successfully!');

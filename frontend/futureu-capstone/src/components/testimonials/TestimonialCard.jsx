@@ -58,13 +58,13 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
       setSchoolName(testimonial.school.name);
     }
   }, [testimonial]);
-
+  
   // Close options menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showOptions && !e.target.closest('.options-menu')) {
         setShowOptions(false);
-      }
+    }
     };
     
     document.addEventListener('mousedown', handleClickOutside);
@@ -183,17 +183,17 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
                 className="absolute right-0 bottom-10 w-32 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200"
               >
                 <button
-                  onClick={handleEdit}
+                onClick={handleEdit}
                   className="w-full px-4 py-2 text-left flex items-center text-sm text-gray-700 hover:bg-[#2B3E4E] hover:text-white"
-                >
+              >
                   <FaEdit className="text-[#FFB71B] mr-2" />
                   <span>Edit</span>
                 </button>
-                
+              
                 <button
-                  onClick={handleDelete}
+                onClick={handleDelete}
                   className="w-full px-4 py-2 text-left flex items-center text-sm text-gray-700 hover:bg-[#2B3E4E] hover:text-white"
-                >
+              >
                   <FaTrash className="text-red-500 mr-2" />
                   <span>Delete</span>
                 </button>

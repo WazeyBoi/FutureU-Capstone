@@ -15,7 +15,7 @@ import QuizSubCategories from './pages/QuizSubCategories.jsx';
 import Questions from './pages/Questions.jsx';
 import TakeAssessment from './pages/TakeAssessment.jsx';
 import AssessmentDashboard from './pages/AssessmentDashboard.jsx';
-import AssessmentResults from './pages/AssessmentResults.jsx'; // Ensure this import exists
+import AssessmentResults from './pages/AssessmentResults.jsx'; 
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import AdminLogin from './components/Admin/AdminLogin.jsx';
@@ -24,27 +24,22 @@ import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminRoute from './components/AdminRoute';
 import Unauthorized from './components/Admin/Unauthorized.jsx';
-import './styles/animations.css'; // Import the animations CSS file
+import './styles/animations.css'; 
 import './App.css';
 import 'leaflet/dist/leaflet.css';
 import SchoolsPage from './components/SchoolsPage.jsx';
- 
-// Add these styles to App.css
-/*
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0px); }
-}
- 
-.animate-float {
-  animation-name: float;
-  animation-duration: 3s;
-  animation-iteration-count: infinite;
-  animation-timing-function: ease-in-out;
-}
-*/
- 
+import CRUD_School from './components/Admin/CRUD_School.jsx';
+import CRUD_Program from './components/Admin/CRUD_Program.jsx';
+import CRUD_Accreditation from './components/Admin/CRUD_Accreditation.jsx';
+import CRUD_SchoolProgram from './components/Admin/CRUD_SchoolProgram.jsx';
+import CRUD_User from './components/Admin/CRUD_User.jsx';
+import CRUD_Career from './components/Admin/CRUD_Career.jsx';
+import CRUD_Testimony from './components/Admin/CRUD_Testimony.jsx';
+import CRUD_Assessment from './components/Admin/CRUD_Assessment.jsx';
+import CRUD_AssessmentCategory from './components/Admin/CRUD_AssessmentCategory.jsx';
+import CRUD_UserAssessment from './components/Admin/CRUD_UserAssessment.jsx';
+// Add any other admin CRUD components you need
+
 function App() {
   return (
     <Router>
@@ -66,7 +61,7 @@ function App() {
         } />
         
         {/* Admin routes */}
-        <Route path="/admin-login" element={
+        <Route path="/admin/login" element={
           <PublicRoute>
             <AdminLogin />
           </PublicRoute>
@@ -148,9 +143,122 @@ function App() {
               <AssessmentResults />
             </PrivateRoute>
           } />
+        
+        {/* Admin CRUD Routes */}
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <CRUD_User />
+          </AdminRoute>
+        } />
+        
+        {/* Add routes for all other admin tools */}
+        <Route path="/admin/testimony" element={
+          <AdminRoute>
+            <CRUD_Testimony />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/school" element={
+          <AdminRoute>
+            <CRUD_School />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/program" element={
+          <AdminRoute>
+            <CRUD_Program />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/accreditation" element={
+          <AdminRoute>
+            <CRUD_Accreditation />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/schoolprogram" element={
+          <AdminRoute>
+            <CRUD_SchoolProgram />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/recommendation" element={
+          <AdminRoute>
+            <div>Recommendation Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-result" element={
+          <AdminRoute>
+            <div>Assessment-Result Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/answer" element={
+          <AdminRoute>
+            <div>Answer Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/question" element={
+          <AdminRoute>
+            <div>Question Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/choice" element={
+          <AdminRoute>
+            <div>Choice Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/user-assessment" element={
+          <AdminRoute>
+            <CRUD_UserAssessment />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment" element={
+          <AdminRoute>
+            <CRUD_Assessment />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/user-assessment-section-result" element={
+          <AdminRoute>
+            <div>User-Assessment-Section-Result Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-category" element={
+          <AdminRoute>
+            <CRUD_AssessmentCategory />
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/assessment-sub-category" element={
+          <AdminRoute>
+            <div>Assessment-Sub-Category Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/quiz-sub-category" element={
+          <AdminRoute>
+            <div>Quiz-Sub-Category Management (Coming Soon)</div>
+          </AdminRoute>
+        } />
+        
+        <Route path="/admin/career" element={
+          <AdminRoute>
+            <CRUD_Career />
+          </AdminRoute>
+        } />
+        
+        {/* For any route that doesn't match */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
 }
- 
+
 export default App;

@@ -6,7 +6,9 @@ const FilterOptions = ({
   selectedAccreditationLevel,
   setSelectedAccreditationLevel,
   selectedRecognition,
-  setSelectedRecognition
+  setSelectedRecognition,
+  showAccreditedOnly,
+  setShowAccreditedOnly
 }) => {
   return (
     <div className="max-w-7xl mx-auto px-4 mt-2 relative z-10">
@@ -42,6 +44,19 @@ const FilterOptions = ({
           <option value="COE">COE</option>
           <option value="COD">COD</option>
         </select>
+
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="accredited-only"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            checked={showAccreditedOnly}
+            onChange={(e) => setShowAccreditedOnly(e.target.checked)}
+          />
+          <label htmlFor="accredited-only" className="ml-2 text-sm text-gray-700">
+            Show accredited programs only
+          </label>
+        </div>
       </div>
     </div>
   );
