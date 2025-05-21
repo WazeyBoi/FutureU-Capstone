@@ -102,10 +102,10 @@ public class RecommendationController {
             }
             
             // Generate and save AI recommendations
-            RecommendationEntity recommendation = 
+            List<RecommendationEntity> recommendations = 
                 recommendationService.generateAndSaveRecommendations(resultOpt.get());
-            
-            return new ResponseEntity<>(recommendation, HttpStatus.OK);
+
+            return new ResponseEntity<>(recommendations, HttpStatus.OK);
             
         } catch (Exception e) {
             e.printStackTrace();

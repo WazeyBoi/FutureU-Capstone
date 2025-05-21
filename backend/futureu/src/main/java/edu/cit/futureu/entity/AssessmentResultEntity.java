@@ -2,7 +2,10 @@ package edu.cit.futureu.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -53,6 +56,10 @@ public class AssessmentResultEntity {
     private Double socialScore;
     private Double enterprisingScore;
     private Double conventionalScore;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "assessmentResult", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecommendationEntity> recommendations = new ArrayList<>();
 
     private LocalDateTime dateComputed;
 
@@ -264,6 +271,14 @@ public class AssessmentResultEntity {
 
     public void setConventionalScore(Double conventionalScore) {
         this.conventionalScore = conventionalScore;
+    }
+
+    public List<RecommendationEntity> getRecommendations() {
+        return recommendations;
+    }
+
+    public void setRecommendations(List<RecommendationEntity> recommendations) {
+        this.recommendations = recommendations;
     }
 
     public LocalDateTime getDateComputed() {

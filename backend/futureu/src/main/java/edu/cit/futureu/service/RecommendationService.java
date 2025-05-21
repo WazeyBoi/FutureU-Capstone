@@ -3,6 +3,8 @@ package edu.cit.futureu.service;
 import java.util.Map;
 import java.util.Optional;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -54,47 +56,65 @@ public class RecommendationService {
     /**
      * Generate and save AI-powered program recommendations
      */
-    public RecommendationEntity generateAndSaveRecommendations(AssessmentResultEntity assessmentResult) {
-        // Check if recommendation already exists
-        RecommendationEntity existingRecommendation = recommendationRepository.findByAssessmentResult(assessmentResult);
-        if (existingRecommendation != null) {
-            return existingRecommendation;
+    public List<RecommendationEntity> generateAndSaveRecommendations(AssessmentResultEntity assessmentResult) {
+        // Check if recommendations already exist
+        List<RecommendationEntity> existingRecommendations = 
+            recommendationRepository.findAllByAssessmentResult(assessmentResult);
+        if (!existingRecommendations.isEmpty()) {
+            return existingRecommendations;
         }
-        
+
         // Get section results for this assessment
         List<UserAssessmentSectionResultEntity> sectionResults = 
             userAssessmentService.getSectionResultsForAssessment(assessmentResult.getUserAssessment());
-        
+
         // Generate AI recommendations
         Map<String, Object> aiRecommendations = 
             geminiAIService.generateProgramRecommendations(assessmentResult, sectionResults);
-        
-        // Create a new recommendation entity
-        RecommendationEntity recommendation = new RecommendationEntity();
-        recommendation.setAssessmentResult(assessmentResult);
-        
-        // Extract the top suggested program if available
-        List<Map<String, Object>> suggestedPrograms = 
-            (List<Map<String, Object>>) aiRecommendations.get("suggestedPrograms");
-        
-        if (suggestedPrograms != null && !suggestedPrograms.isEmpty()) {
-            Map<String, Object> topProgram = suggestedPrograms.get(0);
-            recommendation.setSuggestedProgram(topProgram.get("name").toString());
-            
+
+        // Safely cast suggestedPrograms to the expected type
+        Object suggestedProgramsObj = aiRecommendations.get("suggestedPrograms");
+        List<Map<String, Object>> suggestedPrograms = new ArrayList<>();
+        if (suggestedProgramsObj instanceof List<?>) {
+            for (Object item : (List<?>) suggestedProgramsObj) {
+                if (item instanceof Map<?, ?>) {
+                    Map<?, ?> rawMap = (Map<?, ?>) item;
+                    Map<String, Object> typedMap = new HashMap<>();
+                    for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+                        if (entry.getKey() instanceof String) {
+                            typedMap.put((String) entry.getKey(), entry.getValue());
+                        }
+                    }
+                    suggestedPrograms.add(typedMap);
+                }
+            }
+        }
+
+        // Create and save recommendations for all suggested programs
+        List<RecommendationEntity> recommendations = new ArrayList<>();
+        for (Map<String, Object> program : suggestedPrograms) {
+            RecommendationEntity recommendation = new RecommendationEntity();
+            recommendation.setAssessmentResult(assessmentResult);
+            recommendation.setSuggestedProgram(program.get("name").toString());
+
             // Set confidence score if available
-            if (topProgram.containsKey("confidenceScore")) {
-                recommendation.setConfidenceScore(Double.parseDouble(topProgram.get("confidenceScore").toString()));
-            } else if (aiRecommendations.containsKey("confidenceScore")) {
-                recommendation.setConfidenceScore(Double.parseDouble(aiRecommendations.get("confidenceScore").toString()));
+            if (program.containsKey("confidenceScore")) {
+                recommendation.setConfidenceScore(Double.parseDouble(program.get("confidenceScore").toString()));
             } else {
                 recommendation.setConfidenceScore(75.0); // Default confidence score
             }
-        } else {
-            recommendation.setSuggestedProgram("No specific program recommendation available");
-            recommendation.setConfidenceScore(0.0);
+
+            // Set description if available
+            if (program.containsKey("description")) {
+                recommendation.setDescription(program.get("description").toString());
+            } else {
+                recommendation.setDescription("No description provided.");
+            }
+
+            // Save recommendation
+            recommendations.add(recommendationRepository.save(recommendation));
         }
-        
-        // Save and return the recommendation
-        return recommendationRepository.save(recommendation);
+
+        return recommendations;
     }
 }
