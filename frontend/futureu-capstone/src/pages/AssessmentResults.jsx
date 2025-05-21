@@ -370,6 +370,7 @@ const AssessmentResults = () => {
           {activeTab === 'recommendations' && (
             <RecommendationsTab 
               getTopRecommendations={getTopRecommendations} 
+              userAssessmentId={userAssessmentId}
             />
           )}
         </div>
