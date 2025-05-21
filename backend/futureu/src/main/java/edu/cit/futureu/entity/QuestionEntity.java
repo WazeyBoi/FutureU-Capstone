@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -15,18 +16,18 @@ public class QuestionEntity {
     private int questionId;
 
     // Many-to-one relationship with AssessmentCategory
-    @JsonManagedReference
+    @JsonBackReference(value = "assessmentCategory")
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId")
     private AssessmentCategoryEntity assessmentCategory;
     
     // Add the relationship to QuizSubCategoryCategory
-    @JsonManagedReference
+    @JsonBackReference(value = "quizSubCategoryCategory")
     @ManyToOne
     @JoinColumn(name = "quizSubCategoryCategoryId")
     private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
 
-    @JsonManagedReference
+    @JsonBackReference(value = "assessmentSubCategory")
     @ManyToOne
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assessmentSubCategory;
@@ -37,11 +38,11 @@ public class QuestionEntity {
     private String correctAnswer;
     private String questionType;
 
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
 
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChoiceEntity> choices;
 

@@ -17,8 +17,8 @@ public class ChoiceService {
     private ChoiceRepository choiceRepository;
     
     // CREATE
-    public ChoiceEntity createChoice(ChoiceEntity choice) {
-        return choiceRepository.save(choice);
+    public List<ChoiceEntity> createChoices(List<ChoiceEntity> choices) {
+        return choiceRepository.saveAll(choices);
     }
     
     // READ

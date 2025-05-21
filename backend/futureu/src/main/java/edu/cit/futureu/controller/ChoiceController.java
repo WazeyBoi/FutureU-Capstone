@@ -36,8 +36,8 @@ public class ChoiceController {
 
     // CREATE
     @PostMapping("/postChoice")
-    public ChoiceEntity postChoice(@RequestBody ChoiceEntity choice) {
-        return choiceService.createChoice(choice);
+    public List<ChoiceEntity> postChoices(@RequestBody List<ChoiceEntity> choices) {
+        return choiceService.createChoices(choices);
     }
     
     // READ
