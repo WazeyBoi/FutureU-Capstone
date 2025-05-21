@@ -6,7 +6,6 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import edu.cit.futureu.entity.AccreditationEntity;
 import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.SchoolEntity;
 import edu.cit.futureu.entity.SchoolProgramEntity;
@@ -38,10 +37,6 @@ public class SchoolProgramService {
     
     public List<SchoolProgramEntity> getSchoolProgramsByProgram(ProgramEntity program) {
         return schoolProgramRepository.findByProgram(program);
-    }
-    
-    public List<SchoolProgramEntity> getSchoolProgramsByAccreditation(AccreditationEntity accreditation) {
-        return schoolProgramRepository.findByAccreditation(accreditation);
     }
     
     public SchoolProgramEntity getSchoolProgramBySchoolAndProgram(SchoolEntity school, ProgramEntity program) {

@@ -6,19 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import edu.cit.futureu.entity.AccreditationEntity;
-import edu.cit.futureu.entity.ProgramEntity;
-import edu.cit.futureu.entity.SchoolEntity;
+import edu.cit.futureu.entity.SchoolProgramEntity;
 
 @Repository
 public interface AccreditationRepository extends JpaRepository<AccreditationEntity, Integer> {
-    // Find accreditations by school
-    List<AccreditationEntity> findBySchool(SchoolEntity school);
-    
-    // Find accreditations by program
-    List<AccreditationEntity> findByProgram(ProgramEntity program);
-    
-    // Find accreditations by school and program
-    List<AccreditationEntity> findBySchoolAndProgram(SchoolEntity school, ProgramEntity program);
+    // Find accreditations by schoolProgram
+    List<AccreditationEntity> findBySchoolProgram(SchoolProgramEntity schoolProgram);
     
     // Find accreditations by title
     List<AccreditationEntity> findByTitleContainingIgnoreCase(String title);

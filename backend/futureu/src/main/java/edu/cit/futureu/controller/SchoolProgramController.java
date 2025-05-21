@@ -83,16 +83,6 @@ public class SchoolProgramController {
         return List.of(); // Return empty list if program not found
     }
     
-    // Get school programs by accreditation ID
-    @GetMapping("/getSchoolProgramsByAccreditation/{accredId}")
-    public List<SchoolProgramEntity> getSchoolProgramsByAccreditation(@PathVariable int accredId) {
-        AccreditationEntity accreditation = accreditationService.getAccreditationById(accredId).orElse(null);
-        if (accreditation != null) {
-            return schoolProgramService.getSchoolProgramsByAccreditation(accreditation);
-        }
-        return List.of(); // Return empty list if accreditation not found
-    }
-    
     // Get school program by school ID and program ID
     @GetMapping("/getSchoolProgramBySchoolAndProgram")
     public SchoolProgramEntity getSchoolProgramBySchoolAndProgram(

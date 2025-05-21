@@ -15,11 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.futureu.entity.AccreditationEntity;
-import edu.cit.futureu.entity.ProgramEntity;
-import edu.cit.futureu.entity.SchoolEntity;
+import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.service.AccreditationService;
-import edu.cit.futureu.service.ProgramService;
-import edu.cit.futureu.service.SchoolService;
+import edu.cit.futureu.service.SchoolProgramService;
 
 @RestController
 @RequestMapping(method=RequestMethod.GET, path="/api/accreditation")
@@ -29,10 +27,7 @@ public class AccreditationController {
     private AccreditationService accreditationService;
     
     @Autowired
-    private SchoolService schoolService;
-    
-    @Autowired
-    private ProgramService programService;
+    private SchoolProgramService schoolProgramService;
     
     @GetMapping("/test")
     public String test() {
@@ -58,37 +53,14 @@ public class AccreditationController {
                 .orElse(null);
     }
     
-    // Get accreditations by school ID
-    @GetMapping("/getAccreditationsBySchool/{schoolId}")
-    public List<AccreditationEntity> getAccreditationsBySchool(@PathVariable int schoolId) {
-        SchoolEntity school = schoolService.getSchoolById(schoolId).orElse(null);
-        if (school != null) {
-            return accreditationService.getAccreditationsBySchool(school);
+    // Get accreditations by school program ID
+    @GetMapping("/getAccreditationsBySchoolProgram/{schoolProgramId}")
+    public List<AccreditationEntity> getAccreditationsBySchoolProgram(@PathVariable int schoolProgramId) {
+        SchoolProgramEntity schoolProgram = schoolProgramService.getSchoolProgramById(schoolProgramId).orElse(null);
+        if (schoolProgram != null) {
+            return accreditationService.getAccreditationsBySchoolProgram(schoolProgram);
         }
-        return List.of(); // Return empty list if school not found
-    }
-    
-    // Get accreditations by program ID
-    @GetMapping("/getAccreditationsByProgram/{programId}")
-    public List<AccreditationEntity> getAccreditationsByProgram(@PathVariable int programId) {
-        ProgramEntity program = programService.getProgramById(programId).orElse(null);
-        if (program != null) {
-            return accreditationService.getAccreditationsByProgram(program);
-        }
-        return List.of(); // Return empty list if program not found
-    }
-    
-    // Get accreditations by school ID and program ID
-    @GetMapping("/getAccreditationsBySchoolAndProgram")
-    public List<AccreditationEntity> getAccreditationsBySchoolAndProgram(
-            @RequestParam int schoolId, @RequestParam int programId) {
-        SchoolEntity school = schoolService.getSchoolById(schoolId).orElse(null);
-        ProgramEntity program = programService.getProgramById(programId).orElse(null);
-        
-        if (school != null && program != null) {
-            return accreditationService.getAccreditationsBySchoolAndProgram(school, program);
-        }
-        return List.of(); // Return empty list if school or program not found
+        return List.of(); // Return empty list if school program not found
     }
     
     // Search accreditations by title

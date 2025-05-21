@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import edu.cit.futureu.entity.AccreditationEntity;
 import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.SchoolEntity;
 import edu.cit.futureu.entity.SchoolProgramEntity;
@@ -17,9 +16,6 @@ public interface SchoolProgramRepository extends JpaRepository<SchoolProgramEnti
     
     // Find schools by program
     List<SchoolProgramEntity> findByProgram(ProgramEntity program);
-    
-    // Find school programs by accreditation
-    List<SchoolProgramEntity> findByAccreditation(AccreditationEntity accreditation);
     
     // Find specific school-program combination
     SchoolProgramEntity findBySchoolAndProgram(SchoolEntity school, ProgramEntity program);
