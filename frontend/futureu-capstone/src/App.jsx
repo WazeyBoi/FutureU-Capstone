@@ -19,7 +19,7 @@ import AssessmentResults from './pages/AssessmentResults.jsx';
 import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import AdminLogin from './components/Admin/AdminLogin.jsx';
-import AdminDashboardTest from './components/Admin/AdminDashboardTest.jsx';
+import AdminDashboardTest from './components/Admin/AdminDashboard.jsx';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import AdminRoute from './components/AdminRoute';
@@ -38,6 +38,8 @@ import CRUD_Testimony from './components/Admin/CRUD_Testimony.jsx';
 import CRUD_Assessment from './components/Admin/CRUD_Assessment.jsx';
 import CRUD_AssessmentCategory from './components/Admin/CRUD_AssessmentCategory.jsx';
 import CRUD_UserAssessment from './components/Admin/CRUD_UserAssessment.jsx';
+import CRUD_AssessmentResult from './components/Admin/CRUD_AssessmentResult.jsx'
+import CRUD_AssessmentSubCategory from './components/Admin/CRUD_AssessmentSubCategory.jsx'
 // Add any other admin CRUD components you need
 
 function App() {
@@ -151,12 +153,12 @@ function App() {
           </AdminRoute>
         } />
         
-        {/* Add routes for all other admin tools */}
+        {/* Add routes for all other admin tools
         <Route path="/admin/testimony" element={
           <AdminRoute>
             <CRUD_Testimony />
           </AdminRoute>
-        } />
+        } /> */}
         
         <Route path="/admin/school" element={
           <AdminRoute>
@@ -182,23 +184,23 @@ function App() {
           </AdminRoute>
         } />
         
-        <Route path="/admin/recommendation" element={
+        {/* <Route path="/admin/recommendation" element={
           <AdminRoute>
             <div>Recommendation Management (Coming Soon)</div>
           </AdminRoute>
-        } />
+        } /> */}
         
-        <Route path="/admin/assessment-result" element={
+        {/* <Route path="/admin/assessment-result" element={
           <AdminRoute>
-            <div>Assessment-Result Management (Coming Soon)</div>
+            <CRUD_AssessmentResult />
           </AdminRoute>
-        } />
+        } /> */}
         
-        <Route path="/admin/answer" element={
+        {/* <Route path="/admin/answer" element={
           <AdminRoute>
             <div>Answer Management (Coming Soon)</div>
           </AdminRoute>
-        } />
+        } /> */}
         
         <Route path="/admin/question" element={
           <AdminRoute>
@@ -212,11 +214,11 @@ function App() {
           </AdminRoute>
         } />
         
-        <Route path="/admin/user-assessment" element={
+        {/* <Route path="/admin/user-assessment" element={
           <AdminRoute>
             <CRUD_UserAssessment />
           </AdminRoute>
-        } />
+        } /> */}
         
         <Route path="/admin/assessment" element={
           <AdminRoute>
@@ -224,11 +226,11 @@ function App() {
           </AdminRoute>
         } />
         
-        <Route path="/admin/user-assessment-section-result" element={
+        {/* <Route path="/admin/user-assessment-section-result" element={
           <AdminRoute>
             <div>User-Assessment-Section-Result Management (Coming Soon)</div>
           </AdminRoute>
-        } />
+        } /> */}
         
         <Route path="/admin/assessment-category" element={
           <AdminRoute>
@@ -238,7 +240,7 @@ function App() {
         
         <Route path="/admin/assessment-sub-category" element={
           <AdminRoute>
-            <div>Assessment-Sub-Category Management (Coming Soon)</div>
+            <CRUD_AssessmentSubCategory />
           </AdminRoute>
         } />
         
