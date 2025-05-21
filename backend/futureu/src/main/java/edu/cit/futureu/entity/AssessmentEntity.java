@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,12 +30,12 @@ public class AssessmentEntity {
     private String description;
 
     // One-to-many relationship with AssessmentCategory
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssessmentCategoryEntity> categories;
 
     // One-to-many relationship with UserAssessment
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAssessmentEntity> userAssessments;
 

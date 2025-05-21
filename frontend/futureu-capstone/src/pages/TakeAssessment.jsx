@@ -53,6 +53,9 @@ const TakeAssessment = () => {
   const [saveError, setSaveError] = useState(null);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   
+  // Add state to track the attempt number
+  const [attemptNo, setAttemptNo] = useState(0);
+  
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
     let timer = null;
@@ -193,11 +196,30 @@ const TakeAssessment = () => {
               // Set a new start time based on the saved elapsed time
               setStartTime(Date.now() - (existingProgress.timeSpentSeconds * 1000));
             }
+            
+            // Set the attempt number from the existing progress
+            if (existingProgress.attemptNo) {
+              setAttemptNo(existingProgress.attemptNo);
+            }
           }
         }
         
-        // Only fetch and create new questions if needed
+        // If this is a new assessment or user declined to resume, get attempt number
         if (shouldLoadNewQuestions) {
+          try {
+            // Check how many times this user has completed this assessment before
+            const completedAssessments = await userAssessmentService.getCompletedAssessments(userId);
+            const previousAttempts = completedAssessments.filter(
+              a => a.assessment.assessmentId.toString() === assessmentId
+            ).length;
+            
+            // Set attempt number to previous attempts + 1
+            setAttemptNo(previousAttempts + 1);
+          } catch (err) {
+            console.error("Error checking previous attempts:", err);
+            setAttemptNo(1); // Default to 1 if we can't determine
+          }
+          
           // Fetch and organize questions - this involves randomization
           const questionsData = await assessmentTakingService.loadAssessmentQuestions(parseInt(assessmentId));
           setQuestions(questionsData);
@@ -461,13 +483,14 @@ const TakeAssessment = () => {
       // Get the current logged-in user ID
       const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
       
-      // Create submission payload including sections and elapsed time
+      // Create submission payload including sections, elapsed time, and attempt number
       const payload = {
         userId: userId,
         assessmentId: parseInt(assessmentId),
         answers: formattedAnswers,
         sections: JSON.stringify(sectionList),
-        elapsedTime: finalElapsedTime
+        elapsedTime: finalElapsedTime,
+        attemptNo: attemptNo // Include the attempt number in the payload
       };
       
       // Submit the complete assessment for scoring
@@ -513,7 +536,8 @@ const TakeAssessment = () => {
         // and order are presented when the user resumes
         savedSections: JSON.stringify(sectionList),
         // Include elapsed time in seconds
-        elapsedTime: elapsedTime
+        elapsedTime: elapsedTime,
+        attemptNo: attemptNo // Include the attempt number in the payload
       };
       
       // Call API to save progress using the service
@@ -769,7 +793,7 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     Save & Exit
                   </>
@@ -837,7 +861,7 @@ const TakeAssessment = () => {
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
             <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 2 0 002 2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>

@@ -3,6 +3,7 @@ package edu.cit.futureu.entity;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.*;
@@ -19,17 +20,17 @@ public class AssessmentCategoryEntity {
     private String description;
 
     // Many-to-one relationship with Assessment
-    @JsonManagedReference
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "assessmentId", nullable = false)
     private AssessmentEntity assessment;
 
     // One-to-many with AssessmentSubCategoryEntity
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "assessmentCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AssessmentSubCategoryEntity> subCategories;
 
-    @JsonBackReference
+    @JsonIgnore
     @OneToMany(mappedBy = "assessmentCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuestionEntity> questions;
 

@@ -136,9 +136,15 @@ public class UserAssessmentController {
             String sectionsJson = payload.get("sections").toString();
             int elapsedTime = Integer.parseInt(payload.get("elapsedTime").toString());
             
+            // Get attemptNo from payload if present
+            Integer attemptNo = null;
+            if (payload.containsKey("attemptNo") && payload.get("attemptNo") != null) {
+                attemptNo = Integer.parseInt(payload.get("attemptNo").toString());
+            }
+            
             // Submit and score the assessment
             UserAssessmentEntity result = userAssessmentService.submitAndScoreAssessment(
-                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, elapsedTime);
+                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, elapsedTime, attemptNo);
             
             // Return the result with success message
             return new ResponseEntity<>(
