@@ -45,11 +45,6 @@ public class SchoolEntity {
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestimonyEntity> testimonies;
 
-    // One-to-many to Accreditation
-    @JsonIgnore
-    @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AccreditationEntity> accreditations;
-
     // One-to-many to SchoolProgram
     @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -119,14 +114,6 @@ public class SchoolEntity {
 
     public void setTestimonies(List<TestimonyEntity> testimonies) {
         this.testimonies = testimonies;
-    }
-
-    public List<AccreditationEntity> getAccreditations() {
-        return accreditations;
-    }
-
-    public void setAccreditations(List<AccreditationEntity> accreditations) {
-        this.accreditations = accreditations;
     }
 
     public List<SchoolProgramEntity> getSchoolPrograms() {
