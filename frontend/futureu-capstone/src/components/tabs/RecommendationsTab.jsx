@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as recommendationService from '../../services/recommendationService';
+import userAssessmentService from '../../services/userAssessmentService';
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [aiRecommendations, setAiRecommendations] = useState(null);
@@ -14,12 +15,69 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       
       setLoading(true);
       try {
-        const response = await recommendationService.fetchRecommendations(userAssessmentId);
-        setAiRecommendations(response.data);
+        // Get assessment result data using the service instead of direct fetch
+        const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
+        
+        // Extract the resultId from the assessmentResult in the response
+        const resultId = assessmentData.assessmentResult?.resultId;
+        
+        if (!resultId) {
+          throw new Error('No assessment result found');
+        }
+        
+        console.log("Found assessment result ID:", resultId);
+        
+        // Now use the resultId to fetch recommendations
+        const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
+        
+        // Check if we received recommendations
+        if (existingRecommendations.data && 
+            (Array.isArray(existingRecommendations.data) ? existingRecommendations.data.length > 0 : true)) {
+          
+          console.log("Using existing recommendations from database");
+          
+          // Format the recommendations to match the expected structure
+          const recommendations = Array.isArray(existingRecommendations.data) ? 
+            existingRecommendations.data : [existingRecommendations.data];
+          
+          // Get assessment result data for score - might need to fetch separately if not included
+          let overallScore = 0;
+          if (recommendations.length > 0 && recommendations[0].assessmentResult) {
+            overallScore = recommendations[0].assessmentResult.overallScore || 0;
+          }
+          
+          const formattedData = {
+            assessmentId: userAssessmentId,
+            overallScore: overallScore,
+            recommendations: {
+              suggestedPrograms: recommendations.map(rec => ({
+                name: rec.suggestedProgram,
+                confidenceScore: rec.confidenceScore,
+                description: rec.description
+              }))
+            }
+          };
+          
+          setAiRecommendations(formattedData);
+        } else {
+          // If no recommendations exist, fetch comprehensive recommendations
+          console.log("Fetching comprehensive recommendations");
+          const response = await recommendationService.fetchRecommendations(userAssessmentId);
+          setAiRecommendations(response.data);
+        }
         setError(null);
       } catch (err) {
         console.error('Error fetching recommendations:', err);
-        setError('Failed to load recommendations. Please try again later.');
+        // Fallback to comprehensive recommendations
+        try {
+          console.log("Falling back to comprehensive recommendations");
+          const response = await recommendationService.fetchRecommendations(userAssessmentId);
+          setAiRecommendations(response.data);
+          setError(null);
+        } catch (fallbackErr) {
+          console.error('Error with fallback recommendations:', fallbackErr);
+          setError('Failed to load recommendations. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
@@ -31,7 +89,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const handleGenerateRecommendations = async () => {
     setLoading(true);
     try {
+      // Generate new recommendations
       await recommendationService.generateRecommendations(userAssessmentId);
+      
+      // Then fetch the comprehensive data
       const response = await recommendationService.fetchRecommendations(userAssessmentId);
       setAiRecommendations(response.data);
       setError(null);

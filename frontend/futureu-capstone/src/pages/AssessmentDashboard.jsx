@@ -361,6 +361,9 @@ const AssessmentDashboard = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            User Assessment Id
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Attempt #
                           </th>
                           <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -380,6 +383,9 @@ const AssessmentDashboard = () => {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {attempts.map((attempt, index) => (
                           <tr key={attempt.userQuizAssessment} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                            <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {attempt.userQuizAssessment}
+                            </td>
                             <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                               {attempt.attemptNo || 'N/A'}
                             </td>

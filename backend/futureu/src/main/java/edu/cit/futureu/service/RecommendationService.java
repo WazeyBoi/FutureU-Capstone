@@ -34,8 +34,21 @@ public class RecommendationService {
         return recommendationRepository.findById(id);
     }
 
+    /**
+     * Get a single recommendation by assessment result
+     * @deprecated Use getRecommendationsByAssessmentResult instead as multiple recommendations may exist
+     */
+    @Deprecated
     public RecommendationEntity getRecommendationByAssessmentResult(AssessmentResultEntity assessmentResult) {
-        return recommendationRepository.findByAssessmentResult(assessmentResult);
+        List<RecommendationEntity> recommendations = recommendationRepository.findAllByAssessmentResult(assessmentResult);
+        return recommendations.isEmpty() ? null : recommendations.get(0);
+    }
+
+    /**
+     * Get all recommendations for an assessment result
+     */
+    public List<RecommendationEntity> getRecommendationsByAssessmentResult(AssessmentResultEntity assessmentResult) {
+        return recommendationRepository.findAllByAssessmentResult(assessmentResult);
     }
 
     public RecommendationEntity updateRecommendation(RecommendationEntity recommendation) {

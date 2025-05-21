@@ -43,9 +43,9 @@ export const fetchRecommendationById = (recommendationId) => {
 };
 
 /**
- * Fetch recommendations by assessment result ID
- * @param {number} resultId - The ID of the assessment result
- * @returns {Promise} - Axios response promise
+ * Fetch recommendations by assessment result ID.
+ * @param {number} resultId - The ID of the assessment result.
+ * @returns {Promise} - Axios response promise with array of recommendations.
  */
 export const fetchRecommendationsByResult = (resultId) => {
   try {
