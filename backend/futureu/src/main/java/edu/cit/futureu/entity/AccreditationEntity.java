@@ -20,9 +20,17 @@ public class AccreditationEntity {
     @ManyToOne
     @JoinColumn(name = "schoolId", nullable = false)
     private SchoolEntity school;
+    
+    // Many-to-one relationship with Program
+    @ManyToOne
+    @JoinColumn(name = "program_id")
+    private ProgramEntity program;
 
     private String title;
     private String description;
+    private String recognitionStatus;
+    private String accreditingBody;
+    private String accreditationLevel;
 
     public AccreditationEntity() {
 
@@ -43,6 +51,14 @@ public class AccreditationEntity {
     public void setSchool(SchoolEntity school) {
         this.school = school;
     }
+    
+    public ProgramEntity getProgram() {
+        return program;
+    }
+
+    public void setProgram(ProgramEntity program) {
+        this.program = program;
+    }
 
     public String getTitle() {
         return title;
@@ -60,4 +76,27 @@ public class AccreditationEntity {
         this.description = description;
     }
 
+    public String getRecognitionStatus() {
+        return recognitionStatus;
+    }
+
+    public void setRecognitionStatus(String recognitionStatus) {
+        this.recognitionStatus = recognitionStatus;
+    }
+
+    public String getAccreditingBody() {
+        return accreditingBody;
+    }
+
+    public void setAccreditingBody(String accreditingBody) {
+        this.accreditingBody = accreditingBody;
+    }
+
+    public String getAccreditationLevel() {
+        return accreditationLevel;
+    }
+
+    public void setAccreditationLevel(String accreditationLevel) {
+        this.accreditationLevel = accreditationLevel;
+    }
 }

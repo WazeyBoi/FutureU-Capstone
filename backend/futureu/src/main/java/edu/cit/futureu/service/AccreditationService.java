@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import edu.cit.futureu.entity.AccreditationEntity;
+import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.SchoolEntity;
 import edu.cit.futureu.repository.AccreditationRepository;
 
@@ -34,8 +35,28 @@ public class AccreditationService {
         return accreditationRepository.findBySchool(school);
     }
     
+    public List<AccreditationEntity> getAccreditationsByProgram(ProgramEntity program) {
+        return accreditationRepository.findByProgram(program);
+    }
+    
+    public List<AccreditationEntity> getAccreditationsBySchoolAndProgram(SchoolEntity school, ProgramEntity program) {
+        return accreditationRepository.findBySchoolAndProgram(school, program);
+    }
+    
     public List<AccreditationEntity> searchAccreditationsByTitle(String title) {
         return accreditationRepository.findByTitleContainingIgnoreCase(title);
+    }
+    
+    public List<AccreditationEntity> getAccreditationsByRecognitionStatus(String recognitionStatus) {
+        return accreditationRepository.findByRecognitionStatus(recognitionStatus);
+    }
+    
+    public List<AccreditationEntity> getAccreditationsByAccreditingBody(String accreditingBody) {
+        return accreditationRepository.findByAccreditingBody(accreditingBody);
+    }
+    
+    public List<AccreditationEntity> getAccreditationsByAccreditationLevel(String accreditationLevel) {
+        return accreditationRepository.findByAccreditationLevel(accreditationLevel);
     }
     
     // Update operations
