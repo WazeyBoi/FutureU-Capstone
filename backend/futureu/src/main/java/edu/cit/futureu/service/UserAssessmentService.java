@@ -114,7 +114,8 @@ public class UserAssessmentService {
     @Transactional
     public UserAssessmentEntity saveProgress(UserEntity user, AssessmentEntity assessment, 
                                             int currentSectionIndex, double progressPercentage,
-                                            String savedAnswers, String savedSections, int timeSpentSeconds) {
+                                            String savedAnswers, String savedSections, 
+                                            int timeSpentSeconds, Integer attemptNo) {
         // Look for existing in-progress assessment
         List<UserAssessmentEntity> inProgress = userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
         UserAssessmentEntity userAssessment;
@@ -122,6 +123,7 @@ public class UserAssessmentService {
         if (!inProgress.isEmpty()) {
             // Update existing record
             userAssessment = inProgress.get(0);
+            // If we already have an attemptNo, keep it (don't override)
         } else {
             // Create new record
             userAssessment = new UserAssessmentEntity();
@@ -129,6 +131,15 @@ public class UserAssessmentService {
             userAssessment.setAssessment(assessment);
             userAssessment.setStatus("IN_PROGRESS");
             userAssessment.setDateTaken(LocalDateTime.now());
+            
+            // Set attempt number for new assessments
+            if (attemptNo != null && attemptNo > 0) {
+                userAssessment.setAttemptNo(attemptNo);
+            } else {
+                // If no attempt number is provided, calculate it
+                long existingAttempts = userAssessmentRepository.countByUserAndAssessmentAndStatus(user, assessment, "COMPLETED");
+                userAssessment.setAttemptNo((int) existingAttempts + 1);
+            }
         }
         
         // Update progress fields
@@ -148,13 +159,13 @@ public class UserAssessmentService {
     @Transactional
     public UserAssessmentEntity submitAndScoreAssessment(UserEntity user, AssessmentEntity assessment,
                                                       List<Map<String, Object>> answers, String sectionsJson,
-                                                      int timeSpentSeconds) throws JsonProcessingException {
+                                                      int timeSpentSeconds, Integer attemptNo) throws JsonProcessingException {
         // Find or create the user assessment record
         List<UserAssessmentEntity> inProgress = userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
         UserAssessmentEntity userAssessment;
         
         if (!inProgress.isEmpty()) {
-            // Update existing record
+            // Update existing record - keep existing attemptNo
             userAssessment = inProgress.get(0);
         } else {
             // Create new record
@@ -162,12 +173,26 @@ public class UserAssessmentService {
             userAssessment.setUser(user);
             userAssessment.setAssessment(assessment);
             userAssessment.setDateTaken(LocalDateTime.now());
+            
+            // Handle attempt number
+            if (attemptNo != null && attemptNo > 0) {
+                // Use provided attempt number (from frontend)
+                userAssessment.setAttemptNo(attemptNo);
+            } else {
+                // Calculate based on previous completions
+                long existingAttempts = userAssessmentRepository.countByUserAndAssessmentAndStatus(user, assessment, "COMPLETED");
+                userAssessment.setAttemptNo((int) existingAttempts + 1);
+            }
         }
         
         // Set completion data
         userAssessment.setStatus("COMPLETED");
         userAssessment.setProgressPercentage(100.0);
         userAssessment.setTimeSpentSeconds(timeSpentSeconds);
+        
+        // Set the dateCompleted field
+        LocalDateTime now = LocalDateTime.now();
+        userAssessment.setDateCompleted(now);
         
         // Parse sections data
         List<Map<String, Object>> sections = objectMapper.readValue(sectionsJson, 

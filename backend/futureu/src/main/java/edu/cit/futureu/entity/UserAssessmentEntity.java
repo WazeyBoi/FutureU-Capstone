@@ -41,6 +41,9 @@ public class UserAssessmentEntity {
 
     private LocalDateTime dateTaken;
     
+    // New field for tracking when assessment was completed
+    private LocalDateTime dateCompleted;
+    
     // New fields for tracking progress
     private String status; // "IN_PROGRESS", "COMPLETED", "ABANDONED"
     private LocalDateTime lastSavedTime;
@@ -171,5 +174,13 @@ public class UserAssessmentEntity {
     
     public void setTimeSpentSeconds(Integer timeSpentSeconds) {
         this.timeSpentSeconds = timeSpentSeconds;
+    }
+
+    public LocalDateTime getDateCompleted() {
+        return dateCompleted;
+    }
+
+    public void setDateCompleted(LocalDateTime dateCompleted) {
+        this.dateCompleted = dateCompleted;
     }
 }

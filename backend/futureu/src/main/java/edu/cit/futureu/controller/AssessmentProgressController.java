@@ -39,6 +39,17 @@ public class AssessmentProgressController {
         try {
             int userId = Integer.parseInt(payload.get("userId").toString());
             int assessmentId = Integer.parseInt(payload.get("assessmentId").toString());
+            int currentSectionIndex = Integer.parseInt(payload.get("currentSectionIndex").toString());
+            double progressPercentage = Double.parseDouble(payload.get("progressPercentage").toString());
+            String savedAnswers = payload.get("savedAnswers").toString();
+            String savedSections = payload.get("savedSections").toString();
+            int elapsedTime = Integer.parseInt(payload.get("elapsedTime").toString());
+            
+            // Get attemptNo from payload if present
+            Integer attemptNo = null;
+            if (payload.containsKey("attemptNo") && payload.get("attemptNo") != null) {
+                attemptNo = Integer.parseInt(payload.get("attemptNo").toString());
+            }
             
             // Get authenticated user ID from security context
             // int authenticatedUserId = getAuthenticatedUserId(); // Uncomment when auth is implemented
@@ -51,14 +62,6 @@ public class AssessmentProgressController {
                     HttpStatus.FORBIDDEN
                 );
             }
-            
-            int currentSectionIndex = Integer.parseInt(payload.get("currentSectionIndex").toString());
-            double progressPercentage = Double.parseDouble(payload.get("progressPercentage").toString());
-            String savedAnswers = payload.get("savedAnswers").toString();
-            // Get the serialized sections with questions
-            String savedSections = payload.get("savedSections").toString();
-            // Get elapsed time in seconds
-            int elapsedTime = Integer.parseInt(payload.get("elapsedTime").toString());
             
             Optional<UserEntity> userOpt = userService.getUserById(userId);
             Optional<AssessmentEntity> assessmentOpt = assessmentService.getAssessmentById(assessmentId);
@@ -90,7 +93,7 @@ public class AssessmentProgressController {
             
             // Save progress with sections and elapsed time
             userAssessment = userAssessmentService.saveProgress(
-                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, elapsedTime);
+                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, elapsedTime, attemptNo);
                 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Progress saved successfully");
