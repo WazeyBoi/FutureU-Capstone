@@ -4,6 +4,7 @@ import apiClient from '../services/api'; // Import the configured apiClient inst
 import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, StarOff, Filter, AlertCircle, Compass, Building } from 'lucide-react';
 import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
 import authService from '../services/authService'; // Import authService for auth checks
+import schoolProgramService from '../services/schoolProgramService'; // Import schoolProgramService
 
 // Import all logos
 import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
@@ -233,6 +234,13 @@ const AcademicExplorer = () => {
   const [selectedSchoolDetails, setSelectedSchoolDetails] = useState(null);
   const [showSchoolDetailsModal, setShowSchoolDetailsModal] = useState(false);
   const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
+  
+  // Add new state variables for school search functionality
+  const [searchedSchool, setSearchedSchool] = useState(null);
+  const [schoolPrograms, setSchoolPrograms] = useState([]);
+  const [showSchoolProgramsModal, setShowSchoolProgramsModal] = useState(false);
+  const [isSearchingSchool, setIsSearchingSchool] = useState(false);
+  const [showSchoolSearchResults, setShowSchoolSearchResults] = useState(false); // New state for direct display
 
   const location = useLocation();
   const navigate = useNavigate(); // Add this hook for navigation
@@ -322,6 +330,10 @@ const AcademicExplorer = () => {
       const fetchSchoolPrograms = async () => {
         setLoading(true);
         try {
+          // Reset search results and clear search term when program is selected
+          setShowSchoolSearchResults(false);
+          setSearchedSchool(null);
+          
           // Replace axios with apiClient
           const response = await apiClient.get(
             `/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
@@ -489,6 +501,11 @@ const getAnimationClass = (index) => {
 
   // Add this function to handle program selection and side panel
   const handleProgramChange = (programId) => {
+    // Reset school search when selecting a program
+    setSearchTerm('');
+    setSearchedSchool(null);
+    setShowSchoolSearchResults(false);
+    
     // If the side panel is already open, just update the selected program
     // and the side panel will update via the useEffect hook
     if (showProgramSidePanel) {
@@ -503,6 +520,70 @@ const getAnimationClass = (index) => {
     
     // Always close the programs panel
     setShowProgramsPanel(false);
+  };
+
+  // Add new function to handle school search
+  const handleSchoolSearch = async () => {
+    if (!searchTerm.trim()) return;
+
+    try {
+      // Clear any program selection when searching for a school
+      setSelectedProgram(null);
+      setPendingProgramSelection(null);
+      setShowProgramSidePanel(false);
+      
+      setIsSearchingSchool(true);
+      setShowSchoolSearchResults(false); // Reset search results display
+      
+      // Find schools that match the search term
+      const matchingSchool = schools.find(school => 
+        school.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (matchingSchool) {
+        // Get programs for the matched school
+        const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
+        
+        if (Array.isArray(schoolProgramsResponse)) {
+          // Extract programs from schoolPrograms response
+          const programsData = schoolProgramsResponse.map(sp => sp.program);
+          setSchoolPrograms(programsData);
+          setSearchedSchool(matchingSchool);
+          setShowSchoolSearchResults(true); // Show results in the main container
+          
+          // Show toast notification
+          setShowSchoolsFoundToast(true);
+          setTimeout(() => {
+            setShowSchoolsFoundToast(false);
+          }, 3000);
+        } else {
+          setError(`No programs found for "${searchTerm}". Please try another school name.`);
+          setTimeout(() => {
+            setError(null);
+          }, 3000);
+        }
+      } else {
+        setError(`School "${searchTerm}" not found. Please check the spelling and try again.`);
+        setTimeout(() => {
+          setError(null);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error searching for school programs:", error);
+      setError("Failed to search for school programs. Please try again later.");
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
+    } finally {
+      setIsSearchingSchool(false);
+    }
+  };
+
+  // Add handler for search input keydown
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSchoolSearch();
+    }
   };
 
   if (showComparison) {
@@ -664,6 +745,7 @@ const getAnimationClass = (index) => {
   return (
   <div className="h-screen w-full flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: fadeAnimationStyle }} />
+      
       {showWelcomeModal && (
         <div className="fixed inset-0 backdrop-blur-md bg-white/30 dark:bg-gray-900/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full relative border border-gray-200 dark:border-gray-700">
@@ -732,6 +814,7 @@ const getAnimationClass = (index) => {
           </div>
         </div>
       )}
+
       <div 
         id="toast" 
         className="hidden fixed top-6 right-6 bg-red-100 dark:bg-red-900/80 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-lg shadow-xl z-50 animate-slide-in-right backdrop-blur-sm"
@@ -741,6 +824,7 @@ const getAnimationClass = (index) => {
           <p className="font-medium">You can compare up to 3 schools at a time</p>
         </div>
       </div>
+      
       {showSchoolsFoundToast && filteredAndSearchedSchools.length > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-lg shadow-xl z-50 animate-fade-in-up backdrop-blur-sm">
           <div className="flex items-center">
@@ -749,10 +833,21 @@ const getAnimationClass = (index) => {
           </div>
         </div>
       )}
+      
+      {error && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-red-100 dark:bg-red-900/80 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-lg shadow-xl z-50 animate-fade-in-up backdrop-blur-sm">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 mr-3" />
+            <p className="font-medium">{error}</p>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 w-full backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
         <div className="w-full px-6 py-5">
           <div className="flex items-center gap-16">
             <div className="relative z-50 w-96">
+              {/* Programs dropdown code unchanged */}
               <div className="relative">
                 <button
                   onClick={() => {
@@ -774,88 +869,63 @@ const getAnimationClass = (index) => {
             </div>
                   <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform duration-200 flex-shrink-0 ${showProgramsPanel ? 'rotate-90' : ''}`} />
                 </button>
-                <div
-                  className={`absolute left-0 top-[calc(100%+8px)] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg w-96 shadow-xl transition-all duration-300 ease-in-out origin-top ${
-                    showProgramsPanel ? 'animate-slide-down' : 'animate-slide-up max-h-0 opacity-0'
-                  }`}
-                  style={{ 
-                    zIndex: 100,
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                  }}
-                >
-                  <div className="p-5">
-                    <div className="relative mb-4">
-                <Search className="absolute left-3 top-3 h-5 w-5 text-indigo-500" />
+                {showProgramsPanel && (
+                  <div className="absolute mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-100 dark:border-gray-700 w-96 overflow-hidden animate-slide-down">
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-2.5 h-5 w-5 text-indigo-500" />
                   <input
                     type="text"
                     placeholder="Search programs..."
                     value={programSearchTerm}
                     onChange={(e) => setProgramSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-3 w-full border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-md text-base"
+                          className="pl-10 pr-4 py-2.5 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm text-left"
                   />
                 </div>
-                    <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-700 dark:scrollbar-track-gray-800">
-                {loading && !selectedProgram ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"></div>
-                    ))}
                   </div>
-                ) : error ? (
-                  <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-start">
-                    <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
-                    <p>{error}</p>
-                  </div>
-                ) : (
-                        <div className="space-y-1 pr-1">
-                    {programs.length > 0 ?
-                            programs.filter((program) =>
+                    <div className="max-h-[50vh] overflow-y-auto p-2">
+                      {programs
+                        .filter(program =>
                           program.programName.toLowerCase().includes(programSearchTerm.toLowerCase())
-                            ).map((program) => (
+                        )
+                        .sort((a, b) => a.programName.localeCompare(b.programName))
+                        .map((program) => (
                           <button
                             key={program.programId}
-                            className={`block w-full text-left px-4 py-3 rounded-lg transition-all ${
-                              selectedProgram === program.programId
-                                ? 'bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 font-medium shadow-sm border border-indigo-100 dark:from-indigo-900/20 dark:to-blue-900/20 dark:border-indigo-800/30 dark:text-indigo-400'
-                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                            }`}
                             onClick={() => handleProgramChange(program.programId)}
+                            className={`w-full text-left px-4 py-3 rounded-lg flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 mb-1 transition-colors ${
+                              selectedProgram === program.programId
+                                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-500'
+                                : ''
+                            }`}
                           >
-                            <div className="flex items-center justify-between">
-                                  <div className="text-base pr-3 w-full whitespace-normal break-words leading-snug">
+                            <BookOpen
+                              className={`w-5 h-5 mr-3 flex-shrink-0 ${
+                                selectedProgram === program.programId
+                                  ? 'text-indigo-600 dark:text-indigo-400'
+                                  : 'text-gray-400 dark:text-gray-500'
+                              }`}
+                            />
+                            <span
+                              className={`${
+                                selectedProgram === program.programId
+                                  ? 'font-medium text-indigo-700 dark:text-indigo-300'
+                                  : 'text-gray-800 dark:text-gray-200'
+                              }`}
+                            >
                                     {program.programName}
-                                  </div>
-                              {selectedProgram === program.programId && (
-                                    <ChevronRight className="w-5 h-5 text-indigo-500 ml-2 flex-shrink-0" />
-                              )}
-                            </div>
+                            </span>
                           </button>
-                        ))
-                      : (
-                        <div className="text-center py-8 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                          <BookOpen className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                          <p className="text-gray-600 dark:text-gray-400">No programs found</p>
+                        ))}
                         </div>
-                      )}
-                    {programs.length > 0 && 
-                    programs.filter(program => 
-                    program.programName.toLowerCase().includes(programSearchTerm.toLowerCase())
-                    ).length === 0 && (
-                      <div className="text-center py-8 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                        <Search className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-600 dark:text-gray-400">No matching programs found</p>
                       </div>
                     )}
-                  </div>
-                )}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
-            <div className="flex items-center max-w-3xl mx-auto flex-1">
-              <div className="relative flex-1">
+            <div className="flex items-center max-w-5xl mx-auto flex-1">
+              <div className="flex w-full">
+                <div className="relative flex-1 w-[600px]">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <Search className="h-5 w-5 text-indigo-500" />
                 </div>
@@ -864,17 +934,32 @@ const getAnimationClass = (index) => {
                   placeholder="Search schools..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-3 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm hover:shadow min-h-[56px]"
+                    onKeyDown={handleSearchKeyDown}
+                    className="pl-10 pr-4 py-3 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm hover:shadow h-[56px]"
                 />
               </div>
-              <div className="relative">
+                <div className="flex ml-2">
+                  <button
+                    onClick={handleSchoolSearch}
+                    disabled={isSearchingSchool || !searchTerm.trim()}
+                    className={`bg-[#FFB71B] text-gray-900 px-6 py-3 rounded-lg hover:bg-[#FFB71B]/90 transition border border-[#FFB71B] shadow-sm hover:shadow flex items-center h-[56px] ${(isSearchingSchool || !searchTerm.trim()) ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    {isSearchingSchool ? (
+                      <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    ) : (
+                      <Search className="w-5 h-5 text-gray-900 mr-2" />
+                    )}
+                    <span>Search</span>
+                  </button>
+
                 <button
                   onClick={() => setShowFilterMenu(!showFilterMenu)}
-                  className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-r-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition border border-l-0 border-gray-200 dark:border-gray-600 shadow-sm hover:shadow flex items-center min-h-[56px]"
+                    className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow flex items-center h-[56px] ml-3"
                 >
                   <Filter className="w-5 h-5 text-indigo-500" />
                   <span className="ml-2">Filters</span>
                 </button>
+                </div>
                 
                 {showFilterMenu && (
                   <div className="absolute right-0 top-[calc(100%+8px)] bg-white dark:bg-gray-700 rounded-lg shadow-xl p-5 z-40 border border-gray-100 dark:border-gray-600 w-72">
@@ -971,6 +1056,7 @@ const getAnimationClass = (index) => {
           </div>
         </div>
       </header>
+      
       <main className="flex-1 w-full overflow-hidden flex">
         {/* Program Side Panel */}
         {showProgramSidePanel && (
@@ -1082,7 +1168,163 @@ const getAnimationClass = (index) => {
           showProgramsPanel ? 'animate-content-slide' : 'animate-content-slide-back'
         } ${showProgramSidePanel ? 'ml-96 w-[calc(100%-24rem)]' : 'w-full'}`}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700 h-[calc(100vh-140px)] overflow-auto">
-            {!selectedProgram && filteredSchools.length === 0 ? (
+            {/* School Search Results View - Only show if no program is selected or explicitly searching schools */}
+            {showSchoolSearchResults && searchedSchool && !selectedProgram ? (
+              <div className="flex flex-col h-full animate-fade-in-up">
+                {/* School Header with Background */}
+                <div className="relative w-full h-48 bg-[#2B3E4E] rounded-lg mb-8 overflow-hidden">
+                  {getSchoolBackground(searchedSchool.name) ? (
+                    <img 
+                      src={getSchoolBackground(searchedSchool.name)} 
+                      alt={`${searchedSchool.name} campus`}
+                      className="w-full h-full object-cover opacity-60"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-[#2B3E4E] opacity-90"></div>
+                  )}
+                  
+                  {/* School Info Overlay */}
+                  <div className="absolute inset-0 flex items-center px-8">
+                    <div className="flex items-center">
+                      {/* School Logo */}
+                      <div className="mr-6">
+                        {schoolLogos[searchedSchool.schoolId] ? (
+                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden p-1">
+                            <img 
+                              src={schoolLogos[searchedSchool.schoolId]} 
+                              alt={`${searchedSchool.name} logo`}
+                              className="object-contain"
+                              style={{ width: "95%", height: "95%" }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden">
+                            <School className="w-20 h-20 text-[#2B3E4E]" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* School Details */}
+                      <div className="text-white">
+                        <h2 className="text-3xl font-bold mb-2">{searchedSchool.name}</h2>
+                        <div className="flex items-center text-white/90">
+                          <MapPin className="w-5 h-5 mr-2" />
+                          <span>{searchedSchool.location || "Location not specified"}</span>
+                          
+                          {searchedSchool.type && (
+                            <div className="flex items-center ml-6">
+                              <School className="w-5 h-5 mr-2" />
+                              <span>{searchedSchool.type}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Close button */}
+                    <div className="ml-auto">
+                      <button
+                        onClick={() => setShowSchoolSearchResults(false)}
+                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+                        aria-label="Close search results"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* School Description */}
+                <div className="bg-gray-50 dark:bg-gray-700/40 p-6 rounded-xl mb-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-4 flex items-center">
+                    <Info className="w-5 h-5 mr-2" />
+                    About {searchedSchool.name}
+                  </h3>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {searchedSchool.description || 'No description available for this school.'}
+                  </p>
+                </div>
+                
+                {/* Programs Header */}
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="text-xl font-bold text-[#2B3E4E] dark:text-white flex items-center">
+                    <BookOpen className="w-6 h-6 mr-2 text-[#FFB71B]" />
+                    Programs Offered ({schoolPrograms.length})
+                  </h3>
+                  
+                  {/* Add to comparison button */}
+                  <button
+                    onClick={() => handleSchoolSelect(searchedSchool)}
+                    className={`flex items-center py-2 px-4 rounded-lg text-sm font-medium transition ${
+                      selectedSchools.find(s => s.schoolId === searchedSchool.schoolId) 
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
+                        : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'
+                    }`}
+                  >
+                    {selectedSchools.find(s => s.schoolId === searchedSchool.schoolId) ? (
+                      <>
+                        <StarOff className="w-4 h-4 mr-2" />
+                        Remove from Comparison
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-4 h-4 mr-2" />
+                        Add to Comparison
+                      </>
+                    )}
+                  </button>
+                </div>
+                
+                {/* Programs Grid */}
+                {schoolPrograms.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-4">
+                    {schoolPrograms.map((program) => (
+                      <div 
+                        key={program.programId}
+                        className="bg-white dark:bg-gray-700 rounded-xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 overflow-hidden transition-shadow cursor-pointer animate-fade-in-up"
+                        onClick={() => {
+                          setSelectedProgram(program.programId);
+                          setPendingProgramSelection(program.programId);
+                          setShowProgramSidePanel(true);
+                        }}
+                      >
+                        <div className="p-5">
+                          <div className="flex items-start mb-4">
+                            <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-3 flex-shrink-0">
+                              <BookOpen className="w-6 h-6 text-[#FFB71B]" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">{program.programName}</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">Academic Program</p>
+                            </div>
+                          </div>
+                          
+                          {program.description && (
+                            <div className="mt-3 pl-3 border-l-2 border-gray-200 dark:border-gray-600">
+                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                                {program.description}
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
+                            <button className="text-[#2B3E4E] dark:text-[#FFB71B] text-sm font-medium flex items-center">
+                              View Details
+                              <ChevronRight className="w-4 h-4 ml-1" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                    <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 dark:text-gray-400 text-lg">No programs available for this school</p>
+                  </div>
+                )}
+              </div>
+            ) : !selectedProgram && filteredSchools.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
                   No Program Selected yet. Browse
@@ -1418,6 +1660,9 @@ const getAnimationClass = (index) => {
                     setSelectedProgram(pendingProgramSelection);
                     setShowProgramConfirmation(false);
                     setShowProgramSidePanel(true);
+                    setSearchTerm('');
+                    setShowSchoolSearchResults(false);
+                    setSearchedSchool(null);
                   }}
                   className="py-3 px-6 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] rounded-lg transition shadow-md hover:shadow-lg flex-1 font-medium flex items-center justify-center"
                 >
@@ -1573,6 +1818,9 @@ const getAnimationClass = (index) => {
           </div>
         </div>
       )}
+
+      {/* Keep all other existing modals and code */}
+      {/* ... */}
     </div>
   );
 };

@@ -70,7 +70,7 @@ public class TestimonyEntity {
     public void setDescription(String description) {
         this.description = description;
     }
-    
+
     public Integer getRating() {
         return rating;
     }

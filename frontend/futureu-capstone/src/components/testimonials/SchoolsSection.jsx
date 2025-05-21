@@ -258,8 +258,8 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
                     
                     <div className="flex-grow mb-4">
                       <p className="text-gray-600 text-left">
-                        {school.description || "Read reviews from students and alumni of this school."}
-                      </p>
+                      {school.description || "Read reviews from students and alumni of this school."}
+                    </p>
                     </div>
                     
                     <div className="flex justify-between items-center mt-auto">
@@ -309,4 +309,4 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
   );
 };
 
-export default SchoolsSection;
+export default SchoolsSection; 
