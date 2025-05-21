@@ -25,9 +25,9 @@ const AdminDashboardTest = () => {
       case 'Users':
         navigate('/admin/users');
         break;
-      case 'Testimony':
-        navigate('/admin/testimony');
-        break;
+      // case 'Testimony':
+      //   navigate('/admin/testimony');
+      //   break;
       case 'School':
         navigate('/admin/school');
         break;
@@ -43,30 +43,30 @@ const AdminDashboardTest = () => {
       case 'Career':
         navigate('/admin/career');
         break;
-      case 'Recommendation':
-        navigate('/admin/recommendation');
-        break;
-      case 'Assessment-Result':
-        navigate('/admin/assessment-result');
-        break;
-      case 'Answer':
-        navigate('/admin/answer');
-        break;
+      // case 'Recommendation':
+      //   navigate('/admin/recommendation');
+      //   break;
+      // case 'Assessment-Result':
+      //   navigate('/admin/assessment-result');
+      //   break;
+      // case 'Answer':
+      //   navigate('/admin/answer');
+      //   break;
       case 'Question':
         navigate('/admin/question');
         break;
       case 'Choice':
         navigate('/admin/choice');
         break;
-      case 'User-Assessment':
-        navigate('/admin/user-assessment');
-        break;
+      // case 'User-Assessment':
+      //   navigate('/admin/user-assessment');
+      //   break;
       case 'Assessment':
         navigate('/admin/assessment');
         break;
-      case 'User-Assessment-Section-Result':
-        navigate('/admin/user-assessment-section-result');
-        break;
+      // case 'User-Assessment-Section-Result':
+      //   navigate('/admin/user-assessment-section-result');
+      //   break;
       case 'Assessment-Category':
         navigate('/admin/assessment-category');
         break;
@@ -84,20 +84,20 @@ const AdminDashboardTest = () => {
 
   const adminTools = [
     // New tools
-    { name: 'Testimony', icon: <MessageSquare className="h-8 w-8 mb-3" /> },
+    // { name: 'Testimony', icon: <MessageSquare className="h-8 w-8 mb-3" /> },
     { name: 'School', icon: <School className="h-8 w-8 mb-3" /> },
     { name: 'School-Program', icon: <GraduationCap className="h-8 w-8 mb-3" /> },
     { name: 'Program', icon: <BookOpen className="h-8 w-8 mb-3" /> },
     { name: 'Accreditation', icon: <Award className="h-8 w-8 mb-3" /> },
     { name: 'Career', icon: <Briefcase className="h-8 w-8 mb-3" /> },
-    { name: 'Recommendation', icon: <ThumbsUp className="h-8 w-8 mb-3" /> },
-    { name: 'Assessment-Result', icon: <BarChart2 className="h-8 w-8 mb-3" /> },
-    { name: 'Answer', icon: <CheckCircle className="h-8 w-8 mb-3" /> },
+    // // { name: 'Recommendation', icon: <ThumbsUp className="h-8 w-8 mb-3" /> },
+    // { name: 'Assessment-Result', icon: <BarChart2 className="h-8 w-8 mb-3" /> },
+    // { name: 'Answer', icon: <CheckCircle className="h-8 w-8 mb-3" /> },
     { name: 'Question', icon: <HelpCircle className="h-8 w-8 mb-3" /> },
     { name: 'Choice', icon: <List className="h-8 w-8 mb-3" /> },
-    { name: 'User-Assessment', icon: <ClipboardCheck className="h-8 w-8 mb-3" /> },
+    // { name: 'User-Assessment', icon: <ClipboardCheck className="h-8 w-8 mb-3" /> },
     { name: 'Assessment', icon: <FileText className="h-8 w-8 mb-3" /> },
-    { name: 'User-Assessment-Section-Result', icon: <PieChart className="h-8 w-8 mb-3" /> },
+    // { name: 'User-Assessment-Section-Result', icon: <PieChart className="h-8 w-8 mb-3" /> },
     { name: 'Assessment-Category', icon: <Folder className="h-8 w-8 mb-3" /> },
     { name: 'Assessment-Sub-Category', icon: <FolderPlus className="h-8 w-8 mb-3" /> },
     { name: 'Quiz-Sub-Category', icon: <FilePlus className="h-8 w-8 mb-3" /> },
