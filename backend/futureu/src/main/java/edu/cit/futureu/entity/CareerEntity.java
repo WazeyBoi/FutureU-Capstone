@@ -1,5 +1,9 @@
 package edu.cit.futureu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,10 +27,12 @@ public class CareerEntity {
     private String industry;
     
     // Many-to-one relationship with Program
+    @JsonBackReference
     @ManyToOne
-    @JoinColumn(name = "programId", nullable = false)
+    @JoinColumn(name = "programId")
     private ProgramEntity program;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "careerPath")
     private RecommendationEntity recommendation;
 

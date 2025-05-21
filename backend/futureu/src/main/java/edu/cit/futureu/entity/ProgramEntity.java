@@ -28,6 +28,10 @@ public class ProgramEntity {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SchoolProgramEntity> schoolPrograms;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "program", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CareerEntity> careers;
+
     public ProgramEntity() {
 
     }
