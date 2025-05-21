@@ -27,7 +27,6 @@ import Unauthorized from './components/Admin/Unauthorized.jsx';
 import './styles/animations.css'; 
 import './App.css';
 import 'leaflet/dist/leaflet.css';
-import SchoolsPage from './components/SchoolsPage.jsx';
 import CRUD_School from './components/Admin/CRUD_School.jsx';
 import CRUD_Program from './components/Admin/CRUD_Program.jsx';
 import CRUD_Accreditation from './components/Admin/CRUD_Accreditation.jsx';
@@ -80,7 +79,6 @@ function App() {
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
         <Route path="/user-landing-page" element={<UserLandingPage />} />
-        <Route path="/schools" element={<SchoolsPage />} />
         {/* Protected routes */}
         <Route path="/academic-explorer" element={
           <PrivateRoute>

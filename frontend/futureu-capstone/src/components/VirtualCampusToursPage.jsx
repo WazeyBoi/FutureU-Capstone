@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import apiClient from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import CesiumSchoolsGlobe from "./CesiumSchoolsGlobe";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
@@ -16,6 +16,21 @@ import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
 import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
 import up_school_logo from '../assets/school_logos/up_school_logo.png';
 import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
+
+// School logo mapping
+const schoolLogos = {
+  1: cdu_school_logo,
+  2: citu_school_logo,
+  3: cnu_school_logo,
+  4: ctu_school_logo,
+  5: iau_school_logo,
+  6: swu_school_logo,
+  7: uc_school_logo,
+  8: usc_school_logo,
+  9: usjr_school_logo,
+  10: up_school_logo,
+  11: uv_school_logo,
+};
 
 const schoolIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/167/167707.png",
@@ -58,6 +73,27 @@ const tileOptions = [
   }
 ];
 
+function getSchoolMarkerIcon(schoolId) {
+  const logo = schoolLogos[schoolId];
+  return L.divIcon({
+    className: 'custom-school-marker',
+    iconSize: [48, 56],
+    iconAnchor: [24, 56],
+    popupAnchor: [0, -56],
+    html: `
+      <div style="position: relative; width: 48px; height: 56px;">
+        <svg width="48" height="56" viewBox="0 0 48 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;z-index:1;">
+          <ellipse cx="24" cy="20" rx="18" ry="18" fill="#fff" stroke="#4285F4" stroke-width="3"/>
+          <path d="M24 55C24 55 42 35.5 42 20C42 9.50659 33.4934 1 23.9999 1C14.5066 1 6 9.50659 6 20C6 35.5 24 55 24 55Z" fill="#4285F4" stroke="#4285F4" stroke-width="2"/>
+        </svg>
+        <div style="position:absolute;top:6px;left:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#fff;z-index:2;">
+          ${logo ? `<img src="${logo}" alt="logo" style="width:44px;height:44px;object-fit:cover;" />` : ''}
+        </div>
+      </div>
+    `
+  });
+}
+
 const VirtualCampusToursPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [school, setSchool] = useState("");
@@ -74,7 +110,8 @@ const VirtualCampusToursPage = () => {
   const [mapZoom, setMapZoom] = useState(defaultMapZoom);
   const [tileUrl, setTileUrl] = useState(tileOptions[0].url);
   const [tileAttribution, setTileAttribution] = useState(tileOptions[0].attribution);
-  const [schools, setSchools] = useState([]); // <-- use this for map markers
+  const [tours, setTours] = useState([]);
+  const [schools, setSchools] = useState([]);
   const mapRef = useRef(null);
 
   // Animation variants - simplified for smoother animations
@@ -239,7 +276,7 @@ const VirtualCampusToursPage = () => {
       setIsLoading(true);
       try {
         // First try the getAllSchools endpoint
-        const response = await axios.get('/api/school/getAllSchools');
+        const response = await apiClient.get('/school/getAllSchools');
         console.log("API Response:", response.data);
         
         setApiSchools(response.data);
@@ -281,7 +318,7 @@ const VirtualCampusToursPage = () => {
         
         // If the first endpoint fails, try another one
         try {
-          const response = await axios.get('/api/school/test');
+          const response = await apiClient.get('/api/school/test');
           console.log("API Test Response:", response.data);
           
           // If we can reach the test endpoint but not the data, there might be other issues
@@ -447,53 +484,103 @@ const VirtualCampusToursPage = () => {
     setTileAttribution(option.attribution);
   };
 
-  // Fetch schools from backend
+  // Fetch schools and tours from backend
   useEffect(() => {
-    axios.get("/api/school/getAllSchools")
-      .then(res => {
-        setSchools(res.data);
+    setIsLoading(true);
+    Promise.all([
+      apiClient.get("/school/getAllSchools"),
+      apiClient.get("/virtualcampustours/getAllVirtualCampousTours"),
+    ])
+      .then(([schoolsRes, toursRes]) => {
+        setSchools(schoolsRes.data);
+        setTours(toursRes.data);
       })
-      .catch(err => {
-        console.error("Failed to fetch schools:", err);
-      });
+      .catch((err) => {
+        console.error("Failed to fetch data:", err);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  // School logo mapping (same as AcademicExplorer.jsx)
-  const schoolLogos = {
-    1: cdu_school_logo,
-    2: citu_school_logo,
-    3: cnu_school_logo,
-    4: ctu_school_logo,
-    5: iau_school_logo,
-    6: swu_school_logo,
-    7: uc_school_logo,
-    8: usc_school_logo,
-    9: usjr_school_logo,
-    10: up_school_logo,
-    11: uv_school_logo,
+  // Helper to get school info by id
+  const getSchoolInfo = (schoolObj) => {
+    if (!schoolObj) return {};
+    // If backend returns school as object, use as is
+    if (schoolObj.name) return schoolObj;
+    // If only id, find in schools array
+    return schools.find((s) => s.schoolId === schoolObj) || {};
   };
 
-  // Helper to create a custom marker icon with logo inside a pin
-  function getSchoolMarkerIcon(schoolId) {
-    const logo = schoolLogos[schoolId];
-    return L.divIcon({
-      className: 'custom-school-marker',
-      iconSize: [48, 56],
-      iconAnchor: [24, 56],
-      popupAnchor: [0, -56],
-      html: `
-        <div style="position: relative; width: 48px; height: 56px;">
-          <svg width="48" height="56" viewBox="0 0 48 56" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;z-index:1;">
-            <ellipse cx="24" cy="20" rx="18" ry="18" fill="#fff" stroke="#4285F4" stroke-width="3"/>
-            <path d="M24 55C24 55 42 35.5 42 20C42 9.50659 33.4934 1 23.9999 1C14.5066 1 6 9.50659 6 20C6 35.5 24 55 24 55Z" fill="#4285F4" stroke="#4285F4" stroke-width="2"/>
-          </svg>
-          <div style="position:absolute;top:6px;left:6px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;background:#fff;z-index:2;">
-            ${logo ? `<img src="${logo}" alt="logo" style="width:44px;height:44px;object-fit:cover;" />` : ''}
+  // Render function for campus tour cards
+  const renderTourCard = (tour, index) => {
+    const school = getSchoolInfo(tour.school);
+    return (
+      <motion.div
+        key={tour.virtualCampusTourId}
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        whileHover="hover"
+        transition={{
+          delay: index * 0.05,
+          duration: 0.3,
+        }}
+        className="bg-white rounded-xl overflow-hidden shadow-[rgba(0,0,0,0.08)_0px_8px_24px] border border-gray-100 transition-all duration-300"
+      >
+        <div className="relative aspect-video overflow-hidden">
+          <iframe
+            className="w-full h-full"
+            src={tour.virtualCampusTourUrl}
+            title={school.name || "Virtual Tour"}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+          {tour.featured && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="absolute top-3 right-3 bg-amber-400 text-xs font-bold px-3 py-1 rounded-full text-black shadow-md"
+            >
+              FEATURED
+            </motion.div>
+          )}
+        </div>
+        <div className="p-5 text-left">
+          <h3 className="text-xl font-bold text-gray-800 mb-2">
+            {school.name || "Unknown School"}
+          </h3>
+          <div className="flex items-center space-x-3 mt-3">
+            <div className="flex items-center text-sm text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {school.location}
+            </div>
+            <div className="text-sm text-gray-400">•</div>
+            <div className="flex items-center text-sm text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              {school.type}
+            </div>
+            <div className="text-sm text-gray-400">•</div>
+            <div className="flex items-center text-sm text-gray-600">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+                <text x="12" y="16" textAnchor="middle" fontSize="10" fill="currentColor">{tour.views}</text>
+              </svg>
+              {tour.views} views
+            </div>
+          </div>
+          <div className="mt-4 bg-white p-4 rounded-lg shadow-md">
+            <p className="text-sm text-gray-600">{tour.caption}</p>
           </div>
         </div>
-      `
-    });
-  }
+      </motion.div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -753,251 +840,116 @@ const VirtualCampusToursPage = () => {
         className="py-12 max-w-7xl mx-auto px-4"
       >
         <AnimatePresence mode="wait">
-          {searchQuery ? (
-            /* Search Results Section */
-            <motion.div
-              key="search-results"
+          <motion.div
+            key="featured-tours"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
+              className="text-center mb-10"
             >
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-center mb-10"
-              >
-                <h2 className="text-3xl font-bold text-gray-800 relative inline-block">
-                  Search Results
-                  <span className="absolute -bottom-2 left-0 w-full h-1 bg-amber-400 rounded-full"></span>
-                </h2>
-                <p className="mt-6 text-gray-600">
-                  Showing results for "{searchQuery}"
-                </p>
-              </motion.div>
-              
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"
-                  ></motion.div>
-                  <span className="ml-3 text-gray-600">Loading school data...</span>
-                </div>
-              ) : filteredCampuses.length > 0 ? (
-                <motion.div 
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                >
-                  {filteredCampuses.map((campus, index) => (
-                    renderCampusCard(campus, index)
-                  ))}
-                </motion.div>
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-center py-16"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  </svg>
-                  <motion.button 
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleReset} 
-                    className="mt-6 px-4 py-2 bg-amber-400 hover:bg-amber-500 rounded-lg text-black font-medium transition-colors"
-                  >
-                    Clear Search
-                  </motion.button>
-                </motion.div>
-              )}
+              <h2 className="text-3xl font-bold text-gray-800 relative inline-block">
+                Virtual Campus Tours
+                <span className="absolute -bottom-2 left-0 w-full h-1 bg-amber-400 rounded-full"></span>
+              </h2>
+              <p className="mt-6 text-gray-600">
+                Explore our most popular virtual campus experiences
+              </p>
             </motion.div>
-          ) : (
-            /* Featured Campus Tours (when no search) */
-            <motion.div
-              key="featured-tours"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="text-center mb-10"
-              >
-                <h2 className="text-3xl font-bold text-gray-800 relative inline-block">
-                  Featured Campus Tours
-                  <span className="absolute -bottom-2 left-0 w-full h-1 bg-amber-400 rounded-full"></span>
-                </h2>
-                <p className="mt-6 text-gray-600">
-                  Explore our most popular virtual campus experiences
-                </p>
-              </motion.div>
-              
-              {isLoading ? (
-                <div className="flex justify-center items-center py-8">
-                  <motion.div 
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"
-                  ></motion.div>
-                  <span className="ml-3 text-gray-600">Loading school data...</span>
-                </div>
-              ) : (
-                <motion.div 
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+
+            {/* Filter Controls */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+              <div className="flex-1 flex flex-col md:flex-row gap-4">
+                {/* Search */}
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search for a school or campus..."
+                  className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full md:w-64"
+                />
+                {/* School Dropdown */}
+                <select
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full md:w-64"
                 >
-                  {enhancedCampuses
-                    .filter(campus => campus.featured)
+                  <option value="">All Schools</option>
+                  {schools
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .slice(0, 3)
-                    .map((campus, index) => (
-                      renderCampusCard(campus, index)
+                    .map((s) => (
+                      <option key={s.schoolId} value={s.name}>
+                        {s.name}
+                      </option>
                     ))}
-                </motion.div>
-              )}
-          
-              {/* All Campus Tours */}
-              <motion.div 
-                variants={fadeIn}
+                </select>
+                {/* School Type Dropdown */}
+                <select
+                  value={schoolType}
+                  onChange={(e) => setSchoolType(e.target.value)}
+                  className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full md:w-64"
+                >
+                  <option value="">All School Types</option>
+                  <option value="Public">Public</option>
+                  <option value="Private">Private</option>
+                </select>
+              </div>
+              {/* Reset Button */}
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleReset}
+                className="mt-4 md:mt-0 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg flex items-center text-sm font-medium transition-all duration-300"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset Filters
+              </motion.button>
+            </div>
+
+            {/* Filtered Tours */}
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"
+                ></motion.div>
+                <span className="ml-3 text-gray-600">Loading campus tours...</span>
+              </div>
+            ) : (
+              <motion.div
+                variants={staggerContainer}
                 initial="hidden"
                 animate="visible"
-                transition={{ delay: 0.2 }}
-                className="mt-16"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 border-b-4 border-amber-400 pb-1 inline-block">
-                      All Campus Tours
-                    </h2>
-                  </div>
-                  
-                  <div className="flex items-center mt-4 md:mt-0">
-                    <p className="text-sm text-gray-600 mr-4">Showing {filteredCampuses.length} campus tours</p>
-                    <motion.button 
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setShowFilters(!showFilters)} 
-                      className="flex items-center space-x-1 bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-all duration-300 hover:border-amber-400 hover:shadow-md"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                      </svg>
-                      <span>Filter Options</span>
-                      <motion.svg 
-                        animate={{ rotate: showFilters ? 180 : 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="w-4 h-4" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24" 
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                      </motion.svg>
-                    </motion.button>
-                  </div>
-                </div>
-                
-                {/* Filter options panel */}
-                <AnimatePresence>
-                  {showFilters && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="bg-white p-6 rounded-lg shadow-md mb-8 overflow-hidden"
-                    >
-                      <div className="flex flex-col md:flex-row items-start md:items-end justify-between">
-                        <div className="flex flex-wrap gap-4 mb-4 md:mb-0">
-                          <div className="w-64">
-                            <label htmlFor="school" className="block text-sm font-medium text-gray-700">
-                              School
-                            </label>
-                            <select
-                              id="school"
-                              value={school}
-                              onChange={(e) => setSchool(e.target.value)}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm transition-all duration-300"
-                            >
-                              <option value="">All Schools</option>
-                              {enhancedCampuses
-                                .sort((a, b) => a.name.localeCompare(b.name))
-                                .map((campus, index) => (
-                                  <option key={index} value={campus.name}>
-                                    {campus.name}
-                                  </option>
-                                ))}
-                            </select>
-                          </div>
-                          <div className="w-64">
-                            <label htmlFor="schoolType" className="block text-sm font-medium text-gray-700">
-                              School Type
-                            </label>
-                            <select
-                              id="schoolType"
-                              value={schoolType}
-                              onChange={(e) => setSchoolType(e.target.value)}
-                              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm transition-all duration-300"
-                            >
-                              <option value="">All School Types</option>
-                              <option value="Public">Public</option>
-                              <option value="Private">Private</option>
-                            </select>
-                          </div>
-                        </div>
-                        <motion.button 
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={handleReset}
-                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg flex items-center text-sm font-medium transition-all duration-300"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          Reset Filters
-                        </motion.button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {isLoading ? (
-                  <div className="flex justify-center items-center py-8">
-                    <motion.div 
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"
-                    ></motion.div>
-                    <span className="ml-3 text-gray-600">Loading school data...</span>
-                  </div>
-                ) : (
-                  <motion.div 
-                    variants={staggerContainer}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  >
-                    {filteredCampuses
-                      .map((campus, index) => (
-                        renderCampusCard(campus, index)
-                      ))}
-                  </motion.div>
-                )}
+                {tours
+                  .filter((tour) => {
+                    // Get school info for this tour
+                    const schoolObj = getSchoolInfo(tour.school);
+                    // Filter by search query (school name or tour caption)
+                    const matchesSearch =
+                      !searchQuery ||
+                      (schoolObj.name && schoolObj.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                      (tour.caption && tour.caption.toLowerCase().includes(searchQuery.toLowerCase()));
+                    // Filter by school
+                    const matchesSchool = !school || (schoolObj.name === school);
+                    // Filter by school type
+                    const matchesType = !schoolType || (schoolObj.type === schoolType);
+                    return matchesSearch && matchesSchool && matchesType;
+                  })
+                  .map((tour, index) => renderTourCard(tour, index))
+                }
               </motion.div>
-            </motion.div>
-          )}
+            )}
+          </motion.div>
         </AnimatePresence>
       </motion.div>
       <style>
@@ -1023,3 +975,4 @@ const VirtualCampusToursPage = () => {
 };
 
 export default VirtualCampusToursPage;
+//kuwang kay mga filter HAHAHA
