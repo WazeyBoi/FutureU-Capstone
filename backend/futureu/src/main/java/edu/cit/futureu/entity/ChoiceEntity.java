@@ -1,6 +1,7 @@
 package edu.cit.futureu.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ public class ChoiceEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int choiceId;
 
-    @JsonManagedReference
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "questionId", nullable = false)
     private QuestionEntity question;
