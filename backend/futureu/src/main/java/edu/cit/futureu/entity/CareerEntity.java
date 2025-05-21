@@ -1,17 +1,18 @@
 package edu.cit.futureu.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "career")
@@ -22,15 +23,15 @@ public class CareerEntity {
     private int careerId;
 
     private String careerTitle;
-    private double salary;
+    private String salary;
+    private String careerDescription;
     private String jobTrend;
     private String industry;
     
-    // Many-to-one relationship with Program
-    @JsonBackReference
-    @ManyToOne
-    @JoinColumn(name = "programId")
-    private ProgramEntity program;
+    // Replace direct many-to-one with many-to-many via CareerProgramEntity
+    @JsonIgnore
+    @OneToMany(mappedBy = "career", cascade = CascadeType.ALL)
+    private List<CareerProgramEntity> careerPrograms;
 
     @JsonIgnore
     @OneToOne(mappedBy = "careerPath")
@@ -55,12 +56,20 @@ public class CareerEntity {
         this.careerTitle = careerTitle;
     }
 
-    public double getSalary() {
+    public String getSalary() {
         return salary;
     }
 
-    public void setSalary(double salary) {
+    public void setSalary(String salary) {
         this.salary = salary;
+    }
+
+    public String getCareerDescription() {
+        return careerDescription;
+    }
+
+    public void setCareerDescription(String careerDescription) {
+        this.careerDescription = careerDescription;
     }
 
     public String getJobTrend() {
@@ -78,13 +87,13 @@ public class CareerEntity {
     public void setIndustry(String industry) {
         this.industry = industry;
     }
-
-    public ProgramEntity getProgram() {
-        return program;
+    
+    public List<CareerProgramEntity> getCareerPrograms() {
+        return careerPrograms;
     }
 
-    public void setProgram(ProgramEntity program) {
-        this.program = program;
+    public void setCareerPrograms(List<CareerProgramEntity> careerPrograms) {
+        this.careerPrograms = careerPrograms;
     }
 
     public RecommendationEntity getRecommendation() {
@@ -93,5 +102,19 @@ public class CareerEntity {
 
     public void setRecommendation(RecommendationEntity recommendation) {
         this.recommendation = recommendation;
+    }
+    
+    // For backward compatibility - returns the first associated program
+    @Transient
+    public ProgramEntity getProgram() {
+        if (careerPrograms != null && !careerPrograms.isEmpty()) {
+            return careerPrograms.get(0).getProgram();
+        }
+        return null;
+    }
+    
+    // This is now handled by the CareerProgramService
+    public void setProgram(ProgramEntity program) {
+        // Implementation handled by service layer
     }
 }

@@ -81,12 +81,16 @@ public class CareerController {
         return careerService.filterCareersByJobTrend(jobTrend);
     }
     
-    // Filter careers by salary range
-    @GetMapping("/filterBySalaryRange")
-    public List<CareerEntity> filterBySalaryRange(
-            @RequestParam double minSalary, 
-            @RequestParam double maxSalary) {
-        return careerService.filterCareersBySalaryRange(minSalary, maxSalary);
+    // Updated to filter by salary String
+    @GetMapping("/filterBySalary")
+    public List<CareerEntity> filterBySalary(@RequestParam String salary) {
+        return careerService.filterCareersBySalary(salary);
+    }
+    
+    // New endpoint to filter by career description
+    @GetMapping("/filterByDescription")
+    public List<CareerEntity> filterByDescription(@RequestParam String description) {
+        return careerService.filterCareersByDescription(description);
     }
     
     // UPDATE
