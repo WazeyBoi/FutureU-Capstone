@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
@@ -49,6 +50,28 @@ const Navigation = () => {
                   Dashboard
                 </Link>
                 
+                {/* Add other admin-specific links here */}
+                <Link
+                  to="/assessment-categories"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/assessment')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Assessment Management
+                </Link>
+                
+                <Link
+                  to="/questions"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/questions')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Questions
+                </Link>
               </>
             )}
             
@@ -77,7 +100,50 @@ const Navigation = () => {
                   Academic Explorer
                 </Link>
                 
-                {/* Other student-specific links... */}
+                <Link
+                  to="/accreditation"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    location.pathname.includes('/accreditation')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Accreditation
+                </Link>
+                
+                <Link
+                  to="/virtual-campus-tours"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/virtual-campus-tours')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Virtual Campus Tours
+                </Link>
+                
+                <Link
+                  to="/testimonials"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/testimonials')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Testimonials
+                </Link>
+                
+                <Link
+                  to="/career-pathways"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/career-pathways')
+                      ? 'bg-[#f5fafc] text-white'
+                      : 'text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Career Pathways
+                </Link>
+                
                 <Link
                   to="/assessment-dashboard"
                   className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${

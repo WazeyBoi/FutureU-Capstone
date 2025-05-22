@@ -1,6 +1,8 @@
+
 package edu.cit.futureu.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -68,7 +70,20 @@ public class SchoolProgramController {
     public List<SchoolProgramEntity> getSchoolProgramsBySchool(@PathVariable int schoolId) {
         SchoolEntity school = schoolService.getSchoolById(schoolId).orElse(null);
         if (school != null) {
-            return schoolProgramService.getSchoolProgramsBySchool(school);
+            List<SchoolProgramEntity> schoolPrograms = schoolProgramService.getSchoolProgramsBySchool(school);
+            
+            // Ensure all related entities are eagerly loaded and accessible
+            return schoolPrograms.stream()
+                .peek(sp -> {
+                    if (sp.getAccreditation() != null) {
+                        // Touch the accreditation to force eager loading
+                        AccreditationEntity accred = sp.getAccreditation();
+                        accred.getAccreditationLevel();
+                        accred.getAccreditingBody();
+                        accred.getRecognitionStatus();
+                    }
+                })
+                .collect(Collectors.toList());
         }
         return List.of(); // Return empty list if school not found
     }

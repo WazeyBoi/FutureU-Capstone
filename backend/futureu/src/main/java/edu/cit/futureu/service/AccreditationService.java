@@ -1,20 +1,28 @@
+
 package edu.cit.futureu.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import edu.cit.futureu.entity.AccreditationEntity;
+import edu.cit.futureu.entity.SchoolEntity;
 import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.repository.AccreditationRepository;
+import edu.cit.futureu.repository.SchoolProgramRepository;
 
 @Service
 public class AccreditationService {
 
     @Autowired
     private AccreditationRepository accreditationRepository;
+    
+    @Autowired
+    private SchoolProgramRepository schoolProgramRepository;
     
     // Create operations
     public AccreditationEntity createAccreditation(AccreditationEntity accreditation) {
@@ -30,8 +38,17 @@ public class AccreditationService {
         return accreditationRepository.findById(id);
     }
     
+    public List<AccreditationEntity> getAccreditationsBySchool(SchoolEntity school) {
+        return accreditationRepository.findBySchool(school);
+    }
+    
     public List<AccreditationEntity> getAccreditationsBySchoolProgram(SchoolProgramEntity schoolProgram) {
-        return accreditationRepository.findBySchoolProgram(schoolProgram);
+        if (schoolProgram != null && schoolProgram.getAccreditation() != null) {
+            Integer accredId = schoolProgram.getAccreditation().getAccredId();
+            Optional<AccreditationEntity> accreditation = accreditationRepository.findByAccredId(accredId);
+            return accreditation.map(Collections::singletonList).orElse(Collections.emptyList());
+        }
+        return Collections.emptyList();
     }
     
     public List<AccreditationEntity> searchAccreditationsByTitle(String title) {
@@ -59,8 +76,20 @@ public class AccreditationService {
     }
     
     // Delete operations
+    @Transactional
     public boolean deleteAccreditation(int id) {
         if (accreditationRepository.existsById(id)) {
+            // First, find all SchoolPrograms that reference this accreditation
+            List<SchoolProgramEntity> programsWithAccreditation = 
+                schoolProgramRepository.findByAccreditation_AccredId(id);
+            
+            // Remove the accreditation reference from all these programs
+            for (SchoolProgramEntity program : programsWithAccreditation) {
+                program.setAccreditation(null);
+                schoolProgramRepository.save(program);
+            }
+            
+            // Now it's safe to delete the accreditation
             accreditationRepository.deleteById(id);
             return true;
         }

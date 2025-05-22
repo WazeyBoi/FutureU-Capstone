@@ -1,3 +1,4 @@
+
 import apiClient from './api';
 
 /**
@@ -78,6 +79,28 @@ class AdminAccreditationService {
   }
 
   /**
+   * Assign an accreditation to school program(s)
+   * @param {number} accredId - The accreditation ID
+   * @param {number} schoolId - The school ID
+   * @param {number} [programId] - Optional program ID (if null, assigns to all programs of the school)
+   * @returns {Promise<string>} - Success message
+   */
+  async assignAccreditationToPrograms(accredId, schoolId, programId = null) {
+    try {
+      const params = { accredId, schoolId };
+      if (programId) {
+        params.programId = programId;
+      }
+      
+      const response = await apiClient.post('/accreditation/assignToSchoolPrograms', null, { params });
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Assigning accreditation to programs');
+      throw error;
+    }
+  }
+
+  /**
    * Search accreditations by title
    * @param {string} title - The title to search for
    * @returns {Promise<Array>} - List of matching accreditations
@@ -143,3 +166,5 @@ class AdminAccreditationService {
 }
 
 export default new AdminAccreditationService();
+
+
