@@ -16,18 +16,15 @@ public class QuestionEntity {
     private int questionId;
 
     // Many-to-one relationship with AssessmentCategory
-    @JsonBackReference(value = "assessmentCategory")
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId")
     private AssessmentCategoryEntity assessmentCategory;
     
     // Add the relationship to QuizSubCategoryCategory
-    @JsonBackReference(value = "quizSubCategoryCategory")
     @ManyToOne
     @JoinColumn(name = "quizSubCategoryCategoryId")
     private QuizSubCategoryCategoryEntity quizSubCategoryCategory;
 
-    @JsonBackReference(value = "assessmentSubCategory")
     @ManyToOne
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assessmentSubCategory;

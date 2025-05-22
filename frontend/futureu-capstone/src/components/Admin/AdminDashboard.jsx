@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
@@ -14,7 +13,7 @@ import adminAssessmentCategoryService from '../../services/adminAssessmentCatego
 import adminAssessmentSubCategoryService from '../../services/adminAssessmentSubCategoryService';
 import adminQuizSubCatService from '../../services/adminQuizSubCatService';
 import { 
-  Shield, Users, Settings, FileText, Search, Bell,
+  Shield, Users, Settings, FileText, Search,
   School, GraduationCap, BookOpen, Award, Clock,
   Briefcase, HelpCircle, List, Folder, FolderPlus, 
   FilePlus, User, LogOut, TrendingUp
@@ -287,11 +286,6 @@ const AdminDashboardTest = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            
-            <button className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border-2 border-white"></span>
-            </button>
           </div>
         </div>
       </header>

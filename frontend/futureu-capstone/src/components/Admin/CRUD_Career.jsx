@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import adminCareerService from '../../services/adminCareerService';
 import adminProgramService from '../../services/adminProgramService';
@@ -39,7 +38,8 @@ const CRUD_Career = () => {
     industry: '',
     salary: '',
     jobTrend: '',
-    programId: ''
+    programId: '',
+    careerDescription: ''
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -121,12 +121,18 @@ const CRUD_Career = () => {
     setLoading(true);
     try {
       const data = await adminCareerService.getAllCareers();
-      setCareers(data);
-      setFilteredCareers(data);
+      // Ensure data is an array
+      const careerArray = Array.isArray(data) ? data : [];
+      console.log('Career data from API:', careerArray);
+      setCareers(careerArray);
+      setFilteredCareers(careerArray);
       setError(null);
     } catch (error) {
-      setError('Failed to fetch careers');
       console.error('Error fetching careers:', error);
+      setError('Failed to fetch careers');
+      // Initialize with empty arrays on error
+      setCareers([]);
+      setFilteredCareers([]);
     } finally {
       setLoading(false);
     }
@@ -155,7 +161,8 @@ const CRUD_Career = () => {
       industry: '',
       salary: '',
       jobTrend: '',
-      programId: ''
+      programId: '',
+      careerDescription: ''
     });
     setIsEditing(false);
     setSelectedCareer(null);
@@ -169,7 +176,8 @@ const CRUD_Career = () => {
       industry: career.industry || '',
       salary: career.salary || '',
       jobTrend: career.jobTrend || '',
-      programId: career.program ? career.program.programId : ''
+      programId: career.program ? career.program.programId : '',
+      careerDescription: career.careerDescription || ''
     });
     setIsEditing(true);
     setIsModalVisible(true);
@@ -219,23 +227,28 @@ const CRUD_Career = () => {
       const careerData = {
         careerTitle: formData.careerTitle,
         industry: formData.industry,
-        salary: formData.salary ? parseFloat(formData.salary) : 0,
+        salary: formData.salary,
         jobTrend: formData.jobTrend,
-        program: formData.programId ? {
-          programId: parseInt(formData.programId)
-        } : null
+        careerDescription: formData.careerDescription || ''
       };
+      
+      // Get program ID if one is selected
+      const programId = formData.programId ? parseInt(formData.programId) : null;
       
       if (isEditing) {
         // Update existing career
-        await adminCareerService.updateCareer(selectedCareer.careerId, {
-          ...careerData,
-          careerId: selectedCareer.careerId
-        });
+        await adminCareerService.updateCareer(
+          selectedCareer.careerId, 
+          {
+            ...careerData,
+            careerId: selectedCareer.careerId
+          },
+          programId
+        );
         setSuccess('Career updated successfully');
       } else {
         // Create new career
-        await adminCareerService.createCareer(careerData);
+        await adminCareerService.createCareer(careerData, programId);
         setSuccess('Career created successfully');
       }
       fetchCareers(); // Refresh the list
@@ -254,12 +267,11 @@ const CRUD_Career = () => {
   };
 
   // Calculate pagination
-  const paginatedCareers = filteredCareers.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const paginatedCareers = Array.isArray(filteredCareers) 
+    ? filteredCareers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    : [];
 
-  const totalPages = Math.ceil(filteredCareers.length / rowsPerPage);
+  const totalPages = Math.ceil((Array.isArray(filteredCareers) ? filteredCareers.length : 0) / rowsPerPage);
 
   // Helper function to get pagination range
   const getPaginationRange = () => {
@@ -703,6 +715,23 @@ const CRUD_Career = () => {
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
                   </div>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Career Description</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FileText className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <textarea
+                    name="careerDescription"
+                    value={formData.careerDescription || ""}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="Enter career description"
+                    rows="3"
+                  ></textarea>
                 </div>
               </div>
             </div>

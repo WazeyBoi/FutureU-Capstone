@@ -22,7 +22,6 @@ public class AssessmentSubCategoryEntity {
     private String description;
 
     // Many-to-one relationship with AssessmentCategory
-    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "assessmentCategoryId", nullable = false)
     private AssessmentCategoryEntity assessmentCategory;

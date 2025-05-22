@@ -3,6 +3,7 @@ package edu.cit.futureu.entity;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -28,8 +29,8 @@ public class CareerEntity {
     private String jobTrend;
     private String industry;
     
-    // Replace direct many-to-one with many-to-many via CareerProgramEntity
-    @JsonIgnore
+    // Use JsonManagedReference to prevent circular references
+    @JsonManagedReference
     @OneToMany(mappedBy = "career", cascade = CascadeType.ALL)
     private List<CareerProgramEntity> careerPrograms;
 

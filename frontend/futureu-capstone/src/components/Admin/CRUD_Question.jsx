@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import adminQuestionService from '../../services/adminQuestionService';
 import adminAssessmentCategoryService from '../../services/adminAssessmentCategoryService';
@@ -135,7 +134,9 @@ const CRUD_Question = () => {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const data = await adminQuestionService.getAllQuestions();
+      // Use the enriched method to get complete data for questions
+      const data = await adminQuestionService.getAllQuestionsEnriched();
+      console.log('Enriched questions data:', data);
       setQuestions(data);
       setFilteredQuestions(data);
       setError(null);
@@ -159,18 +160,37 @@ const CRUD_Question = () => {
   const fetchSubCategories = async () => {
     try {
       const data = await adminAssessmentSubCategoryService.getAllAssessmentSubCategories();
-      setSubCategories(data);
+      console.log('Initial load of all sub-categories:', data);
+      if (Array.isArray(data)) {
+        setSubCategories(data);
+      } else {
+        console.error('Invalid data format for sub-categories:', data);
+        setSubCategories([]);
+      }
     } catch (error) {
       console.error('Error fetching assessment sub-categories:', error);
+      setSubCategories([]);
     }
   };
 
   const fetchQuizSubCategories = async () => {
     try {
       const data = await adminQuizSubCatService.getAllQuizSubCategories();
-      setQuizSubCategories(data);
+      console.log('Initial load of all quiz sub-categories:', data);
+      if (Array.isArray(data)) {
+        // Log the structure of the first item if available
+        if (data.length > 0) {
+          console.log('Sample quiz sub-category structure:', data[0]);
+          console.log('Property names in sample:', Object.keys(data[0]));
+        }
+        setQuizSubCategories(data);
+      } else {
+        console.error('Invalid data format for quiz sub-categories:', data);
+        setQuizSubCategories([]);
+      }
     } catch (error) {
       console.error('Error fetching quiz sub-categories:', error);
+      setQuizSubCategories([]);
     }
   };
 
@@ -180,6 +200,76 @@ const CRUD_Question = () => {
       ...formData,
       [name]: value
     });
+    
+    // When assessment category changes, fetch relevant sub-categories
+    if (name === 'assessmentCategoryId' && value) {
+      console.log('Selected assessment category ID:', value);
+      fetchSubCategoriesByCategory(parseInt(value));
+      
+      // Clear sub-category selections when category changes
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        assessmentSubCategoryId: '',
+        quizSubCategoryCategoryId: ''
+      }));
+    }
+    
+    // When assessment sub-category changes, filter relevant quiz sub-categories
+    if (name === 'assessmentSubCategoryId' && value) {
+      console.log('Selected assessment sub-category ID:', value);
+      
+      // Clear quiz sub-category selection
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        quizSubCategoryCategoryId: ''
+      }));
+      
+      // Fetch quiz sub-categories for the selected assessment sub-category
+      fetchQuizSubCategoriesBySubCategory(parseInt(value));
+    }
+  };
+  
+  // Fetch sub-categories filtered by category ID
+  const fetchSubCategoriesByCategory = async (categoryId) => {
+    try {
+      console.log('Fetching sub-categories for category ID:', categoryId);
+      const data = await adminAssessmentSubCategoryService.getAssessmentSubCategoriesByCategory(categoryId);
+      console.log('Sub-categories for selected category:', data);
+      
+      // Update sub-categories state with the filtered data
+      if (Array.isArray(data)) {
+        setSubCategories(data);
+      } else {
+        console.error('Invalid data format for sub-categories:', data);
+        setSubCategories([]);
+      }
+    } catch (error) {
+      console.error('Error fetching sub-categories for category:', error);
+      setSubCategories([]);
+    }
+  };
+
+  // Fetch quiz sub-categories filtered by assessment sub-category ID
+  const fetchQuizSubCategoriesBySubCategory = async (subCategoryId) => {
+    try {
+      console.log('Fetching quiz sub-categories for sub-category ID:', subCategoryId);
+      
+      // Use the new service method
+      const filteredQuizSubCats = await adminQuizSubCatService.getQuizSubCategoriesBySubCategory(subCategoryId);
+      console.log('Filtered quiz sub-categories from service:', filteredQuizSubCats);
+      
+      // If we got results, update the state with only these filtered results
+      // This makes getFilteredQuizSubCategories() simpler because we've already filtered the data
+      if (Array.isArray(filteredQuizSubCats) && filteredQuizSubCats.length > 0) {
+        setQuizSubCategories(filteredQuizSubCats);
+      } else {
+        console.log('No quiz sub-categories found for the selected assessment sub-category');
+      }
+    } catch (error) {
+      console.error('Error fetching quiz sub-categories for sub-category:', error);
+    }
   };
 
   const handleFilterChange = (filterName, value) => {
@@ -320,20 +410,16 @@ const CRUD_Question = () => {
 
   // Filter sub-categories based on selected category
   const getFilteredSubCategories = () => {
-    if (!formData.assessmentCategoryId) return subCategories;
-    
-    return subCategories.filter(
-      subCat => subCat.assessmentCategory?.assessmentCategoryId === parseInt(formData.assessmentCategoryId)
-    );
+    // We don't need to filter here anymore since we're fetching the
+    // filtered sub-categories directly in fetchSubCategoriesByCategory
+    return subCategories;
   };
   
   // Filter quiz sub-categories based on selected sub-category
   const getFilteredQuizSubCategories = () => {
-    if (!formData.assessmentSubCategoryId) return quizSubCategories;
-    
-    return quizSubCategories.filter(
-      quizSubCat => quizSubCat.assesssmentSubCategory?.assessmentSubCategoryId === parseInt(formData.assessmentSubCategoryId)
-    );
+    // We're now handling the filtering in fetchQuizSubCategoriesBySubCategory
+    // Just return the state directly since it's already filtered
+    return quizSubCategories;
   };
 
   // Handle page change

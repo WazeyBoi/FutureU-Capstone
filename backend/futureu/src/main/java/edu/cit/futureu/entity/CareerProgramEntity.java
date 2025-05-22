@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,6 +18,7 @@ public class CareerProgramEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "career_id")
     private CareerEntity career;
