@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
 import userAssessmentService from '../../services/userAssessmentService';
+import '../../styles/animations.css'; // Import the animations CSS
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [aiRecommendations, setAiRecommendations] = useState(null);
@@ -29,6 +30,11 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           const recommendations = Array.isArray(existingRecommendations.data) ? 
             existingRecommendations.data : [existingRecommendations.data];
           
+          // Sort by confidence score (highest first) and take only top 5
+          const sortedRecommendations = [...recommendations]
+            .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
+            .slice(0, 5);
+          
           let overallScore = 0;
           if (recommendations.length > 0 && recommendations[0].assessmentResult) {
             overallScore = recommendations[0].assessmentResult.overallScore || 0;
@@ -38,7 +44,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             assessmentId: userAssessmentId,
             overallScore: overallScore,
             recommendations: {
-              suggestedPrograms: recommendations.map(rec => ({
+              suggestedPrograms: sortedRecommendations.map(rec => ({
                 name: rec.suggestedProgram,
                 confidenceScore: rec.confidenceScore,
                 description: rec.description
@@ -48,17 +54,79 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           
           setAiRecommendations(formattedData);
         } else {
-          const response = await recommendationService.fetchRecommendations(userAssessmentId);
-          setAiRecommendations(response.data);
+          // Generate and save recommendations to database instead of just fetching
+          await recommendationService.generateRecommendations(userAssessmentId);
+          
+          // After generating, fetch the newly created recommendations
+          const newRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
+          
+          if (newRecommendations.data && newRecommendations.data.length > 0) {
+            const recommendations = Array.isArray(newRecommendations.data) ? 
+              newRecommendations.data : [newRecommendations.data];
+            
+            // Sort by confidence score (highest first) and take only top 5
+            const sortedRecommendations = [...recommendations]
+              .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
+              .slice(0, 5);
+            
+            let overallScore = 0;
+            if (recommendations.length > 0 && recommendations[0].assessmentResult) {
+              overallScore = recommendations[0].assessmentResult.overallScore || 0;
+            }
+            
+            const formattedData = {
+              assessmentId: userAssessmentId,
+              overallScore: overallScore,
+              recommendations: {
+                suggestedPrograms: sortedRecommendations.map(rec => ({
+                  name: rec.suggestedProgram,
+                  confidenceScore: rec.confidenceScore,
+                  description: rec.description
+                }))
+              }
+            };
+            
+            setAiRecommendations(formattedData);
+          }
         }
         setError(null);
       } catch (err) {
+        console.error('Error in primary recommendation flow:', err);
         try {
-          const response = await recommendationService.fetchRecommendations(userAssessmentId);
-          setAiRecommendations(response.data);
-          setError(null);
+          // Also use generateRecommendations in the fallback path
+          await recommendationService.generateRecommendations(userAssessmentId);
+          
+          // Get assessment data to access resultId
+          const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
+          const resultId = assessmentData.assessmentResult?.resultId;
+          
+          if (resultId) {
+            const newRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
+            
+            if (newRecommendations.data && newRecommendations.data.length > 0) {
+              // Format and set the recommendations
+              const recommendations = Array.isArray(newRecommendations.data) ? 
+                newRecommendations.data : [newRecommendations.data];
+              
+              const formattedData = {
+                assessmentId: userAssessmentId,
+                overallScore: assessmentData.assessmentResult?.overallScore || 0,
+                recommendations: {
+                  suggestedPrograms: recommendations.map(rec => ({
+                    name: rec.suggestedProgram,
+                    confidenceScore: rec.confidenceScore,
+                    description: rec.description
+                  }))
+                }
+              };
+              
+              setAiRecommendations(formattedData);
+              setError(null);
+            }
+          }
         } catch (fallbackErr) {
-          setError('Failed to load recommendations. Please try again later.');
+          console.error('Error in fallback recommendation flow:', fallbackErr);
+          setError('Failed to generate recommendations. Please try again later.');
         }
       } finally {
         setLoading(false);
@@ -98,11 +166,18 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         </p>
       </div>
 
-      {/* Loading state - simplified */}
+      {/* Loading state - with custom loader from animations.css */}
       {loading && (
         <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20 text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#1D63A1] border-r-transparent mb-4"></div>
-          <p className="text-sm text-gray-600">Loading your personalized recommendations...</p>
+          <div>
+            <img 
+              src="/src/assets/characters/quirky.svg" 
+              alt="Quirky mascot" 
+              className="quirky-bounce h-30 mx-auto"
+            />
+          </div>
+          {/* <div className="loader"></div> Custom loader from animations.css */}
+          <p className="text-sm text-gray-600 mb-3">Loading your personalized recommendations...</p>
         </div>
       )}
 
@@ -128,27 +203,30 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           </p>
           
           <div className="space-y-4">
-            {aiRecommendations.recommendations.suggestedPrograms?.map((program, index) => (
-              <div key={index} className="bg-[#1D63A1]/5 rounded-lg p-4 border border-[#1D63A1]/20">
-                <div className="flex justify-between items-center mb-2">
-                  <h4 className="text-md font-semibold text-[#232D35]">{program.name}</h4>
-                  <span className="text-sm font-semibold text-[#1D63A1]">
-                    {program.confidenceScore?.toFixed(1)}% Match
-                  </span>
-                </div>
-                <p className="text-left text-sm text-gray-600 mb-3">{program.description}</p>
-                <div className="flex gap-2">
-                  <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
-                    Recommended
-                  </span>
-                  {index === 0 && (
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
-                      Best Match
+            {aiRecommendations.recommendations.suggestedPrograms
+              ?.slice(0, 5) // Ensure only top 5 are displayed
+              .map((program, index) => (
+                <div key={index} className="bg-[#1D63A1]/5 rounded-lg p-4 border border-[#1D63A1]/20">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-md font-semibold text-[#232D35]">{program.name}</h4>
+                    <span className="text-sm font-semibold text-[#1D63A1]">
+                      {program.confidenceScore?.toFixed(1)}% Match
                     </span>
-                  )}
+                  </div>
+                  <p className="text-left text-sm text-gray-600 mb-3">{program.description}</p>
+                  <div className="flex gap-2">
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                      Recommended
+                    </span>
+                    {index === 0 && (
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded">
+                        Best Match
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            }
           </div>
           
           {aiRecommendations.recommendations.personalized && (
