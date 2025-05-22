@@ -1,8 +1,29 @@
-
 import React, { useState, useEffect } from 'react';
 import adminAccreditationService from '../../services/adminAccreditationService';
 import adminSchoolService from '../../services/adminSchoolService';
 import adminSchoolProgramService from '../../services/adminSchoolProgramService';
+import {
+  Award,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  X,
+  Check,
+  AlertTriangle,
+  Building,
+  FileText,
+  Loader,
+  ChevronDown,
+  School,
+  ListChecks,
+  Medal,
+  GraduationCap,
+} from 'lucide-react';
 
 const CRUD_Accreditation = () => {
   const [accreditations, setAccreditations] = useState([]);
@@ -54,6 +75,26 @@ const CRUD_Accreditation = () => {
       setFilteredAccreditations(filtered);
     }
   }, [searchQuery, accreditations]);
+
+  // Auto-dismiss success notification after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  // Auto-dismiss error notification after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const fetchAccreditations = async () => {
     setLoading(true);
@@ -342,105 +383,139 @@ const CRUD_Accreditation = () => {
   };
 
   return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">Accreditation Management</h1>
-        <div className="w-24 h-1 bg-yellow-500 dark:bg-yellow-400"></div>
+    <div className="container mx-auto px-6 py-8 max-w-[1400px]">
+      {/* Header Section */}
+      <div className="mb-10">
+        <div className="flex items-center mb-4">
+          <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
+            <Award className="h-6 w-6 text-[#FFB71B]" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#2B3E4E]">Accreditation Management</h1>
+        </div>
+        <p className="text-gray-600 max-w-3xl">
+          Manage all educational accreditations in the system. Add new accreditations, edit details, or remove accreditations as needed.
+        </p>
+        <div className="w-24 h-1 bg-[#FFB71B] mt-4"></div>
       </div>
       
       {/* Search and Add Section */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-grow">
-          <div className="relative">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="w-full md:w-2/3 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
-              placeholder="Search accreditations..."
+              className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md"
+              placeholder="Search accreditations by title..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
             <button
               onClick={handleSearch}
-              className="absolute right-0 top-0 h-full px-4 bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 rounded-r-md hover:bg-[#1D63A1]/90 dark:hover:bg-[#FFB71B]/90"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-md"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              Search
             </button>
           </div>
+
+          <button
+            onClick={handleAddClick}
+            className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add New Accreditation
+          </button>
         </div>
-        <button
-          onClick={handleAddClick}
-          className="inline-flex items-center px-4 py-2 bg-[#FFB71B] dark:bg-[#1D63A1] text-white dark:text-gray-100 rounded-md hover:bg-[#FFB71B]/90 dark:hover:bg-[#1D63A1]/90 transition-colors shadow-md"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Add Accreditation
-        </button>
       </div>
       
       {/* Accreditations Table */}
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
-              <tr className="bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 text-left">
-                <th className="px-6 py-3 font-semibold">ID</th>
-                <th className="px-6 py-3 font-semibold">Title</th>
-                <th className="px-6 py-3 font-semibold">School</th>
-                <th className="px-6 py-3 font-semibold">Description</th>
-                <th className="px-6 py-3 font-semibold">Level</th>
-                <th className="px-6 py-3 font-semibold">Body</th>
-                <th className="px-6 py-3 font-semibold">Status</th>
-                <th className="px-6 py-3 font-semibold">Actions</th>
+              <tr className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white text-left">
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">ID</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Title</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">School</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Description</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Level</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Body</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Status</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200">
               {loading && !filteredAccreditations.length ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center">
-                    <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1] dark:border-[#FFB71B]"></div>
+                  <td colSpan={8} className="px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Loader className="h-8 w-8 text-[#FFB71B] animate-spin mb-2" />
+                      <p className="text-gray-500">Loading accreditations...</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredAccreditations.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                    No accreditations found
+                  <td colSpan={8} className="px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Award className="h-12 w-12 text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-medium">No accreditations found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new accreditation</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 paginatedAccreditations.map((accreditation) => (
-                  <tr key={accreditation.accredId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4">{accreditation.accredId}</td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{accreditation.title}</td>
-                    <td className="px-6 py-4">{accreditation.school?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 truncate max-w-xs">{accreditation.description}</td>
-                    <td className="px-6 py-4">{accreditation.accreditationLevel || 'N/A'}</td>
-                    <td className="px-6 py-4">{accreditation.accreditingBody || 'N/A'}</td>
-                    <td className="px-6 py-4">{accreditation.recognitionStatus || 'N/A'}</td>
+                  <tr key={accreditation.accredId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 font-mono text-left">{accreditation.accredId}</td>
+                    <td className="px-6 py-4 font-medium text-[#2B3E4E] text-left">{accreditation.title}</td>
+                    <td className="px-6 py-4 text-gray-600 text-left">{accreditation.school?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 text-gray-600 truncate max-w-xs text-left">{accreditation.description}</td>
+                    <td className="px-6 py-4 text-center">
+                      {accreditation.accreditationLevel && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                          {accreditation.accreditationLevel}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {accreditation.accreditingBody && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                          {accreditation.accreditingBody}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {accreditation.recognitionStatus ? (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          accreditation.recognitionStatus === 'COE' 
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        }`}>
+                          {accreditation.recognitionStatus}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">None</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
-                      <div className="flex space-x-2">
+                      <div className="flex items-center justify-center space-x-3">
                         <button
                           onClick={() => handleEditClick(accreditation)}
-                          className="p-1 text-[#1D63A1] dark:text-[#FFB71B] hover:bg-[#1D63A1]/10 dark:hover:bg-[#FFB71B]/10 rounded"
-                          title="Edit"
+                          className="p-2 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
+                          title="Edit Accreditation"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(accreditation)}
-                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                          title="Delete"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Accreditation"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -453,172 +528,246 @@ const CRUD_Accreditation = () => {
       </div>
       
       {/* Pagination */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Showing {filteredAccreditations.length > 0 ? page * rowsPerPage + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredAccreditations.length)} of {filteredAccreditations.length} accreditations
-        </div>
-        
-        {totalPages > 0 && (
-          <div className="flex space-x-1 items-center">
-            {/* First page button */}
-            <button
-              onClick={() => handleChangePage(0)}
-              disabled={page === 0}
-              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="First page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Previous page button */}
-            <button
-              onClick={() => handleChangePage(Math.max(0, page - 1))}
-              disabled={page === 0}
-              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Previous page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Page numbers */}
-            {getPaginationRange(page, totalPages).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => handleChangePage(pageNum)}
-                className={`px-3 py-1 rounded ${pageNum === page ? 'bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              >
-                {pageNum + 1}
-              </button>
-            ))}
-            
-            {/* Next page button */}
-            <button
-              onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
-              disabled={page >= totalPages - 1}
-              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Next page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            
-            {/* Last page button */}
-            <button
-              onClick={() => handleChangePage(totalPages - 1)}
-              disabled={page >= totalPages - 1}
-              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Last page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
+      <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Showing {filteredAccreditations.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
+            {Math.min((page + 1) * rowsPerPage, filteredAccreditations.length)} of {filteredAccreditations.length} accreditations
           </div>
-        )}
+          
+          <div className="flex items-center space-x-1">
+            {totalPages > 0 && (
+              <div className="flex space-x-1 items-center">
+                {/* First page button */}
+                <button
+                  onClick={() => handleChangePage(0)}
+                  disabled={page === 0}
+                  className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  title="First page"
+                >
+                  <ChevronsLeft className="h-5 w-5" />
+                </button>
+                
+                {/* Previous page button */}
+                <button
+                  onClick={() => handleChangePage(Math.max(0, page - 1))}
+                  disabled={page === 0}
+                  className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  title="Previous page"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                
+                {/* Page numbers */}
+                {getPaginationRange(page, totalPages).map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => handleChangePage(pageNum)}
+                    className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#2B3E4E] text-white" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  >
+                    {pageNum + 1}
+                  </button>
+                ))}
+                
+                {/* Next page button */}
+                <button
+                  onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
+                  disabled={page >= totalPages - 1}
+                  className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  title="Next page"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                
+                {/* Last page button */}
+                <button
+                  onClick={() => handleChangePage(totalPages - 1)}
+                  disabled={page >= totalPages - 1}
+                  className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  title="Last page"
+                >
+                  <ChevronsRight className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Rows per page:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B]"
+            >
+              {[5, 10, 25, 50].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
       
       {/* Add/Edit Accreditation Dialog */}
       {isModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit Accreditation' : 'Add New Accreditation'}</h3>
+        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-auto animate-fadeIn">
+            <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
+                  {isEditing ? (
+                    <Edit className="h-5 w-5 text-[#FFB71B]" />
+                  ) : (
+                    <Plus className="h-5 w-5 text-[#FFB71B]" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-[#2B3E4E]">{isEditing ? 'Edit Accreditation' : 'Add New Accreditation'}</h3>
+              </div>
+              <button
+                onClick={handleCancel}
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                    required
-                  />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Award className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      required
+                      placeholder="Enter accreditation title"
+                    />
+                  </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">School *</label>
-                  <select
-                    name="schoolId"
-                    value={formData.schoolId}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                    required
-                  >
-                    <option value="">Select a school</option>
-                    {schools.map(school => (
-                      <option key={school.schoolId} value={school.schoolId}>
-                        {school.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <School className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="schoolId"
+                      value={formData.schoolId}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                      required
+                    >
+                      <option value="">Select a school</option>
+                      {schools.map(school => (
+                        <option key={school.schoolId} value={school.schoolId}>
+                          {school.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Accreditation Level</label>
-                  <select
-                    name="accreditationLevel"
-                    value={formData.accreditationLevel}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                  >
-                    <option value="">Select a level</option>
-                    {accreditationLevelOptions.map(level => (
-                      <option key={level} value={level}>
-                        {level}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <ListChecks className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="accreditationLevel"
+                      value={formData.accreditationLevel}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                    >
+                      <option value="">Select a level</option>
+                      {accreditationLevelOptions.map(level => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Accrediting Body</label>
-                  <select
-                    name="accreditingBody"
-                    value={formData.accreditingBody}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                  >
-                    <option value="">Select an accrediting body</option>
-                    {accreditingBodyOptions.map(body => (
-                      <option key={body} value={body}>
-                        {body}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Building className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="accreditingBody"
+                      value={formData.accreditingBody}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                    >
+                      <option value="">Select an accrediting body</option>
+                      {accreditingBodyOptions.map(body => (
+                        <option key={body} value={body}>
+                          {body}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 
-                <div>
+                <div className="col-span-1 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Recognition Status</label>
-                  <select
-                    name="recognitionStatus"
-                    value={formData.recognitionStatus}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                  >
-                    <option value="">None</option>
-                    <option value="COE">COE (Center of Excellence)</option>
-                    <option value="COD">COD (Center of Development)</option>
-                  </select>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Medal className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="recognitionStatus"
+                      value={formData.recognitionStatus}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                    >
+                      <option value="">None</option>
+                      <option value="COE">COE (Center of Excellence)</option>
+                      <option value="COD">COD (Center of Development)</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="col-span-1 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
-                    required
-                  ></textarea>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 pt-3 pointer-events-none">
+                      <FileText className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows="3"
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      required
+                      placeholder="Enter accreditation description"
+                    ></textarea>
+                  </div>
                 </div>
                 
                 {formData.schoolId && (
@@ -628,7 +777,7 @@ const CRUD_Accreditation = () => {
                       <button
                         type="button"
                         onClick={handleSelectAllProgramsInForm}
-                        className="text-sm text-[#1D63A1] hover:underline"
+                        className="text-sm text-[#2B3E4E] hover:underline"
                       >
                         {selectedSchoolPrograms.length === formSchoolPrograms.length && formSchoolPrograms.length > 0 
                           ? 'Deselect All' 
@@ -638,28 +787,29 @@ const CRUD_Accreditation = () => {
                     
                     {loadingPrograms ? (
                       <div className="flex justify-center py-4">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1]"></div>
+                        <Loader className="h-8 w-8 text-[#FFB71B] animate-spin" />
                       </div>
                     ) : formSchoolPrograms.length === 0 ? (
-                      <div className="text-center py-4 text-gray-500">
-                        No programs found for this school (School ID: {formData.schoolId})
+                      <div className="text-center py-4 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
+                        <GraduationCap className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                        <p className="font-medium">No programs found for this school</p>
                         <div className="text-xs mt-1">Please make sure programs are added to this school</div>
                       </div>
                     ) : (
-                      <div className="max-h-36 overflow-y-auto border border-gray-300 rounded-md">
+                      <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-gray-50">
                         {formSchoolPrograms.map(program => (
                           <div 
                             key={program.schoolProgramId}
-                            className="flex items-center px-3 py-2 hover:bg-gray-50 border-b border-gray-200 last:border-b-0"
+                            className="flex items-center px-3 py-2 hover:bg-gray-100 border-b border-gray-200 last:border-b-0 transition-colors"
                           >
                             <input
                               type="checkbox"
                               id={`form-program-${program.schoolProgramId}`}
-                              className="h-4 w-4 text-[#1D63A1] border-gray-300 rounded"
+                              className="h-4 w-4 text-[#FFB71B] border-gray-300 rounded focus:ring-[#FFB71B]"
                               checked={selectedSchoolPrograms.includes(program.schoolProgramId)}
                               onChange={() => handleProgramSelectionInForm(program.schoolProgramId)}
                             />
-                            <label htmlFor={`form-program-${program.schoolProgramId}`} className="ml-2 block text-sm text-gray-700">
+                            <label htmlFor={`form-program-${program.schoolProgramId}`} className="ml-2 block text-sm text-gray-700 cursor-pointer">
                               {program.program?.programName || 'Unknown Program'}
                             </label>
                           </div>
@@ -677,24 +827,29 @@ const CRUD_Accreditation = () => {
                 )}
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="p-6 border-t border-gray-200 sticky bottom-0 bg-white z-10 flex justify-end space-x-3">
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-4 py-2 bg-[#1D63A1] text-white rounded-md hover:bg-[#1D63A1]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D63A1]"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white rounded-lg hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2B3E4E] disabled:opacity-70"
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
                     Saving...
                   </div>
-                ) : isEditing ? 'Update' : 'Create'}
+                ) : (
+                  <div className="flex items-center">
+                    <Check className="h-4 w-4 mr-2" />
+                    {isEditing ? 'Update Accreditation' : 'Create Accreditation'}
+                  </div>
+                )}
               </button>
             </div>
           </div>
@@ -703,34 +858,43 @@ const CRUD_Accreditation = () => {
       
       {/* Delete Confirmation Dialog */}
       {deleteConfirmOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
+            <div className="p-6 border-b border-gray-200 flex items-center">
+              <div className="p-2 rounded-full bg-red-100 mr-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
               <h3 className="text-xl font-semibold text-gray-800">Confirm Delete</h3>
             </div>
             <div className="p-6">
               <p className="text-gray-700">
-                Are you sure you want to delete the accreditation "{accreditationToDelete?.title}"? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-[#2B3E4E]">"{accreditationToDelete?.title}"</span>? This action cannot be undone.
               </p>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={loading}
-                className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 font-medium"
+                className="px-4 py-2 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFB71B] disabled:opacity-70 shadow-md"
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
                     Deleting...
                   </div>
-                ) : 'Delete'}
+                ) : (
+                  <div className="flex items-center">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </div>
+                )}
               </button>
             </div>
           </div>
@@ -739,25 +903,21 @@ const CRUD_Accreditation = () => {
       
       {/* Success Notification */}
       {success && (
-        <div className="fixed bottom-4 right-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md max-w-md z-50">
+        <div className="fixed bottom-4 right-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <Check className="h-5 w-5 text-green-500" />
             </div>
             <div className="ml-3">
-              <p className="text-sm">{success}</p>
+              <p className="text-sm font-medium">{success}</p>
             </div>
             <div className="ml-auto pl-3">
               <div className="-mx-1.5 -my-1.5">
-                <button 
+                <button
                   onClick={() => setSuccess(null)}
-                  className="inline-flex text-green-500 hover:text-green-600 focus:outline-none"
+                  className="inline-flex text-green-500 hover:text-green-600 focus:outline-none p-1.5 rounded-full hover:bg-green-100 transition-colors"
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -767,25 +927,21 @@ const CRUD_Accreditation = () => {
       
       {/* Error Notification */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md max-w-md z-50">
+        <div className="fixed bottom-4 right-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+              <AlertTriangle className="h-5 w-5 text-red-500" />
             </div>
             <div className="ml-3">
-              <p className="text-sm">{error}</p>
+              <p className="text-sm font-medium">{error}</p>
             </div>
             <div className="ml-auto pl-3">
               <div className="-mx-1.5 -my-1.5">
-                <button 
+                <button
                   onClick={() => setError(null)}
-                  className="inline-flex text-red-500 hover:text-red-600 focus:outline-none"
+                  className="inline-flex text-red-500 hover:text-red-600 focus:outline-none p-1.5 rounded-full hover:bg-red-100 transition-colors"
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>

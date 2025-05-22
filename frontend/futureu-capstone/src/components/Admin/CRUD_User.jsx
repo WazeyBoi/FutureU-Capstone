@@ -1,5 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import adminUserService from '../../services/adminUserService';
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  X,
+  Check,
+  AlertTriangle,
+  Mail,
+  Phone,
+  User,
+  Shield,
+  Loader,
+  MapPin,
+  ChevronDown,
+} from 'lucide-react';
 
 const CRUD_User = () => {
   const [users, setUsers] = useState([]);
@@ -27,6 +48,25 @@ const CRUD_User = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [filterRole, setFilterRole] = useState('');
+
+  // Auto-dismiss notifications after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // Fetch users on component mount
   useEffect(() => {
@@ -218,122 +258,151 @@ const CRUD_User = () => {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      <div className="mb-12">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-4">User Management</h1>
-        <div className="w-24 h-1 bg-yellow-500 dark:bg-yellow-400"></div>
+      {/* Header Section */}
+      <div className="mb-10">
+        <div className="flex items-center mb-4">
+          <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
+            <Users className="h-6 w-6 text-[#FFB71B]" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#2B3E4E]">User Management</h1>
+        </div>
+        <p className="text-gray-600 max-w-3xl">
+          Manage all users in the system. Add new users, update user details, or remove users as needed.
+        </p>
+        <div className="w-24 h-1 bg-[#FFB71B] mt-4"></div>
       </div>
       
       {/* Search and Filter Section */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-grow">
-          <div className="relative">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="w-full md:w-2/3 relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
             <input
               type="text"
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
+              className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md"
               placeholder="Search by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && fetchUsers()}
             />
-            <button
-              className="absolute right-0 top-0 h-full px-4 bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 rounded-r-md hover:bg-[#1D63A1]/90 dark:hover:bg-[#FFB71B]/90"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
           </div>
-        </div>
-        
-        {/* Role Filter */}
-        <div>
-          <select
-            value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
+          
+          {/* Role Filter */}
+          <div className="w-full md:w-auto">
+            <div className="relative">
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="w-full px-3 py-3 pl-10 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md appearance-none"
+              >
+                <option value="">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="STUDENT">Student</option>
+              </select>
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Shield className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+          </div>
+          
+          <button
+            onClick={handleAddClick}
+            className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
           >
-            <option value="">All Roles</option>
-            <option value="ADMIN">Admin</option>
-            <option value="STUDENT">Student</option>
-          </select>
+            <Plus className="h-5 w-5 mr-2" />
+            Add New User
+          </button>
         </div>
-        
-        <button
-          onClick={handleAddClick}
-          className="inline-flex items-center px-4 py-2 bg-[#FFB71B] dark:bg-[#1D63A1] text-white dark:text-gray-100 rounded-md hover:bg-[#FFB71B]/90 dark:hover:bg-[#1D63A1]/90 transition-colors shadow-md"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Add User
-        </button>
       </div>
       
       {/* Users Table */}
-      <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
-              <tr className="bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 text-left">
-                <th className="px-6 py-3 font-semibold">ID</th>
-                <th className="px-6 py-3 font-semibold">Name</th>
-                <th className="px-6 py-3 font-semibold">Email</th>
-                <th className="px-6 py-3 font-semibold">Role</th>
-                <th className="px-6 py-3 font-semibold">Contact</th>
-                <th className="px-6 py-3 font-semibold">Actions</th>
+              <tr className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white">
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">ID</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Name</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Email</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Role</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Contact</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200">
               {loading && !filteredUsers.length ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center">
-                    <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1] dark:border-[#FFB71B]"></div>
+                  <td colSpan={6} className="px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Loader className="h-8 w-8 text-[#FFB71B] animate-spin mb-2" />
+                      <p className="text-gray-500">Loading users...</p>
                     </div>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                    No users found
+                  <td colSpan={6} className="px-6 py-8 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Users className="h-12 w-12 text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-medium">No users found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new user</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 paginatedUsers.map((user) => (
-                  <tr key={user.userId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4">{user.userId}</td>
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">
-                      {user.firstName} {user.middleName ? user.middleName + ' ' : ''}{user.lastname}
+                  <tr key={user.userId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 font-mono text-left">{user.userId}</td>
+                    <td className="px-6 py-4 text-left">
+                      <div className="font-medium text-[#2B3E4E]">
+                        {user.firstName} {user.middleName ? user.middleName + ' ' : ''}{user.lastname}
+                      </div>
                     </td>
-                    <td className="px-6 py-4">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
+                    <td className="px-6 py-4 text-left">
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                        <span className="text-gray-600">{user.email}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-left">
+                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                         user.role === 'ADMIN' 
-                          ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' 
-                          : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200' 
+                          : 'bg-green-100 text-green-800 border border-green-200'
                       }`}>
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4">{user.contactNumber || 'N/A'}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
+                    <td className="px-6 py-4 text-left">
+                      {user.contactNumber ? (
+                        <div className="flex items-center">
+                          <Phone className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="text-gray-600">{user.contactNumber}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <div className="flex items-center justify-center space-x-3">
                         <button
                           onClick={() => handleEditClick(user)}
-                          className="p-1 text-[#1D63A1] dark:text-[#FFB71B] hover:bg-[#1D63A1]/10 dark:hover:bg-[#FFB71B]/10 rounded"
-                          title="Edit"
+                          className="p-2 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
+                          title="Edit User"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(user)}
-                          className="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                          title="Delete"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete User"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
@@ -346,151 +415,175 @@ const CRUD_User = () => {
       </div>
       
       {/* Pagination */}
-      <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-700 dark:text-gray-300">
-          Showing {filteredUsers.length > 0 ? page * rowsPerPage + 1 : 0} to {Math.min((page + 1) * rowsPerPage, filteredUsers.length)} of {filteredUsers.length} users
-        </div>
-        
-        {totalPages > 0 && (
-          <div className="flex space-x-1 items-center">
-            {/* First page button */}
-            <button
-              onClick={() => handleChangePage(0)}
-              disabled={page === 0}
-              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="First page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Previous page button */}
-            <button
-              onClick={() => handleChangePage(Math.max(0, page - 1))}
-              disabled={page === 0}
-              className={`px-2 py-1 rounded ${page === 0 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Previous page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            {/* Page numbers */}
-            {getPaginationRange(page, totalPages).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => handleChangePage(pageNum)}
-                className={`px-3 py-1 rounded ${pageNum === page ? 'bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              >
-                {pageNum + 1}
-              </button>
-            ))}
-            
-            {/* Next page button */}
-            <button
-              onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
-              disabled={page >= totalPages - 1}
-              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Next page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            
-            {/* Last page button */}
-            <button
-              onClick={() => handleChangePage(totalPages - 1)}
-              disabled={page >= totalPages - 1}
-              className={`px-2 py-1 rounded ${page >= totalPages - 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              title="Last page"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-            </button>
+      <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Showing {filteredUsers.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
+            {Math.min((page + 1) * rowsPerPage, filteredUsers.length)} of {filteredUsers.length} users
           </div>
-        )}
-        
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-700 dark:text-gray-300">Rows per page:</span>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setPage(0);
-            }}
-            className="border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
-          >
-            {[5, 10, 25].map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+
+          {totalPages > 0 && (
+            <div className="flex space-x-1 items-center">
+              {/* First page button */}
+              <button
+                onClick={() => handleChangePage(0)}
+                disabled={page === 0}
+                className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                title="First page"
+              >
+                <ChevronsLeft className="h-5 w-5" />
+              </button>
+
+              {/* Previous page button */}
+              <button
+                onClick={() => handleChangePage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                title="Previous page"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Page numbers */}
+              {getPaginationRange(page, totalPages).map((pageNum) => (
+                <button
+                  key={pageNum}
+                  onClick={() => handleChangePage(pageNum)}
+                  className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#2B3E4E] text-white" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                >
+                  {pageNum + 1}
+                </button>
+              ))}
+
+              {/* Next page button */}
+              <button
+                onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
+                disabled={page >= totalPages - 1}
+                className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                title="Next page"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+
+              {/* Last page button */}
+              <button
+                onClick={() => handleChangePage(totalPages - 1)}
+                disabled={page >= totalPages - 1}
+                className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                title="Last page"
+              >
+                <ChevronsRight className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Rows per page:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B]"
+            >
+              {[5, 10, 25, 50].map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
       
       {/* Add/Edit User Dialog */}
       {isModalVisible && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-auto">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">{isEditing ? 'Edit User' : 'Add New User'}</h3>
+        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto animate-fadeIn">
+            <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
+                  {isEditing ? (
+                    <Edit className="h-5 w-5 text-[#FFB71B]" />
+                  ) : (
+                    <Plus className="h-5 w-5 text-[#FFB71B]" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-[#2B3E4E]">{isEditing ? 'Edit User' : 'Add New User'}</h3>
+              </div>
+              <button
+                onClick={handleCancel}
+                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name *</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <User className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      required
+                      placeholder="Enter first name"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Middle Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Middle Name</label>
                   <input
                     type="text"
                     name="middleName"
                     value={formData.middleName}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="Enter middle name (optional)"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                   <input
                     type="text"
                     name="lastname"
                     value={formData.lastname}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                     required
+                    placeholder="Enter last name"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    required
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      required
+                      placeholder="Enter email address"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Password {isEditing ? '(leave blank to keep current)' : '*'}
                   </label>
                   <input
@@ -498,78 +591,105 @@ const CRUD_User = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                     required={!isEditing}
+                    placeholder={isEditing ? "Leave blank to keep current" : "Enter password"}
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
                   <input
                     type="number"
                     name="age"
                     value={formData.age}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                     min="0"
+                    placeholder="Enter age"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contact Number</label>
-                  <input
-                    type="text"
-                    name="contactNumber"
-                    value={formData.contactNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="contactNumber"
+                      value={formData.contactNumber}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      placeholder="Enter contact number"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role *</label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                    required
-                  >
-                    <option value="STUDENT">Student</option>
-                    <option value="ADMIN">Admin</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Shield className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                      required
+                    >
+                      <option value="STUDENT">Student</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
                 </div>
                 
                 <div className="col-span-1 md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-                  <textarea
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  ></textarea>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <div className="relative">
+                    <div className="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
+                      <MapPin className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows="3"
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      placeholder="Enter address"
+                    ></textarea>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+            <div className="p-6 border-t border-gray-200 sticky bottom-0 bg-white z-10 flex justify-end space-x-3">
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-5 py-2.5 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="px-4 py-2 bg-[#1D63A1] dark:bg-[#FFB71B] text-white dark:text-gray-900 rounded-md hover:bg-[#1D63A1]/90 dark:hover:bg-[#FFB71B]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D63A1] dark:focus:ring-[#FFB71B]"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white rounded-lg hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2B3E4E] disabled:opacity-70"
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
                     Saving...
                   </div>
-                ) : 'Save'}
+                ) : (
+                  <div className="flex items-center">
+                    <Check className="h-4 w-4 mr-2" />
+                    Save User
+                  </div>
+                )}
               </button>
             </div>
           </div>
@@ -578,34 +698,43 @@ const CRUD_User = () => {
       
       {/* Delete Confirmation Dialog */}
       {deleteConfirmOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100">Confirm Delete</h3>
+        <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
+            <div className="p-6 border-b border-gray-200 flex items-center">
+              <div className="p-2 rounded-full bg-red-100 mr-3">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800">Confirm Delete</h3>
             </div>
             <div className="p-6">
-              <p className="text-gray-700 dark:text-gray-300">
-                Are you sure you want to delete the user "{userToDelete?.firstName} {userToDelete?.lastname}"? This action cannot be undone.
+              <p className="text-gray-700">
+                Are you sure you want to delete{" "}
+                <span className="font-medium text-[#2B3E4E]">{userToDelete?.firstName} {userToDelete?.lastname}</span>? This action cannot be undone.
               </p>
             </div>
-            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
                 onClick={cancelDelete}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
                 disabled={loading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-70 shadow-md"
               >
                 {loading ? (
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
                     Deleting...
                   </div>
-                ) : 'Delete'}
+                ) : (
+                  <div className="flex items-center">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </div>
+                )}
               </button>
             </div>
           </div>
@@ -614,25 +743,21 @@ const CRUD_User = () => {
       
       {/* Success Notification */}
       {success && (
-        <div className="fixed bottom-4 right-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md max-w-md z-50">
+        <div className="fixed bottom-4 right-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
+              <Check className="h-5 w-5 text-green-500" />
             </div>
             <div className="ml-3">
-              <p className="text-sm">{success}</p>
+              <p className="text-sm font-medium">{success}</p>
             </div>
             <div className="ml-auto pl-3">
               <div className="-mx-1.5 -my-1.5">
-                <button 
+                <button
                   onClick={() => setSuccess(null)}
-                  className="inline-flex text-green-500 hover:text-green-600 focus:outline-none"
+                  className="inline-flex text-green-500 hover:text-green-600 focus:outline-none p-1.5 rounded-full hover:bg-green-100 transition-colors"
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -642,25 +767,21 @@ const CRUD_User = () => {
       
       {/* Error Notification */}
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md max-w-md z-50">
+        <div className="fixed bottom-4 right-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+              <AlertTriangle className="h-5 w-5 text-red-500" />
             </div>
             <div className="ml-3">
-              <p className="text-sm">{error}</p>
+              <p className="text-sm font-medium">{error}</p>
             </div>
             <div className="ml-auto pl-3">
               <div className="-mx-1.5 -my-1.5">
-                <button 
+                <button
                   onClick={() => setError(null)}
-                  className="inline-flex text-red-500 hover:text-red-600 focus:outline-none"
+                  className="inline-flex text-red-500 hover:text-red-600 focus:outline-none p-1.5 rounded-full hover:bg-red-100 transition-colors"
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -670,5 +791,28 @@ const CRUD_User = () => {
     </div>
   );
 };
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  .animate-slideInRight {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+`;
+document.head.appendChild(style);
 
 export default CRUD_User;

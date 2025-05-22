@@ -111,6 +111,40 @@ class AdminQuizSubCatService {
   }
 
   /**
+   * Get quiz sub-categories by assessment sub-category ID
+   * @param {number} assessmentSubCategoryId - The assessment sub-category ID
+   * @returns {Promise<Array>} - List of quiz sub-categories
+   */
+  async getQuizSubCategoriesBySubCategory(assessmentSubCategoryId) {
+    try {
+      // Check if there's a direct endpoint for this
+      try {
+        const response = await apiClient.get(`/quizSubCategoryCategory/getByAssessmentSubCategory/${assessmentSubCategoryId}`);
+        return response.data;
+      } catch (directError) {
+        console.log('No direct endpoint for filtering quiz sub-categories, using client-side filtering');
+        
+        // Fallback to client-side filtering
+        const allResponse = await this.getAllQuizSubCategories();
+        if (Array.isArray(allResponse)) {
+          // Filter on the client side
+          return allResponse.filter(quizSubCat => {
+            // Check both possible property names (with different spellings)
+            return (
+              (quizSubCat.assessmentSubCategory?.assessmentSubCategoryId === assessmentSubCategoryId) ||
+              (quizSubCat.assesssmentSubCategory?.assessmentSubCategoryId === assessmentSubCategoryId)
+            );
+          });
+        }
+        return [];
+      }
+    } catch (error) {
+      this.handleError(error, `Fetching quiz sub-categories for assessment sub-category ID ${assessmentSubCategoryId}`);
+      throw error;
+    }
+  }
+
+  /**
    * Centralized error handling
    * @param {Error} error - The error object
    * @param {string} context - Context where the error occurred

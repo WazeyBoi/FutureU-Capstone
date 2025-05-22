@@ -20,7 +20,6 @@ public class ChoiceEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int choiceId;
 
-    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "questionId", nullable = false)
     private QuestionEntity question;

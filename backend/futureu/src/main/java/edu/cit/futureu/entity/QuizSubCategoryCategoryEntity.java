@@ -24,7 +24,6 @@ public class QuizSubCategoryCategoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int quizSubCategoryCategoryId;
 
-    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assesssmentSubCategory;

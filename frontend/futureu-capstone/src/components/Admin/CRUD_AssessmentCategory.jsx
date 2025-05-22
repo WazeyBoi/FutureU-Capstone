@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import adminAssessmentCategoryService from '../../services/adminAssessmentCategoryService';
 import adminAssessmentService from '../../services/adminAssessmentService';
@@ -375,7 +374,7 @@ const CRUD_AssessmentCategory = () => {
                       <div className="flex items-start">
                         <BookOpen className="h-4 w-4 text-gray-400 mt-1 mr-2 flex-shrink-0" />
                         <span className="text-gray-700 text-sm">
-                          {category.assessment ? getAssessmentNameById(category.assessment.assessmentId) : 'N/A'}
+                          {category.assessment ? category.assessment.title : 'N/A'}
                         </span>
                       </div>
                     </td>

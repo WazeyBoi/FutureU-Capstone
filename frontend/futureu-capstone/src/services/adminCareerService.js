@@ -25,6 +25,7 @@ class AdminCareerService {
   async getAllCareers() {
     try {
       const response = await apiClient.get('/career/getAllCareers');
+      console.log('API response for getAllCareers:', response.data);
       return response.data;
     } catch (error) {
       this.handleError(error, 'Fetching all careers');
@@ -50,14 +51,21 @@ class AdminCareerService {
   /**
    * Create a new career
    * @param {Object} careerData - The career data to create
+   * @param {number} programId - Optional program ID to associate with the career
    * @returns {Promise<Object>} - Created career data
    */
-  async createCareer(careerData) {
+  async createCareer(careerData, programId = null) {
     try {
+      // Create a CareerDTO object that matches the backend structure
+      const careerDTO = {
+        career: careerData,
+        programId: programId
+      };
+      
       // Manually stringify the data and set the content type
       const response = await apiClient.post(
         '/career/postCareerRecord', 
-        JSON.stringify(careerData), 
+        JSON.stringify(careerDTO), 
         {
           headers: {
             'Content-Type': 'application/json'
@@ -76,14 +84,21 @@ class AdminCareerService {
    * Update an existing career
    * @param {number} careerId - The ID of the career to update
    * @param {Object} careerData - The updated career data
+   * @param {number} programId - Optional program ID to associate with the career
    * @returns {Promise<Object>} - Updated career data
    */
-  async updateCareer(careerId, careerData) {
+  async updateCareer(careerId, careerData, programId = null) {
     try {
+      // Create a CareerDTO object that matches the backend structure
+      const careerDTO = {
+        career: careerData,
+        programId: programId
+      };
+      
       // Manually stringify the data and set the content type
       const response = await apiClient.put(
         `/career/putCareerDetails?careerId=${careerId}`, 
-        JSON.stringify(careerData), 
+        JSON.stringify(careerDTO), 
         {
           headers: {
             'Content-Type': 'application/json'

@@ -21,7 +21,23 @@ public class QuestionService {
     }
 
     public List<QuestionEntity> getAllQuestions() {
-        return questionRepository.findAll();
+        List<QuestionEntity> questions = questionRepository.findAll();
+        // Explicitly access each relationship to ensure they are loaded
+        for (QuestionEntity question : questions) {
+            if (question.getAssessmentCategory() != null) {
+                // Force loading the category name to ensure it's not lazy loaded
+                question.getAssessmentCategory().getCategoryName();
+            }
+            if (question.getAssessmentSubCategory() != null) {
+                // Force loading the sub-category name
+                question.getAssessmentSubCategory().getSubCategoryName();
+            }
+            if (question.getQuizSubCategoryCategory() != null) {
+                // Force loading the quiz sub-category name
+                question.getQuizSubCategoryCategory().getQuizSubCategoryCategoryName();
+            }
+        }
+        return questions;
     }
 
     public Optional<QuestionEntity> getQuestionById(int id) {

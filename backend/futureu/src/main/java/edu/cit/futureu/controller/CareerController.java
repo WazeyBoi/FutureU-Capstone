@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.futureu.entity.CareerEntity;
 import edu.cit.futureu.entity.ProgramEntity;
+import edu.cit.futureu.service.CareerProgramService;
 import edu.cit.futureu.service.CareerService;
 import edu.cit.futureu.service.ProgramService;
 
@@ -29,15 +30,50 @@ public class CareerController {
     @Autowired
     private ProgramService programService;
     
+    @Autowired
+    private CareerProgramService careerProgramService;
+    
     @GetMapping("/test")
     public String test() {
         return "Career API is working!";
     }
+    
+    // Class to handle career data with program association
+    public static class CareerDTO {
+        private CareerEntity career;
+        private Integer programId;
+        
+        public CareerEntity getCareer() {
+            return career;
+        }
+        
+        public void setCareer(CareerEntity career) {
+            this.career = career;
+        }
+        
+        public Integer getProgramId() {
+            return programId;
+        }
+        
+        public void setProgramId(Integer programId) {
+            this.programId = programId;
+        }
+    }
 
     // CREATE
     @PostMapping("/postCareerRecord")
-    public CareerEntity postCareerRecord(@RequestBody CareerEntity career) {
-        return careerService.createCareer(career);
+    public CareerEntity postCareerRecord(@RequestBody CareerDTO careerDTO) {
+        // Save the career first
+        CareerEntity savedCareer = careerService.createCareer(careerDTO.getCareer());
+        
+        // Create association with program if program ID is provided
+        if (careerDTO.getProgramId() != null) {
+            careerProgramService.associateCareerWithProgram(
+                savedCareer.getCareerId(), careerDTO.getProgramId());
+        }
+        
+        // Fetch the updated career with its program association
+        return careerService.getCareerById(savedCareer.getCareerId()).orElse(savedCareer);
     }
     
     // READ
@@ -95,9 +131,31 @@ public class CareerController {
     
     // UPDATE
     @PutMapping("/putCareerDetails")
-    public CareerEntity putCareerDetails(@RequestParam int careerId, @RequestBody CareerEntity newCareerDetails) {
-        newCareerDetails.setCareerId(careerId);
-        return careerService.updateCareer(newCareerDetails);
+    public CareerEntity putCareerDetails(@RequestParam int careerId, @RequestBody CareerDTO careerDTO) {
+        // Set the career ID from path parameter
+        careerDTO.getCareer().setCareerId(careerId);
+        
+        // Update career details
+        CareerEntity updatedCareer = careerService.updateCareer(careerDTO.getCareer());
+        
+        if (updatedCareer != null) {
+            // Handle program association update
+            if (careerDTO.getProgramId() != null) {
+                // Remove existing associations first (to avoid duplicates)
+                List<ProgramEntity> existingPrograms = careerProgramService.getProgramsByCareer(careerId);
+                for (ProgramEntity existingProgram : existingPrograms) {
+                    careerProgramService.deleteAssociation(careerId, existingProgram.getProgramId());
+                }
+                
+                // Create new association
+                careerProgramService.associateCareerWithProgram(careerId, careerDTO.getProgramId());
+            }
+            
+            // Return updated career with refreshed data
+            return careerService.getCareerById(careerId).orElse(updatedCareer);
+        }
+        
+        return null;
     }
     
     // DELETE

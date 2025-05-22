@@ -101,8 +101,10 @@ class AdminChoiceService {
    */
   async createChoice(choiceData) {
     try {
-      const response = await apiClient.post('/choice/postChoice', choiceData);
-      return response.data;
+      // Wrap the single choice in an array as the backend expects a list
+      const response = await apiClient.post('/choice/postChoice', [choiceData]);
+      // Return the first item from the response array
+      return response.data[0];
     } catch (error) {
       this.handleError(error, 'Creating choice');
       throw error;

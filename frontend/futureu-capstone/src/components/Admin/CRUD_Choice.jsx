@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import adminChoiceService from '../../services/adminChoiceService';
 import adminQuestionService from '../../services/adminQuestionService';
@@ -200,10 +199,19 @@ const CRUD_Choice = () => {
     
     setLoading(true);
     try {
+      // Get the question object from the questions list
+      const questionObj = questions.find(q => q.questionId === parseInt(formData.questionId));
+      
+      if (!questionObj) {
+        setError('Selected question not found. Please select a valid question.');
+        setLoading(false);
+        return;
+      }
+      
       const choiceData = {
         choiceText: formData.choiceText,
         correct: formData.isCorrect,
-        question: { questionId: parseInt(formData.questionId) }
+        question: questionObj // Send the full question object
       };
       
       if (isEditing) {

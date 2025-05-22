@@ -20,7 +20,6 @@ public class AssessmentCategoryEntity {
     private String description;
 
     // Many-to-one relationship with Assessment
-    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "assessmentId", nullable = false)
     private AssessmentEntity assessment;
@@ -58,6 +57,14 @@ public class AssessmentCategoryEntity {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public AssessmentEntity getAssessment() {
+        return assessment;
+    }
+
+    public void setAssessment(AssessmentEntity assessment) {
+        this.assessment = assessment;
     }
 
     public List<AssessmentSubCategoryEntity> getSubCategories() {

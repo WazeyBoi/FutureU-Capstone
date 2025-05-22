@@ -33,6 +33,61 @@ class AdminQuestionService {
   }
 
   /**
+   * Get all questions with complete category and subcategory information
+   * This method ensures that all relations are properly populated
+   * @returns {Promise<Array>} - List of all questions with complete data
+   */
+  async getAllQuestionsEnriched() {
+    try {
+      // First get all questions
+      const questions = await this.getAllQuestions();
+      const adminCategoryService = await import('./adminAssessmentCategoryService').then(m => m.default);
+      const adminSubCategoryService = await import('./adminAssessmentSubCategoryService').then(m => m.default);
+      const adminQuizSubCatService = await import('./adminQuizSubCatService').then(m => m.default);
+      
+      // Fetch all categories, subcategories, and quiz subcategories
+      const [categories, subCategories, quizSubCategories] = await Promise.all([
+        adminCategoryService.getAllAssessmentCategories(),
+        adminSubCategoryService.getAllAssessmentSubCategories(),
+        adminQuizSubCatService.getAllQuizSubCategories()
+      ]);
+      
+      // Map them by ID for quick lookup
+      const categoryMap = Object.fromEntries(categories.map(cat => [cat.assessmentCategoryId, cat]));
+      const subCategoryMap = Object.fromEntries(subCategories.map(subCat => [subCat.assessmentSubCategoryId, subCat]));
+      const quizSubCategoryMap = Object.fromEntries(quizSubCategories.map(quizSubCat => [quizSubCat.quizSubCategoryCategoryId, quizSubCat]));
+      
+      // Enrich each question with full category objects
+      return questions.map(question => {
+        const enriched = {...question};
+        
+        // Check if category ID exists but the full object is missing
+        if (question.assessmentCategory?.assessmentCategoryId && !question.assessmentCategory?.categoryName) {
+          const categoryId = question.assessmentCategory.assessmentCategoryId;
+          enriched.assessmentCategory = categoryMap[categoryId] || question.assessmentCategory;
+        }
+        
+        // Same for sub-category
+        if (question.assessmentSubCategory?.assessmentSubCategoryId && !question.assessmentSubCategory?.subCategoryName) {
+          const subCategoryId = question.assessmentSubCategory.assessmentSubCategoryId;
+          enriched.assessmentSubCategory = subCategoryMap[subCategoryId] || question.assessmentSubCategory;
+        }
+        
+        // And for quiz sub-category
+        if (question.quizSubCategoryCategory?.quizSubCategoryCategoryId && !question.quizSubCategoryCategory?.quizSubCategoryCategoryName) {
+          const quizSubCategoryId = question.quizSubCategoryCategory.quizSubCategoryCategoryId;
+          enriched.quizSubCategoryCategory = quizSubCategoryMap[quizSubCategoryId] || question.quizSubCategoryCategory;
+        }
+        
+        return enriched;
+      });
+    } catch (error) {
+      this.handleError(error, 'Fetching enriched questions');
+      throw error;
+    }
+  }
+
+  /**
    * Get question by ID
    * @param {number} questionId - The question ID
    * @returns {Promise<Object>} - The question data
