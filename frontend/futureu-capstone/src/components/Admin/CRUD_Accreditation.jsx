@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import adminAccreditationService from '../../services/adminAccreditationService';
 import adminSchoolService from '../../services/adminSchoolService';
+import adminSchoolProgramService from '../../services/adminSchoolProgramService';
 
 const CRUD_Accreditation = () => {
   const [accreditations, setAccreditations] = useState([]);
@@ -12,7 +14,10 @@ const CRUD_Accreditation = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    schoolId: ''
+    schoolId: '',
+    accreditationLevel: '',
+    accreditingBody: '',
+    recognitionStatus: ''
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -22,6 +27,15 @@ const CRUD_Accreditation = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredAccreditations, setFilteredAccreditations] = useState([]);
+  const [selectedSchoolPrograms, setSelectedSchoolPrograms] = useState([]);
+  const [schoolPrograms, setSchoolPrograms] = useState([]);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [formSchoolPrograms, setFormSchoolPrograms] = useState([]);
+  
+  // Define accreditation options
+  const accreditingBodyOptions = ['PACUCOA', 'PAASCU', 'AACCUP', 'DOST-SEI'];
+  const accreditationLevelOptions = ['Level I', 'Level II', 'Level III', 'Level IV'];
+  const recognitionStatusOptions = ['COE', 'COD', ''];
 
   // Fetch accreditations and schools on component mount
   useEffect(() => {
@@ -65,22 +79,63 @@ const CRUD_Accreditation = () => {
     }
   };
 
+  const fetchSchoolProgramsBySchool = async (schoolId) => {
+    setLoadingPrograms(true);
+    try {
+      console.log('Fetching programs for school ID:', schoolId);
+      // Fetch all programs for this school
+      const programs = await adminSchoolProgramService.getSchoolProgramsBySchool(schoolId);
+      console.log('Programs retrieved:', programs);
+      
+      // Ensure programs is an array and handle empty or null response
+      const validPrograms = Array.isArray(programs) ? programs : [];
+      
+      setSchoolPrograms(validPrograms);
+      setFormSchoolPrograms(validPrograms);
+      
+      if (validPrograms.length === 0) {
+        console.log('No programs found for school ID:', schoolId);
+      }
+      
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching school programs:', error);
+      setError('Failed to fetch school programs');
+      setFormSchoolPrograms([]);
+    } finally {
+      setLoadingPrograms(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
     });
+
+    // When school changes, fetch its programs
+    if (name === 'schoolId' && value) {
+      console.log('School selected, fetching programs for ID:', value);
+      // Clear previous selections when school changes
+      setSelectedSchoolPrograms([]);
+      fetchSchoolProgramsBySchool(parseInt(value));
+    }
   };
 
   const handleAddClick = () => {
     setFormData({
       title: '',
       description: '',
-      schoolId: ''
+      schoolId: '',
+      accreditationLevel: '',
+      accreditingBody: '',
+      recognitionStatus: ''
     });
     setIsEditing(false);
     setSelectedAccreditation(null);
+    setSelectedSchoolPrograms([]);
+    setFormSchoolPrograms([]);
     setIsModalVisible(true);
   };
 
@@ -89,9 +144,21 @@ const CRUD_Accreditation = () => {
     setFormData({
       title: accreditation.title || '',
       description: accreditation.description || '',
-      schoolId: accreditation.school ? accreditation.school.schoolId : ''
+      schoolId: accreditation.school ? accreditation.school.schoolId : '',
+      accreditationLevel: accreditation.accreditationLevel || '',
+      accreditingBody: accreditation.accreditingBody || '',
+      recognitionStatus: accreditation.recognitionStatus || ''
     });
+    
+    // If editing, fetch the school programs
+    if (accreditation.school) {
+      fetchSchoolProgramsBySchool(accreditation.school.schoolId);
+    } else {
+      setFormSchoolPrograms([]);
+    }
+    
     setIsEditing(true);
+    setSelectedSchoolPrograms([]);
     setIsModalVisible(true);
   };
 
@@ -121,7 +188,16 @@ const CRUD_Accreditation = () => {
       setAccreditationToDelete(null);
     } catch (error) {
       console.error('Error deleting accreditation:', error);
-      setError('Failed to delete accreditation. Please try again later.');
+      let errorMessage = 'Failed to delete accreditation. Please try again later.';
+      
+      // Check for specific error messages
+      if (error.message && error.message.includes('foreign key constraint fails')) {
+        errorMessage = 'Cannot delete this accreditation because it is assigned to programs. Please unassign it first.';
+      } else if (error.response && error.response.data) {
+        errorMessage = error.response.data;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -143,21 +219,47 @@ const CRUD_Accreditation = () => {
       const accreditationData = {
         title: formData.title,
         description: formData.description,
-        school: schoolData
+        school: schoolData,
+        accreditationLevel: formData.accreditationLevel,
+        accreditingBody: formData.accreditingBody,
+        recognitionStatus: formData.recognitionStatus
       };
+      
+      let createdOrUpdatedAccreditation;
       
       if (isEditing) {
         // Update existing accreditation
-        await adminAccreditationService.updateAccreditation(selectedAccreditation.accredId, {
+        createdOrUpdatedAccreditation = await adminAccreditationService.updateAccreditation(selectedAccreditation.accredId, {
           ...accreditationData,
           accredId: selectedAccreditation.accredId
         });
         setSuccess('Accreditation updated successfully');
       } else {
         // Create new accreditation
-        await adminAccreditationService.createAccreditation(accreditationData);
+        createdOrUpdatedAccreditation = await adminAccreditationService.createAccreditation(accreditationData);
         setSuccess('Accreditation created successfully');
       }
+      
+      // If programs were selected, assign the accreditation to them
+      if (selectedSchoolPrograms.length > 0 && createdOrUpdatedAccreditation) {
+        const accredId = createdOrUpdatedAccreditation.accredId;
+        const schoolId = parseInt(formData.schoolId);
+        
+        try {
+          // Assign to each selected program
+          for (const programId of selectedSchoolPrograms) {
+            await adminAccreditationService.assignAccreditationToPrograms(accredId, schoolId, programId);
+          }
+          
+          setSuccess((isEditing ? 'Accreditation updated' : 'Accreditation created') + 
+            ' and assigned to selected programs successfully');
+        } catch (assignError) {
+          console.error('Error assigning to programs:', assignError);
+          setSuccess((isEditing ? 'Accreditation updated' : 'Accreditation created') + 
+            ' but there was an issue assigning to programs');
+        }
+      }
+      
       fetchAccreditations(); // Refresh the list
       setIsModalVisible(false);
     } catch (error) {
@@ -219,6 +321,26 @@ const CRUD_Accreditation = () => {
     return range;
   };
 
+  const handleProgramSelectionInForm = (programId) => {
+    setSelectedSchoolPrograms(prev => {
+      if (prev.includes(programId)) {
+        return prev.filter(id => id !== programId);
+      } else {
+        return [...prev, programId];
+      }
+    });
+  };
+
+  const handleSelectAllProgramsInForm = () => {
+    if (selectedSchoolPrograms.length === formSchoolPrograms.length && formSchoolPrograms.length > 0) {
+      // Deselect all
+      setSelectedSchoolPrograms([]);
+    } else {
+      // Select all
+      setSelectedSchoolPrograms(formSchoolPrograms.map(program => program.schoolProgramId));
+    }
+  };
+
   return (
     <div className="container mx-auto px-6 py-8">
       <div className="mb-12">
@@ -269,13 +391,16 @@ const CRUD_Accreditation = () => {
                 <th className="px-6 py-3 font-semibold">Title</th>
                 <th className="px-6 py-3 font-semibold">School</th>
                 <th className="px-6 py-3 font-semibold">Description</th>
+                <th className="px-6 py-3 font-semibold">Level</th>
+                <th className="px-6 py-3 font-semibold">Body</th>
+                <th className="px-6 py-3 font-semibold">Status</th>
                 <th className="px-6 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {loading && !filteredAccreditations.length ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center">
+                  <td colSpan={8} className="px-6 py-4 text-center">
                     <div className="flex justify-center">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1] dark:border-[#FFB71B]"></div>
                     </div>
@@ -283,7 +408,7 @@ const CRUD_Accreditation = () => {
                 </tr>
               ) : filteredAccreditations.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     No accreditations found
                   </td>
                 </tr>
@@ -294,6 +419,9 @@ const CRUD_Accreditation = () => {
                     <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{accreditation.title}</td>
                     <td className="px-6 py-4">{accreditation.school?.name || 'N/A'}</td>
                     <td className="px-6 py-4 truncate max-w-xs">{accreditation.description}</td>
+                    <td className="px-6 py-4">{accreditation.accreditationLevel || 'N/A'}</td>
+                    <td className="px-6 py-4">{accreditation.accreditingBody || 'N/A'}</td>
+                    <td className="px-6 py-4">{accreditation.recognitionStatus || 'N/A'}</td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <button
@@ -397,12 +525,12 @@ const CRUD_Accreditation = () => {
       {/* Add/Edit Accreditation Dialog */}
       {isModalVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800">{isEditing ? 'Edit Accreditation' : 'Add New Accreditation'}</h3>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                   <input
@@ -434,16 +562,119 @@ const CRUD_Accreditation = () => {
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Accreditation Level</label>
+                  <select
+                    name="accreditationLevel"
+                    value={formData.accreditationLevel}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
+                  >
+                    <option value="">Select a level</option>
+                    {accreditationLevelOptions.map(level => (
+                      <option key={level} value={level}>
+                        {level}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Accrediting Body</label>
+                  <select
+                    name="accreditingBody"
+                    value={formData.accreditingBody}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
+                  >
+                    <option value="">Select an accrediting body</option>
+                    {accreditingBodyOptions.map(body => (
+                      <option key={body} value={body}>
+                        {body}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Recognition Status</label>
+                  <select
+                    name="recognitionStatus"
+                    value={formData.recognitionStatus}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
+                  >
+                    <option value="">None</option>
+                    <option value="COE">COE (Center of Excellence)</option>
+                    <option value="COD">COD (Center of Development)</option>
+                  </select>
+                </div>
+                
+                <div className="col-span-1 md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    rows="4"
+                    rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
                     required
                   ></textarea>
                 </div>
+                
+                {formData.schoolId && (
+                  <div className="col-span-1 md:col-span-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Assign to Programs</label>
+                      <button
+                        type="button"
+                        onClick={handleSelectAllProgramsInForm}
+                        className="text-sm text-[#1D63A1] hover:underline"
+                      >
+                        {selectedSchoolPrograms.length === formSchoolPrograms.length && formSchoolPrograms.length > 0 
+                          ? 'Deselect All' 
+                          : 'Select All'}
+                      </button>
+                    </div>
+                    
+                    {loadingPrograms ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1]"></div>
+                      </div>
+                    ) : formSchoolPrograms.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        No programs found for this school (School ID: {formData.schoolId})
+                        <div className="text-xs mt-1">Please make sure programs are added to this school</div>
+                      </div>
+                    ) : (
+                      <div className="max-h-36 overflow-y-auto border border-gray-300 rounded-md">
+                        {formSchoolPrograms.map(program => (
+                          <div 
+                            key={program.schoolProgramId}
+                            className="flex items-center px-3 py-2 hover:bg-gray-50 border-b border-gray-200 last:border-b-0"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`form-program-${program.schoolProgramId}`}
+                              className="h-4 w-4 text-[#1D63A1] border-gray-300 rounded"
+                              checked={selectedSchoolPrograms.includes(program.schoolProgramId)}
+                              onChange={() => handleProgramSelectionInForm(program.schoolProgramId)}
+                            />
+                            <label htmlFor={`form-program-${program.schoolProgramId}`} className="ml-2 block text-sm text-gray-700">
+                              {program.program?.programName || 'Unknown Program'}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-2 text-xs text-gray-500">
+                      {formSchoolPrograms.length > 0 ? (
+                        selectedSchoolPrograms.length === 0 ? 
+                          'Select programs to assign this accreditation to' : 
+                          `Selected ${selectedSchoolPrograms.length} of ${formSchoolPrograms.length} program(s)`
+                      ) : null}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
@@ -492,7 +723,7 @@ const CRUD_Accreditation = () => {
               <button
                 onClick={confirmDelete}
                 disabled={loading}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 font-medium"
               >
                 {loading ? (
                   <div className="flex items-center">

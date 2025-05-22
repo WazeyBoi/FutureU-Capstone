@@ -1,3 +1,4 @@
+
 import apiClient from './api';
 import authService from './authService';
 
@@ -190,11 +191,11 @@ class AccreditationService {
             // Process school programs and their accreditations
             for (const schoolProgram of schoolPrograms) {
               if (schoolProgram.program) {
-                // Add the program with its accreditations (which are now directly attached)
+                // Add the program with its accreditation (singular, not a list)
                 allPrograms.push({
                   program: schoolProgram.program,
                   schoolProgram: schoolProgram,
-                  accreditations: schoolProgram.accreditations || []
+                  accreditation: schoolProgram.accreditation
                 });
               }
             }
@@ -230,52 +231,44 @@ class AccreditationService {
                 programCategories[category] = [];
               }
               
-              // Find the best accreditation for this program
-              let bestAccreditation = null;
-              
-              // If we have accreditations directly from schoolProgram
-              if (item.accreditations && item.accreditations.length > 0) {
-                // Find the highest level accreditation
-                bestAccreditation = item.accreditations.reduce((best, current) => {
-                  const bestLevel = best ? this.parseAccreditationLevel(best.accreditationLevel) : 0;
-                  const currentLevel = this.parseAccreditationLevel(current.accreditationLevel);
-                  return currentLevel > bestLevel ? current : best;
-                }, null);
-              }
-              
-              // Debug log
-              if (bestAccreditation) {
-                console.log(`Accreditation found for ${program.programName}:`, {
-                  accredId: bestAccreditation.accredId,
-                  accreditationLevel: bestAccreditation.accreditationLevel,
-                  accreditingBody: bestAccreditation.accreditingBody
-                });
-              }
-              
-              // Determine accreditation status 
+              // Get accreditation data from the single accreditation property
               let accreditationStatus = 'Not Accredited';
-              let accreditingBody = 'N/A';
+              let accreditingBody = '-';
               let recognitionStatus = null;
               let level = 0;
               
-              if (bestAccreditation) {
+              // Check if program has accreditation data
+              if (item.accreditation) {
+                const accreditation = item.accreditation;
+                
                 // Set accreditation status and level
-                if (bestAccreditation.accreditationLevel) {
-                  accreditationStatus = `${bestAccreditation.accreditationLevel} Accredited`;
-                  level = this.parseAccreditationLevel(bestAccreditation.accreditationLevel);
+                if (accreditation.accreditationLevel) {
+                  accreditationStatus = `${accreditation.accreditationLevel} Accredited`;
+                  level = this.parseAccreditationLevel(accreditation.accreditationLevel);
                 }
                 
                 // Set accrediting body
-                if (bestAccreditation.accreditingBody) {
-                  accreditingBody = bestAccreditation.accreditingBody;
+                if (accreditation.accreditingBody) {
+                  accreditingBody = accreditation.accreditingBody;
                 }
                 
-                // Set recognition status
-                if (bestAccreditation.recognitionStatus && bestAccreditation.recognitionStatus !== 'None') {
-                  recognitionStatus = bestAccreditation.recognitionStatus;
+                // Set recognition status (COE, COD)
+                if (accreditation.recognitionStatus && accreditation.recognitionStatus !== 'None') {
+                  recognitionStatus = accreditation.recognitionStatus;
                 }
               }
               
+              // Debug log
+              if (item.accreditation) {
+                console.log(`Accreditation found for ${program.programName}:`, {
+                  accredId: item.accreditation.accredId,
+                  level: level,
+                  accreditingBody: accreditingBody,
+                  recognitionStatus: recognitionStatus
+                });
+              }
+              
+              // Create program object
               programCategories[category].push({
                 name: program.programName,
                 description: program.description,
@@ -639,3 +632,4 @@ class AccreditationService {
 // Create an instance of the AccreditationService
 const accreditationService = new AccreditationService();
 export default accreditationService; 
+
