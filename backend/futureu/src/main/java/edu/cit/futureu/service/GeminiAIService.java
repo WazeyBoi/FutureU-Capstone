@@ -1,7 +1,6 @@
 package edu.cit.futureu.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,7 +19,6 @@ import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,315 +111,7 @@ public class GeminiAIService {
     }
     
     /**
-     * Identify the student's top strength areas based on assessment results
-     * Uses a more sophisticated analysis approach for better program matching
-     */
-    private Map<String, Double> identifyTopStrengthAreas(AssessmentResultEntity result) {
-        Map<String, Double> strengths = new HashMap<>();
-        Map<String, List<Double>> strengthFactors = new HashMap<>();
-        
-        // Initialize strength categories with empty factor lists
-        Arrays.asList("STEM", "ABM", "HUMSS", "ARTS", "SPORTS", "TVL").forEach(category -> 
-            strengthFactors.put(category, new ArrayList<>())
-        );
-        
-        // 1. Primary Track Scores - direct measures
-        if (result.getStemScore() != null) {
-            strengthFactors.get("STEM").add(result.getStemScore() * 1.5); // Weight more heavily
-        }
-        
-        if (result.getAbmScore() != null) {
-            strengthFactors.get("ABM").add(result.getAbmScore() * 1.5);
-        }
-        
-        if (result.getHumssScore() != null) {
-            strengthFactors.get("HUMSS").add(result.getHumssScore() * 1.5);
-        }
-        
-        if (result.getArtsDesignTrackScore() != null) {
-            strengthFactors.get("ARTS").add(result.getArtsDesignTrackScore() * 1.5);
-        }
-        
-        if (result.getSportsTrackScore() != null) {
-            strengthFactors.get("SPORTS").add(result.getSportsTrackScore() * 1.5);
-        }
-        
-        if (result.getTvlScore() != null) {
-            strengthFactors.get("TVL").add(result.getTvlScore() * 1.5);
-        }
-        
-        // 2. Ability-based CONTRIBUTIONS - add relevant abilities to each area
-        // Mathematical ability contributes to STEM and ABM
-        if (result.getMathematicalAbilityScore() != null) {
-            double mathScore = result.getMathematicalAbilityScore();
-            strengthFactors.get("STEM").add(mathScore * 0.8);
-            strengthFactors.get("ABM").add(mathScore * 0.4);
-        }
-        
-        // Logical reasoning contributes to STEM, ABM and HUMSS
-        if (result.getLogicalReasoningScore() != null) {
-            double logicScore = result.getLogicalReasoningScore();
-            strengthFactors.get("STEM").add(logicScore * 0.8);
-            strengthFactors.get("ABM").add(logicScore * 0.5);
-            strengthFactors.get("HUMSS").add(logicScore * 0.3);
-        }
-        
-        // Verbal ability contributes to HUMSS, ABM and ARTS
-        if (result.getVerbalAbilityScore() != null) {
-            double verbalScore = result.getVerbalAbilityScore();
-            strengthFactors.get("HUMSS").add(verbalScore * 0.8);
-            strengthFactors.get("ABM").add(verbalScore * 0.4);
-            strengthFactors.get("ARTS").add(verbalScore * 0.3);
-        }
-        
-        // Reading comprehension contributes to HUMSS and ABM
-        if (result.getReadingComprehensionScore() != null) {
-            double readingScore = result.getReadingComprehensionScore();
-            strengthFactors.get("HUMSS").add(readingScore * 0.7);
-            strengthFactors.get("ABM").add(readingScore * 0.5);
-        }
-        
-        // Scientific ability contributes to STEM
-        if (result.getScientificAbilityScore() != null) {
-            strengthFactors.get("STEM").add(result.getScientificAbilityScore() * 0.9);
-        }
-        
-        // 3. RIASEC-based contributions - translate interest types to program areas
-        // Use non-linear scaling for RIASEC scores (0-7 scale) to match percentage scales
-        double riasecScale = 14.0; // Scale factor to convert 0-7 scale to 0-100
-        
-        // Realistic → STEM, TVL, SPORTS
-        if (result.getRealisticScore() != null) {
-            double score = result.getRealisticScore() * riasecScale;
-            strengthFactors.get("STEM").add(score * 0.5);
-            strengthFactors.get("TVL").add(score * 0.8);
-            strengthFactors.get("SPORTS").add(score * 0.4);
-        }
-        
-        // Investigative → STEM, HUMSS
-        if (result.getInvestigativeScore() != null) {
-            double score = result.getInvestigativeScore() * riasecScale;
-            strengthFactors.get("STEM").add(score * 0.9);
-            strengthFactors.get("HUMSS").add(score * 0.4);
-        }
-        
-        // Artistic → ARTS, HUMSS
-        if (result.getArtisticScore() != null) {
-            double score = result.getArtisticScore() * riasecScale;
-            strengthFactors.get("ARTS").add(score * 0.9);
-            strengthFactors.get("HUMSS").add(score * 0.4);
-        }
-        
-        // Social → HUMSS, SPORTS
-        if (result.getSocialScore() != null) {
-            double score = result.getSocialScore() * riasecScale;
-            strengthFactors.get("HUMSS").add(score * 0.8);
-            strengthFactors.get("SPORTS").add(score * 0.3);
-        }
-        
-        // Enterprising → ABM, TVL
-        if (result.getEnterprisingScore() != null) {
-            double score = result.getEnterprisingScore() * riasecScale;
-            strengthFactors.get("ABM").add(score * 0.9);
-            strengthFactors.get("TVL").add(score * 0.3);
-        }
-        
-        // Conventional → ABM
-        if (result.getConventionalScore() != null) {
-            double score = result.getConventionalScore() * riasecScale;
-            strengthFactors.get("ABM").add(score * 0.8);
-        }
-        
-        // 4. Calculate composite scores using weighted averages
-        for (Map.Entry<String, List<Double>> entry : strengthFactors.entrySet()) {
-            String category = entry.getKey();
-            List<Double> factors = entry.getValue();
-            
-            if (!factors.isEmpty()) {
-                // Calculate weighted average (more weight to higher scores)
-                factors.sort(Comparator.reverseOrder()); // Sort from highest to lowest
-                
-                double totalWeight = 0;
-                double weightedSum = 0;
-                
-                // Apply diminishing weights to each factor (highest gets most weight)
-                for (int i = 0; i < factors.size(); i++) {
-                    double weight = 1.0 / (i + 1); // First gets weight 1, second gets 1/2, third gets 1/3, etc.
-                    weightedSum += factors.get(i) * weight;
-                    totalWeight += weight;
-                }
-                
-                double finalScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
-                strengths.put(category, finalScore);
-            }
-        }
-        
-        // 5. Find relative strengths - normalize so total adds up to 300 (3 top strengths at 100 each)
-        double totalStrength = strengths.values().stream().mapToDouble(Double::doubleValue).sum();
-        if (totalStrength > 0) {
-            // Scale factor to make total equal 300
-            double scaleFactor = 300.0 / totalStrength;
-            
-            // Apply scaling but cap at 100
-            strengths.forEach((k, v) -> strengths.put(k, Math.min(v * scaleFactor, 100.0)));
-        } else {
-            // Fallback if no strengths were found
-            strengths.put("STEM", 50.0);
-            strengths.put("ABM", 50.0);
-            strengths.put("HUMSS", 50.0);
-        }
-        
-        // Debug output for transparency
-        System.out.println("Calculated strength areas: " + strengths);
-        
-        return strengths;
-    }
-    
-    /**
-     * Create a more comprehensive prompt that explains student's strengths in detail
-     */
-    private String addStrengthAnalysisToPrompt(StringBuilder promptBuilder, Map<String, Double> strengths, 
-                                              AssessmentResultEntity assessmentResult) {
-        // Add a detailed analysis of the student's strengths
-        promptBuilder.append("\nDETAILED STRENGTH ANALYSIS:\n");
-        
-        // Describe top strengths in detail
-        List<Map.Entry<String, Double>> sortedStrengths = strengths.entrySet().stream()
-            .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-            .collect(Collectors.toList());
-        
-        // Primary strength area
-        if (!sortedStrengths.isEmpty()) {
-            Map.Entry<String, Double> primaryStrength = sortedStrengths.get(0);
-            promptBuilder.append("PRIMARY STRENGTH: ").append(primaryStrength.getKey())
-                .append(" (Score: ").append(String.format("%.1f", primaryStrength.getValue())).append(")\n");
-            
-            promptBuilder.append(getStrengthDescription(primaryStrength.getKey(), assessmentResult)).append("\n\n");
-        }
-        
-        // Secondary strength areas
-        promptBuilder.append("SECONDARY STRENGTHS:\n");
-        for (int i = 1; i < Math.min(sortedStrengths.size(), 3); i++) {
-            Map.Entry<String, Double> strength = sortedStrengths.get(i);
-            if (strength.getValue() > 30) { // Only include meaningful secondary strengths
-                promptBuilder.append("- ").append(strength.getKey())
-                    .append(" (Score: ").append(String.format("%.1f", strength.getValue())).append(")\n");
-                promptBuilder.append("  ").append(getStrengthDescription(strength.getKey(), assessmentResult)
-                    .replace("\n", "\n  ")).append("\n");
-            }
-        }
-        
-        // Add strengths-based career direction
-        promptBuilder.append("\nCAREER DIRECTION BASED ON STRENGTHS:\n");
-        promptBuilder.append(getCareerDirectionFromStrengths(sortedStrengths, assessmentResult)).append("\n");
-        
-        return promptBuilder.toString();
-    }
-    
-    /**
-     * Get detailed description of a strength area
-     */
-    private String getStrengthDescription(String strengthArea, AssessmentResultEntity result) {
-        Map<String, String> descriptions = new HashMap<>();
-        
-        descriptions.put("STEM", "Student shows strong aptitude in Science, Technology, Engineering and Mathematics fields. " +
-            "Mathematical ability: " + formatScore(result.getMathematicalAbilityScore()) + "%, " +
-            "Scientific ability: " + formatScore(result.getScientificAbilityScore()) + "%, " +
-            "Logical reasoning: " + formatScore(result.getLogicalReasoningScore()) + "%. " +
-            "This indicates strong analytical thinking and problem-solving capabilities.");
-        
-        descriptions.put("ABM", "Student demonstrates skills in Accounting, Business and Management areas. " +
-            "Interest in business concepts with enterprising score: " + result.getEnterprisingScore() + "/7, " +
-            "Organizational abilities with conventional score: " + result.getConventionalScore() + "/7. " +
-            "Combined with mathematical ability: " + formatScore(result.getMathematicalAbilityScore()) + "%, " +
-            "this suggests aptitude for business-related programs.");
-        
-        descriptions.put("HUMSS", "Student excels in Humanities and Social Sciences areas. " +
-            "Verbal ability: " + formatScore(result.getVerbalAbilityScore()) + "%, " +
-            "Reading comprehension: " + formatScore(result.getReadingComprehensionScore()) + "%, " +
-            "Social interest score: " + result.getSocialScore() + "/7. " +
-            "This indicates strong communication skills and interest in understanding people and society.");
-        
-        descriptions.put("ARTS", "Student shows artistic talents and creative thinking. " +
-            "Artistic interest score: " + result.getArtisticScore() + "/7, " +
-            "This suggests a strong desire for self-expression and creativity. " +
-            "Combined with verbal skills: " + formatScore(result.getVerbalAbilityScore()) + "%, " +
-            "the student would thrive in creative and expressive fields.");
-        
-        descriptions.put("SPORTS", "Student demonstrates interest and aptitude in physical activities and sports. " +
-            "Realistic score: " + result.getRealisticScore() + "/7, " +
-            "Social score: " + result.getSocialScore() + "/7. " +
-            "This indicates potential for physical education, sports science, or coaching careers.");
-        
-        descriptions.put("TVL", "Student shows promise in Technical-Vocational-Livelihood tracks. " +
-            "Realistic score: " + result.getRealisticScore() + "/7, " +
-            "This suggests hands-on capabilities and practical skills that translate well to technical careers.");
-        
-        return descriptions.getOrDefault(strengthArea, "General aptitude in this area based on assessment scores.");
-    }
-    
-    /**
-     * Format score with proper handling of null values
-     */
-    private String formatScore(Double score) {
-        return score != null ? String.format("%.1f", score) : "N/A";
-    }
-    
-    /**
-     * Generate career direction advice based on strength profile
-     */
-    private String getCareerDirectionFromStrengths(List<Map.Entry<String, Double>> sortedStrengths, 
-                                                 AssessmentResultEntity result) {
-        if (sortedStrengths.isEmpty()) {
-            return "Insufficient data to determine clear career direction.";
-        }
-        
-        String primary = sortedStrengths.get(0).getKey();
-        
-        // Get secondary if available
-        String secondary = sortedStrengths.size() > 1 && sortedStrengths.get(1).getValue() > 30 ? 
-                          sortedStrengths.get(1).getKey() : null;
-        
-        // Create combinations of primary and secondary strengths
-        if (primary.equals("STEM")) {
-            if (secondary == null) {
-                return "Pure STEM focus suggests careers in core scientific or technical fields such as physics, mathematics, computer science, or engineering.";
-            } else if (secondary.equals("ABM")) {
-                return "STEM + ABM combination suggests careers at the intersection of technology and business such as data science, financial engineering, technology management, or quantitative analysis.";
-            } else if (secondary.equals("HUMSS")) {
-                return "STEM + HUMSS combination suggests careers that bridge technology and humanity such as human-computer interaction, science communication, cognitive science, or educational technology.";
-            } else if (secondary.equals("ARTS")) {
-                return "STEM + ARTS combination suggests careers in digital design, animation, game development, creative technology, or architectural design.";
-            }
-        } else if (primary.equals("ABM")) {
-            if (secondary == null) {
-                return "Pure ABM focus suggests careers in business administration, finance, accounting, marketing, or entrepreneurship.";
-            } else if (secondary.equals("STEM")) {
-                return "ABM + STEM combination suggests careers in financial technology, business analytics, investment banking, or technology management.";
-            } else if (secondary.equals("HUMSS")) {
-                return "ABM + HUMSS combination suggests careers in human resources, public relations, organizational psychology, or public administration.";
-            }
-        } else if (primary.equals("HUMSS")) {
-            if (secondary == null) {
-                return "Pure HUMSS focus suggests careers in psychology, education, communication, social work, sociology, or political science.";
-            } else if (secondary.equals("ARTS")) {
-                return "HUMSS + ARTS combination suggests careers in media studies, journalism, creative writing, art therapy, or cultural studies.";
-            }
-        } else if (primary.equals("ARTS")) {
-            if (secondary == null) {
-                return "Pure ARTS focus suggests careers in fine arts, performing arts, graphic design, fashion design, or multimedia arts.";
-            }
-        }
-        
-        // Default response for other combinations
-        return "Based on the strength profile with " + primary + 
-               (secondary != null ? " and " + secondary : "") + 
-               " as dominant areas, careers that combine these strengths would be most suitable. " +
-               "Programs that balance technical skills with personal interests will provide the best fit.";
-    }
-    
-    /**
-     * Build a detailed prompt based on assessment results with enhanced strength analysis
+     * Build a detailed prompt based on assessment results
      */
     private String buildPromptFromAssessmentResults(
             AssessmentResultEntity assessmentResult,
@@ -430,6 +120,7 @@ public class GeminiAIService {
         StringBuilder promptBuilder = new StringBuilder();
         
         // Introduction with more specific guidance
+        promptBuilder.append("You are an expert academic advisor.");
         promptBuilder.append("I need detailed college program recommendations based on a student's assessment results. ");
         promptBuilder.append("The recommendations should precisely match the student's strengths and interests shown in these scores:\n\n");
         
@@ -478,20 +169,15 @@ public class GeminiAIService {
                 .append(" correct)\n");
         }
         
-        // Identify top strength areas using the enhanced method
+        // Identify top strength areas
         Map<String, Double> strengths = identifyTopStrengthAreas(assessmentResult);
-        
-        // Add basic strength areas listing for reference
         promptBuilder.append("\nSTUDENT'S TOP STRENGTH AREAS:\n");
         strengths.entrySet().stream()
             .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
             .limit(3)
             .forEach(entry -> 
-                promptBuilder.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", entry.getValue())).append("\n")
+                promptBuilder.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n")
             );
-        
-        // Add the enhanced strength analysis
-        addStrengthAnalysisToPrompt(promptBuilder, strengths, assessmentResult);
         
         // Filter programs that match top strengths
         List<ProgramEntity> allPrograms = programService.getAllPrograms();
@@ -499,6 +185,7 @@ public class GeminiAIService {
         
         // The request with more detailed instructions
         promptBuilder.append("\nBased on these assessment results, please provide:\n");
+        promptBuilder.append("A summary of what are the stuent's strengths and weaknesses\n");
         promptBuilder.append("1. A ranked list of 5 MOST suitable college programs from the following options, ensuring each recommendation STRONGLY aligns with the student's specific strengths and RIASEC interests:\n");
         
         // Add programs to prompt
@@ -535,10 +222,67 @@ public class GeminiAIService {
         // Add detailed instruction for the AI response format
         promptBuilder.append("\n2. For each recommended program, provide a DETAILED explanation that connects specific assessment results to program requirements and career prospects\n");
         promptBuilder.append("3. Provide a confidence score (0-100) for each recommendation based on how well it matches the assessment profile\n");
-        promptBuilder.append("4. Format the response as a structured JSON with these exact keys: 'topPrograms' (array of objects with 'program', 'explanation', 'confidenceScore'), 'explanation' (string), and 'confidenceScore' (number)\n");
+        promptBuilder.append("4. Format the response as a structured JSON with these exact keys:\n");
+        promptBuilder.append("   - 'summary': An object with 'strengths' (array of strings) and 'weaknesses' (array of strings)\n");
+        promptBuilder.append("   - 'topPrograms': An array of objects, each with 'program' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
         promptBuilder.append("5. IMPORTANT: Only recommend programs from the provided list above - exact program names must be used\n");
+        promptBuilder.append("\nExample JSON Response:\n");
+        promptBuilder.append("{\n");
+        promptBuilder.append("  \"summary\": {\n");
+        promptBuilder.append("    \"strengths\": [\"STEM\", \"Logical Reasoning\"],\n");
+        promptBuilder.append("    \"weaknesses\": [\"Verbal Ability\"]\n");
+        promptBuilder.append("  },\n");
+        promptBuilder.append("  \"topPrograms\": [\n");
+        promptBuilder.append("    {\n");
+        promptBuilder.append("      \"program\": \"Computer Science\",\n");
+        promptBuilder.append("      \"explanation\": \"Strong logical reasoning and STEM aptitude align with program requirements.\",\n");
+        promptBuilder.append("      \"confidenceScore\": 95\n");
+        promptBuilder.append("    }\n");
+        promptBuilder.append("  ]\n");
+        promptBuilder.append("}\n");
         
         return promptBuilder.toString();
+    }
+    
+    /**
+     * Identify the student's top strength areas based on assessment results.
+     * This method calculates weighted scores for different areas and returns the top strengths.
+     */
+    private Map<String, Double> identifyTopStrengthAreas(AssessmentResultEntity result) {
+        Map<String, Double> strengths = new HashMap<>();
+
+        // STEM aptitude
+        if (result.getStemScore() != null) {
+            strengths.put("STEM", result.getStemScore());
+        }
+
+        // ABM aptitude
+        if (result.getAbmScore() != null) {
+            strengths.put("ABM", result.getAbmScore());
+        }
+
+        // HUMSS aptitude
+        if (result.getHumssScore() != null) {
+            strengths.put("HUMSS", result.getHumssScore());
+        }
+
+        // TVL aptitude
+        if (result.getTvlScore() != null) {
+            strengths.put("TVL", result.getTvlScore());
+        }
+
+        // Sports aptitude
+        if (result.getSportsTrackScore() != null) {
+            strengths.put("Sports", result.getSportsTrackScore());
+        }
+
+        // Arts and Design aptitude
+        if (result.getArtsDesignTrackScore() != null) {
+            strengths.put("Arts and Design", result.getArtsDesignTrackScore());
+        }
+
+        // Normalize and sort strengths (if needed, normalization logic can be added here)
+        return strengths;
     }
     
     /**
@@ -913,7 +657,7 @@ public class GeminiAIService {
             
             // Parse the response
             Map<String, Object> result = new HashMap<>();
-            result.put("statusCode", response.getStatusCodeValue());
+            result.put("statusCode", response.getStatusCode().value());
             result.put("success", true);
             
             // Extract the generated text from the response

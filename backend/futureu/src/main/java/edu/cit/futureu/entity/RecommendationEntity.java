@@ -1,5 +1,7 @@
 package edu.cit.futureu.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -10,8 +12,9 @@ public class RecommendationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int recommendationId;
 
-    // One-to-one relationship with AssessmentResult
-    @OneToOne
+    // Many-to-one relationship with AssessmentResult
+    @JsonBackReference
+    @ManyToOne
     @JoinColumn(name = "resultId", nullable = false)
     private AssessmentResultEntity assessmentResult;
 
@@ -22,6 +25,9 @@ public class RecommendationEntity {
 
     private String suggestedProgram;
     private double confidenceScore;
+
+    @Column(length = 1000)
+    private String description;
 
     public RecommendationEntity() {}
 
@@ -39,4 +45,12 @@ public class RecommendationEntity {
 
     public double getConfidenceScore() { return confidenceScore; }
     public void setConfidenceScore(double confidenceScore) { this.confidenceScore = confidenceScore; }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

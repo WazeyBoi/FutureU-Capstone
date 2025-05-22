@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.HashMap;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping(method=RequestMethod.GET, path="/api/recommendation")
@@ -53,12 +54,12 @@ public class RecommendationController {
     }
 
     @GetMapping("/getRecommendationByResult/{resultId}")
-    public RecommendationEntity getRecommendationByResult(@PathVariable int resultId) {
+    public List<RecommendationEntity> getRecommendationByResult(@PathVariable int resultId) {
         AssessmentResultEntity result = assessmentResultService.getAssessmentResultById(resultId).orElse(null);
         if (result != null) {
-            return recommendationService.getRecommendationByAssessmentResult(result);
+            return recommendationService.getRecommendationsByAssessmentResult(result);
         }
-        return null;
+        return new ArrayList<>();
     }
     
     /**
@@ -102,10 +103,10 @@ public class RecommendationController {
             }
             
             // Generate and save AI recommendations
-            RecommendationEntity recommendation = 
+            List<RecommendationEntity> recommendations = 
                 recommendationService.generateAndSaveRecommendations(resultOpt.get());
-            
-            return new ResponseEntity<>(recommendation, HttpStatus.OK);
+
+            return new ResponseEntity<>(recommendations, HttpStatus.OK);
             
         } catch (Exception e) {
             e.printStackTrace();
