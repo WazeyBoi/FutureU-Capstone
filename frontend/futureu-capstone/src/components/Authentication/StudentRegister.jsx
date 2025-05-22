@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -173,7 +172,13 @@ const StudentRegister = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-[#2B3E4E] hover:text-[#FFB71B] dark:text-[#2B3E4E] dark:hover:text-[#FFB71B] transition-colors flex items-center justify-center mt-1">
+              <Link 
+                to="/login" 
+                style={{ color: "#FFB71B", fontWeight: 500 }}
+                onMouseOver={(e) => e.currentTarget.style.color = "#e6a519"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#FFB71B"}
+                className="flex items-center justify-center mt-1"
+              >
                 <LogIn className="w-4 h-4 mr-1" />
                 Sign In
               </Link>
