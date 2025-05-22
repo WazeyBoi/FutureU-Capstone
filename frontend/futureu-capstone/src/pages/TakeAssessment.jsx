@@ -578,17 +578,16 @@ const TakeAssessment = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-white">
-        <div className="loader"></div>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-[#1D63A1] font-medium mt-4"
-        >
-          Preparing your assessment journey...
-        </motion.p>
-      </div>
+          <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+            <div>
+              <img 
+                src="/src/assets/characters/quirky.svg" 
+                alt="Quirky mascot" 
+                className="quirky-bounce h-50 mx-auto"
+              />
+            </div>
+            <p className="text-lg font-bold text-gray-600">Setting up the assessment...</p>
+          </div>
     );
   }
   
