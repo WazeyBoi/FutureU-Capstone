@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
 import userAssessmentService from '../../services/userAssessmentService';
 
@@ -408,9 +409,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                   <h4 className="text-md font-semibold text-[#232D35]">Explore Your Top Tracks</h4>
                   <p className="text-sm text-gray-600 mt-2 leading-relaxed">
                     Research the curriculums, required skills, and career pathways for your recommended tracks. 
-                    <a href="#" className="text-[#1D63A1] ml-1 hover:underline">
+                    <Link to="/academic-explorer" className="text-[#1D63A1] ml-1 hover:underline">
                       Check our Academic Explorer section
-                    </a> for detailed information about each track.
+                    </Link> for detailed information about each track.
                   </p>
                 </div>
               </div>

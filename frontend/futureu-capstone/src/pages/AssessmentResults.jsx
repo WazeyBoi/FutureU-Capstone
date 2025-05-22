@@ -269,7 +269,7 @@ const AssessmentResults = () => {
             <p className="text-left text-gray-600 mb-4">
               {results?.userAssessment?.assessment?.description || 'Comprehensive assessment to help guide your academic and career choices'}
             </p>
-            <div className="flex gap-10 text-sm">
+            <div className="text-left flex gap-10 text-sm">
               <div>
                 <p className="text-gray-500">Completed on:</p>
                 <p className="font-medium text-[#232D35]">{formatDate(results?.userAssessment?.dateCompleted)}</p>
@@ -296,7 +296,7 @@ const AssessmentResults = () => {
       </motion.div>
       
       <div className="mb-8 border-b border-gray-200">
-        <nav className="flex space-x-8">
+        <nav className="flex space-x-2">
           <button 
             onClick={() => setActiveTab('overview')}
             className={`pb-4 px-1 font-medium text-sm ${
