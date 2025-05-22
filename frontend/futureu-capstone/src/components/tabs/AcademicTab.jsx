@@ -110,19 +110,18 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="space-y-8"
+      className="space-y-8 bg-[#F8F9FA] rounded-xl"
     >
-      <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-[#232D35]">Tracks Comparison</h3>
-          
-          <div className="inline-flex rounded-md shadow-sm" role="group">
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <h3 className="text-xl font-bold text-[#232D35]">Tracks Comparison</h3>
+          <div className="inline-flex rounded-md" role="group">
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+              className={`mr-2 px-4 py-2 text-sm font-medium rounded-l-lg border-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
                 activeFilter === 'all' 
-                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                  ? 'bg-[#FFB71B] text-[#FFB71B] border-[#FFB71B] shadow-md' 
+                  : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
               }`}
               onClick={() => setActiveFilter('all')}
             >
@@ -130,10 +129,10 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
             </button>
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium border-t border-b ${
+              className={`mr-2 px-4 py-2 text-sm font-medium border-t-2 border-b-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
                 activeFilter === 'academic' 
-                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                  ? 'bg-[#FFB71B] text-[#FFB71B] border-[#FFB71B]' 
+                  : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
               }`}
               onClick={() => setActiveFilter('academic')}
             >
@@ -141,10 +140,10 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
             </button>
             <button
               type="button"
-              className={`px-4 py-2 text-sm font-medium rounded-r-lg border ${
+              className={`mr-2 px-4 py-2 text-sm font-medium rounded-r-lg border-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
                 activeFilter === 'other' 
-                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
-                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+                  ? 'bg-[#FFB71B] text-[#FFB71B] border-[#FFB71B]' 
+                  : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
               }`}
               onClick={() => setActiveFilter('other')}
             >
@@ -152,7 +151,6 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
             </button>
           </div>
         </div>
-        
         <div className="h-[400px]">
           {getFilteredChartData() && <Bar 
             data={getFilteredChartData()} 
@@ -161,7 +159,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               maintainAspectRatio: false,
               plugins: {
                 legend: {
-                  display: false, // Remove the legend
+                  display: false,
                 },
               },
               scales: {
@@ -170,15 +168,23 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
                   max: 100,
                   title: {
                     display: true,
-                    text: 'Score (%)'
-                  }
+                    text: 'Score (%)',
+                    color: '#1D63A1',
+                    font: { weight: 'bold' }
+                  },
+                  ticks: { color: '#232D35' },
+                  grid: { color: '#F8F9FA' }
                 },
                 x: {
                   title: {
                     display: true,
                     text: activeFilter === 'academic' ? 'Academic Tracks' : 
-                          activeFilter === 'other' ? 'Non-Academic Tracks' : 'All Tracks'
-                  }
+                          activeFilter === 'other' ? 'Non-Academic Tracks' : 'All Tracks',
+                    color: '#1D63A1',
+                    font: { weight: 'bold' }
+                  },
+                  ticks: { color: '#232D35' },
+                  grid: { color: '#F8F9FA' }
                 }
               }
             }}
@@ -189,12 +195,12 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left column - Academic Tracks */}
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-[#232D35] pb-2 border-b border-gray-200">Academic Tracks</h3>
+          <h3 className="text-xl font-bold text-[#232D35] pb-2 border-b-2 border-[#1D63A1]/20">Academic Tracks</h3>
           {academicTracks.map(track => (
-            <div key={track.id} className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(track.score)}`}>
+            <div key={track.id} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-lg p-5 hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-[#232D35]">{track.name}</h3>
-                <span className={`text-xl font-bold ${getScoreColor(track.score)}`}>
+                <h4 className="text-lg font-semibold text-[#232D35]">{track.name}</h4>
+                <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full text-sm font-bold">
                   {track.score.toFixed(1)}%
                 </span>
               </div>
@@ -202,7 +208,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
                 {track.description}
               </p>
               <div className="text-left text-xs text-gray-500">
-                <p><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
+                <p className="mb-1"><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
                 <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
               </div>
             </div>
@@ -211,12 +217,12 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
         
         {/* Right column - Non-Academic Tracks */}
         <div className="space-y-6">
-          <h3 className="text-lg font-semibold text-[#232D35] pb-2 border-b border-gray-200">Non-Academic Tracks</h3>
+          <h3 className="text-xl font-bold text-[#232D35] pb-2 border-b-2 border-[#1D63A1]/20">Non-Academic Tracks</h3>
           {otherTracks.map(track => (
-            <div key={track.id} className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(track.score)}`}>
+            <div key={track.id} className="bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 rounded-lg p-5 hover:shadow-lg transition-shadow">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-[#232D35]">{track.name}</h3>
-                <span className={`text-xl font-bold ${getScoreColor(track.score)}`}>
+                <h4 className="text-lg font-semibold text-[#232D35]">{track.name}</h4>
+                <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
                   {track.score.toFixed(1)}%
                 </span>
               </div>
@@ -224,7 +230,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
                 {track.description}
               </p>
               <div className="text-left text-xs text-gray-500">
-                <p><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
+                <p className="mb-1"><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
                 <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
               </div>
             </div>

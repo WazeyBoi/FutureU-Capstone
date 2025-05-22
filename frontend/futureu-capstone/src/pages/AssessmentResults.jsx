@@ -75,15 +75,15 @@ const AssessmentResults = () => {
   
   const getScoreColor = (score) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-blue-600';
-    if (score >= 40) return 'text-yellow-600';
+    if (score >= 60) return 'text-[#1D63A1]';
+    if (score >= 40) return 'text-[#FFB71B]';
     return 'text-red-600';
   };
   
   const getScoreBgColor = (score) => {
     if (score >= 80) return 'bg-green-100 border-green-300';
-    if (score >= 60) return 'bg-blue-100 border-blue-300';
-    if (score >= 40) return 'bg-yellow-100 border-yellow-300';
+    if (score >= 60) return 'bg-[#1D63A1]/10 border-[#1D63A1]/30';
+    if (score >= 40) return 'bg-[#FFB71B]/10 border-[#FFB71B]/30';
     return 'bg-red-100 border-red-300';
   };
   
@@ -201,7 +201,7 @@ const AssessmentResults = () => {
   
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-white">
+      <div className="flex flex-col justify-center items-center h-screen bg-[#F8F9FA]">
         <div className="loader"></div>
         <motion.p 
           initial={{ opacity: 0 }}
@@ -217,7 +217,7 @@ const AssessmentResults = () => {
   
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto py-8 px-4 bg-[#F8F9FA]">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -240,7 +240,7 @@ const AssessmentResults = () => {
   }
   
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen">
+    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] min-h-screen">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -259,7 +259,7 @@ const AssessmentResults = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-white rounded-xl shadow-md p-6 border border-[#1D63A1]/20 mb-8"
+        className="bg-white rounded-xl shadow-md p-6 mb-8"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
           <div className="col-span-2">
@@ -295,44 +295,44 @@ const AssessmentResults = () => {
         </div>
       </motion.div>
       
-      <div className="mb-8 border-b border-gray-200">
+      <div className="mb-8 border-b-2 border-[#1D63A1]/20">
         <nav className="flex space-x-2">
           <button 
             onClick={() => setActiveTab('overview')}
-            className={`pb-4 px-1 font-medium text-sm ${
+            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
               activeTab === 'overview' ? 
-              'border-b-2 border-[#1D63A1] text-[#1D63A1]' : 
-              'text-gray-500 hover:text-[#1D63A1] hover:border-b-2 hover:border-[#1D63A1]/40'
+              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
+              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
             }`}
           >
             Overview
           </button>
           <button 
             onClick={() => setActiveTab('interests')}
-            className={`pb-4 px-1 font-medium text-sm ${
+            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
               activeTab === 'interests' ? 
-              'border-b-2 border-[#1D63A1] text-[#1D63A1]' : 
-              'text-gray-500 hover:text-[#1D63A1] hover:border-b-2 hover:border-[#1D63A1]/40'
+              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
+              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
             }`}
           >
             Interest Profile
           </button>
           <button 
             onClick={() => setActiveTab('academic')}
-            className={`pb-4 px-1 font-medium text-sm ${
+            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
               activeTab === 'academic' ? 
-              'border-b-2 border-[#1D63A1] text-[#1D63A1]' : 
-              'text-gray-500 hover:text-[#1D63A1] hover:border-b-2 hover:border-[#1D63A1]/40'
+              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
+              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
             }`}
           >
             Academic Tracks
           </button>
           <button 
             onClick={() => setActiveTab('recommendations')}
-            className={`pb-4 px-1 font-medium text-sm ${
+            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
               activeTab === 'recommendations' ? 
-              'border-b-2 border-[#1D63A1] text-[#1D63A1]' : 
-              'text-gray-500 hover:text-[#1D63A1] hover:border-b-2 hover:border-[#1D63A1]/40'
+              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
+              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
             }`}
           >
             Recommendations
@@ -379,28 +379,27 @@ const AssessmentResults = () => {
           <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No result data available</h3>
+          <h3 className="mt-2 text-sm font-medium text-[#232D35]">No result data available</h3>
           <p className="mt-1 text-sm text-gray-500">There was an issue retrieving your assessment results.</p>
         </div>
       )}
       
-      <div className="mt-10 flex justify-between">
+      <div className="mt-10 flex flex-col md:flex-row justify-between gap-4">
         <button
           onClick={() => navigate('/assessment-dashboard')}
-          className="inline-flex items-center px-5 py-2.5 border border-[#1D63A1] text-[#1D63A1] bg-white rounded-lg hover:bg-[#1D63A1]/5 transition-colors"
+          className="inline-flex items-center px-5 py-2.5 border-2 border-[#1D63A1] text-[#1D63A1] bg-white rounded-lg font-bold hover:bg-[#1D63A1]/10 hover:text-[#232D35] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FFB71B]"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
           Back to Dashboard
         </button>
-        
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] rounded-lg hover:from-[#FFB71B]/90 hover:to-[#FFB71B]/70 transition-colors"
+          className="inline-flex items-center px-5 py-2.5 bg-[#FFB71B] text-[#232D35] font-bold rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
           Print Results
         </button>
