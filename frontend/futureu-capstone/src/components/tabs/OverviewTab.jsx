@@ -58,21 +58,29 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
       transition={{ duration: 0.5 }}
       className="space-y-8"
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.gsaScore || 0)}`}>
-          <h3 className="text-lg font-semibold text-[#232D35] mb-1">General Scholastic Aptitude</h3>
-          <div className="text-3xl font-bold text-[#232D35]">{results.assessmentResult?.gsaScore?.toFixed(1)}%</div>
-          <p className="text-sm text-gray-600 mt-2">Your overall academic aptitude score across various cognitive domains.</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className={`rounded-xl shadow-md border ${getScoreBgColor(results.assessmentResult?.gsaScore || 0)} flex flex-col h-[180px]`}>
+          <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">General Scholastic Aptitude</h3>
+          <div className="text-3xl font-bold text-[#232D35] px-5 pt-1">{results.assessmentResult?.gsaScore?.toFixed(1)}%</div>
+          <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your overall academic aptitude score across various cognitive domains.</p>
         </div>
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.academicTrackScore || 0)}`}>
-          <h3 className="text-lg font-semibold text-[#232D35] mb-1">Academic Track Fit</h3>
-          <div className="text-3xl font-bold text-[#232D35]">{results.assessmentResult?.academicTrackScore?.toFixed(1)}%</div>
-          <p className="text-sm text-gray-600 mt-2">Your alignment with academic tracks like STEM, ABM, and HUMSS.</p>
+        
+        <div className={`rounded-xl shadow-md border ${getScoreBgColor(results.assessmentResult?.academicTrackScore || 0)} flex flex-col h-[180px]`}>
+          <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Academic Track Fit</h3>
+          <div className="text-3xl font-bold text-[#232D35] px-5 pt-1">{results.assessmentResult?.academicTrackScore?.toFixed(1)}%</div>
+          <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your alignment with academic tracks like STEM, ABM, and HUMSS.</p>
         </div>
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.interestAreaScore || 0)}`}>
-          <h3 className="text-lg font-semibold text-[#232D35] mb-1">Interest Assessment</h3>
-          <div className="text-3xl font-bold text-[#232D35]">{getRiasecCode()}</div>
-          <p className="text-sm text-gray-600 mt-2">{getRiasecFullNames(getRiasecCode())}</p>
+        
+        <div className={`rounded-xl shadow-md border ${getScoreBgColor(results.assessmentResult?.otherTrackScore || 0)} flex flex-col h-[180px]`}>
+          <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Other Tracks Fit</h3>
+          <div className="text-3xl font-bold text-[#232D35] px-5 pt-1">{results.assessmentResult?.otherTrackScore?.toFixed(1)}%</div>
+          <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your alignment with non-academic tracks like TVL, Sports, and Arts & Design.</p>
+        </div>
+        
+        <div className={`rounded-xl shadow-md border ${getScoreBgColor(results.assessmentResult?.interestAreaScore || 0)} flex flex-col h-[180px]`}>
+          <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Interest Assessment</h3>
+          <div className="text-3xl font-bold text-[#232D35] px-5 pt-1">{getRiasecCode()}</div>
+          <p className="text-xs text-gray-600 mt-auto p-5 pt-2">You are <br/>{getRiasecFullNames(getRiasecCode())}</p>
         </div>
       </div>
       
