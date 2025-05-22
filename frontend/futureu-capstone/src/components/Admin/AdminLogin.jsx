@@ -160,7 +160,13 @@ const AdminLogin = () => {
 
           <div className="mt-8 text-center">
             <p className="text-gray-600 dark:text-gray-400">
-              <Link to="/login" className="font-medium text-[#2B3E4E] hover:text-[#FFB71B] dark:text-blue-400 dark:hover:text-yellow-400 flex items-center justify-center mt-1">
+              <Link 
+                to="/login" 
+                className="flex items-center justify-center mt-1"
+                style={{ color: "#2B3E4E", fontWeight: 500 }}
+                onMouseOver={(e) => e.currentTarget.style.color = "#FFB71B"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#2B3E4E"}
+              >
                 <LogIn className="w-4 h-4 mr-1" />
                 Back to Student Login
               </Link>

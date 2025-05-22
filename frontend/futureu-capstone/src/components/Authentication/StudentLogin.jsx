@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -107,7 +106,13 @@ const StudentLogin = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 ml-1 text-left">
                     Password
                   </label>
-                  <a href="#" className="text-sm font-medium text-[#FFB71B] hover:text-[#FFB71B] dark:text-[#FFB71B] dark:hover:text-[#FFB71B] transition-colors">
+                  <a 
+                    href="#" 
+                    style={{ color: "#FFB71B", fontWeight: 500 }}
+                    onMouseOver={(e) => e.currentTarget.style.color = "#e6a519"} 
+                    onMouseLeave={(e) => e.currentTarget.style.color = "#FFB71B"}
+                    className="text-sm font-medium transition-colors"
+                  >
                     Forgot password?
                   </a>
                 </div>
@@ -166,7 +171,13 @@ const StudentLogin = () => {
           <div className="mt-8 text-center">
             <p className="text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
-              <Link to="/register" className="font-medium text-[#2B3E4E] hover:text-[#FFB71B] dark:text-[#2B3E4E] dark:hover:text-[#FFB71B] transition-colors flex items-center justify-center mt-1">
+              <Link 
+                to="/register" 
+                style={{ color: "#FFB71B", fontWeight: 500 }}
+                onMouseOver={(e) => e.currentTarget.style.color = "#e6a519"}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#FFB71B"}
+                className="flex items-center justify-center mt-1"
+              >
                 <UserPlus className="w-4 h-4 mr-1" />
                 Sign Up Now
               </Link>
