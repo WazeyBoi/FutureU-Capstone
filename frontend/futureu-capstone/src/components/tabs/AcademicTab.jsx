@@ -41,6 +41,69 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
     
     return filteredData;
   };
+
+  // Function to create and sort track cards by score
+  const getSortedTracks = () => {
+    // Academic tracks
+    const academicTracks = [
+      {
+        id: 'stem',
+        name: 'STEM',
+        score: results.assessmentResult?.stemScore || 0,
+        description: 'The Science, Technology, Engineering, and Mathematics strand prepares students for college courses like Engineering, Computer Studies, Natural Sciences, and Mathematics.',
+        strengths: 'Strong analytical skills, mathematical aptitude, scientific reasoning',
+        careers: 'Engineer, Scientist, Programmer, Mathematician, Researcher'
+      },
+      {
+        id: 'abm',
+        name: 'ABM',
+        score: results.assessmentResult?.abmScore || 0,
+        description: 'The Accountancy, Business, and Management strand prepares students for college courses like Business Administration, Accountancy, Management, and Finance.',
+        strengths: 'Financial literacy, analytical thinking, organizational skills',
+        careers: 'Accountant, Entrepreneur, Manager, Financial Analyst, Marketing Professional'
+      },
+      {
+        id: 'humss',
+        name: 'HUMSS',
+        score: results.assessmentResult?.humssScore || 0,
+        description: 'The Humanities and Social Sciences strand prepares students for college courses like Language, Liberal Arts, Communication, Social Sciences, Education, and Law.',
+        strengths: 'Strong communication skills, critical thinking, cultural awareness',
+        careers: 'Lawyer, Psychologist, Teacher, Writer, Social Worker, Journalist'
+      }
+    ].sort((a, b) => b.score - a.score);
+    
+    // Other tracks (non-academic)
+    const otherTracks = [
+      {
+        id: 'tvl',
+        name: 'TVL',
+        score: results.assessmentResult?.tvlScore || 0,
+        description: 'The Technical-Vocational-Livelihood track prepares students for post-secondary courses or employment in fields of technology and vocational work.',
+        strengths: 'Technical skills, practical knowledge, hands-on abilities',
+        careers: 'Technician, Chef, Automotive Specialist, Electronics Expert, IT Support'
+      },
+      {
+        id: 'sports',
+        name: 'Sports Track',
+        score: results.assessmentResult?.sportsTrackScore || 0,
+        description: 'The Sports track prepares students for careers in fitness, sports coaching, athletic training, and physical education.',
+        strengths: 'Physical aptitude, leadership, team coordination',
+        careers: 'Athlete, Coach, Sports Scientist, Physical Therapist, Fitness Trainer'
+      },
+      {
+        id: 'arts',
+        name: 'Arts & Design',
+        score: results.assessmentResult?.artsDesignTrackScore || 0,
+        description: 'The Arts and Design track prepares students for careers in visual arts, performing arts, animation, fashion design, and other creative fields.',
+        strengths: 'Creativity, artistic vision, aesthetic sensibility',
+        careers: 'Artist, Designer, Animator, Photographer, Musician, Architect'
+      }
+    ].sort((a, b) => b.score - a.score);
+    
+    return { academicTracks, otherTracks };
+  };
+  
+  const { academicTracks, otherTracks } = getSortedTracks();
   
   return (
     <motion.div 
@@ -58,7 +121,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               type="button"
               className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
                 activeFilter === 'all' 
-                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
                   : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
               }`}
               onClick={() => setActiveFilter('all')}
@@ -69,7 +132,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               type="button"
               className={`px-4 py-2 text-sm font-medium border-t border-b ${
                 activeFilter === 'academic' 
-                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
                   : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
               }`}
               onClick={() => setActiveFilter('academic')}
@@ -80,7 +143,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               type="button"
               className={`px-4 py-2 text-sm font-medium rounded-r-lg border ${
                 activeFilter === 'other' 
-                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  ? 'bg-[#1D63A1] text-[#1D63A1] border-[#1D63A1]' 
                   : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
               }`}
               onClick={() => setActiveFilter('other')}
@@ -96,6 +159,11 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
             options={{
               responsive: true,
               maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false, // Remove the legend
+                },
+              },
               scales: {
                 y: {
                   beginAtZero: true,
@@ -118,103 +186,49 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.stemScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">STEM</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.stemScore || 0)}`}>
-              {results.assessmentResult?.stemScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Science, Technology, Engineering, and Mathematics strand prepares students for college courses like Engineering, Computer Studies, Natural Sciences, and Mathematics.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Strong analytical skills, mathematical aptitude, scientific reasoning</p>
-            <p><span className="font-semibold">Career paths:</span> Engineer, Scientist, Programmer, Mathematician, Researcher</p>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left column - Academic Tracks */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-[#232D35] pb-2 border-b border-gray-200">Academic Tracks</h3>
+          {academicTracks.map(track => (
+            <div key={track.id} className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(track.score)}`}>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold text-[#232D35]">{track.name}</h3>
+                <span className={`text-xl font-bold ${getScoreColor(track.score)}`}>
+                  {track.score.toFixed(1)}%
+                </span>
+              </div>
+              <p className="text-left text-sm text-gray-600 mb-4">
+                {track.description}
+              </p>
+              <div className="text-left text-xs text-gray-500">
+                <p><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
+                <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
+              </div>
+            </div>
+          ))}
         </div>
         
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.abmScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">ABM</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.abmScore || 0)}`}>
-              {results.assessmentResult?.abmScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Accountancy, Business, and Management strand prepares students for college courses like Business Administration, Accountancy, Management, and Finance.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Financial literacy, analytical thinking, organizational skills</p>
-            <p><span className="font-semibold">Career paths:</span> Accountant, Entrepreneur, Manager, Financial Analyst, Marketing Professional</p>
-          </div>
-        </div>
-        
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.humssScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">HUMSS</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.humssScore || 0)}`}>
-              {results.assessmentResult?.humssScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Humanities and Social Sciences strand prepares students for college courses like Language, Liberal Arts, Communication, Social Sciences, Education, and Law.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Strong communication skills, critical thinking, cultural awareness</p>
-            <p><span className="font-semibold">Career paths:</span> Lawyer, Psychologist, Teacher, Writer, Social Worker, Journalist</p>
-          </div>
-        </div>
-        
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.tvlScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">TVL</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.tvlScore || 0)}`}>
-              {results.assessmentResult?.tvlScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Technical-Vocational-Livelihood track prepares students for post-secondary courses or employment in fields of technology and vocational work.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Technical skills, practical knowledge, hands-on abilities</p>
-            <p><span className="font-semibold">Career paths:</span> Technician, Chef, Automotive Specialist, Electronics Expert, IT Support</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.sportsTrackScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">Sports Track</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.sportsTrackScore || 0)}`}>
-              {results.assessmentResult?.sportsTrackScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Sports track prepares students for careers in fitness, sports coaching, athletic training, and physical education.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Physical aptitude, leadership, team coordination</p>
-            <p><span className="font-semibold">Career paths:</span> Athlete, Coach, Sports Scientist, Physical Therapist, Fitness Trainer</p>
-          </div>
-        </div>
-        
-        <div className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(results.assessmentResult?.artsDesignTrackScore || 0)}`}>
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="text-lg font-semibold text-[#232D35]">Arts & Design</h3>
-            <span className={`text-xl font-bold ${getScoreColor(results.assessmentResult?.artsDesignTrackScore || 0)}`}>
-              {results.assessmentResult?.artsDesignTrackScore?.toFixed(1)}%
-            </span>
-          </div>
-          <p className="text-left text-sm text-gray-600 mb-4">
-            The Arts and Design track prepares students for careers in visual arts, performing arts, animation, fashion design, and other creative fields.
-          </p>
-          <div className="text-left text-xs text-gray-500">
-            <p><span className="font-semibold">Strengths needed:</span> Creativity, artistic vision, aesthetic sensibility</p>
-            <p><span className="font-semibold">Career paths:</span> Artist, Designer, Animator, Photographer, Musician, Architect</p>
-          </div>
+        {/* Right column - Non-Academic Tracks */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-[#232D35] pb-2 border-b border-gray-200">Non-Academic Tracks</h3>
+          {otherTracks.map(track => (
+            <div key={track.id} className={`rounded-xl shadow-md p-5 border ${getScoreBgColor(track.score)}`}>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-semibold text-[#232D35]">{track.name}</h3>
+                <span className={`text-xl font-bold ${getScoreColor(track.score)}`}>
+                  {track.score.toFixed(1)}%
+                </span>
+              </div>
+              <p className="text-left text-sm text-gray-600 mb-4">
+                {track.description}
+              </p>
+              <div className="text-left text-xs text-gray-500">
+                <p><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
+                <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </motion.div>
