@@ -1,8 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bar } from 'react-chartjs-2';
 
 const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getScoreBgColor }) => {
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'academic', 'other'
+  
+  // Create filtered data for the chart based on activeFilter
+  const getFilteredChartData = () => {
+    const baseData = generateAcademicTracksData();
+    
+    if (!baseData || activeFilter === 'all') {
+      return baseData;
+    }
+    
+    // Create a filtered version of the data
+    const filteredData = {
+      ...baseData,
+      labels: [],
+      datasets: baseData.datasets.map(dataset => ({
+        ...dataset,
+        data: []
+      }))
+    };
+    
+    // Identify indices from original data to keep
+    baseData.labels.forEach((label, index) => {
+      // Check if this label belongs to the selected category
+      const isAcademic = ['STEM', 'ABM', 'HUMSS'].includes(label);
+      const shouldInclude = (activeFilter === 'academic' && isAcademic) || 
+                           (activeFilter === 'other' && !isAcademic);
+      
+      if (shouldInclude) {
+        filteredData.labels.push(label);
+        // For each dataset, include the corresponding data point
+        filteredData.datasets.forEach((dataset, datasetIndex) => {
+          dataset.data.push(baseData.datasets[datasetIndex].data[index]);
+        });
+      }
+    });
+    
+    return filteredData;
+  };
+  
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -11,10 +50,49 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
       className="space-y-8"
     >
       <div className="bg-white rounded-xl shadow-md p-5 border border-[#1D63A1]/20">
-        <h3 className="text-lg font-semibold text-[#232D35] mb-4">Tracks Comparison</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-[#232D35]">Tracks Comparison</h3>
+          
+          <div className="inline-flex rounded-md shadow-sm" role="group">
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+                activeFilter === 'all' 
+                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+              }`}
+              onClick={() => setActiveFilter('all')}
+            >
+              All Tracks
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm font-medium border-t border-b ${
+                activeFilter === 'academic' 
+                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+              }`}
+              onClick={() => setActiveFilter('academic')}
+            >
+              Academic
+            </button>
+            <button
+              type="button"
+              className={`px-4 py-2 text-sm font-medium rounded-r-lg border ${
+                activeFilter === 'other' 
+                  ? 'bg-[#1D63A1] text-white border-[#1D63A1]' 
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100'
+              }`}
+              onClick={() => setActiveFilter('other')}
+            >
+              Non-Academic
+            </button>
+          </div>
+        </div>
+        
         <div className="h-[400px]">
-          {generateAcademicTracksData() && <Bar 
-            data={generateAcademicTracksData()} 
+          {getFilteredChartData() && <Bar 
+            data={getFilteredChartData()} 
             options={{
               responsive: true,
               maintainAspectRatio: false,
@@ -30,7 +108,8 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
                 x: {
                   title: {
                     display: true,
-                    text: 'Tracks'
+                    text: activeFilter === 'academic' ? 'Academic Tracks' : 
+                          activeFilter === 'other' ? 'Non-Academic Tracks' : 'All Tracks'
                   }
                 }
               }
