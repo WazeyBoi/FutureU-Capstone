@@ -49,6 +49,11 @@ public class SchoolEntity {
     @JsonIgnore
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SchoolProgramEntity> schoolPrograms;
+    
+    // One-to-many to Accreditation
+    @JsonIgnore
+    @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AccreditationEntity> accreditations;
 
     public SchoolEntity() {}
 
@@ -123,6 +128,14 @@ public class SchoolEntity {
     public void setSchoolPrograms(List<SchoolProgramEntity> schoolPrograms) {
         this.schoolPrograms = schoolPrograms;
     }
+    
+    public List<AccreditationEntity> getAccreditations() {
+        return accreditations;
+    }
+    
+    public void setAccreditations(List<AccreditationEntity> accreditations) {
+        this.accreditations = accreditations;
+    }
 
     public String getSchoolWebsiteUrl() {
         return schoolWebsiteUrl;
@@ -140,3 +153,4 @@ public class SchoolEntity {
        this.averageRating = averageRating;
     }
 }
+
