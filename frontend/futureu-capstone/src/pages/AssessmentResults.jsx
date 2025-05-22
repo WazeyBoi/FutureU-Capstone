@@ -201,28 +201,41 @@ const AssessmentResults = () => {
   
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-[#F8F9FA]">
-        <div className="loader"></div>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-[#1D63A1] font-medium mt-4"
-        >
-          Analyzing your assessment results...
-        </motion.p>
+      <div className="flex flex-col justify-center items-center h-screen bg-[#F8F9FA] relative">
+        {/* Playful floating accent shapes */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
+          <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
+          <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
+        </div>
+        <div className="relative z-10">
+          <div className="loader"></div>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-[#1D63A1] font-medium mt-4"
+          >
+            Analyzing your assessment results...
+          </motion.p>
+        </div>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4 bg-[#F8F9FA]">
+      <div className="max-w-4xl mx-auto py-8 px-4 bg-[#F8F9FA] relative">
+        {/* Playful floating accent shapes */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
+          <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
+        </div>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md"
+          className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md relative z-10"
         >
           <div className="flex">
             <div className="flex-shrink-0">
@@ -240,169 +253,146 @@ const AssessmentResults = () => {
   }
   
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] min-h-screen">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-8"
-      >
-        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-[#1D63A1] to-[#232D35] bg-clip-text text-transparent">
-          Your Assessment Results
-        </h1>
-        <p className="mt-4 text-lg text-[#232D35]/70">
-          Discover your academic strengths and potential career paths
-        </p>
-      </motion.div>
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-white rounded-xl shadow-md p-6 mb-8"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-          <div className="col-span-2">
-            <h2 className="text-left text-xl font-bold text-[#232D35] mb-2">
-              {results?.userAssessment?.assessment?.title || 'FutureU Assessment'}
-            </h2>
-            <p className="text-left text-gray-600 mb-4">
-              {results?.userAssessment?.assessment?.description || 'Comprehensive assessment to help guide your academic and career choices'}
-            </p>
-            <div className="text-left flex gap-10 text-sm">
-              <div>
-                <p className="text-gray-500">Completed on:</p>
-                <p className="font-medium text-[#232D35]">{formatDate(results?.userAssessment?.dateCompleted)}</p>
-              </div>
-              <div>
-                <p className="text-gray-500">Time spent:</p>
-                <p className="font-medium text-[#232D35]">{results?.userAssessment?.timeSpentSeconds ? 
-                  `${Math.floor(results.userAssessment.timeSpentSeconds / 60)} minutes` : 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#232D35]/10 rounded-xl p-6 text-center">
-            <p className="text-sm font-medium text-[#1D63A1] mb-1">Overall Score</p>
-            <div className="text-5xl font-bold text-[#232D35]">
-              {results?.assessmentResult?.overallScore?.toFixed(1)}%
-            </div>
-            <div className={`text-sm font-medium mt-2 ${getScoreColor(results?.assessmentResult?.overallScore || 0)}`}>
-              {results?.assessmentResult?.overallScore >= 80 ? 'Excellent' : 
-               results?.assessmentResult?.overallScore >= 60 ? 'Good' : 
-               results?.assessmentResult?.overallScore >= 40 ? 'Average' : 'Needs Improvement'}
-            </div>
-          </div>
-        </div>
-      </motion.div>
-      
-      <div className="mb-8 border-b-2 border-[#1D63A1]/20">
-        <nav className="flex space-x-2">
-          <button 
-            onClick={() => setActiveTab('overview')}
-            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
-              activeTab === 'overview' ? 
-              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
-              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
-            }`}
-          >
-            Overview
-          </button>
-          <button 
-            onClick={() => setActiveTab('interests')}
-            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
-              activeTab === 'interests' ? 
-              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
-              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
-            }`}
-          >
-            Interest Profile
-          </button>
-          <button 
-            onClick={() => setActiveTab('academic')}
-            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
-              activeTab === 'academic' ? 
-              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
-              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
-            }`}
-          >
-            Academic Tracks
-          </button>
-          <button 
-            onClick={() => setActiveTab('recommendations')}
-            className={`pb-4 px-4 font-bold text-sm rounded-t-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] ${
-              activeTab === 'recommendations' ? 
-              'border-b-4 border-[#1D63A1] text-[#1D63A1] bg-[#F8F9FA]' : 
-              'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'
-            }`}
-          >
-            Recommendations
-          </button>
-        </nav>
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
+      {/* Playful floating accent shapes background */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
       </div>
-      
-      {results ? (
-        <div className="min-h-[500px]">
-          {activeTab === 'overview' && (
-            <OverviewTab 
-              results={results} 
-              getScoreColor={getScoreColor} 
-              getScoreBgColor={getScoreBgColor} 
-            />
-          )}
-          
-          {activeTab === 'interests' && (
-            <InterestsTab 
-              results={results} 
-              generateRiasecRadarData={generateRiasecRadarData} 
-              getRiasecDescription={getRiasecDescription} 
-            />
-          )}
-          
-          {activeTab === 'academic' && (
-            <AcademicTab 
-              results={results} 
-              generateAcademicTracksData={generateAcademicTracksData} 
-              getScoreColor={getScoreColor} 
-              getScoreBgColor={getScoreBgColor} 
-            />
-          )}
-          
-          {activeTab === 'recommendations' && (
-            <RecommendationsTab 
-              getTopRecommendations={getTopRecommendations} 
-              userAssessmentId={userAssessmentId}
-            />
-          )}
-        </div>
-      ) : (
-        <div className="text-center text-gray-500 py-8 bg-white rounded-xl shadow-md p-6 border border-[#1D63A1]/20">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-[#232D35]">No result data available</h3>
-          <p className="mt-1 text-sm text-gray-500">There was an issue retrieving your assessment results.</p>
-        </div>
-      )}
-      
-      <div className="mt-10 flex flex-col md:flex-row justify-between gap-4">
-        <button
-          onClick={() => navigate('/assessment-dashboard')}
-          className="inline-flex items-center px-5 py-2.5 border-2 border-[#1D63A1] text-[#1D63A1] bg-white rounded-lg font-bold hover:bg-[#1D63A1]/10 hover:text-[#232D35] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FFB71B]"
+      <div className="relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-10"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          Back to Dashboard
-        </button>
-        <button
-          onClick={() => window.print()}
-          className="inline-flex items-center px-5 py-2.5 bg-[#FFB71B] text-[#232D35] font-bold rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1]"
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#1D63A1] to-[#232D35] bg-clip-text text-transparent drop-shadow-lg tracking-tight animate-pop">
+            Your Assessment Results
+          </h1>
+          <p className="mt-4 text-lg text-[#232D35]/70 font-medium animate-fade-in">
+            Discover your academic strengths and potential career paths
+          </p>
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-white rounded-3xl shadow-xl p-8 mb-10 animate-card-pop border-2 border-[#1D63A1]/10"
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Print Results
-        </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            <div className="col-span-2">
+              <h2 className="text-left text-2xl font-bold text-[#232D35] mb-2">
+                {results?.userAssessment?.assessment?.title || 'FutureU Assessment'}
+              </h2>
+              <p className="text-left text-[#232D35]/70 mb-4">
+                {results?.userAssessment?.assessment?.description || 'Comprehensive assessment to help guide your academic and career choices'}
+              </p>
+              <div className="text-left flex gap-10 text-sm">
+                <div>
+                  <p className="text-[#1D63A1]/80">Completed on:</p>
+                  <p className="font-medium text-[#232D35]">{formatDate(results?.userAssessment?.dateCompleted)}</p>
+                </div>
+                <div>
+                  <p className="text-[#1D63A1]/80">Time spent:</p>
+                  <p className="font-medium text-[#232D35]">{results?.userAssessment?.timeSpentSeconds ? 
+                    `${Math.floor(results.userAssessment.timeSpentSeconds / 60)} minutes` : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#232D35]/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center shadow-md">
+              <p className="text-sm font-medium text-[#1D63A1] mb-1">Overall Score</p>
+              <div className="text-5xl font-extrabold text-[#232D35] animate-pop">
+                {results?.assessmentResult?.overallScore?.toFixed(1)}%
+              </div>
+              <div className={`text-sm font-bold mt-2 ${getScoreColor(results?.assessmentResult?.overallScore || 0)}`}>
+                {results?.assessmentResult?.overallScore >= 80 ? 'Excellent' : 
+                 results?.assessmentResult?.overallScore >= 60 ? 'Good' : 
+                 results?.assessmentResult?.overallScore >= 40 ? 'Average' : 'Needs Improvement'}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+        <div className="mb-8 border-b-2 border-[#1D63A1]/20">
+          <nav className="flex space-x-4 mb-8">
+            {['overview', 'interests', 'academic', 'recommendations'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-4 px-6 font-bold text-base rounded-t-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm
+                  ${activeTab === tab
+                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]  text-white animate-bounce-short'
+                    : 'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'}
+                `}
+              >
+                {tab === 'overview' && 'Overview'}
+                {tab === 'interests' && 'Interest Profile'}
+                {tab === 'academic' && 'Academic Tracks'}
+                {tab === 'recommendations' && 'Recommendations'}
+              </button>
+            ))}
+          </nav>
+        </div>
+        {results ? (
+          <div className="min-h-[500px] animate-fade-in">
+            {activeTab === 'overview' && (
+              <OverviewTab 
+                results={results} 
+                getScoreColor={getScoreColor} 
+                getScoreBgColor={getScoreBgColor} 
+              />
+            )}
+            {activeTab === 'interests' && (
+              <InterestsTab 
+                results={results} 
+                generateRiasecRadarData={generateRiasecRadarData} 
+                getRiasecDescription={getRiasecDescription} 
+              />
+            )}
+            {activeTab === 'academic' && (
+              <AcademicTab 
+                results={results} 
+                generateAcademicTracksData={generateAcademicTracksData} 
+                getScoreColor={getScoreColor} 
+                getScoreBgColor={getScoreBgColor} 
+              />
+            )}
+            {activeTab === 'recommendations' && (
+              <RecommendationsTab 
+                getTopRecommendations={getTopRecommendations} 
+                userAssessmentId={userAssessmentId}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 py-8 bg-white rounded-3xl shadow-xl p-8 border-2 border-[#1D63A1]/10 animate-fade-in">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 className="mt-2 text-base font-semibold text-[#232D35]">No result data available</h3>
+            <p className="mt-1 text-sm text-gray-500">There was an issue retrieving your assessment results.</p>
+          </div>
+        )}
+        <div className="mt-10 flex flex-col md:flex-row justify-between gap-4">
+          <button
+            onClick={() => navigate('/assessment-dashboard')}
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-white to-white text-[#2B3E4E] font-bold rounded-xl shadow-md hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#FFB71B] animate-bounce-short"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Dashboard
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white font-bold rounded-xl shadow-md hover:from-[#2B3E4E] hover:to-[#2B3E4E] transition-all focus:outline-none focus:ring-2 focus:ring-[#1D63A1] animate-bounce-short"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Results
+          </button>
+        </div>
       </div>
     </div>
   );

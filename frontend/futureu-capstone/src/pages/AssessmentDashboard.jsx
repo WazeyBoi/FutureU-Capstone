@@ -150,7 +150,7 @@ const AssessmentDashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-white">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1D63A1]"></div>
+        <div className="loader"></div>
       </div>
     );
   }
