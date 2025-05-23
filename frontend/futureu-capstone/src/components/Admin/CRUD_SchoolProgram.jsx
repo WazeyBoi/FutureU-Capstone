@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import adminSchoolProgramService from '../../services/adminSchoolProgramService';
 import adminSchoolService from '../../services/adminSchoolService';
@@ -521,7 +520,11 @@ const CRUD_SchoolProgram = () => {
               <button
                 key={pageNum}
                 onClick={() => handleChangePage(pageNum)}
-                    className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#2B3E4E] text-white" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                className={`px-3 py-1 rounded-lg ${
+                  pageNum === page
+                    ? "bg-[#FFB71B] text-[#2B3E4E] font-semibold"
+                    : "text-gray-700 hover:bg-gray-100"
+                } transition-colors`}
               >
                 {pageNum + 1}
               </button>
