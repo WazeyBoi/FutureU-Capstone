@@ -37,9 +37,6 @@ public class SchoolEntity {
     @Column(precision = 9, scale = 6)
     private BigDecimal longitude;
 
-    @Column(precision = 2, scale = 1)
-    private BigDecimal averageRating;
-
     // One-to-many to Testimony
     @JsonManagedReference(value = "school-testimony")
     @OneToMany(mappedBy = "school", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -143,14 +140,6 @@ public class SchoolEntity {
 
     public void setSchoolWebsiteUrl(String schoolWebsiteUrl) {
         this.schoolWebsiteUrl = schoolWebsiteUrl;
-    }
-
-    public BigDecimal getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(BigDecimal averageRating) {
-       this.averageRating = averageRating;
     }
 }
 

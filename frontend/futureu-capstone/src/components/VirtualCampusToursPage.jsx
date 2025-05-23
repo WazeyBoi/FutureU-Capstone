@@ -16,6 +16,7 @@ import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
 import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
 import up_school_logo from '../assets/school_logos/up_school_logo.png';
 import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
+import { useClickAway } from "react-use"; // Add this at the top if you want to close dropdown on outside click (optional)
 
 // School logo mapping
 const schoolLogos = {
@@ -113,6 +114,10 @@ const VirtualCampusToursPage = () => {
   const [tours, setTours] = useState([]);
   const [schools, setSchools] = useState([]);
   const mapRef = useRef(null);
+  const [schoolSearch, setSchoolSearch] = useState("");
+  const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
+  const schoolInputRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   // Animation variants - simplified for smoother animations
   const fadeIn = {
@@ -166,96 +171,6 @@ const VirtualCampusToursPage = () => {
     "Indiana Aerospace University": ["IAU", "Indiana Aerospace"],
     "Cebu Normal University": ["CNU", "Normal University"],
   };
-
-  const campuses = [
-    {
-      name: "Cebu Institute of Technology - University",
-      description:
-        "Our main campus offers state-of-the-art facilities and a vibrant student community.",
-      video: "https://drive.google.com/file/d/1M_HWOUz4Z-UIkJMWhuxbFOpnlfVXKLn7/preview", // Updated embed link
-      location: "Cebu",
-      schoolType: "Private",
-      featured: true,
-    },
-    {
-      name: "University of San Jose - Recoletos",
-      description:
-        "The University of San Jose - Recoletos is known for its rich history and academic excellence.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fwww.facebook.com%2Fusjr.official%2Fvideos%2F358279392604079%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "Southwestern University - PHINMA",
-      description:
-        "Southwestern University - PHINMA is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fswuphinma%2Fvideos%2F1186881652309815%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-      featured: true,
-    },
-    {
-      name: "University of San Carlos",
-      description:
-        "University of San Carlos is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fusccebu%2Fvideos%2F668876398463718%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "University of the Visayas - Main Campus",
-      description:
-        "University of the Visayas - Main Campus is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Funiversityofthevisayascebu%2Fvideos%2F1700673043796685%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "University of the Visayas - Main Campus",
-      description:
-        "University of the Visayas - Main Campus is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Funiversityofthevisayascebu%2Fvideos%2F975038627400028%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "Cebu Doctors' University",
-      description: "Cebu Doctors' University is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fcebudoctorsuniversityofficial%2Fvideos%2F583647479816850%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "Cebu Doctors' University",
-      description: "Cebu Doctors' University is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fcebudoctorsuniversityofficial%2Fvideos%2F468438925081437%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "Cebu Technological University",
-      description: "Cebu Technological University is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fctu.premier%2Fvideos%2F609134661314472%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Public",
-      featured: true,
-    },
-    {
-      name: "Indiana Aerospace University",
-      description: "Indiana Aerospace University is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2FIndianaAeroUniv%2Fvideos%2F601543727175461%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Private",
-    },
-    {
-      name: "Cebu Normal University",
-      description: "Cebu Normal University is a leading institution in Cebu, offering a wide range of programs.",
-      video: "https://www.facebook.com/plugins/video.php?height=314&href=https%3A%2F%2Fweb.facebook.com%2Fcebunormaluniversityofficial%2Fvideos%2F364001561712089%2F&show_text=false&width=560&t=0",
-      location: "Cebu",
-      schoolType: "Public",
-    },
-    // Add more campuses here...
-  ];
 
   // Helper function to find a matching school name across different formats
   const findMatchingSchool = (apiSchoolName) => {
@@ -334,34 +249,6 @@ const VirtualCampusToursPage = () => {
     
     fetchSchoolData();
   }, []);
-
-  // Initialize the filtered campuses with all campuses when component mounts
-  useEffect(() => {
-    // Sort alphabetically
-    const sortedCampuses = [...campuses].sort((a, b) => a.name.localeCompare(b.name));
-    setFilteredCampuses(sortedCampuses);
-  }, []);
-
-  // Update enhancedCampuses when realSchoolData changes
-  useEffect(() => {
-    const updatedCampuses = campuses.map(campus => {
-      const realData = realSchoolData[campus.name];
-      
-      if (realData) {
-        console.log(`Enhancing ${campus.name} with real data:`, realData);
-        
-        return {
-          ...campus,
-          location: realData.location || campus.location,
-          schoolType: realData.schoolType || campus.schoolType,
-          description: realData.description || campus.description
-        };
-      }
-      return campus;
-    });
-    
-    setEnhancedCampuses(updatedCampuses);
-  }, [realSchoolData]);
 
   // Log the enhanced campuses for debugging
   useEffect(() => {
@@ -464,6 +351,7 @@ const VirtualCampusToursPage = () => {
   const handleSchoolMarkerClick = (schoolObj) => {
     setSelectedSchool(schoolObj);
     setSchool(schoolObj.name);
+    setSchoolSearch(schoolObj.name); // <-- Sync search bar with selected school
     setFlyTo([Number(schoolObj.latitude), Number(schoolObj.longitude)]);
     setMapZoom(17); // Zoom in to school
   };
@@ -582,6 +470,42 @@ const VirtualCampusToursPage = () => {
     );
   };
 
+  const handleSchoolSelect = (schoolObj) => {
+    setSchoolSearch(schoolObj.name);
+    setSelectedSchool(schoolObj);
+    setSchool(schoolObj.name);
+    setFlyTo([Number(schoolObj.latitude), Number(schoolObj.longitude)]);
+    setMapZoom(17);
+    setShowSchoolDropdown(false);
+  };
+
+  const handleSchoolInputKeyDown = (e) => {
+    if (e.key === "Enter" && filteredSchools.length > 0) {
+      handleSchoolSelect(filteredSchools[0]);
+    }
+    if (e.key === "Escape") {
+      setShowSchoolDropdown(false);
+    }
+  };
+
+  // Filtered schools for dropdown
+  const filteredSchools = schools.filter(s =>
+    s.name.toLowerCase().includes(schoolSearch.toLowerCase())
+  );
+
+  // Optional: close dropdown when clicking outside
+  useClickAway(dropdownRef, () => setShowSchoolDropdown(false));
+
+  // When schoolSearch is cleared, reset map
+  useEffect(() => {
+    if (schoolSearch === "") {
+      setSelectedSchool(null);
+      setSchool("");
+      setFlyTo(defaultMapCenter);
+      setMapZoom(defaultMapZoom);
+    }
+  }, [schoolSearch]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Wave */}
@@ -609,39 +533,6 @@ const VirtualCampusToursPage = () => {
             Experience the campus environment. Explore facilities,
             classrooms, and student spaces through our immersive virtual tours.
           </motion.p>
-          
-          {/* Search Bar */}
-          <motion.div 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="relative max-w-2xl mx-auto mt-10"
-          >
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a school or campus..."
-              className="w-full py-3 px-12 rounded-full shadow-lg text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300"
-            />
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            {searchQuery && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 cursor-pointer" 
-                onClick={() => setSearchQuery('')}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.div>
-            )}
-          </motion.div>
         </div>
         
         {/* Wave Shape */}
@@ -675,7 +566,7 @@ const VirtualCampusToursPage = () => {
           3D Globe
         </button>
       </div>
-      <div className="flex flex-col md:flex-row h-[70vh] bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative max-w-7xl mx-auto rounded-3xl shadow-2xl border border-blue-100 mb-8">
+      <div className="flex flex-col md:flex-row h-[85vh] items-stretch bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative max-w-7xl mx-auto rounded-3xl shadow-2xl border border-blue-100 mb-8">
         {viewMode === "2d" ? (
           <div className="w-full h-full flex items-center justify-center p-4 relative">
             {/* Map Style Switcher */}
@@ -764,51 +655,141 @@ const VirtualCampusToursPage = () => {
           />
         )}
         {/* School Details Section (always shown for both 2D and 3D) */}
-        <div className="w-full max-w-md bg-white rounded-r-3xl shadow-2xl border border-yellow-100 p-0 flex flex-col justify-center items-center">
+        <div className="w-full max-w-md h-full min-h-[85vh] flex flex-col justify-center items-center p-0">
           {selectedSchool ? (
-            <div className="w-full flex flex-col items-center">
-              {/* Header with logo */}
-              <div className="w-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-tr-3xl rounded-tl-3xl flex flex-col items-center py-6 shadow">
-                <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg mb-2 border-4 border-blue-100">
-                  <img
-                    src={schoolLogos[selectedSchool.schoolId]}
-                    alt={selectedSchool.name}
-                    className="w-20 h-20 object-cover rounded-full"
-                    style={{ background: "#fff" }}
-                  />
+            <motion.div
+              initial={{ opacity: 0, y: 60, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.7, type: "spring", stiffness: 80 }}
+              className="w-full h-full flex flex-col items-center justify-center"
+              style={{ minHeight: "100%" }}
+            >
+              <div className="w-full h-full flex flex-col justify-start items-center overflow-auto p-0">
+                {/* Glassmorphism Card */}
+                <div className="relative w-full h-full bg-white/70 backdrop-blur-lg rounded-3xl shadow-2xl border border-blue-100 flex flex-col items-center px-6 py-7 md:px-8 md:py-10 transition-all duration-300">
+                  {/* Accent Bar */}
+                  <div className="absolute top-0 left-0 w-full h-2" />
+                  {/* Logo with animated ring */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.15, duration: 0.5, type: "spring" }}
+                    className="flex flex-col items-center mb-3 mt-2"
+                  >
+                    <div className="relative mb-2">
+                      <motion.span
+                        initial={{ opacity: 0, scale: 0.7 }}
+                        animate={{ opacity: 1, scale: 1.15 }}
+                        transition={{ delay: 0.2, duration: 1.2, repeat: Infinity, repeatType: "reverse", type: "spring" }}
+                        className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-400 to-amber-300 opacity-40 blur-[10px] scale-110"
+                      ></motion.span>
+                      <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-xl border-4 border-blue-200 relative z-10">
+                        <img
+                          src={schoolLogos[selectedSchool.schoolId]}
+                          alt={selectedSchool.name}
+                          className="w-20 h-20 object-cover rounded-full"
+                          style={{ background: "#fff" }}
+                        />
+                      </div>
+                    </div>
+                    <motion.h2
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25, duration: 0.5, type: "spring" }}
+                      className="text-2xl font-extrabold text-blue-800 mt-2 text-center drop-shadow-sm tracking-tight"
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      {selectedSchool.name}
+                    </motion.h2>
+                  </motion.div>
+                  {/* Info */}
+                  <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: {
+                        transition: { staggerChildren: 0.12 }
+                      }
+                    }}
+                    className="flex flex-col gap-3 mt-2 w-full"
+                  >
+                    {/* Location Detail - icon only, no label */}
+                    <motion.div
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
+                      }}
+                      className="flex items-center gap-2 text-gray-700 text-sm text-justify"
+                    >
+                      <svg
+                        className="w-4 h-4 text-blue-500 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        style={{ minWidth: "1rem", minHeight: "1rem" }}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span className="break-words whitespace-pre-line">{selectedSchool.location}</span>
+                    </motion.div>
+                    {/* School Type Detail - icon only, no label, new icon */}
+                    <motion.div
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
+                      }}
+                      className="flex items-center gap-2 text-gray-700 text-sm"
+                    >
+                      {/* Academic Cap icon for school type */}
+                      <svg
+                        className="w-4 h-4 text-amber-500 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                        style={{ minWidth: "1rem", minHeight: "1rem" }}
+                      >
+                        <path d="M12 3L2 9l10 6 10-6-10-6z" />
+                        <path d="M2 9v6c0 2.21 4.48 4 10 4s10-1.79 10-4V9" />
+                        <path d="M12 21v-6" />
+                      </svg>
+                      <span>{selectedSchool.type}</span>
+                    </motion.div>
+                  </motion.div>
+                  {/* Description */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5, type: "spring" }}
+                    className="w-full bg-gradient-to-br from-blue-50 via-amber-50 to-white rounded-xl p-5 mt-6 border border-blue-100 shadow-inner text-base"
+                  >
+                    <p className="text-gray-700 leading-relaxed break-words whitespace-pre-line text-justify">{selectedSchool.description}</p>
+                  </motion.div>
+                  {/* Visit Website Button - now below description and centered */}
+                  {selectedSchool.schoolWebsiteUrl && (
+                    <motion.a
+                      variants={{
+                        hidden: { opacity: 0, x: -20 },
+                        visible: { opacity: 1, x: 0, transition: { duration: 0.4 } }
+                      }}
+                      href={selectedSchool.schoolWebsiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-5 px-3 py-2 bg-gradient-to-r from-blue-100 to-amber-100 hover:from-blue-200 hover:to-amber-200 text-blue-700 font-semibold rounded-xl transition-all duration-200 shadow border border-blue-100 text-sm mx-auto"
+                      style={{ minWidth: "0" }}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M14 3h7v7m0 0L10 21l-7-7 11-11z" />
+                      </svg>
+                      Visit Website
+                    </motion.a>
+                  )}
                 </div>
-                <h2 className="text-2xl font-extrabold text-white drop-shadow mb-1 text-center">{selectedSchool.name}</h2>
               </div>
-              {/* Details */}
-              <div className="w-full px-8 py-6 flex flex-col items-start">
-                <p className="mb-2 text-gray-700">
-                  <span className="font-semibold text-blue-700">Location:</span> {selectedSchool.location}
-                </p>
-                <p className="mb-2 text-gray-700">
-                  <span className="font-semibold text-blue-700">Type:</span> {selectedSchool.type}
-                </p>
-                {selectedSchool.schoolWebsiteUrl && (
-                  <p className="mb-2 text-gray-700">
-                    <span className="font-semibold text-blue-700">Website:</span>{" "}
-                    <a href={selectedSchool.schoolWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all">
-                      {selectedSchool.schoolWebsiteUrl}
-                    </a>
-                  </p>
-                )}
-                <p className="mb-2 text-gray-700">
-                  <span className="font-semibold text-blue-700">Rating:</span> {selectedSchool.averageRating ?? "N/A"}
-                </p>
-                <div className="w-full bg-blue-50 rounded-lg p-4 mt-2 mb-4 border border-blue-100">
-                  <p className="text-gray-700 text-sm">{selectedSchool.description}</p>
-                </div>
-                <button
-                  onClick={handleClearSchool}
-                  className="mt-2 px-4 py-2 bg-yellow-400 hover:bg-yellow-500 rounded-full text-white font-semibold shadow transition self-center"
-                >
-                  Clear School
-                </button>
-              </div>
-            </div>
+            </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
               <svg
@@ -865,30 +846,60 @@ const VirtualCampusToursPage = () => {
             {/* Filter Controls */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
               <div className="flex-1 flex flex-col md:flex-row gap-4">
-                {/* Search */}
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for a school or campus..."
-                  className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full md:w-64"
-                />
-                {/* School Dropdown */}
-                <select
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full md:w-64"
-                >
-                  <option value="">All Schools</option>
-                  {schools
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((s) => (
-                      <option key={s.schoolId} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                </select>
-                {/* School Type Dropdown */}
+                {/* Unified School Search/Dropdown */}
+                <div className="relative w-full md:w-64" ref={dropdownRef}>
+                  <input
+                    type="text"
+                    ref={schoolInputRef}
+                    value={schoolSearch}
+                    onChange={e => {
+                      setSchoolSearch(e.target.value);
+                      setShowSchoolDropdown(true);
+                    }}
+                    onFocus={() => setShowSchoolDropdown(true)}
+                    onKeyDown={handleSchoolInputKeyDown}
+                    placeholder="Search for a school..."
+                    className="py-2 px-4 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 w-full pr-10"
+                    autoComplete="off"
+                  />
+                  {/* Improved Clear button */}
+                  {(schoolSearch || selectedSchool) && (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white border border-gray-200 rounded-full p-1 shadow hover:bg-amber-100 hover:border-amber-300 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      onClick={() => {
+                        setSchoolSearch("");
+                        setSelectedSchool(null);
+                        setSchool("");
+                        setFlyTo(defaultMapCenter);
+                        setMapZoom(defaultMapZoom);
+                        setShowSchoolDropdown(false);
+                      }}
+                      tabIndex={-1}
+                      aria-label="Clear"
+                      style={{ lineHeight: 0 }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 hover:text-amber-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle cx="12" cy="12" r="11" stroke="currentColor" strokeWidth="1.5" fill="#fff"/>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9l6 6m0-6l-6 6" stroke="#f59e42"/>
+                      </svg>
+                    </button>
+                  )}
+                  {showSchoolDropdown && filteredSchools.length > 0 && (
+                    <ul className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredSchools.map((s) => (
+                        <li
+                          key={s.schoolId}
+                          className="px-4 py-2 hover:bg-amber-50 cursor-pointer"
+                          onMouseDown={() => handleSchoolSelect(s)}
+                        >
+                          {s.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {/* School Type Dropdown remains */}
                 <select
                   value={schoolType}
                   onChange={(e) => setSchoolType(e.target.value)}
