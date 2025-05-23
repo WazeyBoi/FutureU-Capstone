@@ -1,3 +1,5 @@
+
+
 @import "tailwindcss";
 
 :root {
@@ -78,4 +80,33 @@ button:focus-visible {
 
 .text-shadow-lg {
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
+}
+
+/* Navigation override styles - updated with navy blue (#2B3E4E) */
+.nav-override a,
+.nav-override a span,
+.nav-override button,
+.nav-override button span {
+  color: #2B3E4E !important;
+}
+
+/* Only make active links and hover states gold */
+.nav-override a:hover span {
+  color: #FFB71B !important;
+}
+
+.nav-override a[class*="bg-[#FFB71B]"] span {
+  color: #2B3E4E !important;
+}
+
+/* Fix for authentication buttons - make Sign In text white */
+.nav-override a[class*="bg-[#2B3E4E]"],
+.nav-override a[class*="bg-[#2B3E4E]"] span {
+  color: white !important;
+}
+
+/* Keep Sign Up button text navy blue since it has gold background */
+.nav-override a[class*="bg-[#FFB71B]"],
+.nav-override a[class*="bg-[#FFB71B]"] span {
+  color: #2B3E4E !important;
 }
