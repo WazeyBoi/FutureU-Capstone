@@ -165,7 +165,7 @@ public class RecommendationController {
             
             // Generate AI recommendations
             Map<String, Object> aiRecommendations = 
-                geminiAIService.generateProgramRecommendations(resultOpt.get(), sectionResults);
+                geminiAIService.generateCareerRecommendations(resultOpt.get(), sectionResults);
             
             // Create a comprehensive response
             Map<String, Object> response = new HashMap<>();

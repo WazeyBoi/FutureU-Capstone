@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import edu.cit.futureu.entity.AssessmentResultEntity;
-import edu.cit.futureu.entity.ProgramEntity;
+import edu.cit.futureu.entity.CareerEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 
 import java.util.ArrayList;
@@ -35,10 +35,10 @@ public class GeminiAIService {
     private final ObjectMapper objectMapper;
     
     @Autowired
-    private ProgramService programService;
+    private CareerService careerService;
     
-    // Mapping to categorize program types - this will help with matching assessment results
-    private static final Map<String, List<String>> PROGRAM_CATEGORY_KEYWORDS = Map.of(
+    // Mapping to categorize career types - update keywords if needed
+    private static final Map<String, List<String>> CAREER_CATEGORY_KEYWORDS = Map.of(
         "STEM", List.of("engineering", "computer", "science", "technology", "mathematics", "physics", "chemistry", "biology", "information", "data", "statistics", "programming"),
         "ABM", List.of("business", "management", "accounting", "finance", "economics", "entrepreneurship", "marketing", "administration"),
         "HUMSS", List.of("humanities", "social", "psychology", "sociology", "anthropology", "history", "literature", "language", "communication", "education", "teaching", "political", "law"),
@@ -53,9 +53,9 @@ public class GeminiAIService {
     }
     
     /**
-     * Generate program recommendations based on assessment results
+     * Generate career pathway recommendations based on assessment results
      */
-    public Map<String, Object> generateProgramRecommendations(
+    public Map<String, Object> generateCareerRecommendations(
             AssessmentResultEntity assessmentResult,
             List<UserAssessmentSectionResultEntity> sectionResults) {
         
@@ -105,7 +105,7 @@ public class GeminiAIService {
             e.printStackTrace();
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("error", "Failed to generate recommendations: " + e.getMessage());
-            errorResult.put("suggestedPrograms", new ArrayList<>());
+            errorResult.put("suggestedCareers", new ArrayList<>());
             return errorResult;
         }
     }
@@ -120,8 +120,8 @@ public class GeminiAIService {
         StringBuilder promptBuilder = new StringBuilder();
         
         // Introduction with more specific guidance
-        promptBuilder.append("You are an expert academic advisor.");
-        promptBuilder.append("I need detailed college program recommendations based on a student's assessment results. ");
+        promptBuilder.append("You are an expert career advisor.");
+        promptBuilder.append("I need detailed career pathway recommendations based on a student's assessment results. ");
         promptBuilder.append("The recommendations should precisely match the student's strengths and interests shown in these scores:\n\n");
         
         // Overall scores
@@ -179,40 +179,40 @@ public class GeminiAIService {
                 promptBuilder.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n")
             );
         
-        // Filter programs that match top strengths
-        List<ProgramEntity> allPrograms = programService.getAllPrograms();
-        List<ProgramEntity> filteredPrograms = filterProgramsByStrengths(allPrograms, strengths);
+        // Filter careers that match top strengths
+        List<CareerEntity> allCareers = careerService.getAllCareers();
+        List<CareerEntity> filteredCareers = filterCareersByStrengths(allCareers, strengths);
         
         // The request with more detailed instructions
         promptBuilder.append("\nBased on these assessment results, please provide:\n");
-        promptBuilder.append("A summary of what are the stuent's strengths and weaknesses\n");
-        promptBuilder.append("1. A ranked list of 5 MOST suitable college programs from the following options, ensuring each recommendation STRONGLY aligns with the student's specific strengths and RIASEC interests:\n");
+        promptBuilder.append("A summary of what are the student's strengths and weaknesses\n");
+        promptBuilder.append("1. A ranked list of 5 MOST suitable career pathways from the following options, ensuring each recommendation STRONGLY aligns with the student's specific strengths and RIASEC interests:\n");
         
-        // Add programs to prompt
-        Map<String, List<ProgramEntity>> categorizedPrograms = categorizeProgramsByType(filteredPrograms);
+        // Add careers to prompt
+        Map<String, List<CareerEntity>> categorizedCareers = categorizeCareersByType(filteredCareers);
         
-        // First add programs from the student's strongest categories
+        // First add careers from the student's strongest categories
         for (String category : strengths.keySet()) {
-            if (categorizedPrograms.containsKey(category)) {
-                promptBuilder.append("\n" + category + " PROGRAMS:\n");
-                for (ProgramEntity program : categorizedPrograms.get(category)) {
-                    promptBuilder.append("   - ").append(program.getProgramName());
-                    if (program.getDescription() != null && !program.getDescription().isEmpty()) {
-                        promptBuilder.append(": ").append(program.getDescription());
+            if (categorizedCareers.containsKey(category)) {
+                promptBuilder.append("\n" + category + " CAREERS:\n");
+                for (CareerEntity career : categorizedCareers.get(category)) {
+                    promptBuilder.append("   - ").append(career.getCareerTitle());
+                    if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
+                        promptBuilder.append(": ").append(career.getCareerDescription());
                     }
                     promptBuilder.append("\n");
                 }
             }
         }
         
-        // Add remaining programs by category
-        for (Map.Entry<String, List<ProgramEntity>> entry : categorizedPrograms.entrySet()) {
+        // Add remaining careers by category
+        for (Map.Entry<String, List<CareerEntity>> entry : categorizedCareers.entrySet()) {
             if (!strengths.containsKey(entry.getKey())) {
-                promptBuilder.append("\n" + entry.getKey() + " PROGRAMS:\n");
-                for (ProgramEntity program : entry.getValue()) {
-                    promptBuilder.append("   - ").append(program.getProgramName());
-                    if (program.getDescription() != null && !program.getDescription().isEmpty()) {
-                        promptBuilder.append(": ").append(program.getDescription());
+                promptBuilder.append("\n" + entry.getKey() + " CAREERS:\n");
+                for (CareerEntity career : entry.getValue()) {
+                    promptBuilder.append("   - ").append(career.getCareerTitle());
+                    if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
+                        promptBuilder.append(": ").append(career.getCareerDescription());
                     }
                     promptBuilder.append("\n");
                 }
@@ -220,22 +220,22 @@ public class GeminiAIService {
         }
         
         // Add detailed instruction for the AI response format
-        promptBuilder.append("\n2. For each recommended program, provide a DETAILED explanation that connects specific assessment results to program requirements and career prospects\n");
+        promptBuilder.append("\n2. For each recommended career pathway, provide a DETAILED explanation that connects specific assessment results to career requirements and prospects\n");
         promptBuilder.append("3. Provide a confidence score (0-100) for each recommendation based on how well it matches the assessment profile\n");
         promptBuilder.append("4. Format the response as a structured JSON with these exact keys:\n");
         promptBuilder.append("   - 'summary': An object with 'strengths' (array of strings) and 'weaknesses' (array of strings)\n");
-        promptBuilder.append("   - 'topPrograms': An array of objects, each with 'program' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
-        promptBuilder.append("5. IMPORTANT: Only recommend programs from the provided list above - exact program names must be used\n");
+        promptBuilder.append("   - 'topCareers': An array of objects, each with 'career' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
+        promptBuilder.append("5. IMPORTANT: Only recommend career pathways from the provided list above - exact career titles must be used\n");
         promptBuilder.append("\nExample JSON Response:\n");
         promptBuilder.append("{\n");
         promptBuilder.append("  \"summary\": {\n");
         promptBuilder.append("    \"strengths\": [\"STEM\", \"Logical Reasoning\"],\n");
         promptBuilder.append("    \"weaknesses\": [\"Verbal Ability\"]\n");
         promptBuilder.append("  },\n");
-        promptBuilder.append("  \"topPrograms\": [\n");
+        promptBuilder.append("  \"topCareers\": [\n");
         promptBuilder.append("    {\n");
-        promptBuilder.append("      \"program\": \"Computer Science\",\n");
-        promptBuilder.append("      \"explanation\": \"Strong logical reasoning and STEM aptitude align with program requirements.\",\n");
+        promptBuilder.append("      \"career\": \"Software Engineer\",\n");
+        promptBuilder.append("      \"explanation\": \"Strong logical reasoning and STEM aptitude align with this pathway.\",\n");
         promptBuilder.append("      \"confidenceScore\": 95\n");
         promptBuilder.append("    }\n");
         promptBuilder.append("  ]\n");
@@ -286,10 +286,10 @@ public class GeminiAIService {
     }
     
     /**
-     * Filter programs based on student strengths
+     * Filter careers based on student strengths
      */
-    private List<ProgramEntity> filterProgramsByStrengths(List<ProgramEntity> allPrograms, Map<String, Double> strengths) {
-        List<ProgramEntity> filteredPrograms = new ArrayList<>();
+    private List<CareerEntity> filterCareersByStrengths(List<CareerEntity> allCareers, Map<String, Double> strengths) {
+        List<CareerEntity> filteredCareers = new ArrayList<>();
         
         // Get top 3 strength categories
         List<String> topCategories = strengths.entrySet().stream()
@@ -298,17 +298,17 @@ public class GeminiAIService {
             .map(Map.Entry::getKey)
             .collect(Collectors.toList());
         
-        // First pass: add all programs that match top categories
-        for (ProgramEntity program : allPrograms) {
-            String programText = (program.getProgramName() + " " + 
-                                 (program.getDescription() != null ? program.getDescription() : "")).toLowerCase();
+        // First pass: add all careers that match top categories
+        for (CareerEntity career : allCareers) {
+            String careerText = (career.getCareerTitle() + " " + 
+                                 (career.getCareerDescription() != null ? career.getCareerDescription() : "")).toLowerCase();
             
             for (String category : topCategories) {
-                List<String> keywords = PROGRAM_CATEGORY_KEYWORDS.get(category);
+                List<String> keywords = CAREER_CATEGORY_KEYWORDS.get(category);
                 if (keywords != null) {
                     for (String keyword : keywords) {
-                        if (programText.contains(keyword.toLowerCase())) {
-                            filteredPrograms.add(program);
+                        if (careerText.contains(keyword.toLowerCase())) {
+                            filteredCareers.add(career);
                             break;
                         }
                     }
@@ -316,53 +316,53 @@ public class GeminiAIService {
             }
         }
         
-        // If we don't have enough programs, add more
-        if (filteredPrograms.size() < 30) {
-            // Add programs that didn't match initially
-            for (ProgramEntity program : allPrograms) {
-                if (!filteredPrograms.contains(program)) {
-                    filteredPrograms.add(program);
+        // If we don't have enough careers, add more
+        if (filteredCareers.size() < 30) {
+            // Add careers that didn't match initially
+            for (CareerEntity career : allCareers) {
+                if (!filteredCareers.contains(career)) {
+                    filteredCareers.add(career);
                     
-                    // Stop when we reach 50 programs
-                    if (filteredPrograms.size() >= 50) {
+                    // Stop when we reach 50 careers
+                    if (filteredCareers.size() >= 50) {
                         break;
                     }
                 }
             }
         }
         
-        return filteredPrograms;
+        return filteredCareers;
     }
     
     /**
-     * Categorize programs by their types (STEM, ABM, HUMSS, etc.)
+     * Categorize careers by their types (STEM, ABM, HUMSS, etc.)
      */
-    private Map<String, List<ProgramEntity>> categorizeProgramsByType(List<ProgramEntity> programs) {
-        Map<String, List<ProgramEntity>> categorizedPrograms = new HashMap<>();
+    private Map<String, List<CareerEntity>> categorizeCareersByType(List<CareerEntity> careers) {
+        Map<String, List<CareerEntity>> categorizedCareers = new HashMap<>();
         
         // Initialize categories
-        for (String category : PROGRAM_CATEGORY_KEYWORDS.keySet()) {
-            categorizedPrograms.put(category, new ArrayList<>());
+        for (String category : CAREER_CATEGORY_KEYWORDS.keySet()) {
+            categorizedCareers.put(category, new ArrayList<>());
         }
         
-        // Add "Other" category for programs that don't match any category
-        categorizedPrograms.put("OTHER", new ArrayList<>());
+        // Add "Other" category for careers that don't match any category
+        categorizedCareers.put("OTHER", new ArrayList<>());
         
-        // Categorize each program
-        for (ProgramEntity program : programs) {
-            String programText = (program.getProgramName() + " " + 
-                                 (program.getDescription() != null ? program.getDescription() : "")).toLowerCase();
+        // Categorize each career
+        for (CareerEntity career : careers) {
+            String careerText = (career.getCareerTitle() + " " + 
+                                 (career.getCareerDescription() != null ? career.getCareerDescription() : "")).toLowerCase();
             
             boolean categorized = false;
             
             // Check against each category's keywords
-            for (Map.Entry<String, List<String>> entry : PROGRAM_CATEGORY_KEYWORDS.entrySet()) {
+            for (Map.Entry<String, List<String>> entry : CAREER_CATEGORY_KEYWORDS.entrySet()) {
                 String category = entry.getKey();
                 List<String> keywords = entry.getValue();
                 
                 for (String keyword : keywords) {
-                    if (programText.contains(keyword.toLowerCase())) {
-                        categorizedPrograms.get(category).add(program);
+                    if (careerText.contains(keyword.toLowerCase())) {
+                        categorizedCareers.get(category).add(career);
                         categorized = true;
                         break;
                     }
@@ -373,33 +373,33 @@ public class GeminiAIService {
             
             // If not categorized, add to "Other"
             if (!categorized) {
-                categorizedPrograms.get("OTHER").add(program);
+                categorizedCareers.get("OTHER").add(career);
             }
         }
         
-        return categorizedPrograms;
+        return categorizedCareers;
     }
     
     /**
-     * Find the closest matching program in the database with improved matching
+     * Find the closest matching career in the database with improved matching
      */
-    private ProgramEntity findClosestProgramMatch(String recommendedName, List<ProgramEntity> programs) {
-        ProgramEntity bestMatch = null;
-        double highestScore = 0.4; // Lower threshold to consider more programs
+    private CareerEntity findClosestCareerMatch(String recommendedName, List<CareerEntity> careers) {
+        CareerEntity bestMatch = null;
+        double highestScore = 0.4; // Lower threshold to consider more careers
         
         // Convert recommended name to lowercase for comparison
         String normalizedRecommendName = recommendedName.toLowerCase();
         
-        for (ProgramEntity program : programs) {
-            // Get program name in lowercase
-            String normalizedProgramName = program.getProgramName().toLowerCase();
+        for (CareerEntity career : careers) {
+            // Get career title in lowercase
+            String normalizedCareerTitle = career.getCareerTitle().toLowerCase();
             
             // Calculate various similarity measures
-            double exactMatchScore = normalizedProgramName.equals(normalizedRecommendName) ? 1.0 : 0.0;
-            double containsScore = normalizedProgramName.contains(normalizedRecommendName) || 
-                                  normalizedRecommendName.contains(normalizedProgramName) ? 0.8 : 0.0;
-            double jaccardScore = calculateSimilarity(normalizedRecommendName, normalizedProgramName);
-            double levenshteinScore = calculateLevenshteinSimilarity(normalizedRecommendName, normalizedProgramName);
+            double exactMatchScore = normalizedCareerTitle.equals(normalizedRecommendName) ? 1.0 : 0.0;
+            double containsScore = normalizedCareerTitle.contains(normalizedRecommendName) || 
+                                  normalizedRecommendName.contains(normalizedCareerTitle) ? 0.8 : 0.0;
+            double jaccardScore = calculateSimilarity(normalizedRecommendName, normalizedCareerTitle);
+            double levenshteinScore = calculateLevenshteinSimilarity(normalizedRecommendName, normalizedCareerTitle);
             
             // Weight the scores with preference for exact matches
             double combinedScore = exactMatchScore * 0.6 + 
@@ -407,9 +407,9 @@ public class GeminiAIService {
                                   jaccardScore * 0.1 + 
                                   levenshteinScore * 0.1;
             
-            // If program has a description, check it too
-            if (program.getDescription() != null && !program.getDescription().isEmpty()) {
-                String normalizedDescription = program.getDescription().toLowerCase();
+            // If career has a description, check it too
+            if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
+                String normalizedDescription = career.getCareerDescription().toLowerCase();
                 double descriptionSimilarity = calculateSimilarity(normalizedRecommendName, normalizedDescription);
                 
                 // Add a small boost if the description matches
@@ -419,7 +419,7 @@ public class GeminiAIService {
             // Update best match if this one is better
             if (combinedScore > highestScore) {
                 highestScore = combinedScore;
-                bestMatch = program;
+                bestMatch = career;
             }
         }
         
@@ -479,7 +479,7 @@ public class GeminiAIService {
     }
     
     /**
-     * Parse the AI-generated text into a structured recommendation format and match with database programs
+     * Parse the AI-generated text into a structured recommendation format and match with database careers
      */
     private Map<String, Object> parseRecommendationsFromText(String generatedText) {
         Map<String, Object> result = new HashMap<>();
@@ -507,71 +507,71 @@ public class GeminiAIService {
             JsonNode jsonNode = objectMapper.readTree(jsonContent);
             System.out.println("Successfully parsed JSON");
             
-            // After extracting recommendations, match with actual database programs
-            List<Map<String, Object>> recommendedPrograms = new ArrayList<>();
-            List<ProgramEntity> databasePrograms = programService.getAllPrograms();
+            // After extracting recommendations, match with actual database careers
+            List<Map<String, Object>> recommendedCareers = new ArrayList<>();
+            List<CareerEntity> databaseCareers = careerService.getAllCareers();
             
             // Create a map for quicker lookups
-            Map<String, ProgramEntity> programNameMap = new HashMap<>();
-            for (ProgramEntity program : databasePrograms) {
-                programNameMap.put(program.getProgramName().toLowerCase(), program);
+            Map<String, CareerEntity> careerTitleMap = new HashMap<>();
+            for (CareerEntity career : databaseCareers) {
+                careerTitleMap.put(career.getCareerTitle().toLowerCase(), career);
             }
             
-            if (jsonNode.has("topPrograms") && jsonNode.get("topPrograms").isArray()) {
-                System.out.println("Found topPrograms array in JSON");
-                // Extract programs from topPrograms array
-                ArrayNode topProgramsNode = (ArrayNode) jsonNode.get("topPrograms");
+            if (jsonNode.has("topCareers") && jsonNode.get("topCareers").isArray()) {
+                System.out.println("Found topCareers array in JSON");
+                // Extract careers from topCareers array
+                ArrayNode topCareersNode = (ArrayNode) jsonNode.get("topCareers");
                 
-                for (JsonNode programNode : topProgramsNode) {
-                    Map<String, Object> programMap = new HashMap<>();
+                for (JsonNode careerNode : topCareersNode) {
+                    Map<String, Object> careerMap = new HashMap<>();
                     
-                    // Handle different field names for program/name
-                    if (programNode.has("name")) {
-                        programMap.put("name", programNode.get("name").asText());
-                    } else if (programNode.has("program")) {
-                        programMap.put("name", programNode.get("program").asText());
-                        System.out.println("Found program field instead of name: " + programNode.get("program").asText());
+                    // Handle different field names for career/name
+                    if (careerNode.has("name")) {
+                        careerMap.put("name", careerNode.get("name").asText());
+                    } else if (careerNode.has("career")) {
+                        careerMap.put("name", careerNode.get("career").asText());
+                        System.out.println("Found career field instead of name: " + careerNode.get("career").asText());
                     }
                     
                     // Handle different field names for description/explanation
-                    if (programNode.has("description")) {
-                        programMap.put("description", programNode.get("description").asText());
-                    } else if (programNode.has("explanation")) {
-                        programMap.put("description", programNode.get("explanation").asText());
+                    if (careerNode.has("description")) {
+                        careerMap.put("description", careerNode.get("description").asText());
+                    } else if (careerNode.has("explanation")) {
+                        careerMap.put("description", careerNode.get("explanation").asText());
                         System.out.println("Found explanation field instead of description");
                     }
                     
                     // Extract confidence score
-                    if (programNode.has("confidenceScore")) {
-                        programMap.put("confidenceScore", programNode.get("confidenceScore").asDouble());
+                    if (careerNode.has("confidenceScore")) {
+                        careerMap.put("confidenceScore", careerNode.get("confidenceScore").asDouble());
                     }
                     
-                    // Match recommended programs with database programs
-                    String recommendedName = ((String) programMap.get("name")).toLowerCase();
+                    // Match recommended careers with database careers
+                    String recommendedName = ((String) careerMap.get("name")).toLowerCase();
                     
                     // First try exact match
-                    ProgramEntity matchedProgram = programNameMap.get(recommendedName);
+                    CareerEntity matchedCareer = careerTitleMap.get(recommendedName);
                     
                     // If no exact match, try to find the closest match
-                    if (matchedProgram == null) {
-                        matchedProgram = findClosestProgramMatch(recommendedName, databasePrograms);
+                    if (matchedCareer == null) {
+                        matchedCareer = findClosestCareerMatch(recommendedName, databaseCareers);
                     }
                     
-                    if (matchedProgram != null) {
-                        // Add database program ID and other details
-                        programMap.put("programId", matchedProgram.getProgramId());
-                        programMap.put("name", matchedProgram.getProgramName()); // Use exact database name
+                    if (matchedCareer != null) {
+                        // Add database career ID and other details
+                        careerMap.put("careerId", matchedCareer.getCareerId());
+                        careerMap.put("name", matchedCareer.getCareerTitle()); // Use exact database name
                         
                         // If there's no description in AI response, use the database description
-                        if (!programMap.containsKey("description") || programMap.get("description") == null) {
-                            programMap.put("description", matchedProgram.getDescription());
+                        if (!careerMap.containsKey("description") || careerMap.get("description") == null) {
+                            careerMap.put("description", matchedCareer.getCareerDescription());
                         }
                     }
                     
-                    recommendedPrograms.add(programMap);
+                    recommendedCareers.add(careerMap);
                 }
                 
-                result.put("suggestedPrograms", recommendedPrograms);
+                result.put("suggestedCareers", recommendedCareers);
                 
                 // Extract overall explanation
                 if (jsonNode.has("explanation")) {
@@ -583,11 +583,11 @@ public class GeminiAIService {
                     result.put("confidenceScore", jsonNode.get("confidenceScore").asDouble());
                 }
             } else {
-                // Fallback - use programs from database instead of hardcoded defaults
+                // Fallback - use careers from database instead of hardcoded defaults
                 System.out.println("JSON structure not as expected, using fallback extraction method");
                 result.put("parseWarning", "Expected JSON structure not found, using fallback extraction");
-                result.put("suggestedPrograms", createRecommendationsFromDatabase(databasePrograms, 5));
-                result.put("explanation", "Recommendations generated from available programs based on assessment results.");
+                result.put("suggestedCareers", createRecommendationsFromDatabase(databaseCareers, 5));
+                result.put("explanation", "Recommendations generated from available careers based on assessment results.");
                 result.put("confidenceScore", 65.0);
             }
             
@@ -595,11 +595,11 @@ public class GeminiAIService {
             e.printStackTrace();
             System.out.println("Error parsing recommendation: " + e.getMessage());
             
-            // Fallback to database programs on error
-            List<ProgramEntity> databasePrograms = programService.getAllPrograms();
+            // Fallback to database careers on error
+            List<CareerEntity> databaseCareers = careerService.getAllCareers();
             result.put("error", "Failed to parse recommendation: " + e.getMessage());
-            result.put("suggestedPrograms", createRecommendationsFromDatabase(databasePrograms, 5));
-            result.put("explanation", "Fallback recommendations from available programs.");
+            result.put("suggestedCareers", createRecommendationsFromDatabase(databaseCareers, 5));
+            result.put("explanation", "Fallback recommendations from available careers.");
             result.put("confidenceScore", 60.0);
         }
         
@@ -607,23 +607,23 @@ public class GeminiAIService {
     }
     
     /**
-     * Create recommendations from database programs when AI fails
+     * Create recommendations from database careers when AI fails
      */
-    private List<Map<String, Object>> createRecommendationsFromDatabase(List<ProgramEntity> programs, int limit) {
+    private List<Map<String, Object>> createRecommendationsFromDatabase(List<CareerEntity> careers, int limit) {
         List<Map<String, Object>> recommendations = new ArrayList<>();
         
-        // Ensure we don't exceed the available programs
-        int count = Math.min(limit, programs.size());
+        // Ensure we don't exceed the available careers
+        int count = Math.min(limit, careers.size());
         
-        // Generate some generic recommendations based on database programs
+        // Generate some generic recommendations based on database careers
         for (int i = 0; i < count; i++) {
-            ProgramEntity program = programs.get(i);
+            CareerEntity career = careers.get(i);
             Map<String, Object> recommendation = new HashMap<>();
             
-            recommendation.put("programId", program.getProgramId());
-            recommendation.put("name", program.getProgramName());
-            recommendation.put("description", program.getDescription() != null ? 
-                program.getDescription() : "Recommended based on assessment results");
+            recommendation.put("careerId", career.getCareerId());
+            recommendation.put("name", career.getCareerTitle());
+            recommendation.put("description", career.getCareerDescription() != null ? 
+                career.getCareerDescription() : "Recommended based on assessment results");
             recommendation.put("confidenceScore", 80.0 - (i * 5.0)); // Decreasing confidence scores
             
             recommendations.add(recommendation);

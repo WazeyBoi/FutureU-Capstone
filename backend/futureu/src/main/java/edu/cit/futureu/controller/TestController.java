@@ -67,7 +67,7 @@ public class TestController {
             }
             
             // Try full recommendation parsing
-            result.put("fullParsingResult", geminiAIService.generateProgramRecommendations(null, null));
+            result.put("fullParsingResult", geminiAIService.generateCareerRecommendations(null, null));
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {

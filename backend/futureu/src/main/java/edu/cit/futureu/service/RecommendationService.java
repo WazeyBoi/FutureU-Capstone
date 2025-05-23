@@ -83,7 +83,7 @@ public class RecommendationService {
 
         // Generate AI recommendations
         Map<String, Object> aiRecommendations = 
-            geminiAIService.generateProgramRecommendations(assessmentResult, sectionResults);
+            geminiAIService.generateCareerRecommendations(assessmentResult, sectionResults);
 
         // Safely cast suggestedPrograms to the expected type
         Object suggestedProgramsObj = aiRecommendations.get("suggestedPrograms");
