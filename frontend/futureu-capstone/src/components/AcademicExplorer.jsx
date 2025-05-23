@@ -55,7 +55,7 @@ const schoolBackgroundMap = {
   "Cebu Technological University": ctu_school_image,
   "Southwestern University": swu_school_image,
   "University of San Carlos": usc_school_image,
-  "University of San Jose Recoletos": usjr_school_image,
+  "University of San Jose-Recoletos": usjr_school_image,
   "University of the Philippines Cebu": up_school_image,
   "University of Cebu": uc_school_image,
   "University of the Visayas": uv_school_image,
@@ -224,7 +224,9 @@ const AcademicExplorer = () => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [showSchoolsFoundToast, setShowSchoolsFoundToast] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
+    return !localStorage.getItem('academicExplorerWelcomeSeen');
+  });
   const [showProgramsPanel, setShowProgramsPanel] = useState(false);
   const [showProgramConfirmation, setShowProgramConfirmation] = useState(false);
   const [pendingProgramSelection, setPendingProgramSelection] = useState(null);
@@ -347,7 +349,7 @@ const AcademicExplorer = () => {
             setShowSchoolsFoundToast(true);
             setTimeout(() => {
               setShowSchoolsFoundToast(false);
-            }, 3000);
+            }, 2000);
         } else {
             setFilteredSchools(schools);
             console.log("Invalid response format, showing all schools");
@@ -407,6 +409,21 @@ const AcademicExplorer = () => {
     }
   }, [pendingProgramSelection, navigate]);
 
+  useEffect(() => {
+    if (showProgramConfirmation && pendingProgramSelection) {
+      const timer = setTimeout(() => {
+        setSelectedProgram(pendingProgramSelection);
+        setShowProgramConfirmation(false);
+        setShowProgramSidePanel(true);
+        setSearchTerm('');
+        setShowSchoolSearchResults(false);
+        setSearchedSchool(null);
+      }, 3000); // 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showProgramConfirmation, pendingProgramSelection]);
+
   // Add this effect to load program details when side panel is shown
   useEffect(() => {
     if (showProgramSidePanel && selectedProgram && !selectedProgramDetails) {
@@ -443,6 +460,11 @@ const AcademicExplorer = () => {
         }, 3000);
       }
     }
+  };
+
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem('academicExplorerWelcomeSeen', 'true');
   };
 
   const handleCompareClick = () => {
@@ -747,18 +769,18 @@ const getAnimationClass = (index) => {
       <style dangerouslySetInnerHTML={{ __html: fadeAnimationStyle }} />
       
       {showWelcomeModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 dark:bg-gray-900/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full relative border border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setShowWelcomeModal(false)}
-              className="absolute top-6 right-6 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 p-1.5 rounded-full"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-10">
-              <div className="flex items-center mb-4 pr-10">
-                <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4 flex-shrink-0">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full relative border border-gray-200 dark:border-gray-700 p-0 overflow-hidden">
+      <button
+        onClick={handleCloseWelcomeModal}
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded-full z-10"
+        aria-label="Close"
+      >
+        <X className="w-5 h-5" />
+      </button>
+      <div className="p-8 sm:p-10">
+        <div className="flex items-center mb-4 pr-10">
+                <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
                   <School className="w-6 h-6 text-white" />
                 </div>
                 <h2 className="text-xl font-bold text-[#2B3E4E] dark:text-white">Welcome to Academic Explorer</h2>
@@ -768,7 +790,7 @@ const getAnimationClass = (index) => {
               </p>
               <div className="space-y-6 mb-8">
                 <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
                     <Compass className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
@@ -779,7 +801,7 @@ const getAnimationClass = (index) => {
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
                     <Building className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
@@ -790,7 +812,7 @@ const getAnimationClass = (index) => {
                   </div>
                 </div>
                 <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
                     <Globe className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
@@ -802,7 +824,7 @@ const getAnimationClass = (index) => {
                 </div>
               </div>
               <button
-                onClick={() => setShowWelcomeModal(false)}
+                onClick={handleCloseWelcomeModal}
                 className="w-full py-4 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-bold rounded-md transition-colors flex items-center justify-center shadow-md"
               >
                 <span className="text-lg mr-2">Start Exploring</span>
@@ -1111,7 +1133,7 @@ const getAnimationClass = (index) => {
                         Program Description
                       </h4>
                       <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
                             {selectedProgramDetails?.description || selectedProgramDetails?.programDescription || 
                               "This program prepares students for careers in this field."}
                           </p>
@@ -1125,7 +1147,7 @@ const getAnimationClass = (index) => {
                         Career Opportunities
                       </h4>
                       <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed h-17 overflow-y-auto pr-2 text-left"> 
                             {selectedProgramDetails?.careerOpportunities || 
                               "Graduates of this program can pursue various career paths in related fields."}
                           </p>
@@ -1189,7 +1211,7 @@ const getAnimationClass = (index) => {
                       {/* School Logo */}
                       <div className="mr-6">
                         {schoolLogos[searchedSchool.schoolId] ? (
-                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden p-1">
+                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-800 overflow-hidden p-1">
                             <img 
                               src={schoolLogos[searchedSchool.schoolId]} 
                               alt={`${searchedSchool.name} logo`}
@@ -1198,7 +1220,7 @@ const getAnimationClass = (index) => {
                             />
                           </div>
                         ) : (
-                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white overflow-hidden">
+                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-800 overflow-hidden">
                             <School className="w-20 h-20 text-[#2B3E4E]" />
                           </div>
                         )}
@@ -1422,30 +1444,13 @@ const getAnimationClass = (index) => {
                               
                               {/* All information in one container with shadow */}
                               <div className="space-y-3 bg-white dark:bg-gray-700/60 p-5 rounded-lg mb-4 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow">
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                  <MapPin className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                                <span className="truncate">{school.location}</span>
-                              </div>
-                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                  <Globe className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                                <span>{school.type}</span>
-                              </div>
-                                
-                                {/* Programs Offered - divider line */}
-                                <div className="h-px bg-gray-200 dark:bg-gray-600 my-3"></div>
-                                
-                                {/* Programs Offered inside the same container - left aligned */}
-                                <div>
-                                  <div className="flex items-center">
-                                    <BookOpen className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                                    <h4 className="font-medium text-gray-800 dark:text-gray-200">Programs Offered</h4>
-                                  </div>
-                                  <div className="mt-2 ml-8">
-                                    <div className="flex flex-col items-start">
-                                      <span className="text-[#FFB71B] text-3xl font-bold">{schoolProgramCounts[school.schoolId] || "0"}</span>
-                                      <span className="text-sm text-gray-600 dark:text-gray-400 mt-1">Academic Programs Available</span>
-                                    </div>
-                                  </div>
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                    <MapPin className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
+                                  <span className="truncate">{school.location}</span>
+                                </div>
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                    <Globe className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
+                                  <span>{school.type}</span>
                                 </div>
                               </div>
                               
@@ -1534,7 +1539,7 @@ const getAnimationClass = (index) => {
                                 <button 
                                   className={`w-full py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium ${
                                     selectedSchools.find(s => s.schoolId === school.schoolId) ? 
-                                    'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
+                                    'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30' 
                                     : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1628,57 +1633,19 @@ const getAnimationClass = (index) => {
                     </div>
                   ) : (
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {selectedProgramDetails?.description || selectedProgramDetails?.programDescription || 
-                       "This program prepares students for careers in this field. Would you like to see schools that offer this program?"}
+                      {selectedProgramDetails?.description ||
+                        selectedProgramDetails?.programDescription ||
+                        "Select a program from the dropdown menu to see its description."}
                     </p>
                   )}
                 </div>
               </div>
-              
-              {/* Career prospects */}
-              <div className="mb-8">
-                <h3 className="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                  <Compass className="w-4 h-4 mr-2 text-[#FFB71B]" />
-                  Explore Your Future
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/20 p-4 rounded-lg border border-[#2B3E4E]/20 dark:border-[#2B3E4E]/30">
-                    <div className="font-medium text-[#2B3E4E] dark:text-[#FFB71B] mb-1">Find Available Schools</div>
-                    <p className="text-sm text-[#2B3E4E]/80 dark:text-gray-300/80">Discover institutions offering this program</p>
-                  </div>
-                  <div className="bg-[#FFB71B]/10 dark:bg-[#FFB71B]/20 p-4 rounded-lg border border-[#FFB71B]/20 dark:border-[#FFB71B]/30">
-                    <div className="font-medium text-[#2B3E4E] dark:text-[#FFB71B] mb-1">Compare Options</div>
-                    <p className="text-sm text-[#2B3E4E]/80 dark:text-gray-300/80">Select up to 3 schools to compare details</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Action buttons */}
-              <div className="flex gap-4 flex-col sm:flex-row">
-                <button
-                  onClick={() => {
-                    setSelectedProgram(pendingProgramSelection);
-                    setShowProgramConfirmation(false);
-                    setShowProgramSidePanel(true);
-                    setSearchTerm('');
-                    setShowSchoolSearchResults(false);
-                    setSearchedSchool(null);
-                  }}
-                  className="py-3 px-6 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] rounded-lg transition shadow-md hover:shadow-lg flex-1 font-medium flex items-center justify-center"
-                >
-                  <School className="w-5 h-5 mr-2" />
-                  Show Available Schools
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProgramConfirmation(false);
-                    setPendingProgramSelection(null);
-                  }}
-                  className="py-3 px-6 bg-white dark:bg-gray-700 text-[#2B3E4E] dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600 flex-1 flex items-center justify-center"
-                >
-                  <X className="w-5 h-5 mr-2" />
-                  Cancel
-                </button>
+
+              <div className="flex items-center justify-center mt-6">
+                <span className="text-gray-500 dark:text-gray-300 text-sm">
+                  Loading available schools...
+                </span>
+                <span className="ml-2 w-4 h-4 border-2 border-[#FFB71B] border-t-transparent rounded-full animate-spin"></span>
               </div>
             </div>
           </div>
@@ -1686,19 +1653,18 @@ const getAnimationClass = (index) => {
       )}
       {/* School Details Modal */}
       {showSchoolDetailsModal && selectedSchoolDetails && (
-        <div className="fixed inset-0 backdrop-blur-md bg-black/40 dark:bg-gray-900/60 flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full relative border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden">
-            {/* Close button at the top-right corner */}
+        <div className="fixed inset-0 backdrop-blur-md bg-black/40 dark:bg-gray-900/60 flex items-center justify-center z-[100] p-2">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full relative border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden h-[90vh]">
+            {/* Close button */}
             <button
               onClick={() => setShowSchoolDetailsModal(false)}
-              className="absolute top-4 right-4 bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 p-2 rounded-full hover:bg-white dark:hover:bg-gray-700 z-10 shadow-md"
+              className="absolute top-3 right-3 bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 p-1.5 rounded-full hover:bg-white dark:hover:bg-gray-700 z-10 shadow"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
             </button>
-            
-            {/* School Banner Background */}
-            <div className="h-52 bg-[#2B3E4E] relative overflow-hidden w-full">
+            {/* Banner */}
+            <div className="h-32 bg-[#2B3E4E] relative overflow-hidden w-full">
               {getSchoolBackground(selectedSchoolDetails.name) ? (
                 <img 
                   src={getSchoolBackground(selectedSchoolDetails.name)} 
@@ -1708,80 +1674,92 @@ const getAnimationClass = (index) => {
               ) : (
                 <div className="absolute inset-0 bg-[#2B3E4E] opacity-90"></div>
               )}
-              
-              {/* School Name Overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="px-6 py-3 text-center">
-                  <h2 className="text-white text-3xl font-bold text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}>
+                <div className="px-4 py-2 text-center">
+                  <h2 className="text-white text-2xl font-bold text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
                     {selectedSchoolDetails.name}
                   </h2>
                 </div>
               </div>
             </div>
-            
-            {/* Content area with negative margin to overlap with header */}
-            <div className="px-8 pb-8 relative">
-              {/* School logo that overlaps with the header */}
-              <div className="absolute -top-20 right-8 w-40 h-40">
-                <div className="w-40 h-40 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-800 overflow-hidden p-1">
-                  {schoolLogos[selectedSchoolDetails.schoolId] ? (
-                    <img 
-                      src={schoolLogos[selectedSchoolDetails.schoolId]} 
-                      alt={`${selectedSchoolDetails.name} logo`}
-                      className="object-contain"
-                      style={{ width: "95%", height: "95%" }}
-                    />
-                  ) : (
-                    <School className="w-28 h-28 text-[#2B3E4E]" />
-                  )}
-                </div>
+            {/* Content */}
+            <div className="px-4 pb-4 relative">
+              {/* Logo */}
+              <div className="absolute -top-10 right-4">
+                {schoolLogos[selectedSchoolDetails.schoolId] ? (
+                  <img 
+                    src={schoolLogos[selectedSchoolDetails.schoolId]} 
+                    alt={`${selectedSchoolDetails.name} logo`}
+                    className="w-25 h-25 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-25 h-25 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
+                    <School className="w-24 h-24 text-[#2B3E4E]" />
+                  </div>
+                )}
               </div>
-              
-              {/* School location info */}
-              <div className="pt-12 pb-4 flex items-center">
+              {/* Location */}
+              <div className="pt-10 pb-2 flex items-center text-sm">
                 <div className="flex items-center text-gray-600 dark:text-gray-300">
-                  <MapPin className="w-5 h-5 mr-2 text-[#FFB71B]" />
+                  <MapPin className="w-4 h-4 mr-1 text-[#FFB71B]" />
                   {selectedSchoolDetails.location}
                 </div>
                 {selectedSchoolDetails.type && (
-                  <div className="flex items-center text-gray-600 dark:text-gray-300 ml-6">
-                    <School className="w-5 h-5 mr-2 text-[#FFB71B]" />
+                  <div className="flex items-center text-gray-600 dark:text-gray-300 ml-4">
+                    <School className="w-4 h-4 mr-1 text-[#FFB71B]" />
                     {selectedSchoolDetails.type}
                   </div>
                 )}
               </div>
-              
-              {/* About the School - Full width */}
-              <div className="bg-gray-50 dark:bg-gray-700/40 p-6 rounded-xl mb-6">
-                <h3 className="text-lg font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-4 flex items-center">
-                  <Info className="w-5 h-5 mr-2" />
+              {/* About */}
+              <div className="bg-gray-50 dark:bg-gray-700/40 p-3 rounded-lg mb-4 h-[20vh] flex flex-col justify-center">
+                <h3 className="text-base font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-2 flex items-center">
+                  <Info className="w-4 h-4 mr-1" />
                   About the School
                 </h3>
-                <div className="max-h-[200px] overflow-y-auto pr-2">
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                <div>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                     {selectedSchoolDetails.description || 'No description available for this school.'}
                   </p>
                 </div>
               </div>
-              
-              {/* Programs Offered - Below description */}
-              <div className="bg-[#2B3E4E]/5 dark:bg-[#2B3E4E]/20 p-6 rounded-xl border border-[#2B3E4E]/10 dark:border-[#2B3E4E]/30 mb-8">
-                <h3 className="text-lg font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-4 flex items-center">
-                  <BookOpen className="w-5 h-5 mr-2" />
-                  Programs Offered
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300 flex items-center font-medium text-left">
-                  <span className="text-2xl mr-2 text-[#FFB71B]">{schoolProgramCounts[selectedSchoolDetails.schoolId] || "0"}</span> 
-                  Academic Programs Available
-                </p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mt-2 text-left">
-                  Select a program from the dropdown menu to see which schools offer it.
-                </p>
+              {/* Program Description */}
+              <div className="bg-[#2B3E4E]/5 dark:bg-[#2B3E4E]/20 p-3 h-[27vh] rounded-lg border border-[#2B3E4E]/10 dark:border-[#2B3E4E]/30 mb-4 shadow relative overflow-hidden flex flex-col justify-center items-center">
+                <div className="absolute -top-6 -left-6 w-20 h-20 bg-gradient-to-br from-[#FFB71B]/40 to-[#2B3E4E]/10 rounded-full blur-xl opacity-60 pointer-events-none"></div>
+                
+                {/* Left-aligned heading */}
+                <div className="w-full">
+                  <h3 className="text-base font-extrabold text-[#2B3E4E] dark:text-[#FFB71B] flex gap-2 tracking-tight mb-3">
+                    <BookOpen className="w-5 h-5 mr-1 text-[#FFB71B] drop-shadow" />
+                    Program Description
+                  </h3>
+                </div>
+                
+                {/* Top: badges and program name */}
+                <div className="flex flex-col items-center w-full">
+                  <span className="uppercase text-[10px] font-semibold tracking-wider text-[#2B3E4E]/70 dark:text-[#FFB71B]/80 bg-white/60 dark:bg-gray-800/60 px-1.5 py-0.5 rounded mb-2">
+                    Selected Program
+                  </span>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-[#FFB71B]/90 to-[#FFB71B]/60 text-[#2B3E4E] dark:text-[#2B3E4E] font-bold shadow text-sm border border-[#FFB71B] mb-2">
+                    <BookOpen className="w-4 h-4 mr-1 text-[#2B3E4E]" />
+                    {selectedProgramDetails?.programName ||
+                      programs.find(p => p.programId === selectedProgram)?.programName ||
+                      "N/A"}
+                  </span>
+                  <hr className="border-t border-[#FFB71B]/30 mb-2 w-full" />
+                </div>
+
+                {/* Center only the description vertically */}
+                <div className="flex-1 flex items-center w-full">
+                  <p className="text-gray-800 dark:text-gray-200 text-base leading-snug font-medium drop-shadow-sm line-clamp-4 text-center w-full">
+                    {selectedProgramDetails?.description ||
+                      selectedProgramDetails?.programDescription ||
+                      "Select a program from the dropdown menu to see its description."}
+                  </p>
+                </div>
               </div>
-              
               {/* Action buttons */}
-              <div className="flex gap-4 flex-col sm:flex-row">
-                {/* Virtual tour button removed */}
+              <div className="flex gap-2 flex-col sm:flex-row">
                 <button
                   onClick={() => {
                     handleSchoolSelect(selectedSchoolDetails);
@@ -1789,28 +1767,28 @@ const getAnimationClass = (index) => {
                       setShowSchoolDetailsModal(false);
                     }
                   }}
-                  className={`py-3 px-6 rounded-lg transition shadow-md hover:shadow-lg flex-1 flex items-center justify-center font-medium
+                  className={`py-2 px-4 rounded-lg transition shadow hover:shadow-md flex-1 flex items-center justify-center font-medium
                     ${selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) 
-                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30 border border-red-200 dark:border-red-900/30' 
+                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30' 
                       : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
                 >
                   {selectedSchools.find(s => s.schoolId === selectedSchoolDetails.schoolId) ? (
                     <>
-                      <StarOff className="w-5 h-5 mr-2" />
+                      <StarOff className="w-4 h-4 mr-1" />
                       Remove from Comparison
                     </>
                   ) : (
                     <>
-                      <Star className="w-5 h-5 mr-2" />
+                      <Star className="w-4 h-4 mr-1" />
                       Add to Comparison
                     </>
                   )}
                 </button>
                 <button
                   onClick={() => setShowSchoolDetailsModal(false)}
-                  className="py-3 px-6 bg-white dark:bg-gray-700 text-[#2B3E4E] dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600 flex-1 flex items-center justify-center"
+                  className="py-2 px-4 bg-white dark:bg-gray-700 text-[#2B3E4E] dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600 flex-1 flex items-center justify-center"
                 >
-                  <X className="w-5 h-5 mr-2" />
+                  <X className="w-4 h-4 mr-1" />
                   Close
                 </button>
               </div>
