@@ -1,7 +1,9 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import FutureULogo from '../assets/FutureU_logo.png'; // Import the logo - adjust path/extension if needed
  
 const Navigation = () => {
   const location = useLocation();
@@ -26,51 +28,67 @@ const Navigation = () => {
   };
  
   return (
-    <nav className="bg-[#111d24] border-b border-gray-700">
-      <div className="container mx-auto px-4">
+    <nav className="bg-transparent border-b border-[#2B3E4E]/20 shadow-lg backdrop-blur-md nav-override">
+      <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Brand */}
-          <Link to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} className="text-white text-xl font-semibold">
-            FutureU {userRole === 'ADMIN' && <span className="text-[#FFB71B] text-sm ml-2">Admin</span>}
+          {/* Brand with Logo */}
+          <Link 
+            to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} 
+            className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+          >
+            {/* Real Logo - Increased Size */}
+            <img 
+              src={FutureULogo} 
+              alt="FutureU Logo" 
+              className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+            />
+            
+            <div className="text-black text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
+              FutureU
+            </div>
+            {userRole === 'ADMIN' && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md">
+                Admin
+              </span>
+            )}
           </Link>
- 
+
           {/* Navigation Links */}
-          <div className="flex space-x-1">
+          <div className="flex items-center space-x-1">
             {/* Admin-specific navigation */}
             {isAuthenticated && userRole === 'ADMIN' && (
               <>
                 <Link
                   to="/admin-dashboard"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/admin-dashboard')
-                      ? 'bg-[#FFB71B] text-[#2B3E4E]'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Dashboard
+                  <span className="relative z-10">Dashboard</span>
                 </Link>
                 
-                {/* Add other admin-specific links here */}
                 <Link
                   to="/assessment-categories"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     location.pathname.includes('/assessment')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Assessment Management
+                  <span className="relative z-10">Assessment Management</span>
                 </Link>
                 
                 <Link
                   to="/questions"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     location.pathname.includes('/questions')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Questions
+                  <span className="relative z-10">Questions</span>
                 </Link>
               </>
             )}
@@ -80,79 +98,79 @@ const Navigation = () => {
               <>
                 <Link
                   to="/user-landing-page"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/user-landing-page')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Home
+                  <span className="relative z-10">Home</span>
                 </Link>
                 
                 <Link
                   to="/academic-explorer"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/academic-explorer')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Academic Explorer
+                  <span className="relative z-10">Academic Explorer</span>
                 </Link>
                 
                 <Link
                   to="/accreditation"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     location.pathname.includes('/accreditation')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Accreditation
+                  <span className="relative z-10">Accreditation</span>
                 </Link>
                 
                 <Link
                   to="/virtual-campus-tours"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/virtual-campus-tours')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Virtual Campus Tours
+                  <span className="relative z-10">Virtual Campus Tours</span>
                 </Link>
                 
                 <Link
                   to="/testimonials"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/testimonials')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Testimonials
+                  <span className="relative z-10">Testimonials</span>
                 </Link>
                 
                 <Link
                   to="/career-pathways"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/career-pathways')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Career Pathways
+                  <span className="relative z-10">Career Pathways</span>
                 </Link>
                 
                 <Link
                   to="/assessment-dashboard"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     location.pathname.includes('/assessment')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Assessments
+                  <span className="relative z-10">Assessments</span>
                 </Link>
               </>
             )}
@@ -162,46 +180,48 @@ const Navigation = () => {
               <>
                 <Link
                   to="/user-landing-page"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/user-landing-page')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'text-white hover:bg-gray-700'
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  Home
+                  <span className="relative z-10">Home</span>
                 </Link>
               </>
             )}
            
             {/* Authentication buttons */}
-            {isAuthenticated ? (
-              <button
-                onClick={handleLogout}
-                className="ml-2 px-4 py-2 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-md transition-colors"
-              >
-                Logout
-              </button>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive('/login')
-                      ? 'bg-[#f5fafc] text-white'
-                      : 'bg-[#1D63A1] text-white hover:bg-[#1D63A1]/90'
-                  }`}
+            <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#2B3E4E]/30">
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
                 >
-                  Sign In
-                </Link>
-               
-                <Link
-                  to="/register"
-                  className="ml-2 px-4 py-2 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-md transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+                  <span className="relative z-10">Logout</span>
+                </button>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 border border-[#2B3E4E] ${
+                      isActive('/login')
+                        ? 'bg-[#FFB71B]/20 text-[#2B3E4E] shadow-lg'
+                        : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90 hover:shadow-lg'
+                    }`}
+                  >
+                    <span className="relative z-10">Sign In</span>
+                  </Link>
+                 
+                  <Link
+                    to="/register"
+                    className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+                  >
+                    <span className="relative z-10">Sign Up</span>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
