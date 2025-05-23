@@ -196,9 +196,12 @@ public class GeminiAIService {
             if (categorizedCareers.containsKey(category)) {
                 promptBuilder.append("\n" + category + " CAREERS:\n");
                 for (CareerEntity career : categorizedCareers.get(category)) {
-                    promptBuilder.append("   - ").append(career.getCareerTitle());
+                    promptBuilder.append("   - Title: ").append(career.getCareerTitle());
                     if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
-                        promptBuilder.append(": ").append(career.getCareerDescription());
+                        promptBuilder.append(" | Description: ").append(career.getCareerDescription());
+                    }
+                    if (career.getIndustry() != null && !career.getIndustry().isEmpty()) {
+                        promptBuilder.append(" | Industry: ").append(career.getIndustry());
                     }
                     promptBuilder.append("\n");
                 }
@@ -210,9 +213,12 @@ public class GeminiAIService {
             if (!strengths.containsKey(entry.getKey())) {
                 promptBuilder.append("\n" + entry.getKey() + " CAREERS:\n");
                 for (CareerEntity career : entry.getValue()) {
-                    promptBuilder.append("   - ").append(career.getCareerTitle());
+                    promptBuilder.append("   - Title: ").append(career.getCareerTitle());
                     if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
-                        promptBuilder.append(": ").append(career.getCareerDescription());
+                        promptBuilder.append(" | Description: ").append(career.getCareerDescription());
+                    }
+                    if (career.getIndustry() != null && !career.getIndustry().isEmpty()) {
+                        promptBuilder.append(" | Industry: ").append(career.getIndustry());
                     }
                     promptBuilder.append("\n");
                 }
@@ -220,11 +226,12 @@ public class GeminiAIService {
         }
         
         // Add detailed instruction for the AI response format
+        promptBuilder.append("\nIMPORTANT: For each career, consider the title, description, and industry fields when matching recommendations.\n");
         promptBuilder.append("\n2. For each recommended career pathway, provide a DETAILED explanation that connects specific assessment results to career requirements and prospects\n");
         promptBuilder.append("3. Provide a confidence score (0-100) for each recommendation based on how well it matches the assessment profile\n");
         promptBuilder.append("4. Format the response as a structured JSON with these exact keys:\n");
         promptBuilder.append("   - 'summary': An object with 'strengths' (array of strings) and 'weaknesses' (array of strings)\n");
-        promptBuilder.append("   - 'topCareers': An array of objects, each with 'career' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
+        promptBuilder.append("   - 'topCareers': An array of objects, each with 'careerId' (number), 'career' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
         promptBuilder.append("5. IMPORTANT: Only recommend career pathways from the provided list above - exact career titles must be used\n");
         promptBuilder.append("\nExample JSON Response:\n");
         promptBuilder.append("{\n");
@@ -234,6 +241,7 @@ public class GeminiAIService {
         promptBuilder.append("  },\n");
         promptBuilder.append("  \"topCareers\": [\n");
         promptBuilder.append("    {\n");
+        promptBuilder.append("      \"careerId\": 123,\n");
         promptBuilder.append("      \"career\": \"Software Engineer\",\n");
         promptBuilder.append("      \"explanation\": \"Strong logical reasoning and STEM aptitude align with this pathway.\",\n");
         promptBuilder.append("      \"confidenceScore\": 95\n");

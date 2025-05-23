@@ -23,7 +23,6 @@ public class RecommendationEntity {
     @JoinColumn(name = "careerId")
     private CareerEntity careerPath;
 
-    private String suggestedProgram;
     private double confidenceScore;
 
     @Column(length = 1000)
@@ -39,9 +38,6 @@ public class RecommendationEntity {
 
     public CareerEntity getCareerPath() { return careerPath; }
     public void setCareerPath(CareerEntity careerPath) { this.careerPath = careerPath; }
-
-    public String getSuggestedProgram() { return suggestedProgram; }
-    public void setSuggestedProgram(String suggestedProgram) { this.suggestedProgram = suggestedProgram; }
 
     public double getConfidenceScore() { return confidenceScore; }
     public void setConfidenceScore(double confidenceScore) { this.confidenceScore = confidenceScore; }

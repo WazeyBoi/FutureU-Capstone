@@ -13,6 +13,7 @@ import edu.cit.futureu.entity.RecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 import edu.cit.futureu.repository.RecommendationRepository;
+import edu.cit.futureu.service.CareerService;
 
 @Service
 public class RecommendationService {
@@ -25,6 +26,9 @@ public class RecommendationService {
     
     @Autowired
     private GeminiAIService geminiAIService;
+
+    @Autowired
+    private CareerService careerService;
 
     public RecommendationEntity createRecommendation(RecommendationEntity recommendation) {
         return recommendationRepository.save(recommendation);
@@ -85,11 +89,11 @@ public class RecommendationService {
         Map<String, Object> aiRecommendations = 
             geminiAIService.generateCareerRecommendations(assessmentResult, sectionResults);
 
-        // Safely cast suggestedPrograms to the expected type
-        Object suggestedProgramsObj = aiRecommendations.get("suggestedPrograms");
-        List<Map<String, Object>> suggestedPrograms = new ArrayList<>();
-        if (suggestedProgramsObj instanceof List<?>) {
-            for (Object item : (List<?>) suggestedProgramsObj) {
+        // Safely cast suggestedCareers to the expected type
+        Object suggestedCareersObj = aiRecommendations.get("suggestedCareers");
+        List<Map<String, Object>> suggestedCareers = new ArrayList<>();
+        if (suggestedCareersObj instanceof List<?>) {
+            for (Object item : (List<?>) suggestedCareersObj) {
                 if (item instanceof Map<?, ?>) {
                     Map<?, ?> rawMap = (Map<?, ?>) item;
                     Map<String, Object> typedMap = new HashMap<>();
@@ -98,28 +102,37 @@ public class RecommendationService {
                             typedMap.put((String) entry.getKey(), entry.getValue());
                         }
                     }
-                    suggestedPrograms.add(typedMap);
+                    suggestedCareers.add(typedMap);
                 }
             }
         }
 
-        // Create and save recommendations for all suggested programs
+        // Create and save recommendations for all suggested careers
         List<RecommendationEntity> recommendations = new ArrayList<>();
-        for (Map<String, Object> program : suggestedPrograms) {
+        for (Map<String, Object> careerMap : suggestedCareers) {
             RecommendationEntity recommendation = new RecommendationEntity();
             recommendation.setAssessmentResult(assessmentResult);
-            recommendation.setSuggestedProgram(program.get("name").toString());
+
+            // Set careerPath if careerId is available
+            if (careerMap.containsKey("careerId")) {
+                try {
+                    int careerId = Integer.parseInt(careerMap.get("careerId").toString());
+                    careerService.getCareerById(careerId).ifPresent(recommendation::setCareerPath);
+                } catch (Exception e) {
+                    // Ignore and leave careerPath null if not found
+                }
+            }
 
             // Set confidence score if available
-            if (program.containsKey("confidenceScore")) {
-                recommendation.setConfidenceScore(Double.parseDouble(program.get("confidenceScore").toString()));
+            if (careerMap.containsKey("confidenceScore")) {
+                recommendation.setConfidenceScore(Double.parseDouble(careerMap.get("confidenceScore").toString()));
             } else {
                 recommendation.setConfidenceScore(75.0); // Default confidence score
             }
 
             // Set description if available
-            if (program.containsKey("description")) {
-                recommendation.setDescription(program.get("description").toString());
+            if (careerMap.containsKey("description")) {
+                recommendation.setDescription(careerMap.get("description").toString());
             } else {
                 recommendation.setDescription("No description provided.");
             }
