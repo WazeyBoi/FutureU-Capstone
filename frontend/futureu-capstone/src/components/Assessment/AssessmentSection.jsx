@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import QuestionItem from './QuestionItem';
 
-const AssessmentSection = ({ 
+const AssessmentSection = forwardRef(({
   title, 
   description, 
   questions, 
@@ -16,8 +16,10 @@ const AssessmentSection = ({
   totalQuestions,
   sectionProgress,
   remainingTime,
-  currentSection = 0 
-}) => {
+  currentSection = 0,
+  pageOverride,
+  onPageOverrideHandled,
+}, ref) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   // Check if this is a RIASEC section - if so, use 7 questions per page, otherwise 5
@@ -28,6 +30,15 @@ const AssessmentSection = ({
   // New ref for the section header - better scroll target
   const sectionHeaderRef = useRef(null);
   
+  // Track last handled page override to avoid duplicate calls
+  const lastHandledPageOverride = useRef(null);
+
+  // Expose currentPage to parent via ref
+  useImperativeHandle(ref, () => ({
+    getCurrentPage: () => currentPage,
+    _currentPage: currentPage
+  }), [currentPage]);
+
   // Calculate pagination values
   const indexOfLastQuestion = currentPage * questionsPerPage;
   const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
@@ -116,6 +127,32 @@ const AssessmentSection = ({
     }
   };
 
+  // Handle pageOverride from parent (for number navigation)
+  useEffect(() => {
+    if (
+      pageOverride &&
+      pageOverride !== currentPage &&
+      lastHandledPageOverride.current !== pageOverride
+    ) {
+      setCurrentPage(pageOverride);
+      lastHandledPageOverride.current = pageOverride;
+    }
+  }, [pageOverride, currentPage]);
+
+  // Notify parent after page is set
+  useEffect(() => {
+    if (
+      pageOverride &&
+      currentPage === pageOverride &&
+      onPageOverrideHandled &&
+      lastHandledPageOverride.current === pageOverride
+    ) {
+      onPageOverrideHandled();
+      // Reset tracker so it can handle future overrides
+      lastHandledPageOverride.current = null;
+    }
+  }, [currentPage, pageOverride, onPageOverrideHandled]);
+
   // Generate page numbers
   const pageNumbers = [];
   for (let i = 1; i <= totalPages; i++) {
@@ -196,6 +233,7 @@ const AssessmentSection = ({
         {currentQuestions.map((question, index) => (
           <motion.div
             key={question.questionId}
+            id={`question-${question.questionId}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -340,6 +378,6 @@ const AssessmentSection = ({
       )}
     </motion.div>
   );
-};
+});
 
 export default AssessmentSection;

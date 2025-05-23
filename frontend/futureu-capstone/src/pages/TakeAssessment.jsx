@@ -49,6 +49,7 @@ const TakeAssessment = () => {
   
   // Reference to the assessment section container
   const sectionRef = useRef(null);
+  const assessmentSectionRef = useRef(null); // Add a ref to AssessmentSection to control page navigation
   
   // Add states for saving progress
   const [isSaving, setIsSaving] = useState(false);
@@ -62,6 +63,12 @@ const TakeAssessment = () => {
   const [showResumeModal, setShowResumeModal] = useState(false);
   const [resumeData, setResumeData] = useState(null);
   
+  // Add state to control which page to show in AssessmentSection
+  const [sectionPageOverrides, setSectionPageOverrides] = useState({}); // { sectionIndex: pageNumber }
+  
+  // Add state to track which question to scroll to after navigation
+  const [pendingScroll, setPendingScroll] = useState(null); // { sectionIndex, questionIndex }
+
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
     let timer = null;
@@ -651,6 +658,64 @@ const TakeAssessment = () => {
     }, 100);
   };
   
+  // Handler for number navigation from SectionNavigator
+  const handleNavigateToQuestion = (sectionIndex, questionIndex) => {
+    setCurrentSection(sectionIndex);
+
+    const section = sectionList[sectionIndex];
+    const questionsPerPage = section.questionsPerPage || (section.questions.length > 0 && section.questions[0].isRiasecQuestion ? 7 : 5);
+    const page = Math.floor(questionIndex / questionsPerPage) + 1;
+
+    // If already on the correct section and page, scroll immediately
+    if (
+      sectionIndex === currentSection &&
+      assessmentSectionRef.current &&
+      assessmentSectionRef.current.getCurrentPage &&
+      assessmentSectionRef.current.getCurrentPage() === page
+    ) {
+      const question = section.questions[questionIndex];
+      if (question) {
+        setTimeout(() => {
+          const questionElem = document.getElementById(`question-${question.questionId}`);
+          if (questionElem) {
+            questionElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      return;
+    }
+
+    // Otherwise, set page override and pending scroll
+    setSectionPageOverrides(prev => ({
+      ...prev,
+      [sectionIndex]: page
+    }));
+    setPendingScroll({ sectionIndex, questionIndex });
+  };
+
+  // After page override is handled and AssessmentSection is rendered, scroll to the question
+  useEffect(() => {
+    if (
+      pendingScroll &&
+      pendingScroll.sectionIndex === currentSection &&
+      !sectionPageOverrides[currentSection]
+    ) {
+      const section = sectionList[currentSection];
+      const question = section?.questions?.[pendingScroll.questionIndex];
+      if (question) {
+        setTimeout(() => {
+          const questionElem = document.getElementById(`question-${question.questionId}`);
+          if (questionElem) {
+            questionElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          setPendingScroll(null);
+        }, 100); // Slight delay to ensure DOM is updated
+      } else {
+        setPendingScroll(null);
+      }
+    }
+  }, [pendingScroll, currentSection, sectionList, sectionPageOverrides]);
+
   // Assessment completion
   const handleComplete = async () => {
     try {
@@ -987,7 +1052,7 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     Save & Exit
                   </>
@@ -1093,6 +1158,8 @@ const TakeAssessment = () => {
             currentSection={currentSection} 
             onSectionChange={handleSectionChange}
             sectionCompletion={sectionCompletion}
+            onNavigateToQuestion={handleNavigateToQuestion}
+            userAnswers={userAnswers} // <-- Pass userAnswers here
           />
         </div>
         
@@ -1109,6 +1176,7 @@ const TakeAssessment = () => {
               className="flex-grow"
             >
               <AssessmentSection
+                ref={assessmentSectionRef}
                 title={currentSectionData.title}
                 description={currentSectionData.description}
                 questions={currentSectionData.questions}
@@ -1123,6 +1191,16 @@ const TakeAssessment = () => {
                 sectionProgress={sectionProgress}
                 remainingTime={timeRemaining}
                 currentSection={currentSection}
+                // Pass page override if set
+                pageOverride={sectionPageOverrides[currentSection]}
+                onPageOverrideHandled={() => {
+                  setSectionPageOverrides(prev => {
+                    const copy = { ...prev };
+                    delete copy[currentSection];
+                    return copy;
+                  });
+                }}
+                getCurrentPage={() => assessmentSectionRef.current?._currentPage || 1}
               />
             </motion.div>
           </AnimatePresence>
