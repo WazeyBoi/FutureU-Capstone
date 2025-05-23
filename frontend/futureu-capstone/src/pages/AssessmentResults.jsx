@@ -201,24 +201,15 @@ const AssessmentResults = () => {
   
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center h-screen bg-[#F8F9FA] relative">
-        {/* Playful floating accent shapes */}
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
-          <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
-          <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
+      <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+        <div>
+          <img 
+            src="/src/assets/characters/quirky.svg" 
+            alt="Quirky mascot" 
+            className="quirky-bounce h-50 mx-auto"
+          />
         </div>
-        <div className="relative z-10">
-          <div className="loader"></div>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-[#1D63A1] font-medium mt-4"
-          >
-            Analyzing your assessment results...
-          </motion.p>
-        </div>
+        <p className="text-lg font-bold text-gray-600">Analyzing your assessment results...</p>
       </div>
     );
   }

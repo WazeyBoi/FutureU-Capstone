@@ -149,8 +149,15 @@ const AssessmentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <div className="loader"></div>
+      <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+        <div>
+          <img 
+            src="/src/assets/characters/quirky.svg" 
+            alt="Quirky mascot" 
+            className="quirky-bounce h-50 mx-auto"
+          />
+        </div>
+        <p className="text-lg font-bold text-gray-600">Please wait for a moment...</p>
       </div>
     );
   }

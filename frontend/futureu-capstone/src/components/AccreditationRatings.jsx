@@ -89,11 +89,15 @@ const AccreditationRatings = () => {
   // Add conditional rendering for loading and error states
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-800 border-r-transparent mb-4"></div>
-          <p className="text-gray-700">Loading accreditation data...</p>
+      <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+        <div>
+          <img 
+            src="/src/assets/characters/quirky.svg" 
+            alt="Quirky mascot" 
+            className="quirky-bounce h-50 mx-auto"
+          />
         </div>
+        <p className="text-lg font-bold text-gray-600">Loading accreditation data...</p>
       </div>
     );
   }
