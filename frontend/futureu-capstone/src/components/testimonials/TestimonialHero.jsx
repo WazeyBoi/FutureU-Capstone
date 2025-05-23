@@ -15,18 +15,18 @@ const TestimonialHero = () => {
   const statsData = [
     { 
       icon: <FaUserGraduate className="text-yellow-500 text-2xl" />,
-      count: "1,200+",
+      count: "",
       label: "Alumni Stories"
     },
     { 
       icon: <FaStar className="text-yellow-500 text-2xl" />,
-      count: "4.8",
-      label: "Average Rating"
+      count: "",
+      label: "Ratings"
     },
     { 
       icon: <FaGraduationCap className="text-yellow-500 text-2xl" />,
-      count: "25+",
-      label: "Schools"
+      count: "",
+      label: "Schools Offered"
     }
   ];
 
@@ -62,12 +62,12 @@ const TestimonialHero = () => {
             transition={{ delay: 0.4 }}
           >
             {statsData.map((stat, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-lg p-6 backdrop-filter">
+              <div key={index} className="bg-[#2B3E4E]/70 backdrop-blur-sm rounded-lg p-6 backdrop-filter shadow-lg">
                 <div className="flex justify-center mb-3">
                   {stat.icon}
                 </div>
                 <div className="text-3xl font-bold text-white">{stat.count}</div>
-                <div className="text-gray-300">{stat.label}</div>
+                <div className="text-lg text-gray-100">{stat.label}</div>
               </div>
             ))}
           </motion.div>
