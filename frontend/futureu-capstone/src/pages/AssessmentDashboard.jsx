@@ -6,6 +6,36 @@ import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
 
+// Import Chart.js components at the top of the file
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Bar, Line, Radar } from 'react-chartjs-2';
+
+// Register Chart.js components
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
 const AssessmentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -67,16 +97,37 @@ const AssessmentDashboard = () => {
         // Fetch all available assessments
         const allAssessments = await assessmentService.getAllAssessments();
         
-        // Fetch completed assessments using the new method we added to userAssessmentService
+        // Fetch completed assessments with their results
         const completedData = await userAssessmentService.getCompletedAssessments(userId);
+        console.log('Completed assessments data:', completedData); // Debug log
         setCompletedAssessments(completedData);
+        
+        // For each completed assessment, fetch its results if not already included
+        const completedWithResults = await Promise.all(completedData.map(async assessment => {
+          if (!assessment.result) {
+            try {
+              const resultData = await userAssessmentService.getAssessmentResults(assessment.userQuizAssessment);
+              return {
+                ...assessment,
+                result: resultData.assessmentResult,
+                sectionResults: resultData.sectionResults
+              };
+            } catch (err) {
+              console.error(`Error fetching results for assessment ${assessment.userQuizAssessment}:`, err);
+              return assessment;
+            }
+          }
+          return assessment;
+        }));
+        
+        setCompletedAssessments(completedWithResults);
         
         // Calculate assessment stats
         const statsMap = {};
         const groupedAssessments = {};
         
         // Group completed assessments by assessment ID
-        completedData.forEach(assessment => {
+        completedWithResults.forEach(assessment => {
           const assessmentId = assessment.assessment.assessmentId;
           
           if (!groupedAssessments[assessmentId]) {
@@ -114,6 +165,7 @@ const AssessmentDashboard = () => {
           }
         });
         
+        console.log('Processed assessment stats:', statsMap); // Debug log
         setCompletedByAssessment(groupedAssessments);
         setAssessmentStats(statsMap);
 
@@ -145,6 +197,265 @@ const AssessmentDashboard = () => {
 
   const handleViewResults = (userQuizAssessmentId) => {
     navigate(`/assessment-results/${userQuizAssessmentId}`);
+  };
+
+  // Replace the generateScoreTrendData function with this updated version that formats data for a radar chart
+  const generateScoreTrendData = (assessmentStats) => {
+    // Get unique section types to use as labels (e.g., GSA, Academic Track, Interest, etc.)
+    const sectionTypes = new Set();
+    
+    // For each assessment, collect all sections from all attempts
+    Object.entries(completedByAssessment).forEach(([assessmentId, attempts]) => {
+      attempts.forEach(attempt => {
+        const sectionResults = attempt.sectionResults || attempt.result?.sectionResults;
+        if (sectionResults && Array.isArray(sectionResults)) {
+          sectionResults.forEach(section => {
+            if (section.sectionType) {
+              sectionTypes.add(section.sectionType);
+            }
+          });
+        }
+      });
+    });
+    
+    // If no section types were found, use placeholder categories
+    const sectionTypesList = Array.from(sectionTypes).length > 0 
+      ? Array.from(sectionTypes) 
+      : ['Academic', 'Interest', 'GSA', 'Other'];
+  
+    // Colors for different assessments - extended palette with more colors
+    const colors = [
+      { bg: 'rgba(29, 99, 161, 0.2)', border: 'rgba(29, 99, 161, 1)' },
+      { bg: 'rgba(255, 183, 27, 0.2)', border: 'rgba(255, 183, 27, 1)' },
+      { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' },
+      { bg: 'rgba(153, 102, 255, 0.2)', border: 'rgba(153, 102, 255, 1)' },
+      { bg: 'rgba(255, 99, 132, 0.2)', border: 'rgba(255, 99, 132, 1)' },
+      { bg: 'rgba(255, 159, 64, 0.2)', border: 'rgba(255, 159, 64, 1)' },
+      { bg: 'rgba(54, 162, 235, 0.2)', border: 'rgba(54, 162, 235, 1)' },
+      { bg: 'rgba(255, 206, 86, 0.2)', border: 'rgba(255, 206, 86, 1)' },
+      { bg: 'rgba(231, 233, 237, 0.2)', border: 'rgba(231, 233, 237, 1)' }
+    ];
+    
+    // Create datasets - one for EACH ATTEMPT (not just each assessment type)
+    const datasets = [];
+    let colorIndex = 0;
+    
+    Object.entries(completedByAssessment).forEach(([assessmentId, attempts]) => {
+      const assessment = attempts[0].assessment;
+      const title = assessment.title;
+      
+      // Process all attempts instead of just the latest one
+      attempts.forEach((attempt, attemptIndex) => {
+        const color = colors[colorIndex % colors.length];
+        colorIndex++;
+        
+        // Calculate scores per section type for this attempt
+        const sectionScores = {};
+        
+        const attemptDate = new Date(attempt.dateCompleted);
+        const formattedDate = attemptDate.toLocaleDateString();
+        
+        const sectionResults = attempt.sectionResults || attempt.result?.sectionResults;
+        
+        if (sectionResults && Array.isArray(sectionResults)) {
+          sectionResults.forEach(section => {
+            const sectionType = section.sectionType || 'Other';
+            if (!sectionScores[sectionType]) {
+              sectionScores[sectionType] = 0;
+            }
+            sectionScores[sectionType] = section.percentageScore || section.sectionScore || 0;
+          });
+        }
+        
+        // If we have an overall score but no section breakdowns, use the overall score
+        if (Object.keys(sectionScores).length === 0 && attempt.result?.overallScore) {
+          sectionScores['Overall'] = attempt.result.overallScore;
+          if (!sectionTypesList.includes('Overall')) {
+            sectionTypesList.push('Overall');
+          }
+        }
+        
+        // Create data array with scores for each section type (fill with 0 for missing sections)
+        const data = sectionTypesList.map(sectionType => sectionScores[sectionType] || 0);
+        
+        datasets.push({
+          label: `${title} (Attempt ${attemptIndex + 1} - ${formattedDate})`,
+          data: data,
+          backgroundColor: color.bg,
+          borderColor: color.border,
+          pointBackgroundColor: color.border,
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: color.border,
+          borderWidth: 2,
+          fill: true
+        });
+      });
+    });
+    
+    return {
+      labels: sectionTypesList,
+      datasets: datasets
+    };
+  };
+
+  const generateImprovementData = (completedByAssessment) => {
+    const improvements = Object.entries(completedByAssessment).map(([assessmentId, attempts]) => {
+      if (attempts.length < 2) return { id: assessmentId, name: attempts[0].assessment.title, improvement: 0 };
+      
+      // Sort attempts by date
+      const sortedAttempts = [...attempts].sort((a, b) => 
+        new Date(a.dateCompleted) - new Date(b.dateCompleted));
+      
+      const firstScore = sortedAttempts[0].result?.overallScore || 0;
+      const lastScore = sortedAttempts[sortedAttempts.length - 1].result?.overallScore || 0;
+      const improvement = lastScore - firstScore;
+      
+      return {
+        id: assessmentId,
+        name: attempts[0].assessment.title,
+        improvement,
+        firstScore,
+        lastScore
+      };
+    });
+    
+    // Sort by improvement (highest first)
+    const sortedImprovements = improvements
+      .sort((a, b) => b.improvement - a.improvement)
+      .slice(0, 5); // Take top 5
+    
+    return {
+      labels: sortedImprovements.map(item => item.name),
+      datasets: [
+        {
+          label: 'Score Improvement',
+          data: sortedImprovements.map(item => item.improvement),
+          backgroundColor: sortedImprovements.map(item => 
+            item.improvement >= 0 ? 'rgba(72, 187, 120, 0.7)' : 'rgba(237, 100, 100, 0.7)'),
+          borderColor: sortedImprovements.map(item => 
+            item.improvement >= 0 ? 'rgba(72, 187, 120, 1)' : 'rgba(237, 100, 100, 1)'),
+          borderWidth: 1
+        }
+      ]
+    };
+  };
+
+  const generateSectionAveragesData = (completedAssessments, completedByAssessment) => {
+    // Get all unique section types across all assessments
+    const allSectionTypes = new Set();
+    completedAssessments.forEach(assessment => {
+      const sectionResults = assessment.sectionResults || assessment.result?.sectionResults;
+      if (sectionResults && Array.isArray(sectionResults)) {
+        sectionResults.forEach(section => {
+          if (section.sectionType) {
+            allSectionTypes.add(section.sectionType);
+          }
+        });
+      }
+    });
+    
+    const sectionTypesList = Array.from(allSectionTypes);
+    
+    // If no section types were found, add placeholder
+    if (sectionTypesList.length === 0) {
+      return {
+        labels: ['No Data'],
+        datasets: [{
+          label: 'No Assessment Data',
+          data: [0],
+          backgroundColor: 'rgba(200, 200, 200, 0.2)',
+          borderColor: 'rgba(200, 200, 200, 1)',
+          pointBackgroundColor: 'rgba(200, 200, 200, 1)',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: 'rgba(200, 200, 200, 1)'
+        }]
+      };
+    }
+    
+    // Create datasets for each assessment
+    const datasets = [];
+    
+    // Colors for different assessments
+    const colors = [
+      { bg: 'rgba(29, 99, 161, 0.2)', border: 'rgba(29, 99, 161, 1)' },
+      { bg: 'rgba(255, 183, 27, 0.2)', border: 'rgba(255, 183, 27, 1)' },
+      { bg: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' },
+      { bg: 'rgba(153, 102, 255, 0.2)', border: 'rgba(153, 102, 255, 1)' },
+      { bg: 'rgba(255, 99, 132, 0.2)', border: 'rgba(255, 99, 132, 1)' },
+      { bg: 'rgba(255, 159, 64, 0.2)', border: 'rgba(255, 159, 64, 1)' }
+    ];
+    
+    // Group assessments by their title
+    const assessmentsByTitle = {};
+    Object.entries(completedByAssessment).forEach(([assessmentId, attempts]) => {
+      const assessment = attempts[0].assessment;
+      const title = assessment.title;
+      
+      if (!assessmentsByTitle[title]) {
+        assessmentsByTitle[title] = [];
+      }
+      
+      attempts.forEach(attempt => {
+        if (attempt.result?.sectionResults || attempt.sectionResults) {
+          assessmentsByTitle[title].push(attempt);
+        }
+      });
+    });
+    
+    // Create a dataset for each assessment type
+    let colorIndex = 0;
+    Object.entries(assessmentsByTitle).forEach(([title, attempts]) => {
+      const color = colors[colorIndex % colors.length];
+      colorIndex++;
+      
+      // Calculate average scores per section for this assessment
+      const sectionScores = {};
+      let totalAttempts = 0;
+      
+      // Collect all section scores from all attempts
+      attempts.forEach(attempt => {
+        const sectionResults = attempt.sectionResults || attempt.result?.sectionResults;
+        if (sectionResults && Array.isArray(sectionResults)) {
+          totalAttempts++;
+          sectionResults.forEach(section => {
+            const sectionType = section.sectionType || 'Other';
+            if (!sectionScores[sectionType]) {
+              sectionScores[sectionType] = 0;
+            }
+            sectionScores[sectionType] += section.percentageScore || section.sectionScore || 0;
+          });
+        }
+      });
+      
+      // Calculate averages
+      Object.keys(sectionScores).forEach(sectionType => {
+        if (totalAttempts > 0) {
+          sectionScores[sectionType] /= totalAttempts;
+        }
+      });
+      
+      // Create data array with all section types (fill with 0 for missing sections)
+      const data = sectionTypesList.map(sectionType => sectionScores[sectionType] || 0);
+      
+      datasets.push({
+        label: title,
+        data: data,
+        backgroundColor: color.bg,
+        borderColor: color.border,
+        pointBackgroundColor: color.border,
+        pointBorderColor: '#fff',
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: color.border,
+        borderWidth: 2
+      });
+    });
+    
+    return {
+      labels: sectionTypesList,
+      datasets: datasets
+    };
   };
 
   if (loading) {
@@ -250,8 +561,8 @@ const AssessmentDashboard = () => {
                     </div>
                     <div className="flex items-center text-xs text-[#232D35]/60 mb-5">
                       <svg className="mr-1.5 h-4 w-4 text-[#1D63A1]/80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Last saved: {new Date(assessment.lastSavedTime).toLocaleString()}
-                    </div>
+                      Last saved: {new Date(assessment.lastSavedTime).toLocaleString()
+                    }</div>
                     <div className="flex-1 flex flex-col items-end">
                       <button
                         onClick={() => handleContinueAssessment(assessment.assessment.assessmentId)}
@@ -317,7 +628,237 @@ const AssessmentDashboard = () => {
           )}
         </div>
 
-        {/* Completed Assessments */}
+        {/* Performance Summary Dashboard - MOVED BEFORE ASSESSMENT HISTORY */}
+        {Object.keys(completedByAssessment).length > 0 && (
+          <div className="mb-14">
+            <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#1D63A1]/20 text-[#FFB71B] mr-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              </span>
+              Performance Summary
+            </h2>
+            
+            {/* Key metrics */}
+            <div className="bg-white rounded-3xl shadow-xl p-7 mb-8 animate-card-pop">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+                <div className="bg-[#1D63A1]/10 rounded-xl p-5 border border-[#1D63A1]/30 flex flex-col items-center">
+                  <h3 className="text-sm font-medium text-[#1D63A1] mb-1">Total Assessments Completed</h3>
+                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">{completedAssessments.length}</p>
+                </div>
+                <div className="bg-[#FFB71B]/10 rounded-xl p-5 border border-[#FFB71B]/30 flex flex-col items-center">
+                  <h3 className="text-sm font-medium text-[#232D35] mb-1">Assessment Types</h3>
+                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">{Object.keys(completedByAssessment).length}</p>
+                </div>
+                <div className="bg-green-50 rounded-xl p-5 border border-green-200 flex flex-col items-center">
+                  <h3 className="text-sm font-medium text-green-700 mb-1">Highest Score</h3>
+                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">
+                    {Object.values(assessmentStats).length > 0 ?
+                      Math.max(...Object.values(assessmentStats).map(stat => stat.highestScore)).toFixed(1) + '%' :
+                      'N/A'}
+                  </p>
+                </div>
+                <div className="bg-purple-50 rounded-xl p-5 border border-purple-200 flex flex-col items-center">
+                  <h3 className="text-sm font-medium text-purple-700 mb-1">Average Performance</h3>
+                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">
+                    {Object.values(assessmentStats).length > 0 ?
+                      (Object.values(assessmentStats).reduce((acc, stat) => acc + stat.averageScore, 0) /
+                        Object.keys(assessmentStats).length).toFixed(1) + '%' :
+                      'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Charts section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Performance by Assessment - Radar Chart with Multiple Datasets */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-3xl shadow-xl p-5 animate-card-pop border-2 border-[#1D63A1]/10"
+              >
+                <h3 className="text-lg font-semibold text-[#232D35] mb-4 text-center">Performance by Assessment</h3>
+                <div className="h-[450px]">  {/* Increased from 300px to 450px */}
+                  {Object.keys(assessmentStats).length > 0 && (
+                    <Radar
+                      data={generateScoreTrendData(assessmentStats)}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        elements: {
+                          line: {
+                            borderWidth: 2
+                          }
+                        },
+                        scales: {
+                          r: {
+                            angleLines: {
+                              display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            pointLabels: {
+                              font: {
+                                weight: 'bold',
+                                size: 12  // Added slightly larger font for better visibility
+                              }
+                            },
+                            ticks: {
+                              stepSize: 20,
+                              backdropColor: 'transparent'
+                            }
+                          }
+                        },
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              boxWidth: 12,
+                              padding: 15,
+                              usePointStyle: true
+                            }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(1)}%`;
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+              </motion.div>
+              
+              {/* Score Improvement Chart */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white rounded-3xl shadow-xl p-5 animate-card-pop border-2 border-[#1D63A1]/10"
+              >
+                <h3 className="text-lg font-semibold text-[#232D35] mb-4 text-center">Score Improvement</h3>
+                <div className="h-[300px]">
+                  {Object.values(completedByAssessment).some(attempts => attempts.length > 1) ? (
+                    <Bar
+                      data={generateImprovementData(completedByAssessment)}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                          legend: {
+                            display: false,
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                const item = context.raw;
+                                return item >= 0 ? `Improved by ${item.toFixed(1)}%` : `Decreased by ${Math.abs(item).toFixed(1)}%`;
+                              }
+                            }
+                          }
+                        },
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: 'Score Change (%)'
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full">
+                      <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="mt-2 text-gray-500">Complete more attempts to see improvement data</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+              
+              {/* Section Performance Radar Chart */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white rounded-3xl shadow-xl p-5 animate-card-pop border-2 border-[#1D63A1]/10 lg:col-span-2"
+              >
+                <h3 className="text-lg font-semibold text-[#232D35] mb-4 text-center">Performance by Section Type</h3>
+                <div className="h-[500px]">  {/* Increased from 350px to 500px */}
+                  {completedAssessments.some(a => {
+                    const hasResults = a.result?.sectionResults?.length > 0;
+                    const hasSectionResults = a.sectionResults && a.sectionResults.length > 0;
+                    return hasResults || hasSectionResults;
+                  }) ? (
+                    <Radar
+                      data={generateSectionAveragesData(completedAssessments, completedByAssessment)}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        elements: {
+                          line: {
+                            borderWidth: 2
+                          }
+                        },
+                        scales: {
+                          r: {
+                            angleLines: {
+                              display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            pointLabels: {
+                              font: {
+                                weight: 'bold',
+                                size: 12  // Added slightly larger font for better visibility
+                              }
+                            },
+                            ticks: {
+                              stepSize: 20,
+                              backdropColor: 'transparent'
+                            }
+                          }
+                        },
+                        plugins: {
+                          legend: {
+                            position: 'bottom',
+                            labels: {
+                              boxWidth: 12,
+                              padding: 15,
+                              usePointStyle: true
+                            }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(1)}%`;
+                              }
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full">
+                      <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="mt-2 text-gray-500">No section data available</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+
+        {/* Your Assessment History - MOVED AFTER PERFORMANCE SUMMARY */}
         {Object.keys(completedByAssessment).length > 0 ? (
           <div className="mb-14">
             <h2 className="text-xl font-bold text-[#232D35] mb-6 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
@@ -417,47 +958,6 @@ const AssessmentDashboard = () => {
               <svg className="mx-auto h-12 w-12 text-[#232D35]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               <h3 className="mt-2 text-base font-semibold text-[#232D35]/80">No completed assessments</h3>
               <p className="mt-1 text-sm text-[#232D35]/60">Complete an assessment to see your history and performance statistics</p>
-            </div>
-          </div>
-        )}
-
-        {/* Performance Summary Dashboard */}
-        {Object.keys(completedByAssessment).length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#1D63A1]/20 text-[#FFB71B] mr-1">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              </span>
-              Performance Summary
-            </h2>
-            <div className="bg-white rounded-3xl shadow-xl p-7 animate-card-pop">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-                <div className="bg-[#1D63A1]/10 rounded-xl p-5 border border-[#1D63A1]/30 flex flex-col items-center">
-                  <h3 className="text-sm font-medium text-[#1D63A1] mb-1">Total Assessments Completed</h3>
-                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">{completedAssessments.length}</p>
-                </div>
-                <div className="bg-[#FFB71B]/10 rounded-xl p-5 border border-[#FFB71B]/30 flex flex-col items-center">
-                  <h3 className="text-sm font-medium text-[#232D35] mb-1">Assessment Types</h3>
-                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">{Object.keys(completedByAssessment).length}</p>
-                </div>
-                <div className="bg-green-50 rounded-xl p-5 border border-green-200 flex flex-col items-center">
-                  <h3 className="text-sm font-medium text-green-700 mb-1">Highest Score</h3>
-                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">
-                    {Object.values(assessmentStats).length > 0 ?
-                      Math.max(...Object.values(assessmentStats).map(stat => stat.highestScore)).toFixed(1) + '%' :
-                      'N/A'}
-                  </p>
-                </div>
-                <div className="bg-purple-50 rounded-xl p-5 border border-purple-200 flex flex-col items-center">
-                  <h3 className="text-sm font-medium text-purple-700 mb-1">Average Performance</h3>
-                  <p className="text-3xl font-extrabold text-[#232D35] animate-pop">
-                    {Object.values(assessmentStats).length > 0 ?
-                      (Object.values(assessmentStats).reduce((acc, stat) => acc + stat.averageScore, 0) /
-                        Object.keys(assessmentStats).length).toFixed(1) + '%' :
-                      'N/A'}
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         )}
