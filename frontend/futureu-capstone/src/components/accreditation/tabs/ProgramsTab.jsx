@@ -1,6 +1,38 @@
-import React from "react";
+import React, { useState } from "react";
+import ProgramDetailsModal from "../ProgramDetailsModal";
 
 const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
+  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Show 10 items per page
+  
+  // Get current programs for pagination
+  const indexOfLastProgram = currentPage * itemsPerPage;
+  const indexOfFirstProgram = indexOfLastProgram - itemsPerPage;
+  const currentPrograms = filteredPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+  
+  // Change page function
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Previous and next page functions
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   // Function to determine the color for recognition badges
   const getRecognitionColor = (recognition) => {
     if (!recognition) return "bg-gray-200 text-gray-600";
@@ -34,6 +66,30 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
     }
   };
 
+  const handleProgramClick = (program) => {
+    if (program.level > 0) {  // Only allow clicking accredited programs
+      // Create a combined program object with accreditation details
+      const programWithAccreditation = {
+        ...program,
+        accreditation: {
+          title: program.accreditation?.title || 'Not Available',
+          description: program.accreditation?.description || 'No description available',
+          level: program.level,
+          accreditingBody: program.accreditingBody,
+          recognition: program.recognition,
+          status: program.status
+        }
+      };
+      setSelectedProgram(programWithAccreditation);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedProgram(null);
+  };
+
   return (
     <div className="animate-fadeIn">
       {/* Search and Filter Section */}
@@ -47,7 +103,9 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Accredited Programs</h3>
-          <p className="text-sm text-gray-500 mt-1">Showing {filteredPrograms.length} programs</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Showing {indexOfFirstProgram + 1}-{Math.min(indexOfLastProgram, filteredPrograms.length)} of {filteredPrograms.length} programs
+          </p>
         </div>
 
         <div className="overflow-x-auto">
@@ -69,11 +127,14 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPrograms.length > 0 ? (
-                filteredPrograms.map((program, index) => (
+              {currentPrograms.length > 0 ? (
+                currentPrograms.map((program, index) => (
                   <tr 
                     key={`${program.schoolName}-${program.name}-${index}`} 
-                    className="hover:bg-gray-50 transition-opacity duration-500 ease-out" 
+                    className={`transition-opacity duration-500 ease-out ${
+                      program.level > 0 ? 'hover:bg-gray-50 cursor-pointer' : 'cursor-default'
+                    }`}
+                    onClick={() => handleProgramClick(program)}
                     style={{ 
                       animationDelay: `${index * 30}ms`,
                       opacity: contentAnimated ? 1 : 0,
@@ -123,9 +184,67 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls - Updated to match screenshot */}
+        {filteredPrograms.length > 0 && totalPages > 1 && (
+          <div className="px-6 py-5 border-t border-gray-200 flex justify-center">
+            <div className="flex items-center space-x-1">
+              {/* Previous Button */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`flex items-center justify-center w-10 h-10 rounded-md shadow transition-colors duration-200 ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-[#2B3E4E] hover:bg-gray-50'
+                }`}
+                aria-label="Previous page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Current Page Number */}
+              <div className="flex items-center justify-center min-w-[40px] h-10 px-3 rounded-md bg-[#FFB71B] text-white font-semibold shadow">
+                {currentPage}
+              </div>
+              
+              {/* Total Pages (if more than 1 page) */}
+              {totalPages > 1 && (
+                <div className="text-[#2B3E4E] text-sm mx-1">
+                  of {totalPages}
+                </div>
+              )}
+              
+              {/* Next Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`flex items-center justify-center w-10 h-10 rounded-md shadow transition-colors duration-200 ${
+                  currentPage === totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-[#2B3E4E] hover:bg-gray-50'
+                }`}
+                aria-label="Next page"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Program Details Modal */}
+      <ProgramDetailsModal
+        program={selectedProgram}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 };
 
-export default ProgramsTab; 
+export default ProgramsTab;
