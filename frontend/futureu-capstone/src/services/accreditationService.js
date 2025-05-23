@@ -1,4 +1,3 @@
-
 import apiClient from './api';
 import authService from './authService';
 
@@ -276,7 +275,16 @@ class AccreditationService {
                 accreditationStatus: accreditationStatus,
                 accreditingBody: accreditingBody,
                 recognition: recognitionStatus,
-                level: level
+                level: level,
+                // Add accreditation object with title and description
+                accreditation: item.accreditation ? {
+                  title: item.accreditation.title,
+                  description: item.accreditation.description,
+                  level: level,
+                  accreditingBody: accreditingBody,
+                  recognition: recognitionStatus,
+                  status: accreditationStatus
+                } : null
               });
             }
             
