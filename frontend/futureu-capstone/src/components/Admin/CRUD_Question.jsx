@@ -517,9 +517,10 @@ const CRUD_Question = () => {
       </div>
       
       {/* Search and Filter Section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100 overflow-hidden">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <div className="w-full md:w-1/2 relative">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
+        <div className="flex flex-col md:flex-row gap-4 mb-4 items-center">
+          {/* Search Input */}
+          <div className="w-full md:w-2/5 relative"> {/* Adjusted width for search */}
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
@@ -530,66 +531,67 @@ const CRUD_Question = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {/* Search button can be re-added here if needed, currently removed for space with 3 filters */}
           </div>
-          
-          <div className="w-full md:w-1/2 flex flex-wrap gap-2">
-            <div className="flex items-center w-full sm:w-auto">
+
+          {/* Filter Dropdowns - All in one line */}
+          <div className="w-full md:w-3/5 flex flex-col sm:flex-row gap-2 items-center"> {/* Adjusted width for filters and items-center */}
+            {/* Category Filter */}
+            <div className="flex items-center w-full sm:w-1/3">
               <select
                 value={filterCategory}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border-t border-b border-l border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category.assessmentCategoryId} value={category.assessmentCategoryId}>
-                    {category.categoryName}
+                {categories.map((cat) => (
+                  <option key={cat.assessmentCategoryId} value={cat.assessmentCategoryId}>
+                    {cat.categoryName}
                   </option>
                 ))}
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border-t border-b border-r border-gray-200 py-3">
                 <Filter className="h-5 w-5 text-gray-500" />
               </div>
             </div>
-            
-            <div className="flex items-center w-full sm:w-auto">
+
+            {/* Difficulty Filter */}
+            <div className="flex items-center w-full sm:w-1/3">
               <select
                 value={filterDifficulty}
                 onChange={(e) => handleFilterChange('difficulty', e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border-t border-b border-l border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Difficulties</option>
                 {DIFFICULTY_LEVELS.map((level) => (
-                  <option key={level} value={level}>
-                    {level}
-                  </option>
+                  <option key={level} value={level}>{level}</option>
                 ))}
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border-t border-b border-r border-gray-200 py-3">
                 <Sparkles className="h-5 w-5 text-gray-500" />
               </div>
             </div>
-            
-            <div className="flex items-center w-full sm:w-auto">
+
+            {/* Type Filter */}
+            <div className="flex items-center w-full sm:w-1/3">
               <select
                 value={filterType}
                 onChange={(e) => handleFilterChange('type', e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border-t border-b border-l border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Types</option>
                 {QUESTION_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border-t border-b border-r border-gray-200 py-3">
                 <ListFilter className="h-5 w-5 text-gray-500" />
               </div>
             </div>
           </div>
         </div>
-        
-        <div className="flex justify-end">
+
+        <div className="flex justify-end mt-4">
           <button
             onClick={handleAddClick}
             className="flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all shadow-sm"

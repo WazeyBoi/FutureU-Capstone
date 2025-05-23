@@ -312,33 +312,33 @@ const CRUD_Choice = () => {
       
       {/* Search and Filter Section */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-4 mb-4 items-center">
           <div className="w-full md:w-1/2 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
+              className="w-full pl-10 pr-28 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
               placeholder="Search choices..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
             />
             <button
+              type="button"
               onClick={handleSearch}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-5 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-sm"
             >
               Search
             </button>
           </div>
           
-          <div className="w-full md:w-1/2 flex flex-wrap gap-2">
+          <div className="w-full md:w-1/2 flex flex-col sm:flex-row gap-2">
             <div className="flex items-center w-full sm:w-auto">
               <select
                 value={filterQuestion}
                 onChange={(e) => setFilterQuestion(e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Questions</option>
                 {questions.map((question) => (
@@ -347,7 +347,7 @@ const CRUD_Choice = () => {
                   </option>
                 ))}
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border border-l-0 border-gray-200 py-3">
                 <HelpCircle className="h-5 w-5 text-gray-500" />
               </div>
             </div>
@@ -356,13 +356,13 @@ const CRUD_Choice = () => {
               <select
                 value={filterCorrect}
                 onChange={(e) => setFilterCorrect(e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Choices</option>
-                <option value="true">Correct Choices</option>
-                <option value="false">Incorrect Choices</option>
+                <option value="true">Correct</option>
+                <option value="false">Incorrect</option>
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border border-l-0 border-gray-200 py-3">
                 <Filter className="h-5 w-5 text-gray-500" />
               </div>
             </div>
