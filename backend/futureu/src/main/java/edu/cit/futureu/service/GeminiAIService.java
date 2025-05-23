@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.CareerEntity;
+import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 
 import java.util.ArrayList;
@@ -36,6 +37,10 @@ public class GeminiAIService {
     
     @Autowired
     private CareerService careerService;
+    @Autowired
+    private CareerProgramService careerProgramService;
+    @Autowired
+    private ProgramService programService;
     
     // Mapping to categorize career types - update keywords if needed
     private static final Map<String, List<String>> CAREER_CATEGORY_KEYWORDS = Map.of(
@@ -187,6 +192,8 @@ public class GeminiAIService {
         promptBuilder.append("\nBased on these assessment results, please provide:\n");
         promptBuilder.append("A summary of what are the student's strengths and weaknesses\n");
         promptBuilder.append("1. A ranked list of 5 MOST suitable career pathways from the following options, ensuring each recommendation STRONGLY aligns with the student's specific strengths and RIASEC interests:\n");
+        promptBuilder.append("\nDIVERSITY REQUIREMENT: Select 2 careers from the student's highest scoring track/category, and 1 career each from the next 3 highest scoring tracks/categories (if available). If there are not enough categories, fill the rest with the next best matches from any field, but avoid duplicates.\n");
+        promptBuilder.append("This ensures the list is both highly relevant and diverse.\n");
         
         // Add careers to prompt
         Map<String, List<CareerEntity>> categorizedCareers = categorizeCareersByType(filteredCareers);
@@ -225,29 +232,61 @@ public class GeminiAIService {
             }
         }
         
+        // Add all available programs to the prompt
+        List<ProgramEntity> allPrograms = programService.getAllPrograms();
+        promptBuilder.append("\nAVAILABLE PROGRAMS:\n");
+        for (ProgramEntity program : allPrograms) {
+            promptBuilder.append("- [ID: ").append(program.getProgramId()).append("] ")
+                .append(program.getProgramName());
+            if (program.getDescription() != null && !program.getDescription().isEmpty()) {
+                promptBuilder.append(" | Description: ").append(program.getDescription());
+            }
+            promptBuilder.append("\n");
+        }
+        promptBuilder.append("\nIMPORTANT: From the AVAILABLE PROGRAMS list above, select and recommend exactly 5 programs that best match the student's top 5 recommended careers. ");
+        promptBuilder.append("For each program, include programId, programName, description, confidenceScore (0-100), and a detailed explanation of why it fits the student. ");
+        promptBuilder.append("Only use programs from the provided list. Do NOT invent new programs.\n");
+        
         // Add detailed instruction for the AI response format
         promptBuilder.append("\nIMPORTANT: For each career, consider the title, description, and industry fields when matching recommendations.\n");
-        promptBuilder.append("\n2. For each recommended career pathway, provide a DETAILED explanation that connects specific assessment results to career requirements and prospects\n");
-        promptBuilder.append("3. Provide a confidence score (0-100) for each recommendation based on how well it matches the assessment profile\n");
-        promptBuilder.append("4. Format the response as a structured JSON with these exact keys:\n");
-        promptBuilder.append("   - 'summary': An object with 'strengths' (array of strings) and 'weaknesses' (array of strings)\n");
-        promptBuilder.append("   - 'topCareers': An array of objects, each with 'careerId' (number), 'career' (string), 'explanation' (string), and 'confidenceScore' (number)\n");
-        promptBuilder.append("5. IMPORTANT: Only recommend career pathways from the provided list above - exact career titles must be used\n");
-        promptBuilder.append("\nExample JSON Response:\n");
+        promptBuilder.append("\n2. For the recommendations, ensure the FINAL LIST contains exactly 5 careers, and DIVERSIFY the fields as much as possible (e.g., do not recommend 5 from the same track/category/industry).\n");
+        promptBuilder.append("If the top matches are all from the same field, replace some with the next best matches from other fields, so the list is varied but still relevant.\n");
+        promptBuilder.append("3. For each recommended career pathway, provide a DETAILED, LONG, and highly personalized explanation that:");
+        promptBuilder.append("\n   - Clearly connects the student's specific assessment results, strengths, and interests to the requirements, daily work, and long-term prospects of the career.");
+        promptBuilder.append("\n   - Uses motivational, engaging, and self-discovery language. For example, say things like: 'You are more likely to excel at...', 'You have a natural ability to...', 'People with your strengths often find fulfillment in...', 'Your unique combination of skills means you can...'.");
+        promptBuilder.append("\n   - Helps the student visualize themselves in the role, describing what they might enjoy, achieve, or contribute, and how their strengths will help them succeed and feel fulfilled.");
+        promptBuilder.append("\n   - Offers insights about how their personality and abilities make them a great fit, and encourages them to explore their potential in this field.");
+        promptBuilder.append("\n   - The explanation should be long, detailed, and written in a positive, inspiring, and student-centered tone, sparking the student's interest in themselves and their future.");
+        promptBuilder.append("4. Provide a confidence score (0-100) for each recommendation based on how well it matches the assessment profile\n");
+        promptBuilder.append("5. Your response MUST be a single JSON object, with NO extra text, markdown, or explanation. The structure MUST match this sample exactly (including all keys and field names):\n");
         promptBuilder.append("{\n");
         promptBuilder.append("  \"summary\": {\n");
-        promptBuilder.append("    \"strengths\": [\"STEM\", \"Logical Reasoning\"],\n");
-        promptBuilder.append("    \"weaknesses\": [\"Verbal Ability\"]\n");
+        promptBuilder.append("    \"strengths\": [\"...\"],\n");
+        promptBuilder.append("    \"weaknesses\": [\"...\"]\n");
         promptBuilder.append("  },\n");
         promptBuilder.append("  \"topCareers\": [\n");
         promptBuilder.append("    {\n");
-        promptBuilder.append("      \"careerId\": 123,\n");
-        promptBuilder.append("      \"career\": \"Software Engineer\",\n");
-        promptBuilder.append("      \"explanation\": \"Strong logical reasoning and STEM aptitude align with this pathway.\",\n");
-        promptBuilder.append("      \"confidenceScore\": 95\n");
-        promptBuilder.append("    }\n");
-        promptBuilder.append("  ]\n");
-        promptBuilder.append("}\n");
+        promptBuilder.append("      \"careerId\": 0,\n");
+        promptBuilder.append("      \"career\": \"...\",\n");
+        promptBuilder.append("      \"explanation\": \"...\",\n");
+        promptBuilder.append("      \"confidenceScore\": 0,\n");
+        promptBuilder.append("      \"category\": \"...\"\n");
+        promptBuilder.append("    }\n    // ...4 more objects\n  ],\n");
+        promptBuilder.append("  \"topPrograms\": [\n");
+        promptBuilder.append("    {\n");
+        promptBuilder.append("      \"programId\": 0,\n");
+        promptBuilder.append("      \"programName\": \"...\",\n");
+        promptBuilder.append("      \"description\": \"...\",\n");
+        promptBuilder.append("      \"confidenceScore\": 0,\n");
+        promptBuilder.append("      \"explanation\": \"...\"\n");
+        promptBuilder.append("    },\n");
+        promptBuilder.append("    { /* 2nd program */ },\n");
+        promptBuilder.append("    { /* 3rd program */ },\n");
+        promptBuilder.append("    { /* 4th program */ },\n");
+        promptBuilder.append("    { /* 5th program */ }\n");
+        promptBuilder.append("  ]\n}\n");
+        promptBuilder.append("- All fields are required. Do NOT include any text before or after the JSON. Do NOT use markdown code blocks.\n");
+        promptBuilder.append("6. IMPORTANT: Only recommend career pathways from the provided list above - exact career titles must be used\n");
         
         return promptBuilder.toString();
     }
@@ -530,6 +569,8 @@ public class GeminiAIService {
                 // Extract careers from topCareers array
                 ArrayNode topCareersNode = (ArrayNode) jsonNode.get("topCareers");
                 
+                // Collect all recommended CareerEntity objects
+                List<CareerEntity> topCareerEntities = new ArrayList<>();
                 for (JsonNode careerNode : topCareersNode) {
                     Map<String, Object> careerMap = new HashMap<>();
                     
@@ -574,12 +615,29 @@ public class GeminiAIService {
                         if (!careerMap.containsKey("description") || careerMap.get("description") == null) {
                             careerMap.put("description", matchedCareer.getCareerDescription());
                         }
+                        
+                        topCareerEntities.add(matchedCareer);
                     }
                     
                     recommendedCareers.add(careerMap);
                 }
-                
                 result.put("suggestedCareers", recommendedCareers);
+                
+                // Prepare JSON array for topPrograms
+                List<Map<String, Object>> topPrograms = new ArrayList<>();
+                if (jsonNode.has("topPrograms") && jsonNode.get("topPrograms").isArray()) {
+                    ArrayNode topProgramsNode = (ArrayNode) jsonNode.get("topPrograms");
+                    for (JsonNode progNode : topProgramsNode) {
+                        Map<String, Object> programMap = new HashMap<>();
+                        if (progNode.has("programId")) programMap.put("programId", progNode.get("programId").asInt());
+                        if (progNode.has("programName")) programMap.put("programName", progNode.get("programName").asText());
+                        if (progNode.has("description")) programMap.put("description", progNode.get("description").asText());
+                        if (progNode.has("confidenceScore")) programMap.put("confidenceScore", progNode.get("confidenceScore").asDouble());
+                        if (progNode.has("explanation")) programMap.put("explanation", progNode.get("explanation").asText());
+                        topPrograms.add(programMap);
+                    }
+                }
+                result.put("topPrograms", topPrograms);
                 
                 // Extract overall explanation
                 if (jsonNode.has("explanation")) {

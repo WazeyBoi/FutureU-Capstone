@@ -12,8 +12,11 @@ import org.springframework.stereotype.Service;
 import edu.cit.futureu.entity.RecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
+import edu.cit.futureu.entity.ProgramRecommendationEntity;
 import edu.cit.futureu.repository.RecommendationRepository;
 import edu.cit.futureu.service.CareerService;
+import edu.cit.futureu.service.ProgramService;
+import edu.cit.futureu.service.ProgramRecommendationService;
 
 @Service
 public class RecommendationService {
@@ -26,9 +29,15 @@ public class RecommendationService {
     
     @Autowired
     private GeminiAIService geminiAIService;
-
+    
     @Autowired
     private CareerService careerService;
+    
+    @Autowired
+    private ProgramService programService;
+    
+    @Autowired
+    private ProgramRecommendationService programRecommendationService;
 
     public RecommendationEntity createRecommendation(RecommendationEntity recommendation) {
         return recommendationRepository.save(recommendation);
@@ -139,6 +148,35 @@ public class RecommendationService {
 
             // Save recommendation
             recommendations.add(recommendationRepository.save(recommendation));
+        }
+
+        // Insert top 5 programs into ProgramRecommendationEntity
+        if (aiRecommendations.containsKey("topPrograms")) {
+            Object topProgramsObj = aiRecommendations.get("topPrograms");
+            if (topProgramsObj instanceof List<?>) {
+                for (Object prog : (List<?>) topProgramsObj) {
+                    if (prog instanceof Map<?, ?>) {
+                        Map<?, ?> progMap = (Map<?, ?>) prog;
+                        // Convert to Map<String, Object> for type safety
+                        Map<String, Object> progMapString = new HashMap<>();
+                        for (Map.Entry<?, ?> entry : progMap.entrySet()) {
+                            if (entry.getKey() instanceof String) {
+                                progMapString.put((String) entry.getKey(), entry.getValue());
+                            }
+                        }
+                        if (progMapString.containsKey("programId")) {
+                            try {
+                                int programId = Integer.parseInt(progMapString.get("programId").toString());
+                                programService.getProgramById(programId).ifPresent(programEntity -> {
+                                    programRecommendationService.createFromAI(progMapString, assessmentResult, programEntity);
+                                });
+                            } catch (Exception e) {
+                                // Ignore invalid programId
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return recommendations;

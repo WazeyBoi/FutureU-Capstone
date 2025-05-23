@@ -3,6 +3,7 @@ package edu.cit.futureu.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name = "recommendation")
@@ -25,7 +26,7 @@ public class RecommendationEntity {
 
     private double confidenceScore;
 
-    @Column(length = 1000)
+    @Column(length = 2000)
     private String description;
 
     public RecommendationEntity() {}
@@ -49,4 +50,5 @@ public class RecommendationEntity {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }
