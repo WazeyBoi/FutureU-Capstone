@@ -149,8 +149,15 @@ const AssessmentDashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-white">
-        <div className="loader"></div>
+      <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+        <div>
+          <img 
+            src="/src/assets/characters/quirky.svg" 
+            alt="Quirky mascot" 
+            className="quirky-bounce h-50 mx-auto"
+          />
+        </div>
+        <p className="text-lg font-bold text-gray-600">Please wait for a moment...</p>
       </div>
     );
   }
@@ -175,7 +182,7 @@ const AssessmentDashboard = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-x-hidden">
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-visible">
       {/* Playful floating shapes background */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
@@ -190,6 +197,21 @@ const AssessmentDashboard = () => {
           <p className="mt-4 text-lg text-[#232D35]/70 font-medium animate-fade-in">
             Continue your educational journey or start something new!
           </p>
+        </div>
+        {/* Playful mascot image, overlapping container on the right */}
+        <div className="relative">
+          <img 
+            src="/src/assets/characters/ohMyLeft.svg" 
+            alt="Oh My Charcter" 
+            className="hidden md:block absolute -top-10 -right-30 h-[320px] w-auto z-20 drop-shadow-xl animate-float pointer-events-none"
+            style={{ maxWidth: '40vw', minWidth: '220px' }}
+          />
+          {/* For mobile, show at the bottom, centered */}
+          <img 
+            src="/src/assets/characters/ohMy.svg" 
+            alt="Oh My Charcter" 
+            className="block md:hidden mx-auto mb-4 h-40 w-auto z-10 animate-float"
+          />
         </div>
 
         {/* In Progress Assessments */}

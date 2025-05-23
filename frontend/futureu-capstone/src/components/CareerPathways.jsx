@@ -456,7 +456,7 @@ const CareerPathways = () => {
               <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: "calc(100vh - 280px)" }}>
                 {loading ? (
                   <div className="flex justify-center items-center h-40">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+                    <div className="loader"></div>
                   </div>
                 ) : (
                   <table className="min-w-full table-fixed divide-y divide-gray-200">
