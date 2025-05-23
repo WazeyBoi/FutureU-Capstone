@@ -7,6 +7,8 @@ import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
 import AssessmentSection from '../components/assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
+import ResumeAssessmentModal from '../components/assessment/ResumeAssessmentModal';
+import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -55,6 +57,10 @@ const TakeAssessment = () => {
   
   // Add state to track the attempt number
   const [attemptNo, setAttemptNo] = useState(0);
+  
+  // Add state for resume modal
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [resumeData, setResumeData] = useState(null);
   
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
@@ -159,49 +165,11 @@ const TakeAssessment = () => {
             return;
           }
           
-          // Ask user if they want to resume
-          const wantToResume = window.confirm(
-            "You have a saved progress for this assessment. Would you like to resume from where you left off?"
-          );
-          
-          if (wantToResume) {
-            shouldLoadNewQuestions = false;
-            
-            // If we have saved sections with questions, use those instead of fetching new ones
-            if (existingProgress.savedSections) {
-              const savedSectionList = JSON.parse(existingProgress.savedSections);
-              setSectionList(savedSectionList);
-              
-              // Initialize section completion rates
-              const initialCompletion = {};
-              savedSectionList.forEach(section => {
-                initialCompletion[section.id] = 0;
-              });
-              setSectionCompletion(initialCompletion);
-            }
-            
-            // Set user answers
-            if (existingProgress.savedAnswers) {
-              setUserAnswers(JSON.parse(existingProgress.savedAnswers));
-            }
-            
-            // Set current section
-            if (existingProgress.currentSectionIndex !== null) {
-              setCurrentSection(existingProgress.currentSectionIndex);
-            }
-            
-            // Set the saved elapsed time if available
-            if (existingProgress.timeSpentSeconds) {
-              setElapsedTime(existingProgress.timeSpentSeconds);
-              // Set a new start time based on the saved elapsed time
-              setStartTime(Date.now() - (existingProgress.timeSpentSeconds * 1000));
-            }
-            
-            // Set the attempt number from the existing progress
-            if (existingProgress.attemptNo) {
-              setAttemptNo(existingProgress.attemptNo);
-            }
-          }
+          // Show pretty modal instead of window.confirm
+          setResumeData(existingProgress);
+          setShowResumeModal(true);
+          setLoading(false);
+          return; // Wait for user action
         }
         
         // If this is a new assessment or user declined to resume, get attempt number
@@ -378,6 +346,223 @@ const TakeAssessment = () => {
     fetchAssessment();
   }, [assessmentId]);
   
+  // Handler for resuming saved progress from modal
+  const handleResumeAssessment = () => {
+    const existingProgress = resumeData;
+    let shouldLoadNewQuestions = false;
+
+    // If we have saved sections with questions, use those instead of fetching new ones
+    if (existingProgress.savedSections) {
+      const savedSectionList = JSON.parse(existingProgress.savedSections);
+      setSectionList(savedSectionList);
+
+      // Initialize section completion rates
+      const initialCompletion = {};
+      savedSectionList.forEach(section => {
+        initialCompletion[section.id] = 0;
+      });
+      setSectionCompletion(initialCompletion);
+    }
+
+    // Set user answers
+    if (existingProgress.savedAnswers) {
+      setUserAnswers(JSON.parse(existingProgress.savedAnswers));
+    }
+
+    // Set current section
+    if (existingProgress.currentSectionIndex !== null) {
+      setCurrentSection(existingProgress.currentSectionIndex);
+    }
+
+    // Set the saved elapsed time if available
+    if (existingProgress.timeSpentSeconds) {
+      setElapsedTime(existingProgress.timeSpentSeconds);
+      setStartTime(Date.now() - (existingProgress.timeSpentSeconds * 1000));
+    }
+
+    // Set the attempt number from the existing progress
+    if (existingProgress.attemptNo) {
+      setAttemptNo(existingProgress.attemptNo);
+    }
+
+    setShowResumeModal(false);
+    setResumeData(null);
+    setLoading(false);
+  };
+
+  // Handler for starting new assessment (ignore saved progress)
+  const handleStartNewAssessment = async () => {
+    setShowResumeModal(false);
+    setResumeData(null);
+    setLoading(true);
+
+    try {
+      // Get the current authenticated user ID
+      const userId = getCurrentUserId();
+      // Check how many times this user has completed this assessment before
+      const completedAssessments = await userAssessmentService.getCompletedAssessments(userId);
+      const previousAttempts = completedAssessments.filter(
+        a => a.assessment.assessmentId.toString() === assessmentId
+      ).length;
+      setAttemptNo(previousAttempts + 1);
+
+      // Fetch and organize questions - this involves randomization
+      const questionsData = await assessmentTakingService.loadAssessmentQuestions(parseInt(assessmentId));
+      setQuestions(questionsData);
+
+      // Setup section list and initial question indices
+      const initialSections = [];
+      const initialIndices = {};
+
+      // GSA Sections
+      if (questionsData.gsa.scientificAbility.length) {
+        initialSections.push({
+          id: 'gsa-scientific',
+          title: 'Scientific Ability',
+          description: 'Test your scientific knowledge and reasoning abilities',
+          questions: questionsData.gsa.scientificAbility
+        });
+        initialIndices['gsa-scientific'] = 0;
+      }
+      
+      if (questionsData.gsa.readingComprehension.length) {
+        initialSections.push({
+          id: 'gsa-reading',
+          title: 'Reading Comprehension',
+          description: 'Assess your ability to understand and interpret written materials',
+          questions: questionsData.gsa.readingComprehension
+        });
+        initialIndices['gsa-reading'] = 0;
+      }
+      
+      if (questionsData.gsa.verbalAbility.length) {
+        initialSections.push({
+          id: 'gsa-verbal',
+          title: 'Verbal Ability',
+          description: 'Evaluate your command of language and verbal reasoning',
+          questions: questionsData.gsa.verbalAbility
+        });
+        initialIndices['gsa-verbal'] = 0;
+      }
+      
+      if (questionsData.gsa.mathematicalAbility.length) {
+        initialSections.push({
+          id: 'gsa-math',
+          title: 'Mathematical Ability',
+          description: 'Test your mathematical skills and numerical reasoning',
+          questions: questionsData.gsa.mathematicalAbility
+        });
+        initialIndices['gsa-math'] = 0;
+      }
+      
+      if (questionsData.gsa.logicalReasoning.length) {
+        initialSections.push({
+          id: 'gsa-logical',
+          title: 'Logical Reasoning',
+          description: 'Assess your ability to analyze and solve logical problems',
+          questions: questionsData.gsa.logicalReasoning
+        });
+        initialIndices['gsa-logical'] = 0;
+      }
+      
+      // Academic Track Sections
+      if (questionsData.academicTrack.stem.length) {
+        initialSections.push({
+          id: 'at-stem',
+          title: 'STEM',
+          description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
+          questions: questionsData.academicTrack.stem
+        });
+        initialIndices['at-stem'] = 0;
+      }
+      
+      if (questionsData.academicTrack.abm.length) {
+        initialSections.push({
+          id: 'at-abm',
+          title: 'ABM',
+          description: 'Accountancy, Business, and Management aptitude assessment',
+          questions: questionsData.academicTrack.abm
+        });
+        initialIndices['at-abm'] = 0;
+      }
+      
+      if (questionsData.academicTrack.humss.length) {
+        initialSections.push({
+          id: 'at-humss',
+          title: 'HUMSS',
+          description: 'Humanities and Social Sciences aptitude assessment',
+          questions: questionsData.academicTrack.humss
+        });
+        initialIndices['at-humss'] = 0;
+      }
+      
+      // Other Track Sections
+      if (questionsData.otherTracks.techVoc.length) {
+        initialSections.push({
+          id: 'track-tech',
+          title: 'Techno-Vocational Livelihood',
+          description: 'Assess your aptitude for technical and vocational fields',
+          questions: questionsData.otherTracks.techVoc
+        });
+        initialIndices['track-tech'] = 0;
+      }
+      
+      if (questionsData.otherTracks.sports.length) {
+        initialSections.push({
+          id: 'track-sports',
+          title: 'Sports Track',
+          description: 'Evaluate your sports aptitude and interests',
+          questions: questionsData.otherTracks.sports
+        });
+        initialIndices['track-sports'] = 0;
+      }
+      
+      if (questionsData.otherTracks.artsDesign.length) {
+        initialSections.push({
+          id: 'track-arts',
+          title: 'Arts & Design Track',
+          description: 'Assess your creative abilities and artistic aptitude',
+          questions: questionsData.otherTracks.artsDesign
+        });
+        initialIndices['track-arts'] = 0;
+      }
+      
+      // RIASEC Combined Section - Now as a single section instead of individual subsections
+      if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
+        initialSections.push({
+          id: 'interest-combined',
+          title: 'Interest Assessment',
+          description: 'Assess your personal interests and preferences in various activities',
+          questions: questionsData.interestAreas,
+          questionsPerPage: 7, // Set to display 7 questions per page for RIASEC
+          isRiasecSection: true // Marker that this is a RIASEC section
+        });
+        initialIndices['interest-combined'] = 0;
+      }
+
+      setSectionList(initialSections);
+      setCurrentQuestionIndices(initialIndices);
+
+      // Initialize section completion rates
+      const initialCompletion = {};
+      initialSections.forEach(section => {
+        initialCompletion[section.id] = 0;
+      });
+      setSectionCompletion(initialCompletion);
+
+      setUserAnswers({});
+      setCurrentSection(0);
+      setElapsedTime(0);
+      setStartTime(null);
+
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load assessment. Please try again later.');
+      setLoading(false);
+      console.error('Error loading assessment:', err);
+    }
+  };
+
   // Calculate overall progress
   const calculateProgress = useCallback(() => {
     if (!sectionList.length) return { completed: 0, total: 0 };
@@ -575,6 +760,16 @@ const TakeAssessment = () => {
     };
   }, [completed, userAnswers]);
   
+  // Insert this modal before the main return
+  if (showResumeModal) {
+    return (
+      <ResumeAssessmentModal
+        onResume={handleResumeAssessment}
+        onStartNew={handleStartNewAssessment}
+      />
+    );
+  }
+
   // Loading state
   if (loading) {
     return (
@@ -792,7 +987,7 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
                     Save & Exit
                   </>
@@ -860,7 +1055,7 @@ const TakeAssessment = () => {
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
             <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 2 0 002 2z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 2 0 00-2 2v12a2 2 2 0 002 2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>
@@ -958,41 +1153,12 @@ const TakeAssessment = () => {
       
       {/* Save Confirmation Dialog */}
       {showSaveConfirmation && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto p-6">
-            {saveError ? (
-              <>
-                <h3 className="text-lg font-medium text-red-700 mb-3">Error Saving Progress</h3>
-                <p className="text-gray-600 mb-4">{saveError}</p>
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => setShowSaveConfirmation(false)}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none"
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Save Progress & Exit</h3>
-                <p className="text-gray-600 mb-4">
-                  {isSaving 
-                    ? 'Saving your progress...' 
-                    : 'Your progress has been saved successfully! You can resume this assessment later.'}
-                </p>
-                <div className="flex justify-end">
-                  <button
-                    onClick={() => navigate('/assessment-dashboard')}
-                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none"
-                  >
-                    Go to Dashboard
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <SaveExitConfirmationModal
+          saveError={saveError}
+          isSaving={isSaving}
+          onClose={() => setShowSaveConfirmation(false)}
+          onGoToDashboard={() => navigate('/assessment-dashboard')}
+        />
       )}
     </div>
   );
