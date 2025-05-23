@@ -44,8 +44,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             assessmentId: userAssessmentId,
             overallScore: overallScore,
             recommendations: {
-              suggestedPrograms: sortedRecommendations.map(rec => ({
-                name: rec.suggestedProgram,
+              careers: sortedRecommendations.map(rec => ({
+                name: rec.careerPath?.careerTitle || 'Unknown Career',
                 confidenceScore: rec.confidenceScore,
                 description: rec.description
               }))
@@ -78,8 +78,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               assessmentId: userAssessmentId,
               overallScore: overallScore,
               recommendations: {
-                suggestedPrograms: sortedRecommendations.map(rec => ({
-                  name: rec.suggestedProgram,
+                careers: sortedRecommendations.map(rec => ({
+                  name: rec.careerPath?.careerTitle || 'Unknown Career',
                   confidenceScore: rec.confidenceScore,
                   description: rec.description
                 }))
@@ -112,8 +112,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 assessmentId: userAssessmentId,
                 overallScore: assessmentData.assessmentResult?.overallScore || 0,
                 recommendations: {
-                  suggestedPrograms: recommendations.map(rec => ({
-                    name: rec.suggestedProgram,
+                  careers: recommendations.map(rec => ({
+                    name: rec.careerPath?.careerTitle || 'Unknown Career',
                     confidenceScore: rec.confidenceScore,
                     description: rec.description
                   }))
@@ -168,7 +168,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
           <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Recommendations</h3>
           <p className="text-sm text-gray-600">
-            Based on your assessment results, we've identified programs and academic paths that align with your skills, 
+            Based on your assessment results, we've identified careers and academic paths that align with your skills, 
             interests, and strengths. Explore these recommendations to find the best fit for your future.
           </p>
         </motion.div>
@@ -197,25 +197,25 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </button>
           </motion.div>
         )}
-        {/* Program recommendations */}
+        {/* Career recommendations */}
         {aiRecommendations && aiRecommendations.recommendations && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Program Recommendations</h3>
+            <h3 className="text-xl font-bold text-[#232D35] mb-2">Career Recommendations</h3>
             <p className="text-sm text-gray-600 mb-6">
               Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score
             </p>
             <div className="space-y-6">
-              {aiRecommendations.recommendations.suggestedPrograms
+              {aiRecommendations.recommendations.careers
                 ?.slice(0, 5)
-                .map((program, index) => (
+                .map((career, index) => (
                   <motion.div key={index} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
                     <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-lg font-semibold text-[#232D35]">{program.name}</h4>
+                      <h4 className="text-lg font-semibold text-[#232D35]">{career.name}</h4>
                       <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                        {program.confidenceScore?.toFixed(1)}% Match
+                        {career.confidenceScore?.toFixed(1)}% Match
                       </span>
                     </div>
-                    <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
+                    <p className="text-left text-sm text-gray-600 mb-4">{career.description}</p>
                     <div className="flex gap-2">
                       <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
                         Recommended
@@ -319,7 +319,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="bg-white rounded-3xl shadow-xl p-6 border-2 border-[#1D63A1]/20 text-center animate-card-pop">
             <h3 className="text-xl font-bold text-[#232D35] mb-2">Generate AI Recommendations</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Get detailed program and career recommendations tailored to your assessment results.
+              Get detailed career and academic recommendations tailored to your assessment results.
             </p>
             <button 
               onClick={handleGenerateRecommendations}
