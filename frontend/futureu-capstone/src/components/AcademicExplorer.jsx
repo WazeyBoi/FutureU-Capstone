@@ -50,13 +50,13 @@ const schoolLogos = {
 // Create a mapping for school name detection to their background images
 const schoolBackgroundMap = {
   "Cebu Institute of Technology": citu_school_image,
-  "Cebu Doctors' University": cdu_school_image,
+  "Cebu Doctors'": cdu_school_image,
   "Cebu Normal University": cnu_school_image,
   "Cebu Technological University": ctu_school_image,
   "Southwestern University": swu_school_image,
   "University of San Carlos": usc_school_image,
-  "University of San Jose-Recoletos": usjr_school_image,
-  "University of the Philippines Cebu": up_school_image,
+  "University of San Jose": usjr_school_image,
+  "University of the Philippines": up_school_image,
   "University of Cebu": uc_school_image,
   "University of the Visayas": uv_school_image,
   "Indiana Aerospace University": iau_school_image,
@@ -563,6 +563,7 @@ const getAnimationClass = (index) => {
       );
       
       if (matchingSchool) {
+        console.log("Found matching school:", matchingSchool); // Add logging
         // Get programs for the matched school
         const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
         
@@ -1190,72 +1191,95 @@ const getAnimationClass = (index) => {
           showProgramsPanel ? 'animate-content-slide' : 'animate-content-slide-back'
         } ${showProgramSidePanel ? 'ml-96 w-[calc(100%-24rem)]' : 'w-full'}`}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700 h-[calc(100vh-140px)] overflow-auto">
-            {/* School Search Results View - Only show if no program is selected or explicitly searching schools */}
+            
+            {/* School Search Results View - Takes precedence if active */}
             {showSchoolSearchResults && searchedSchool && !selectedProgram ? (
-              <div className="flex flex-col h-full animate-fade-in-up">
-                {/* School Header with Background */}
-                <div className="relative w-full h-48 bg-[#2B3E4E] rounded-lg mb-8 overflow-hidden">
-                  {getSchoolBackground(searchedSchool.name) ? (
-                    <img 
-                      src={getSchoolBackground(searchedSchool.name)} 
-                      alt={`${searchedSchool.name} campus`}
-                      className="w-full h-full object-cover opacity-60"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-[#2B3E4E] opacity-90"></div>
-                  )}
-                  
-                  {/* School Info Overlay */}
-                  <div className="absolute inset-0 flex items-center px-8">
-                    <div className="flex items-center">
-                      {/* School Logo */}
-                      <div className="mr-6">
-                        {schoolLogos[searchedSchool.schoolId] ? (
-                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-800 overflow-hidden p-1">
-                            <img 
-                              src={schoolLogos[searchedSchool.schoolId]} 
-                              alt={`${searchedSchool.name} logo`}
-                              className="object-contain"
-                              style={{ width: "95%", height: "95%" }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-lg border-4 border-white dark:border-gray-800 overflow-hidden">
-                            <School className="w-20 h-20 text-[#2B3E4E]" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* School Details */}
-                      <div className="text-white">
-                        <h2 className="text-3xl font-bold mb-2">{searchedSchool.name}</h2>
-                        <div className="flex items-center text-white/90">
-                          <MapPin className="w-5 h-5 mr-2" />
-                          <span>{searchedSchool.location || "Location not specified"}</span>
-                          
-                          {searchedSchool.type && (
-                            <div className="flex items-center ml-6">
-                              <School className="w-5 h-5 mr-2" />
-                              <span>{searchedSchool.type}</span>
-                            </div>
-                          )}
-                        </div>
+              <div className="flex flex-col h-auto animate-fade-in-up"> {/* Changed h-full to h-auto to let content define height, ensure parent allows for it */}
+                {/* School Header with Background - Enhanced to match testimonials */}
+                <div className="relative w-full h-96 rounded-xl mb-8 overflow-hidden"> {/* REMOVED: border-4 border-red-500 */}
+                  {/* Background Image with Gradient Overlay */}
+                  <div className="absolute inset-0"> {/* REMOVED: z-0 */}
+                    {(() => {
+                      const bgImage = getSchoolBackground(searchedSchool.name);
+                      // console.log('[Render] Searched School Name for BG:', searchedSchool.name); // Keep logs for now, can be removed later
+                      // console.log('[Render] Calculated Background Image URL:', bgImage);
+                      if (bgImage) {
+                        return (
+                          <img 
+                            src={bgImage} 
+                            alt={`${searchedSchool.name} campus`}
+                            className="w-full h-full object-cover" /* REMOVED: absolute inset-0 z-10 border-4 border-lime-500 */
+                            onError={(e) => console.error('[Render] BG Image Error: Failed to load', e.target.src, e)}
+                          />
+                        );
+                      } else {
+                        // console.log('[Render] Rendering fallback BG div because bgImage is null/undefined.');
+                        return (
+                          <div className="w-full h-full bg-gradient-to-r from-[#2B3E4E] to-[#1b2d3d]"></div>
+                        );
+                      }
+                    })()}
+                    <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.3)] to-[rgba(0,0,0,0.7)]"></div> {/* REMOVED: z-20 */}
+                  </div>
+
+                  {/* School Logo and Info - Centered Layout */}
+                  <div className="absolute inset-0 flex flex-row items-center justify-start px-8 sm:px-12 md:px-16 z-30"> {/* MODIFIED: for left alignment, row layout, and vertical centering */}
+                    {/* School Logo */}
+                    <div className="mr-6 flex-shrink-0"> {/* ADDED: margin-right and prevent shrinking */}
+                      <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-white overflow-hidden"> {/* MODIFIED: removed p-2 */}
+                        {(() => {
+                          const logo = schoolLogos[searchedSchool.schoolId];
+                          // console.log('[Render] Searched School ID for Logo:', searchedSchool.schoolId);
+                          // console.log('[Render] Calculated Logo URL:', logo);
+                          if (logo) {
+                            return (
+                              <img 
+                                src={logo} 
+                                alt={`${searchedSchool.name} logo`}
+                                className="w-full h-full object-cover" /* MODIFIED: object-contain to object-cover */
+                                onError={(e) => console.error('[Render] Logo Image Error: Failed to load', e.target.src, e)}
+                              />
+                            );
+                          } else {
+                            // console.log('[Render] Rendering fallback Logo icon because logo is null/undefined.');
+                            return (
+                              <School className="w-24 h-24 text-[#2B3E4E]" />
+                            );
+                          }
+                        })()}
                       </div>
                     </div>
-                    
-                    {/* Close button */}
-                    <div className="ml-auto">
-                      <button
-                        onClick={() => setShowSchoolSearchResults(false)}
-                        className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
-                        aria-label="Close search results"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
+
+                    {/* Text Container (Name and Location) */}
+                    <div className="flex flex-col">
+                      {/* School Name */}
+                      <h2 className="text-2xl md:text-3xl font-bold text-white text-left text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}> {/* MODIFIED: text size, text-left, removed mb-4 */}
+                        {searchedSchool.name}
+                      </h2>
+                      
+                      {/* School Location */}
+                      <div className="flex items-center text-white/90 mt-2 text-sm md:text-base"> {/* MODIFIED: margin-top and text size */}
+                        <MapPin className="w-5 h-5 mr-2" />
+                        <span>{searchedSchool.location}</span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Close button */} 
+                  <button
+                    onClick={() => {
+                      setShowSchoolSearchResults(false);
+                      setSearchedSchool(null);
+                      setSearchTerm('');
+                    }}
+                    className="absolute top-4 right-4 bg-white/70 hover:bg-white/90 p-2 rounded-full transition-colors shadow-md z-40" /* MODIFIED: Added z-40 */
+                    aria-label="Close search results"
+                  >
+                    <X className="w-5 h-5 text-[#2B3E4E]" /> {/* MODIFIED: icon color to navy blue */}
+                  </button>
                 </div>
-                
+
+                {/* Rest of the content */}
                 {/* School Description */}
                 <div className="bg-gray-50 dark:bg-gray-700/40 p-6 rounded-xl mb-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-4 flex items-center">
@@ -1357,217 +1381,218 @@ const getAnimationClass = (index) => {
                 </p>
               </div>
             ) : loading && selectedProgram ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                      <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                    ))}
-                  </div>
-                ) : filteredAndSearchedSchools.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="bg-gray-100 dark:bg-gray-700 p-5 rounded-full inline-block mb-5">
-                      <Search className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">No schools found</h3>
-                    <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
-                  {searchTerm ? 'Try adjusting your search term or filters'
-                        : filterOptions.locationSearch 
-                          ? `No schools found matching location "${filterOptions.locationSearch}"`
-                          : 'Select a program to view available schools'}
-                    </p>
-                  </div>
-                ) : (
-              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 auto-rows-max transition-all duration-300 ${
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+                ))}
+              </div>
+            ) : filteredAndSearchedSchools.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="bg-gray-100 dark:bg-gray-700 p-5 rounded-full inline-block mb-5">
+                  <Search className="w-10 h-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">No schools found</h3>
+                <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
+              {searchTerm ? 'Try adjusting your search term or filters'
+                    : filterOptions.locationSearch 
+                      ? `No schools found matching location "${filterOptions.locationSearch}"`
+                      : 'Select a program to view available schools'}
+                </p>
+              </div>
+            ) : (
+              // Grid for displaying school cards (when a program is selected and schools are found)
+              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 auto-rows-max transition-all duration-300 ${ // This is the school card grid
                 showProgramSidePanel ? 'grid-with-panel' : 'lg:grid-cols-3'
               }`}>
-                    {filteredAndSearchedSchools.map((school, index) => {
-                      const isSelected = selectedSchools.find((s) => s.schoolId === school.schoolId);
-                      const schoolLogo = schoolLogos[school.schoolId];
-                      const schoolBackground = getSchoolBackground(school.name);
+                {filteredAndSearchedSchools.map((school, index) => {
+                  const isSelected = selectedSchools.find((s) => s.schoolId === school.schoolId);
+                  const schoolLogo = schoolLogos[school.schoolId];
+                  const schoolBackground = getSchoolBackground(school.name);
 
-                      return (
-                        <div
-                          key={school.schoolId}
-                          className={`relative bg-white dark:bg-gray-700 border rounded-xl transition-all duration-300 overflow-hidden ${getAnimationClass(index)} ${
-                            isSelected ? 'border-[#FFB71B] shadow-lg ring-2 ring-[#FFB71B]/20 dark:ring-[#FFB71B]/30' : 'border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-lg hover:-translate-y-1'
-                          }`}
-                          style={{}}
-                          onMouseEnter={(e) => handleMouseEnter(school, e)}
-                          onMouseLeave={handleMouseLeave}
-                          onClick={() => handleSchoolSelect(school)}
-                        >
-                          {isSelected && (
-                            <div className="absolute top-2 right-2 bg-[#2B3E4E] text-[#FFB71B] p-1.5 rounded-full z-10 shadow-md">
-                              <Star className="w-4 h-4" />
+                  return (
+                    <div
+                      key={school.schoolId}
+                      className={`relative bg-white dark:bg-gray-700 border rounded-xl transition-all duration-300 overflow-hidden ${getAnimationClass(index)} ${
+                        isSelected ? 'border-[#FFB71B] shadow-lg ring-2 ring-[#FFB71B]/20 dark:ring-[#FFB71B]/30' : 'border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-lg hover:-translate-y-1'
+                      }`}
+                      style={{}}
+                      onMouseEnter={(e) => handleMouseEnter(school, e)}
+                      onMouseLeave={handleMouseLeave}
+                      onClick={() => handleSchoolSelect(school)}
+                    >
+                      {isSelected && (
+                        <div className="absolute top-2 right-2 bg-[#2B3E4E] text-[#FFB71B] p-1.5 rounded-full z-10 shadow-md">
+                          <Star className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="flex flex-col h-full">
+                        {/* Top half with image and logo */}
+                        <div className="relative w-full h-44 bg-blue-100 overflow-hidden">
+                          {/* Banner image - using a gradient overlay to ensure text readability */}
+                          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
+                          
+                          {/* School background image */}
+                          {getSchoolBackground(school.name) ? (
+                            <img 
+                              src={getSchoolBackground(school.name)} 
+                              alt={`${school.name} campus`}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          ) : (
+                            <img 
+                              src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school.schoolId}`} 
+                              alt={`${school.name} campus`}
+                              className="w-full h-full object-cover object-center"
+                            />
+                          )}
+
+                          {/* Logo positioned in the middle with no white background */}
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                          {schoolLogo ? (
+                            <img 
+                              src={schoolLogo} 
+                              alt={`${school.name} logo`}
+                                className="w-32 h-32 object-cover rounded-full shadow-lg"
+                            />
+                          ) : (
+                              <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
+                                <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
                             </div>
                           )}
-                          <div className="flex flex-col h-full">
-                            {/* Top half with image and logo */}
-                            <div className="relative w-full h-44 bg-blue-100 overflow-hidden">
-                              {/* Banner image - using a gradient overlay to ensure text readability */}
-                              <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
-                              
-                              {/* School background image */}
-                              {getSchoolBackground(school.name) ? (
-                                <img 
-                                  src={getSchoolBackground(school.name)} 
-                                  alt={`${school.name} campus`}
-                                  className="w-full h-full object-cover object-center"
-                                />
-                              ) : (
-                                <img 
-                                  src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school.schoolId}`} 
-                                  alt={`${school.name} campus`}
-                                  className="w-full h-full object-cover object-center"
-                                />
-                              )}
+                          </div>
+                        </div>
 
-                              {/* Logo positioned in the middle with no white background */}
-                              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                              {schoolLogo ? (
-                                <img 
-                                  src={schoolLogo} 
-                                  alt={`${school.name} logo`}
-                                    className="w-32 h-32 object-cover rounded-full shadow-lg"
-                                />
-                              ) : (
-                                  <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
-                                    <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
-                                </div>
-                              )}
-                              </div>
+                        {/* Bottom half with school information */}
+                        <div className="p-5 flex flex-col flex-1">
+                          {/* School name centered */}
+                          <h3 className="font-bold text-lg text-gray-900 dark:text-white text-center mb-4">{school.name}</h3>
+                          
+                          {/* All information in one container with shadow */}
+                          <div className="space-y-3 bg-white dark:bg-gray-700/60 p-5 rounded-lg mb-4 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow">
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                <MapPin className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
+                              <span className="truncate">{school.location}</span>
                             </div>
-
-                            {/* Bottom half with school information */}
-                            <div className="p-5 flex flex-col flex-1">
-                              {/* School name centered */}
-                              <h3 className="font-bold text-lg text-gray-900 dark:text-white text-center mb-4">{school.name}</h3>
-                              
-                              {/* All information in one container with shadow */}
-                              <div className="space-y-3 bg-white dark:bg-gray-700/60 p-5 rounded-lg mb-4 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow">
-                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                    <MapPin className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                                  <span className="truncate">{school.location}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                    <Globe className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                                  <span>{school.type}</span>
-                                </div>
-                              </div>
-                              
-                              {/* View More button */}
-                              <div className="mt-3">
-                                <button
-                                  className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-2.5 px-3 rounded-md transition-colors text-sm font-medium"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedSchoolDetails(school);
-                                    setShowSchoolDetailsModal(true);
-                                  }}
-                                >
-                                  <ChevronRight className="w-4 h-4 mr-2" />
-                                  View More
-                                </button>
-                                </div>
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                                <Globe className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
+                              <span>{school.type}</span>
                             </div>
                           </div>
-
-                          {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
-                            <div 
-                              className="fixed z-50 w-[400px] rounded-xl shadow-2xl p-6 transform transition-all duration-200 ease-in-out backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700"
-                              style={{
-                                top: tooltipPosition.y + 'px',
-                                left: tooltipPosition.x + 'px'
+                          
+                          {/* View More button */}
+                          <div className="mt-3">
+                            <button
+                              className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-2.5 px-3 rounded-md transition-colors text-sm font-medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSchoolDetails(school);
+                                setShowSchoolDetailsModal(true);
                               }}
                             >
-                              <div className="flex items-center mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-                                {schoolLogo ? (
-                                  <img 
-                                    src={schoolLogo} 
-                                    alt={`${school.name} logo`}
-                                    className="w-32 h-32 object-cover rounded-full shadow-lg"
-                                  />
-                                ) : (
-                                  <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
-                                    <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
-                                  </div>
-                                )}
-                                <div className="ml-4">
-                                  <h4 className="font-bold text-xl text-gray-900 dark:text-white">{school.name}</h4>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">{school.location}</p>
-                                </div>
-                              </div>
-                              <div className="space-y-5">
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                  <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">About</h5>
-                                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                    {school.description || 'No description available'}
-                                  </p>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                    <div className="flex items-center mb-2">
-                                      <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mr-2" />
-                                      <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Requirements</h5>
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                      {school.admissionRequirements || 'Not specified'}
-                                    </p>
-                                  </div>
-                                  {school.tuitionFee && (
-                                    <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                      <div className="flex items-center mb-2">
-                                        <div className="w-4 h-4 mr-2 text-yellow-500">💰</div>
-                                        <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Tuition</h5>
-                                      </div>
-                                      <p className="text-gray-600 dark:text-gray-400 text-sm">{school.tuitionFee}</p>
-                                    </div>
-                                  )}
-                                </div>
-                                <button
-                                  className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-3 px-4 rounded-lg transition-colors font-medium"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedSchoolDetails(school);
-                                    setShowSchoolDetailsModal(true);
-                                  }}
-                                >
-                                  <ChevronRight className="w-5 h-5 mr-2" />
-                                  View More Details
-                                </button>
-                              </div>
-                              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
-                                <button 
-                                  className={`w-full py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium ${
-                                    selectedSchools.find(s => s.schoolId === school.schoolId) ? 
-                                    'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30' 
-                                    : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSchoolSelect(school);
-                                  }}
-                                >
-                                  {selectedSchools.find(s => s.schoolId === school.schoolId) ? (
-                                    <>
-                                      <StarOff className="w-5 h-5 mr-2" />
-                                      Remove from Comparison
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Star className="w-5 h-5 mr-2" />
-                                      Add to Comparison
-                                    </>
-                                  )}
-                                </button>
-                              </div>
+                              <ChevronRight className="w-4 h-4 mr-2" />
+                              View More
+                            </button>
                             </div>
-                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      </div>
+
+                      {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
+                        <div 
+                          className="fixed z-50 w-[400px] rounded-xl shadow-2xl p-6 transform transition-all duration-200 ease-in-out backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700"
+                          style={{
+                            top: tooltipPosition.y + 'px',
+                            left: tooltipPosition.x + 'px'
+                          }}
+                        >
+                          <div className="flex items-center mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
+                            {schoolLogo ? (
+                              <img 
+                                src={schoolLogo} 
+                                alt={`${school.name} logo`}
+                                className="w-32 h-32 object-cover rounded-full shadow-lg"
+                              />
+                            ) : (
+                              <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
+                                <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
+                              </div>
+                            )}
+                            <div className="ml-4">
+                              <h4 className="font-bold text-xl text-gray-900 dark:text-white">{school.name}</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">{school.location}</p>
+                            </div>
+                          </div>
+                          <div className="space-y-5">
+                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                              <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">About</h5>
+                              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                                {school.description || 'No description available'}
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <div className="flex items-center mb-2">
+                                  <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mr-2" />
+                                  <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Requirements</h5>
+                                </div>
+                                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                                  {school.admissionRequirements || 'Not specified'}
+                                </p>
+                              </div>
+                              {school.tuitionFee && (
+                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                  <div className="flex items-center mb-2">
+                                    <div className="w-4 h-4 mr-2 text-yellow-500">💰</div>
+                                    <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Tuition</h5>
+                                  </div>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm">{school.tuitionFee}</p>
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-3 px-4 rounded-lg transition-colors font-medium"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSchoolDetails(school);
+                                setShowSchoolDetailsModal(true);
+                              }}
+                            >
+                              <ChevronRight className="w-5 h-5 mr-2" />
+                              View More Details
+                            </button>
+                          </div>
+                          <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <button 
+                              className={`w-full py-3 px-4 rounded-lg transition-colors flex items-center justify-center font-medium ${
+                                selectedSchools.find(s => s.schoolId === school.schoolId) ? 
+                                'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-800/30' 
+                                : 'bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#2B3E4E]/90'}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSchoolSelect(school);
+                              }}
+                            >
+                              {selectedSchools.find(s => s.schoolId === school.schoolId) ? (
+                                <>
+                                  <StarOff className="w-5 h-5 mr-2" />
+                                  Remove from Comparison
+                                </>
+                              ) : (
+                                <>
+                                  <Star className="w-5 h-5 mr-2" />
+                                  Add to Comparison
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            )}
+          </div>
+        </div>
       </main>
       {showProgramConfirmation && pendingProgramSelection && (
         <div className="fixed inset-0 backdrop-blur-md bg-black/40 dark:bg-gray-900/60 flex items-center justify-center z-[100] p-4">

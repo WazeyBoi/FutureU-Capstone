@@ -295,7 +295,7 @@ const CRUD_User = () => {
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="w-full px-3 py-3 pl-10 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md appearance-none"
+                className="w-full px-3 py-3 pl-10 pr-10 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md appearance-none"
               >
                 <option value="">All Roles</option>
                 <option value="ADMIN">Admin</option>
@@ -449,7 +449,11 @@ const CRUD_User = () => {
                 <button
                   key={pageNum}
                   onClick={() => handleChangePage(pageNum)}
-                  className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#2B3E4E] text-white" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                  className={`px-3 py-1 rounded-lg ${
+                    pageNum === page
+                      ? "bg-[#FFB71B] text-[#2B3E4E] font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
+                  } transition-colors`}
                 >
                   {pageNum + 1}
                 </button>

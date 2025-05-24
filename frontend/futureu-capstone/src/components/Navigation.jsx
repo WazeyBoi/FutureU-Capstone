@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-import FutureULogo from '../assets/FutureU_logo.png'; // Import the logo - adjust path/extension if needed
+import FutureULogo from '../assets/FutureU_Logo_Header_Display.png'; // Import the logo - adjust path/extension if needed
  
 const Navigation = () => {
   const location = useLocation();

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
-import { User, Mail, Lock, Home, Phone, Calendar, UserPlus, LogIn, AlertCircle, CheckCircle, GraduationCap } from 'lucide-react';
+import { User, Mail, Lock, Home, Phone, Calendar, UserPlus, LogIn, AlertCircle, CheckCircle, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
 const StudentRegister = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +18,7 @@ const StudentRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -128,16 +129,48 @@ const StudentRegister = () => {
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       {field.icon}
                     </div>
-                    <input
-                      id={field.name}
-                      name={field.name}
-                      type={field.type}
-                      required={field.name !== 'middleName'}
-                      value={formData[field.name]}
-                      onChange={handleChange}
-                      className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
-                      placeholder={field.placeholder}
-                    />
+                    {field.name === 'password' ? (
+                      <>
+                        <input
+                          id={field.name}
+                          name={field.name}
+                          type={showPassword ? "text" : "password"}
+                          required
+                          value={formData[field.name]}
+                          onChange={handleChange}
+                          className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                          placeholder={field.placeholder}
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                          <button
+                            type="button"
+                            className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? "Hide password" : "Show password"}
+                            style={{ 
+                              boxShadow: 'none', 
+                              outline: 'none',
+                              border: 'none'
+                            }}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onFocus={(e) => e.target.style.outline = 'none'}
+                          >
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type={field.type}
+                        required={field.name !== 'middleName'}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                        className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                        placeholder={field.placeholder}
+                      />
+                    )}
                   </div>
                 </div>
               ))}

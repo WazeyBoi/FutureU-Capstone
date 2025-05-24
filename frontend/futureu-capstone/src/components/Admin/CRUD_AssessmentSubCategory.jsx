@@ -272,21 +272,21 @@ const CRUD_AssessmentSubCategory = () => {
       
       {/* Search and Filter Section */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
+        <div className="flex flex-col md:flex-row gap-4 mb-4 items-center">
           <div className="w-full md:w-1/2 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
+              className="w-full pl-10 pr-28 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
               placeholder="Search sub-categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <button
               type="button"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-sm"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-5 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-sm"
             >
               Search
             </button>
@@ -298,7 +298,7 @@ const CRUD_AssessmentSubCategory = () => {
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-4 py-2.5 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                className="px-4 py-3 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
               >
                 <option value="">All Categories</option>
                 {categories.map((category) => (
@@ -307,7 +307,7 @@ const CRUD_AssessmentSubCategory = () => {
                   </option>
                 ))}
               </select>
-              <div className="bg-gray-100 px-2 py-2.5 rounded-r-xl border border-l-0 border-gray-200">
+              <div className="bg-gray-100 px-3 py-3 h-full flex items-center rounded-r-xl border border-l-0 border-gray-200">
                 <Filter className="h-5 w-5 text-gray-500" />
               </div>
             </div>
@@ -441,7 +441,11 @@ const CRUD_AssessmentSubCategory = () => {
                   <button
                     key={pageNum}
                     onClick={() => handleChangePage(pageNum)}
-                    className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#2B3E4E] text-white" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                    className={`px-3 py-1 rounded-lg ${
+                      pageNum === page
+                        ? "bg-[#FFB71B] text-[#2B3E4E] font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                    } transition-colors`}
                   >
                     {pageNum + 1}
                   </button>
