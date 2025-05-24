@@ -3,11 +3,10 @@ package edu.cit.futureu.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.*;
-import java.util.List;
 
 @Entity
-@Table(name = "recommendation")
-public class RecommendationEntity {
+@Table(name = "career_recommendation")
+public class CareerRecommendationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +28,7 @@ public class RecommendationEntity {
     @Column(length = 2000)
     private String description;
 
-    public RecommendationEntity() {}
+    public CareerRecommendationEntity() {}
 
     public int getRecommendationId() { return recommendationId; }
     public void setRecommendationId(int recommendationId) { this.recommendationId = recommendationId; }

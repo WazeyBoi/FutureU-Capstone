@@ -9,20 +9,16 @@ import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import edu.cit.futureu.entity.RecommendationEntity;
+import edu.cit.futureu.entity.CareerRecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
-import edu.cit.futureu.entity.ProgramRecommendationEntity;
-import edu.cit.futureu.repository.RecommendationRepository;
-import edu.cit.futureu.service.CareerService;
-import edu.cit.futureu.service.ProgramService;
-import edu.cit.futureu.service.ProgramRecommendationService;
+import edu.cit.futureu.repository.CareerRecommendationRepository;
 
 @Service
-public class RecommendationService {
+public class CareerRecommendationService {
 
     @Autowired
-    private RecommendationRepository recommendationRepository;
+    private CareerRecommendationRepository recommendationRepository;
     
     @Autowired
     private UserAssessmentService userAssessmentService;
@@ -39,11 +35,11 @@ public class RecommendationService {
     @Autowired
     private ProgramRecommendationService programRecommendationService;
 
-    public RecommendationEntity createRecommendation(RecommendationEntity recommendation) {
+    public CareerRecommendationEntity createRecommendation(CareerRecommendationEntity recommendation) {
         return recommendationRepository.save(recommendation);
     }
 
-    public Optional<RecommendationEntity> getRecommendationById(int id) {
+    public Optional<CareerRecommendationEntity> getRecommendationById(int id) {
         return recommendationRepository.findById(id);
     }
 
@@ -52,19 +48,19 @@ public class RecommendationService {
      * @deprecated Use getRecommendationsByAssessmentResult instead as multiple recommendations may exist
      */
     @Deprecated
-    public RecommendationEntity getRecommendationByAssessmentResult(AssessmentResultEntity assessmentResult) {
-        List<RecommendationEntity> recommendations = recommendationRepository.findAllByAssessmentResult(assessmentResult);
+    public CareerRecommendationEntity getRecommendationByAssessmentResult(AssessmentResultEntity assessmentResult) {
+        List<CareerRecommendationEntity> recommendations = recommendationRepository.findAllByAssessmentResult(assessmentResult);
         return recommendations.isEmpty() ? null : recommendations.get(0);
     }
 
     /**
      * Get all recommendations for an assessment result
      */
-    public List<RecommendationEntity> getRecommendationsByAssessmentResult(AssessmentResultEntity assessmentResult) {
+    public List<CareerRecommendationEntity> getRecommendationsByAssessmentResult(AssessmentResultEntity assessmentResult) {
         return recommendationRepository.findAllByAssessmentResult(assessmentResult);
     }
 
-    public RecommendationEntity updateRecommendation(RecommendationEntity recommendation) {
+    public CareerRecommendationEntity updateRecommendation(CareerRecommendationEntity recommendation) {
         if (recommendationRepository.existsById(recommendation.getRecommendationId())) {
             return recommendationRepository.save(recommendation);
         }
@@ -82,9 +78,9 @@ public class RecommendationService {
     /**
      * Generate and save AI-powered program recommendations
      */
-    public List<RecommendationEntity> generateAndSaveRecommendations(AssessmentResultEntity assessmentResult) {
+    public List<CareerRecommendationEntity> generateAndSaveRecommendations(AssessmentResultEntity assessmentResult) {
         // Check if recommendations already exist
-        List<RecommendationEntity> existingRecommendations = 
+        List<CareerRecommendationEntity> existingRecommendations = 
             recommendationRepository.findAllByAssessmentResult(assessmentResult);
         if (!existingRecommendations.isEmpty()) {
             return existingRecommendations;
@@ -117,9 +113,9 @@ public class RecommendationService {
         }
 
         // Create and save recommendations for all suggested careers
-        List<RecommendationEntity> recommendations = new ArrayList<>();
+        List<CareerRecommendationEntity> recommendations = new ArrayList<>();
         for (Map<String, Object> careerMap : suggestedCareers) {
-            RecommendationEntity recommendation = new RecommendationEntity();
+            CareerRecommendationEntity recommendation = new CareerRecommendationEntity();
             recommendation.setAssessmentResult(assessmentResult);
 
             // Set careerPath if careerId is available

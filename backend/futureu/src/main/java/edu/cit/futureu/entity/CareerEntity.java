@@ -36,7 +36,7 @@ public class CareerEntity {
 
     @JsonIgnore
     @OneToOne(mappedBy = "careerPath")
-    private RecommendationEntity recommendation;
+    private CareerRecommendationEntity recommendation;
 
     public CareerEntity() {
     }
@@ -97,11 +97,11 @@ public class CareerEntity {
         this.careerPrograms = careerPrograms;
     }
 
-    public RecommendationEntity getRecommendation() {
+    public CareerRecommendationEntity getRecommendation() {
         return recommendation;
     }
 
-    public void setRecommendation(RecommendationEntity recommendation) {
+    public void setRecommendation(CareerRecommendationEntity recommendation) {
         this.recommendation = recommendation;
     }
     

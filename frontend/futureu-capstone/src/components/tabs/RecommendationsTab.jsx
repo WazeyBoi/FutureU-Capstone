@@ -30,6 +30,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       try {
         const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
         const resultId = assessmentData.assessmentResult?.resultId;
+        const overallScore = assessmentData.assessmentResult?.overallScore || 0;
         if (!resultId) throw new Error('No assessment result found');
         const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
         let recommendationsArr = [];
@@ -39,10 +40,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           const sortedRecommendations = [...recommendationsArr]
             .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
             .slice(0, 5);
-          let overallScore = 0;
-          if (recommendationsArr.length > 0 && recommendationsArr[0].assessmentResult) {
-            overallScore = recommendationsArr[0].assessmentResult.overallScore || 0;
-          }
           const formattedData = {
             assessmentId: userAssessmentId,
             overallScore: overallScore,
@@ -115,6 +112,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       // Fetch assessment resultId
       const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
       const resultId = assessmentData.assessmentResult?.resultId;
+      const overallScore = assessmentData.assessmentResult?.overallScore || 0;
       if (!resultId) throw new Error('No assessment result found');
       // Try to fetch existing recommendations
       const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
@@ -130,10 +128,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       const sortedRecommendations = [...recommendationsArr]
         .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
         .slice(0, 5);
-      let overallScore = 0;
-      if (recommendationsArr.length > 0 && recommendationsArr[0].assessmentResult) {
-        overallScore = recommendationsArr[0].assessmentResult.overallScore || 0;
-      }
       const formattedData = {
         assessmentId: userAssessmentId,
         overallScore: overallScore,

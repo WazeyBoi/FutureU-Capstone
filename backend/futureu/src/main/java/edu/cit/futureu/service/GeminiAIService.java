@@ -244,8 +244,12 @@ public class GeminiAIService {
             promptBuilder.append("\n");
         }
         promptBuilder.append("\nIMPORTANT: From the AVAILABLE PROGRAMS list above, select and recommend exactly 5 programs that best match the student's top 5 recommended careers. ");
-        promptBuilder.append("For each program, include programId, programName, description, confidenceScore (0-100), and a detailed explanation of why it fits the student. ");
-        promptBuilder.append("Only use programs from the provided list. Do NOT invent new programs.\n");
+        promptBuilder.append("For each program, include programId, programName, description, confidenceScore (0-100), and a highly detailed, globally relevant explanation of why it fits the student. The explanation should:");
+        promptBuilder.append("\n   - Reference real-world trends, job market data, and global opportunities related to the program.");
+        promptBuilder.append("\n   - Mention the types of roles, industries, and future prospects associated with the program, both locally and internationally.");
+        promptBuilder.append("\n   - Highlight unique features or advantages of the program, and how it prepares students for success in a changing world.");
+        promptBuilder.append("\n   - Use up-to-date, motivational, and student-centered language, helping the student visualize their future and inspiring them to pursue their goals.");
+        promptBuilder.append("\n   - Connect the program to the student's strengths, interests, and assessment results, and explain how it can open doors to meaningful and rewarding careers worldwide.\n");
         
         // Add detailed instruction for the AI response format
         promptBuilder.append("\nIMPORTANT: For each career, consider the title, description, and industry fields when matching recommendations.\n");
