@@ -1,36 +1,58 @@
 import React, { useState } from "react";
 import ProgramDetailsModal from "../ProgramDetailsModal";
+import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 
 const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10); // Show 10 items per page
+  const [page, setPage] = useState(0); // Changed from currentPage to page (0-indexed)
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Changed from itemsPerPage, added setter
   
   // Get current programs for pagination
-  const indexOfLastProgram = currentPage * itemsPerPage;
-  const indexOfFirstProgram = indexOfLastProgram - itemsPerPage;
+  const indexOfLastProgram = (page + 1) * rowsPerPage; // Adjusted for 0-indexed page
+  const indexOfFirstProgram = page * rowsPerPage; // Adjusted for 0-indexed page
   const currentPrograms = filteredPrograms.slice(indexOfFirstProgram, indexOfLastProgram);
   
   // Calculate total pages
-  const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPrograms.length / rowsPerPage);
   
   // Change page function
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  
-  // Previous and next page functions
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+  const handleChangePage = (newPage) => { // Renamed from paginate and adjusted for 0-indexed
+    setPage(newPage);
   };
   
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+  // Previous and next page functions (will be replaced by admin pagination buttons)
+  // const goToPreviousPage = () => {
+  //   if (page > 0) { // Adjusted for 0-indexed page
+  //     setPage(page - 1);
+  //   }
+  // };
+  
+  // const goToNextPage = () => {
+  //   if (page < totalPages - 1) { // Adjusted for 0-indexed page
+  //     setPage(page + 1);
+  //   }
+  // };
+
+  // Helper function to get pagination range (copied from CRUD_SchoolProgram.jsx)
+  const getPaginationRange = (current, totalPages) => {
+    const MAX_VISIBLE_PAGES = 5;
+    let start = Math.max(0, current - Math.floor(MAX_VISIBLE_PAGES / 2));
+    let end = Math.min(totalPages - 1, start + MAX_VISIBLE_PAGES - 1);
+    
+    // Adjust start if we're near the end
+    if (end - start + 1 < MAX_VISIBLE_PAGES) {
+      start = Math.max(0, end - MAX_VISIBLE_PAGES + 1);
     }
+    
+    const range = [];
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+    
+    return range;
   };
 
   // Function to determine the color for recognition badges
@@ -104,7 +126,7 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Accredited Programs</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Showing {indexOfFirstProgram + 1}-{Math.min(indexOfLastProgram, filteredPrograms.length)} of {filteredPrograms.length} programs
+            Showing {filteredPrograms.length > 0 ? indexOfFirstProgram + 1 : 0} - {Math.min(indexOfLastProgram, filteredPrograms.length)} of {filteredPrograms.length} programs
           </p>
         </div>
 
@@ -185,53 +207,89 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
           </table>
         </div>
 
-        {/* Pagination Controls - Updated to match screenshot */}
-        {filteredPrograms.length > 0 && totalPages > 1 && (
-          <div className="px-6 py-5 border-t border-gray-200 flex justify-center">
-            <div className="flex items-center space-x-1">
-              {/* Previous Button */}
-              <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className={`flex items-center justify-center w-10 h-10 rounded-md shadow transition-colors duration-200 ${
-                  currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-[#2B3E4E] hover:bg-gray-50'
-                }`}
-                aria-label="Previous page"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              {/* Current Page Number */}
-              <div className="flex items-center justify-center min-w-[40px] h-10 px-3 rounded-md bg-[#FFB71B] text-white font-semibold shadow">
-                {currentPage}
+        {/* Pagination Controls - Updated to match admin style */}
+        {filteredPrograms.length > 0 && totalPages > 0 && (
+          <div className="bg-white rounded-b-lg shadow p-4 border-t border-gray-200">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-gray-600">
+                Showing {filteredPrograms.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
+                {Math.min((page + 1) * rowsPerPage, filteredPrograms.length)} of {filteredPrograms.length} programs
               </div>
-              
-              {/* Total Pages (if more than 1 page) */}
-              {totalPages > 1 && (
-                <div className="text-[#2B3E4E] text-sm mx-1">
-                  of {totalPages}
-                </div>
-              )}
-              
-              {/* Next Button */}
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className={`flex items-center justify-center w-10 h-10 rounded-md shadow transition-colors duration-200 ${
-                  currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-[#2B3E4E] hover:bg-gray-50'
-                }`}
-                aria-label="Next page"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+            
+              <div className="flex items-center space-x-1">
+                {totalPages > 0 && (
+                  <div className="flex space-x-1 items-center">
+                    {/* First page button */}
+                    <button
+                      onClick={() => handleChangePage(0)}
+                      disabled={page === 0}
+                      className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                      title="First page"
+                    >
+                      <ChevronsLeft className="h-5 w-5" />
+                    </button>
+                    
+                    {/* Previous page button */}
+                    <button
+                      onClick={() => handleChangePage(Math.max(0, page - 1))}
+                      disabled={page === 0}
+                      className={`p-2 rounded-lg ${page === 0 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                      title="Previous page"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    
+                    {/* Page numbers */}
+                    {getPaginationRange(page, totalPages).map((pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => handleChangePage(pageNum)}
+                        className={`px-3 py-1 rounded-lg ${pageNum === page ? "bg-[#FFB71B] text-[#2B3E4E] font-semibold" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                      >
+                        {pageNum + 1}
+                      </button>
+                    ))}
+                    
+                    {/* Next page button */}
+                    <button
+                      onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
+                      disabled={page >= totalPages - 1}
+                      className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                      title="Next page"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                    
+                    {/* Last page button */}
+                    <button
+                      onClick={() => handleChangePage(totalPages - 1)}
+                      disabled={page >= totalPages - 1}
+                      className={`p-2 rounded-lg ${page >= totalPages - 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"} transition-colors`}
+                      title="Last page"
+                    >
+                      <ChevronsRight className="h-5 w-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Rows per page:</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setPage(0); // Reset to first page when rows per page changes
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B]"
+                >
+                  {[5, 10, 25, 50].map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
