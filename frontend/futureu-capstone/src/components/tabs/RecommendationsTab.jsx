@@ -596,7 +596,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               </div>
               {/* Content on the right side */}
               <div className="text-left space-y-5 flex-1 flex flex-col justify-center">
-                <h3 className="text-xl font-bold text-[#232D35] mb-2">Your Path Forward</h3>
+                <h3 className="text-center text-xl font-bold text-[#232D35] mb-2">Your Path Forward</h3>
                 <div className="flex gap-3">
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
                     <span className="text-xs font-bold">1</span>
