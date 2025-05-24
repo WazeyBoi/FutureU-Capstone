@@ -14,15 +14,9 @@ const Unauthorized = () => {
         <div className="space-y-3">
           <Link 
             to="/user-landing-page" 
-            className="block w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+            className="block w-full py-2 px-4 bg-[#FFB71B] hover:bg-[#e09b00] text-black rounded-lg transition-colors"
           >
             Return to Home
-          </Link>
-          <Link 
-            to="/admin-login" 
-            className="block w-full py-2 px-4 bg-[#1D63A1] hover:bg-[#1D63A1]/90 text-white rounded-lg transition-colors"
-          >
-            Admin Login
           </Link>
         </div>
       </div>

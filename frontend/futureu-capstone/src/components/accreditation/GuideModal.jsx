@@ -22,7 +22,7 @@ const GuideModal = ({ onClose }) => {
           
           <button 
             onClick={onClose} 
-            className="text-white hover:bg-white/10 rounded-full p-1.5 transition-colors"
+            className="text-[#2B3E4E] hover:bg-white/10 rounded-full p-1.5 transition-colors"
             aria-label="Close"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

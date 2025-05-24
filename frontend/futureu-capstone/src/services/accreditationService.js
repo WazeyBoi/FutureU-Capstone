@@ -298,6 +298,8 @@ class AccreditationService {
             return {
               id: school.schoolId,
               name: school.name,
+              location: school.location,
+              type: school.type,
               totalAccredited: Object.values(programCategories)
                 .flatMap(progs => progs)
                 .filter(p => p.level > 0).length,
@@ -313,6 +315,8 @@ class AccreditationService {
             return {
               id: school.schoolId,
               name: school.name,
+              location: school.location,
+              type: school.type,
               totalAccredited: 0,
               institutionalStatus: {
                 autonomousStatus: "Error",
