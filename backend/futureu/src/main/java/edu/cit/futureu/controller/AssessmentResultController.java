@@ -134,7 +134,7 @@ public class AssessmentResultController {
             
             // Generate AI recommendations
             Map<String, Object> aiRecommendations = 
-                geminiAIService.generateProgramRecommendations(resultOpt.get(), sectionResults);
+                geminiAIService.generateCareerRecommendations(resultOpt.get(), sectionResults);
             
             return new ResponseEntity<>(aiRecommendations, HttpStatus.OK);
             

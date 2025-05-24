@@ -5,11 +5,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import edu.cit.futureu.entity.RecommendationEntity;
+import edu.cit.futureu.entity.CareerRecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
-import edu.cit.futureu.service.RecommendationService;
+import edu.cit.futureu.service.CareerRecommendationService;
 import edu.cit.futureu.service.AssessmentResultService;
 import edu.cit.futureu.service.UserAssessmentService;
 import edu.cit.futureu.service.GeminiAIService;
@@ -22,10 +22,10 @@ import java.util.ArrayList;
 
 @RestController
 @RequestMapping(method=RequestMethod.GET, path="/api/recommendation")
-public class RecommendationController {
+public class CareerRecommendationController {
 
     @Autowired
-    private RecommendationService recommendationService;
+    private CareerRecommendationService recommendationService;
 
     @Autowired
     private AssessmentResultService assessmentResultService;
@@ -43,18 +43,18 @@ public class RecommendationController {
 
     // CREATE
     @PostMapping("/postRecommendation")
-    public RecommendationEntity postRecommendation(@RequestBody RecommendationEntity recommendation) {
+    public CareerRecommendationEntity postRecommendation(@RequestBody CareerRecommendationEntity recommendation) {
         return recommendationService.createRecommendation(recommendation);
     }
 
     // READ
     @GetMapping("/getRecommendation/{recommendationId}")
-    public RecommendationEntity getRecommendationById(@PathVariable int recommendationId) {
+    public CareerRecommendationEntity getRecommendationById(@PathVariable int recommendationId) {
         return recommendationService.getRecommendationById(recommendationId).orElse(null);
     }
 
     @GetMapping("/getRecommendationByResult/{resultId}")
-    public List<RecommendationEntity> getRecommendationByResult(@PathVariable int resultId) {
+    public List<CareerRecommendationEntity> getRecommendationByResult(@PathVariable int resultId) {
         AssessmentResultEntity result = assessmentResultService.getAssessmentResultById(resultId).orElse(null);
         if (result != null) {
             return recommendationService.getRecommendationsByAssessmentResult(result);
@@ -103,7 +103,7 @@ public class RecommendationController {
             }
             
             // Generate and save AI recommendations
-            List<RecommendationEntity> recommendations = 
+            List<CareerRecommendationEntity> recommendations = 
                 recommendationService.generateAndSaveRecommendations(resultOpt.get());
 
             return new ResponseEntity<>(recommendations, HttpStatus.OK);
@@ -165,7 +165,7 @@ public class RecommendationController {
             
             // Generate AI recommendations
             Map<String, Object> aiRecommendations = 
-                geminiAIService.generateProgramRecommendations(resultOpt.get(), sectionResults);
+                geminiAIService.generateCareerRecommendations(resultOpt.get(), sectionResults);
             
             // Create a comprehensive response
             Map<String, Object> response = new HashMap<>();
@@ -190,7 +190,7 @@ public class RecommendationController {
 
     // UPDATE
     @PutMapping("/putRecommendation")
-    public RecommendationEntity putRecommendation(@RequestParam int recommendationId, @RequestBody RecommendationEntity newRecommendation) {
+    public CareerRecommendationEntity putRecommendation(@RequestParam int recommendationId, @RequestBody CareerRecommendationEntity newRecommendation) {
         newRecommendation.setRecommendationId(recommendationId);
         return recommendationService.updateRecommendation(newRecommendation);
     }

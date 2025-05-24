@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "assessment_result")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AssessmentResultEntity {
 
     @Id
@@ -59,7 +61,7 @@ public class AssessmentResultEntity {
 
     @JsonIgnore
     @OneToMany(mappedBy = "assessmentResult", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<RecommendationEntity> recommendations = new ArrayList<>();
+    private List<CareerRecommendationEntity> recommendations = new ArrayList<>();
 
     private LocalDateTime dateComputed;
 
@@ -273,11 +275,11 @@ public class AssessmentResultEntity {
         this.conventionalScore = conventionalScore;
     }
 
-    public List<RecommendationEntity> getRecommendations() {
+    public List<CareerRecommendationEntity> getRecommendations() {
         return recommendations;
     }
 
-    public void setRecommendations(List<RecommendationEntity> recommendations) {
+    public void setRecommendations(List<CareerRecommendationEntity> recommendations) {
         this.recommendations = recommendations;
     }
 

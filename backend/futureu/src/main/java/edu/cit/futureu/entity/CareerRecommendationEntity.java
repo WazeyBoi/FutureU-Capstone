@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "recommendation")
-public class RecommendationEntity {
+@Table(name = "career_recommendation")
+public class CareerRecommendationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,13 +23,12 @@ public class RecommendationEntity {
     @JoinColumn(name = "careerId")
     private CareerEntity careerPath;
 
-    private String suggestedProgram;
     private double confidenceScore;
 
-    @Column(length = 1000)
+    @Column(length = 2000)
     private String description;
 
-    public RecommendationEntity() {}
+    public CareerRecommendationEntity() {}
 
     public int getRecommendationId() { return recommendationId; }
     public void setRecommendationId(int recommendationId) { this.recommendationId = recommendationId; }
@@ -39,9 +38,6 @@ public class RecommendationEntity {
 
     public CareerEntity getCareerPath() { return careerPath; }
     public void setCareerPath(CareerEntity careerPath) { this.careerPath = careerPath; }
-
-    public String getSuggestedProgram() { return suggestedProgram; }
-    public void setSuggestedProgram(String suggestedProgram) { this.suggestedProgram = suggestedProgram; }
 
     public double getConfidenceScore() { return confidenceScore; }
     public void setConfidenceScore(double confidenceScore) { this.confidenceScore = confidenceScore; }
@@ -53,4 +49,5 @@ public class RecommendationEntity {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }

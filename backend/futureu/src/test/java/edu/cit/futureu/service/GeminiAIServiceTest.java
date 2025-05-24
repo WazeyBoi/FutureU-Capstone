@@ -97,7 +97,7 @@ public class GeminiAIServiceTest {
     }
 
     @Test
-    public void testGenerateProgramRecommendations() {
+    public void testGenerateCareerRecommendations() {
         // Create mock assessment result and section results
         AssessmentResultEntity mockResult = new AssessmentResultEntity();
         mockResult.setOverallScore(85.0);
@@ -126,7 +126,7 @@ public class GeminiAIServiceTest {
         // Similar to testApiConnection but with different return values
         
         // Call the method
-        Map<String, Object> recommendations = geminiAIService.generateProgramRecommendations(mockResult, mockSectionResults);
+        Map<String, Object> recommendations = geminiAIService.generateCareerRecommendations(mockResult, mockSectionResults);
         
         // Assertions would depend on exact implementation and response format
         // This is a placeholder for the actual assertions

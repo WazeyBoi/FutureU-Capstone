@@ -360,42 +360,36 @@ public class UserAssessmentService {
      * Calculate overall assessment score with weights for different section types
      */
     private double calculateOverallScore(Map<String, Map<String, Object>> sectionScores) {
-        // Define weights for different section types
+        // Define weights for different section types (INTEREST removed)
         Map<String, Double> typeWeights = new HashMap<>();
         typeWeights.put("GSA", 0.40);       // 40% weight for GSA
         typeWeights.put("ACADEMIC", 0.30);  // 30% weight for Academic Track
         typeWeights.put("OTHER", 0.15);     // 15% weight for Other Track
-        typeWeights.put("INTEREST", 0.15);  // 15% weight for Interest Areas
-        
-        // Group section scores by type
+        // INTEREST section is not included in the overall score
+
+        // Group section scores by type, excluding INTEREST
         Map<String, List<Double>> scoresByType = new HashMap<>();
-        
+
         for (Map.Entry<String, Map<String, Object>> entry : sectionScores.entrySet()) {
             String sectionType = (String) entry.getValue().get("sectionType");
+            if ("INTEREST".equals(sectionType)) continue; // skip INTEREST
             double score = (double) entry.getValue().get("percentageScore");
-            
             scoresByType.computeIfAbsent(sectionType, k -> new ArrayList<>()).add(score);
         }
-        
+
         // Calculate weighted average for each type
         double weightedTotal = 0.0;
         double totalWeight = 0.0;
-        
+
         for (Map.Entry<String, List<Double>> entry : scoresByType.entrySet()) {
             String type = entry.getKey();
             List<Double> scores = entry.getValue();
-            
-            // Calculate average score for this type
             double typeAverage = scores.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            
-            // Get weight for this type
             double weight = typeWeights.getOrDefault(type, 0.0);
-            
-            // Add weighted score to total
             weightedTotal += typeAverage * weight;
             totalWeight += weight;
         }
-        
+
         // Calculate final weighted average
         return totalWeight > 0 ? weightedTotal / totalWeight : 0;
     }
