@@ -11,6 +11,7 @@ const StudentRegister = () => {
     lastname: '',
     email: '',
     password: '',
+    confirmPassword: '', // Added confirm password field
     age: '',
     address: '',
     contactNumber: '',
@@ -19,10 +20,44 @@ const StudentRegister = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // Password validation
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password);
+    
+    if (password.length < minLength) {
+      return 'Password must be at least 8 characters long';
+    }
+    if (!hasUpperCase) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    if (!hasLowerCase) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    if (!hasNumbers) {
+      return 'Password must contain at least one number';
+    }
+    if (!hasSpecialChar) {
+      return 'Password must contain at least one special character';
+    }
+    
+    return null; // Valid password
+  };
+  
+  // Phone number validation for Philippines (09XXXXXXXXX format)
+  const validatePhilippinesPhoneNumber = (phoneNumber) => {
+    const phoneRegex = /^09\d{9}$/;
+    return phoneRegex.test(phoneNumber);
   };
 
   const handleRegister = async (e) => {
@@ -30,24 +65,42 @@ const StudentRegister = () => {
     setError('');
     setSuccess('');
     setLoading(true);
-
-    // Basic validation example (add more as needed)
+    
+    // Age validation
     if (parseInt(formData.age) < 0 || parseInt(formData.age) > 120) {
-        setError('Please enter a valid age.');
-        setLoading(false);
-        return;
+      setError('Please enter a valid age.');
+      setLoading(false);
+      return;
     }
-    if (formData.password.length < 6) {
-        setError('Password must be at least 6 characters long.');
-        setLoading(false);
-        return;
+    
+    // Password validation
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setError(passwordError);
+      setLoading(false);
+      return;
     }
-
+    
+    // Confirm password validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+    
+    // Phone number validation
+    if (!validatePhilippinesPhoneNumber(formData.contactNumber)) {
+      setError('Please enter a valid Philippines mobile number (e.g., 09611532284)');
+      setLoading(false);
+      return;
+    }
 
     try {
-      await authService.signup(formData);
+      // Remove confirmPassword as it's not needed in the API request
+      const { confirmPassword, ...registrationData } = formData;
+      await authService.signup(registrationData);
       setSuccess('Registration successful! Please sign in.');
-      // Optionally, redirect to login after a delay or clear form
+      // Redirect to login after a delay
       setTimeout(() => {
         navigate('/login');
       }, 2000);
@@ -102,7 +155,7 @@ const StudentRegister = () => {
               animate={{ opacity: 1, y: 0 }}
               className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-600 dark:text-red-400 p-3 rounded-lg mb-6 flex items-center"
             >
-              <AlertCircle className="w-5 h-5 mr-2" />
+              <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
               <span>{error}</span>
             </motion.div>
           )}
@@ -120,63 +173,227 @@ const StudentRegister = () => {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
-              {inputFields.map(field => (
-                <div key={field.name} className={field.name === 'address' || field.name === 'contactNumber' ? 'md:col-span-2' : ''}>
-                  <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
-                    {field.placeholder}
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      {field.icon}
-                    </div>
-                    {field.name === 'password' ? (
-                      <>
-                        <input
-                          id={field.name}
-                          name={field.name}
-                          type={showPassword ? "text" : "password"}
-                          required
-                          value={formData[field.name]}
-                          onChange={handleChange}
-                          className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
-                          placeholder={field.placeholder}
-                        />
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <button
-                            type="button"
-                            className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
-                            onClick={() => setShowPassword(!showPassword)}
-                            aria-label={showPassword ? "Hide password" : "Show password"}
-                            style={{ 
-                              boxShadow: 'none', 
-                              outline: 'none',
-                              border: 'none'
-                            }}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onFocus={(e) => e.target.style.outline = 'none'}
-                          >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <input
-                        id={field.name}
-                        name={field.name}
-                        type={field.type}
-                        required={field.name !== 'middleName'}
-                        value={formData[field.name]}
-                        onChange={handleChange}
-                        className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
-                        placeholder={field.placeholder}
-                      />
-                    )}
+              {/* First Name and Middle Name (side by side) */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  First Name
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    required
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="First Name"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Middle Name (Optional)
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="middleName"
+                    name="middleName"
+                    type="text"
+                    value={formData.middleName}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Middle Name (Optional)"
+                  />
+                </div>
+              </div>
+
+              {/* Last Name and Age (side by side) */}
+              <div>
+                <label htmlFor="lastname" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Last Name
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="lastname"
+                    name="lastname"
+                    type="text"
+                    required
+                    value={formData.lastname}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Last Name"
+                  />
+                </div>
+              </div>
+              <div>
+                <label htmlFor="age" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Age
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Calendar className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="age"
+                    name="age"
+                    type="number"
+                    required
+                    value={formData.age}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Age"
+                    min="0" 
+                    max="120"
+                  />
+                </div>
+              </div>
+
+              {/* Password and Confirm Password (side by side) */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Password"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onMouseDown={(e) => e.preventDefault()}
+                      style={{ boxShadow: 'none', outline: 'none', border: 'none' }}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Confirm Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Confirm Password"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <button
+                      type="button"
+                      className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      onMouseDown={(e) => e.preventDefault()}
+                      style={{ boxShadow: 'none', outline: 'none', border: 'none' }}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Email (full width) */}
+              <div className="col-span-1 md:col-span-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Email Address"
+                  />
+                </div>
+              </div>
+
+              {/* Address (full width) */}
+              <div className="col-span-1 md:col-span-2">
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Address
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Home className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="address"
+                    name="address"
+                    type="text"
+                    required
+                    value={formData.address}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Address"
+                  />
+                </div>
+              </div>
+
+              {/* Contact Number (full width) */}
+              <div className="col-span-1 md:col-span-2">
+                <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  Contact Number
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="contactNumber"
+                    name="contactNumber"
+                    type="tel"
+                    required
+                    value={formData.contactNumber}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="09XXXXXXXXX"
+                    pattern="09[0-9]{9}"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-4">
               <motion.button
                 type="submit"
                 disabled={loading}
