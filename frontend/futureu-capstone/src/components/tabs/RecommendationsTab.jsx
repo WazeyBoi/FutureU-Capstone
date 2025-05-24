@@ -1,10 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
 import userAssessmentService from '../../services/userAssessmentService';
 import programRecommendationService from '../../services/programRecommendationService';
+import schoolProgramService from '../../services/schoolProgramService';
+import { MapPin, Globe, ChevronDown, ChevronUp, School } from 'lucide-react';
 import '../../styles/animations.css'; // Import the animations CSS
+
+// Import school logos and images for parity with AcademicExplorer
+import cdu_school_logo from '../../assets/school_logos/cdu_school_logo.png';
+import citu_school_logo from '../../assets/school_logos/citu_school_logo.png';
+import cnu_school_logo from '../../assets/school_logos/cnu_school_logo.png';
+import ctu_school_logo from '../../assets/school_logos/ctu_school_logo.png';
+import iau_school_logo from '../../assets/school_logos/iau_school_logo.png';
+import swu_school_logo from '../../assets/school_logos/swu_school_logo.png';
+import uc_school_logo from '../../assets/school_logos/uc_school_logo.png';
+import usc_school_logo from '../../assets/school_logos/usc_school_logo.png';
+import usjr_school_logo from '../../assets/school_logos/usjr_school_logo.png';
+import up_school_logo from '../../assets/school_logos/up_school_logo.png';
+import uv_school_logo from '../../assets/school_logos/uv_school_logo.png';
+
+import citu_school_image from '../../assets/school_images/citu_school_image.jpg';
+import cdu_school_image from '../../assets/school_images/cdu_school_image.jpg';
+import cnu_school_image from '../../assets/school_images/cnu_school_image.jpg';
+import ctu_school_image from '../../assets/school_images/ctu_school_image.jpg';
+import swu_school_image from '../../assets/school_images/swu_school_image.jpg';
+import usc_school_image from '../../assets/school_images/usc_school_image.jpg';
+import usjr_school_image from '../../assets/school_images/usjr_school_image.jpg';
+import up_school_image from '../../assets/school_images/up_school_image.jpg';
+import uc_school_image from '../../assets/school_images/uc_school_image.jpg';
+import uv_school_image from '../../assets/school_images/uv_school_image.jpg';
+import iau_school_image from '../../assets/school_images/iau_school_image.jpg';
+
+// School logo and background mappings (copied from AcademicExplorer)
+const schoolLogos = {
+  1: cdu_school_logo,
+  2: citu_school_logo,
+  3: cnu_school_logo,
+  4: ctu_school_logo,
+  5: iau_school_logo,
+  6: swu_school_logo,
+  7: uc_school_logo,
+  8: usc_school_logo,
+  9: usjr_school_logo,
+  10: up_school_logo,
+  11: uv_school_logo,
+};
+const schoolBackgroundMap = {
+  "Cebu Institute of Technology": citu_school_image,
+  "Cebu Doctors' University": cdu_school_image,
+  "Cebu Normal University": cnu_school_image,
+  "Cebu Technological University": ctu_school_image,
+  "Southwestern University": swu_school_image,
+  "University of San Carlos": usc_school_image,
+  "University of San Jose-Recoletos": usjr_school_image,
+  "University of the Philippines Cebu": up_school_image,
+  "University of Cebu": uc_school_image,
+  "University of the Visayas": uv_school_image,
+  "Indiana Aerospace University": iau_school_image,
+};
+function getSchoolBackground(schoolName) {
+  if (!schoolName) return null;
+  const normalizedName = schoolName.toLowerCase();
+  for (const [key, background] of Object.entries(schoolBackgroundMap)) {
+    if (normalizedName.includes(key.toLowerCase())) {
+      return background;
+    }
+  }
+  return null;
+}
+
+const AccordionContent = ({ expanded, children }) => {
+  const ref = useRef(null);
+  const [maxHeight, setMaxHeight] = useState(0);
+
+  useEffect(() => {
+    if (expanded && ref.current) {
+      setMaxHeight(ref.current.scrollHeight);
+    } else {
+      setMaxHeight(0);
+    }
+  }, [expanded, children]);
+
+  return (
+    <div
+      className="overflow-hidden transition-all duration-500"
+      style={{ maxHeight: expanded ? maxHeight : 0 }}
+      aria-hidden={!expanded}
+    >
+      <div ref={ref}>{children}</div>
+    </div>
+  );
+};
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [aiRecommendations, setAiRecommendations] = useState(null);
@@ -14,6 +102,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [programRecommendations, setProgramRecommendations] = useState(null);
   const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [programError, setProgramError] = useState(null);
+  const [expandedPrograms, setExpandedPrograms] = useState([]); // Track expanded accordions
+  const [schoolsByProgram, setSchoolsByProgram] = useState({}); // Cache schools per program
+  const [loadingSchools, setLoadingSchools] = useState({}); // Track loading state per program
+  const [showTip, setShowTip] = useState(true); // State to show/hide tip
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -89,6 +181,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           .slice(0, 5)
           .map(p => ({
             programName: p.program.programName,
+            programId: p.program.programId,
             description: p.program.description,
             confidenceScore: p.confidenceScore,
             explanation: p.explanation
@@ -146,6 +239,34 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       setError('Failed to generate recommendations. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Accordion toggle handler (only one open at a time)
+  const handleToggleProgram = (program, idx) => {
+    setExpandedPrograms((prev) => (prev[0] === idx ? [] : [idx]));
+    // Only fetch if not already loaded
+    const programId = program.programId || (program.program && program.program.programId);
+    if (!programId) {
+      setSchoolsByProgram((prev) => ({ ...prev, [program.programName]: [] }));
+      setLoadingSchools((prev) => ({ ...prev, [program.programName]: false }));
+      return;
+    }
+    if (!schoolsByProgram[program.programName]) {
+      setLoadingSchools((prev) => ({ ...prev, [program.programName]: true }));
+      schoolProgramService.getSchoolProgramsByProgram(programId)
+        .then((schoolPrograms) => {
+          const schools = (schoolPrograms || [])
+            .map((sp) => sp.school)
+            .filter((s, i, arr) => s && arr.findIndex(ss => ss.schoolId === s.schoolId) === i);
+          setSchoolsByProgram((prev) => ({ ...prev, [program.programName]: schools }));
+        })
+        .catch(() => {
+          setSchoolsByProgram((prev) => ({ ...prev, [program.programName]: [] }));
+        })
+        .finally(() => {
+          setLoadingSchools((prev) => ({ ...prev, [program.programName]: false }));
+        });
     }
   };
 
@@ -239,41 +360,124 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         )}
         {/* Program recommendations - only show if loaded and not loading */}
         {aiRecommendations && programRecommendations && !loadingPrograms && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              These programs are matched to your top career recommendations and assessment profile.
-            </p>
-            <div className="space-y-6">
-              {programRecommendations.map((program, idx) => (
-                <motion.div key={idx} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
-                    <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                      {program.confidenceScore?.toFixed(1)}% Match
-                    </span>
-                  </div>
-                  <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
-                  <div className="flex gap-2">
-                    <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                      Recommended Program
-                    </span>
-                    {idx === 0 && (
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                        Best Match
-                      </span>
-                    )}
-                  </div>
-                  {program.explanation && (
-                    <div className="mt-3 p-3 bg-[#F8F9FA] rounded-xl shadow-inner">
-                      <span className="block text-xs text-[#1D63A1] font-semibold mb-1">Why this program?</span>
-                      <span className="block text-xs text-gray-700 text-left">{program.explanation}</span>
+          <div className="relative">
+            {/* Overlapping tip container */}
+            {showTip && (
+              <div className="absolute -top-8 -left-15 z-20 w-90 h-28 flex flex-row items-center px-2 py-4 rounded-3xl shadow-lg bg-white animate-fade-in-up">
+                <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-6" />
+                <div className="flex-1 flex flex-col">
+                <span className="text-left text-xs font-semibold text-[#2B3E4E] text-center flex-1 pr-2">
+                  <p className='text-lg'><b>Tip</b></p> Click the Program to expand and see the list of schools offering it.
+                </span>
+                <div className='text-right pr-6'>
+                  <span
+                    className="text-xs font-bold text-[#FFB71B] cursor-pointer hover:underline"
+                    onClick={() => setShowTip(false)}
+                  >
+                    Okay
+                  </span>
+                </div>
+                </div>
+              </div>
+            )}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
+              <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
+              <p className="text-sm text-gray-600 mb-2">
+                These programs are matched to your top career recommendations and assessment profile.
+              </p>
+              <div className="space-y-6">
+                {programRecommendations.map((program, idx) => (
+                  <motion.div key={idx} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                    <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleToggleProgram(program, idx)}>
+                      <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
+                          {program.confidenceScore?.toFixed(1)}% Match
+                        </span>
+                        {expandedPrograms.includes(idx) ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                      </div>
                     </div>
-                  )}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                    <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
+                    <div className="flex gap-2">
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
+                        Recommended Program
+                      </span>
+                      {idx === 0 && (
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
+                          Best Match
+                        </span>
+                      )}
+                    </div>
+                    {program.explanation && (
+                      <div className="mt-3 p-3 bg-[#F8F9FA] rounded-xl shadow-inner">
+                        <span className="block text-xs text-[#1D63A1] font-semibold mb-1">Why this program?</span>
+                        <span className="block text-xs text-gray-700 text-left">{program.explanation}</span>
+                      </div>
+                    )}
+                    {/* Accordion content: Schools offering this program */}
+                    <AccordionContent expanded={expandedPrograms.includes(idx)}>
+                      <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2">
+                        Schools offering this program
+                      </h5>
+                      {loadingSchools[program.programName] ? (
+                        <div className="flex items-center justify-center h-12">
+                          <div className="loader"></div>
+                          <div className="text-gray-500 text-sm">Loading schools...</div>
+                        </div>
+                      ) : (schoolsByProgram[program.programName]?.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                          {schoolsByProgram[program.programName].map((school) => {
+                            const schoolLogo = schoolLogos[school.schoolId];
+                            const schoolBackground = getSchoolBackground(school.name);
+                            return (
+                              <div key={school.schoolId} className="relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs">
+                                <div className="flex flex-col h-full">
+                                  {/* Top half with image and logo (scaled down) */}
+                                  <div className="relative w-full h-28 bg-blue-100 overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
+                                    {schoolBackground ? (
+                                      <img src={schoolBackground} alt={`${school.name} campus`} className="w-full h-full object-cover object-center" />
+                                    ) : (
+                                      <img src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school.schoolId}`} alt={`${school.name} campus`} className="w-full h-full object-cover object-center" />
+                                    )}
+                                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                      {schoolLogo ? (
+                                        <img src={schoolLogo} alt={`${school.name} logo`} className="w-14 h-14 object-cover rounded-full shadow-md" />
+                                      ) : (
+                                        <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow">
+                                          <School className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {/* Bottom half with school information (scaled down) */}
+                                  <div className="p-3 flex flex-col flex-1">
+                                    <h3 className="text-xs font-bold text-base text-gray-900 dark:text-white text-left mb-2">{school.name}</h3>
+                                    <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
+                                      <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
+                                        <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
+                                        <span className="text-left text-xs">{school.location}</span>
+                                      </div>
+                                      <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
+                                        <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
+                                        <span>{school.type}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
+                      ))}
+                    </AccordionContent>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
         )}
         {loadingPrograms && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop mt-8">
