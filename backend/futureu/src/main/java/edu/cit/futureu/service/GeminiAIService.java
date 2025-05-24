@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.CareerEntity;
 import edu.cit.futureu.entity.ProgramEntity;
+import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 
 import java.util.ArrayList;
@@ -37,10 +38,12 @@ public class GeminiAIService {
     
     @Autowired
     private CareerService careerService;
-    @Autowired
-    private CareerProgramService careerProgramService;
+    // @Autowired
+    // private CareerProgramService careerProgramService;
     @Autowired
     private ProgramService programService;
+    @Autowired
+    private SchoolProgramService schoolProgramService;
     
     // Mapping to categorize career types - update keywords if needed
     private static final Map<String, List<String>> CAREER_CATEGORY_KEYWORDS = Map.of(
@@ -755,5 +758,103 @@ public class GeminiAIService {
             errorResult.put("error", e.getMessage());
             return errorResult;
         }
+    }
+
+    /**
+     * For each programId, fetch all schools offering it, sort by accreditation, and return the ranked list with reasons.
+     * Returns a list of objects: { programId, programName, schools: [{...schoolProgram, reason}], ... }
+     */
+    public List<Map<String, Object>> getProgramSchoolRecommendations(List<Integer> programIds) {
+        List<Map<String, Object>> recommendations = new ArrayList<>();
+        for (Integer programId : programIds) {
+            ProgramEntity program = programService.getProgramById(programId).orElse(null);
+            if (program == null) continue;
+            List<SchoolProgramEntity> schoolPrograms = schoolProgramService.getSchoolProgramsByProgram(program);
+            // Sort schools by accreditation level (IV > III > II > I > null), then by recognition (COE > COD > others > null)
+            schoolPrograms.sort((a, b) -> {
+                int levelA = getAccredLevelRank(a.getAccreditation());
+                int levelB = getAccredLevelRank(b.getAccreditation());
+                if (levelA != levelB) return Integer.compare(levelB, levelA); // Descending
+                int recogA = getRecognitionRank(a.getAccreditation());
+                int recogB = getRecognitionRank(b.getAccreditation());
+                return Integer.compare(recogB, recogA); // Descending
+            });
+            // Build school list with reasons
+            List<Map<String, Object>> schoolsWithReasons = new ArrayList<>();
+            for (int i = 0; i < schoolPrograms.size(); i++) {
+                SchoolProgramEntity sp = schoolPrograms.get(i);
+                Map<String, Object> schoolMap = new HashMap<>();
+                schoolMap.put("schoolProgram", sp);
+                String reason;
+                if (i == 0) {
+                    reason = buildBestSchoolReason(sp);
+                } else {
+                    reason = buildRankedSchoolReason(sp, i + 1);
+                }
+                schoolMap.put("reason", reason);
+                schoolsWithReasons.add(schoolMap);
+            }
+            Map<String, Object> rec = new HashMap<>();
+            rec.put("programId", program.getProgramId());
+            rec.put("programName", program.getProgramName());
+            rec.put("schools", schoolsWithReasons); // Already ranked, with reasons
+            recommendations.add(rec);
+        }
+        return recommendations;
+    }
+
+    // Helper: build a reason string for why this school is best (1st)
+    private String buildBestSchoolReason(SchoolProgramEntity sp) {
+        if (sp.getAccreditation() == null) {
+            return "No accreditation information available.";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Best School Based on the Accreditation: ")
+          .append(sp.getAccreditation().getAccreditationLevel());
+        if (sp.getAccreditation().getRecognitionStatus() != null && !sp.getAccreditation().getRecognitionStatus().equalsIgnoreCase("none")) {
+            sb.append(", Recognition: ").append(sp.getAccreditation().getRecognitionStatus());
+        }
+        if (sp.getAccreditation().getAccreditingBody() != null) {
+            sb.append(", Accrediting Body: ").append(sp.getAccreditation().getAccreditingBody());
+        }
+        return sb.toString();
+    }
+
+    // Helper: build a reason string for why this school is ranked at its position (2nd, 3rd, ...)
+    private String buildRankedSchoolReason(SchoolProgramEntity sp, int rank) {
+        if (sp.getAccreditation() == null) {
+            return "Ranked #" + rank + ": No accreditation information available.";
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Ranked #").append(rank).append(" due to accreditation: ")
+          .append(sp.getAccreditation().getAccreditationLevel());
+        if (sp.getAccreditation().getRecognitionStatus() != null && !sp.getAccreditation().getRecognitionStatus().equalsIgnoreCase("none")) {
+            sb.append(", Recognition: ").append(sp.getAccreditation().getRecognitionStatus());
+        }
+        if (sp.getAccreditation().getAccreditingBody() != null) {
+            sb.append(", Accrediting Body: ").append(sp.getAccreditation().getAccreditingBody());
+        }
+        return sb.toString();
+    }
+
+    // Helper: assign numeric rank to accreditation level (higher is better)
+    private int getAccredLevelRank(edu.cit.futureu.entity.AccreditationEntity accred) {
+        if (accred == null || accred.getAccreditationLevel() == null) return 0;
+        switch (accred.getAccreditationLevel().replaceAll("[^IV1234]", "").toUpperCase()) {
+            case "IV": case "4": return 4;
+            case "III": case "3": return 3;
+            case "II": case "2": return 2;
+            case "I": case "1": return 1;
+            default: return 0;
+        }
+    }
+    // Helper: assign numeric rank to recognition (COE > COD > others > null)
+    private int getRecognitionRank(edu.cit.futureu.entity.AccreditationEntity accred) {
+        if (accred == null || accred.getRecognitionStatus() == null) return 0;
+        String recog = accred.getRecognitionStatus().toUpperCase();
+        if (recog.contains("COE")) return 3;
+        if (recog.contains("COD")) return 2;
+        if (!recog.equals("NONE") && !recog.isEmpty()) return 1;
+        return 0;
     }
 }

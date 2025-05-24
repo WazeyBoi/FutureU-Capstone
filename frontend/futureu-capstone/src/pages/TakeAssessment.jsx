@@ -9,6 +9,7 @@ import AssessmentSection from '../components/assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
 import ResumeAssessmentModal from '../components/assessment/ResumeAssessmentModal';
 import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
+import ohMySVG from '../assets/characters/ohMy.svg';
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -68,6 +69,9 @@ const TakeAssessment = () => {
   
   // Add state to track which question to scroll to after navigation
   const [pendingScroll, setPendingScroll] = useState(null); // { sectionIndex, questionIndex }
+
+  // Add state to control showing the assessment tips/instructions
+  const [showAssessmentTips, setShowAssessmentTips] = useState(true);
 
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
@@ -570,6 +574,12 @@ const TakeAssessment = () => {
     }
   };
 
+  // Handler for closing the resume modal and navigating back
+  const handleCloseResumeModal = () => {
+    setShowResumeModal(false);
+    navigate(-1);
+  };
+
   // Calculate overall progress
   const calculateProgress = useCallback(() => {
     if (!sectionList.length) return { completed: 0, total: 0 };
@@ -831,6 +841,7 @@ const TakeAssessment = () => {
       <ResumeAssessmentModal
         onResume={handleResumeAssessment}
         onStartNew={handleStartNewAssessment}
+        onClose={handleCloseResumeModal}
       />
     );
   }
@@ -1039,7 +1050,7 @@ const TakeAssessment = () => {
               <button
                 onClick={handleSaveAndExit}
                 disabled={isSaving}
-                className="mt-2 sm:mt-0 px-4 py-2 bg-[#FFB71B] text-[#232D35] rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors"
+                className="text-center mt-2 sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors"
               >
                 {isSaving ? (
                   <>
@@ -1060,7 +1071,7 @@ const TakeAssessment = () => {
               </button>
               
               {/* Elapsed time indicator */}
-              <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-full text-[#1D63A1] flex shadow-sm">
+              <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-lg text-[#1D63A1] flex shadow-sm">
                 <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -1119,8 +1130,8 @@ const TakeAssessment = () => {
           className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
-            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 2 0 00-2 2v12a2 2 2 0 002 2z"></path>
+            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
             <span className="truncate">Your Assessment Progress</span>
           </h4>
@@ -1206,26 +1217,52 @@ const TakeAssessment = () => {
           </AnimatePresence>
           
           {/* Instructions and information */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-6 bg-white p-5 rounded-xl border border-[#1D63A1]/20 shadow-md"
-          >
-            <h3 className="text-sm font-medium text-[#232D35] mb-3 flex items-center">
-              <svg className="w-5 h-5 mr-1 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Assessment Tips
-            </h3>
-            <ul className="text-start text-xs text-gray-600 space-y-2 pl-6 list-disc">
-              <li>Answer all questions to the best of your ability.</li>
-              <li>You can navigate between sections using the panel on the left.</li>
-              <li>Your progress is automatically saved as you answer questions.</li>
-              <li>Click "Complete Assessment" on the final question to submit all your answers.</li>
-              <li>Time limits, if applicable, are shown at the top of the screen.</li>
-            </ul>
-          </motion.div>
+          {showAssessmentTips && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 pt-40">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-white p-6 rounded-2xl border border-[#1D63A1]/20 shadow-2xl max-w-md w-full relative overflow-visible"
+              >
+                {/* OhMy mascot SVG, overflowing the top of the modal */}
+                <img
+                  src={ohMySVG}
+                  alt="OhMy mascot"
+                  className="absolute -top-70 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl pointer-events-none select-none"
+                  style={{ zIndex: 61 }}
+                />
+                <button
+                  onClick={() => setShowAssessmentTips(false)}
+                  aria-label="Close instructions"
+                  className="absolute bg-gradient-to-r from-white to-white top-3 right-3 text-gray-400 hover:text-[#FFB71B] transition-colors p-1"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#FFB71B]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <h3 className="text-lg font-bold text-[#232D35] mb-4 flex items-center mt-8">
+                  <svg className="w-6 h-6 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Assessment Instructions
+                </h3>
+                <ul className="text-start text-xs text-gray-700 space-y-1 pl-6 list-disc mb-6">
+                  <li>Answer all questions honestly with the best of your ability.</li>
+                  <li>You can navigate between sections using the panel on the left.</li>
+                  <li>Use the "Save & Exit" button to save your progress and return later.</li>
+                  <li>Click "Complete Assessment" on the final question to submit all your answers.</li>
+                  <li>Elapsed Time, is shown at the top of the screen.</li>
+                </ul>
+                <button
+                  onClick={() => setShowAssessmentTips(false)}
+                  className="text-center sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors block mx-auto mt-6"
+                >
+                  Got it!
+                </button>
+              </motion.div>
+            </div>
+          )}
         </div>
       </div>
       

@@ -187,7 +187,7 @@ const LandingPage = () => {
               <motion.div className="mt-10" variants={fadeIn}>
             <Link to="/register">
                   <motion.button
-                    className="bg-yellow-500 !important text-black font-bold text-xl py-4 px-10 rounded-full hover:bg-yellow-400 transition duration-300 flex items-center"
+                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-[#2B3E4E] py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
                     style={{ backgroundColor: '#ffc107' }} 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -394,19 +394,19 @@ const LandingPage = () => {
               icon: <FaBriefcase size={48} className="text-yellow-500" />,
               title: "Career Pathways",
               description: "Explore the right career paths based on your unique strengths.",
-                link: "/career-paths",
+                link: "/career-pathways",
             },
             {
               icon: <FaSearch size={48} className="text-yellow-500" />,
               title: "Program Finder",
               description: "Discover the best college programs tailored to your goals.",
-                link: "/programs",
+                link: "/academic-explorer",
             },
             {
               icon: <FaClipboardList size={48} className="text-yellow-500" />,
               title: "Assessments",
               description: "Evaluate your skills and preferences with our assessments.",
-                link: "/assessments",
+                link: "/assessment-dashboard",
             },
           ].map((item, index) => (
               <motion.div
@@ -540,8 +540,8 @@ const LandingPage = () => {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Academic Journey?</h2>
-              <p className="text-xl text-gray-300">
+              <h2 className="text-left text-3xl md:text-4xl font-bold mb-4">Ready to Start Your Academic Journey?</h2>
+              <p className="text-left text-xl text-gray-300">
                 Join thousands of students who have found their perfect academic path with FutureU.
               </p>
             </motion.div>
@@ -554,7 +554,7 @@ const LandingPage = () => {
             >
               <Link to="/register">
                 <motion.button
-                  className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-full hover:bg-yellow-400 transition duration-300 text-lg flex items-center"
+                  className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-[#2B3E4E] py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -570,26 +570,26 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-15">
             <div>
               <div className="flex items-center mb-4">
                 <FaGraduationCap className="text-yellow-500 text-3xl mr-2" />
                 <span className="font-bold text-2xl">FutureU</span>
               </div>
-              <p className="text-gray-400">
+              <p className=" text-left text-gray-400">
                 Empowering students to make informed decisions about their academic and career paths.
               </p>
             </div>
 
             <div>
-              <h3 className="font-bold text-lg mb-4">Quick Links</h3>
-              <ul className="space-y-2">
+              <h3 className=" text-left font-bold text-lg mb-4">Quick Links</h3>
+              <ul className="text-left space-y-2">
                 {[
                   { name: "Home", path: "/" },
                   { name: "About", path: "/about" },
                   { name: "Programs", path: "/programs" },
                   { name: "Schools", path: "/schools" },
-                  { name: "Career Paths", path: "/career-paths" }
+                  { name: "Career Paths", path: "/career-pathways" }
                 ].map((item, index) => (
                   <li key={index}>
                     <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
@@ -601,13 +601,13 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-lg mb-4">Resources</h3>
-              <ul className="space-y-2">
+              <h3 className="text-left font-bold text-lg mb-4">Resources</h3>
+              <ul className="text-left space-y-2">
                 {[
-                  { name: "Assessments", path: "/assessments" },
-                  { name: "Program Finder", path: "/programs" },
-                  { name: "Career Pathways", path: "/career-paths" },
-                  { name: "Alumni Network", path: "/alumni" },
+                  { name: "Assessments", path: "/assessment-dashboard" },
+                  { name: "Program Finder", path: "/academic-explorer" },
+                  { name: "Career Pathways", path: "/career-pathways" },
+                  { name: "Alumni Network", path: "/testimonials" },
                   { name: "Blog", path: "/blog" }
                 ].map((item, index) => (
                   <li key={index}>
@@ -620,8 +620,8 @@ const LandingPage = () => {
             </div>
 
             <div>
-              <h3 className="font-bold text-lg mb-4">Contact</h3>
-              <ul className="space-y-2 text-gray-400">
+              <h3 className="text-left font-bold text-lg mb-4">Contact</h3>
+              <ul className="text-left space-y-2 text-gray-400">
                 <li>Email: info@futureu.edu</li>
                 <li>Phone: +63 (32) 123-4567</li>
                 <li>Address: Cebu City, Philippines</li>
