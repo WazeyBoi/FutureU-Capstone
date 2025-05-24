@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
 import userAssessmentService from '../../services/userAssessmentService';
+import programRecommendationService from '../../services/programRecommendationService';
 import '../../styles/animations.css'; // Import the animations CSS
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
@@ -10,6 +11,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkedExisting, setCheckedExisting] = useState(false);
+  const [programRecommendations, setProgramRecommendations] = useState(null);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
+  const [programError, setProgramError] = useState(null);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -63,6 +67,47 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     fetchExistingRecommendations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userAssessmentId]);
+
+  // Fetch program recommendations when career recommendations are loaded
+  useEffect(() => {
+    if (!aiRecommendations || !aiRecommendations.assessmentId) return;
+    const localKey = `futureu_program_recommendations_${userAssessmentId}`;
+    const saved = localStorage.getItem(localKey);
+    if (saved) {
+      setProgramRecommendations(JSON.parse(saved));
+      return;
+    }
+    const fetchPrograms = async () => {
+      setLoadingPrograms(true);
+      try {
+        const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
+        const resultId = assessmentData.assessmentResult?.resultId;
+        if (!resultId) throw new Error('No assessment result found');
+        const res = await programRecommendationService.fetchProgramRecommendationsByResult(resultId);
+        let arr = Array.isArray(res.data) ? res.data : [res.data];
+        // Map to flatten the nested program object for UI
+        arr = arr
+          .filter(p => p && p.program && p.program.programName)
+          .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
+          .slice(0, 5)
+          .map(p => ({
+            programName: p.program.programName,
+            description: p.program.description,
+            confidenceScore: p.confidenceScore,
+            explanation: p.explanation
+          }));
+        setProgramRecommendations(arr);
+        localStorage.setItem(localKey, JSON.stringify(arr));
+        setProgramError(null);
+      } catch (err) {
+        setProgramError('Failed to load program recommendations.');
+      } finally {
+        setLoadingPrograms(false);
+      }
+    };
+    fetchPrograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiRecommendations, userAssessmentId]);
 
   const handleGenerateRecommendations = async () => {
     setLoading(true);
@@ -196,6 +241,54 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
               </motion.div>
             )}
+          </motion.div>
+        )}
+        {/* Program recommendations - only show if loaded and not loading */}
+        {aiRecommendations && programRecommendations && !loadingPrograms && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
+            <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              These programs are matched to your top career recommendations and assessment profile.
+            </p>
+            <div className="space-y-6">
+              {programRecommendations.map((program, idx) => (
+                <motion.div key={idx} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
+                    <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
+                      {program.confidenceScore?.toFixed(1)}% Match
+                    </span>
+                  </div>
+                  <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
+                  <div className="flex gap-2">
+                    <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
+                      Recommended Program
+                    </span>
+                    {idx === 0 && (
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
+                        Best Match
+                      </span>
+                    )}
+                  </div>
+                  {program.explanation && (
+                    <div className="mt-3 p-3 bg-[#F8F9FA] rounded-xl shadow-inner">
+                      <span className="block text-xs text-[#1D63A1] font-semibold mb-1">Why this program?</span>
+                      <span className="block text-xs text-gray-700 text-left">{program.explanation}</span>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+        {loadingPrograms && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop mt-8">
+            <p className="text-sm text-gray-600 mb-3 mt-4">Loading your recommended programs...</p>
+          </motion.div>
+        )}
+        {programError && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 border-2 border-red-300 text-center animate-card-pop mt-8">
+            <p className="text-sm text-red-600 mb-3">{programError}</p>
           </motion.div>
         )}
         {/* Academic Track Recommendations - only show if recommendations exist */}
