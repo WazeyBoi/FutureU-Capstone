@@ -6,8 +6,9 @@ import SchoolsList from "./accreditation/SchoolsList";
 import StatsCards from "./accreditation/StatsCards";
 import FilterOptions from "./accreditation/FilterOptions";
 import ProgramsTab from "./accreditation/tabs/ProgramsTab";
-import StatisticsTab from "./accreditation/tabs/StatisticsTab";
 import AboutTab from "./accreditation/tabs/AboutTab";
+import ProgramsModal from "./accreditation/ProgramsModal";
+import CompareSchools from "./accreditation/CompareSchools";
 // Import the accreditation service
 import accreditationService from "../services/accreditationService";
 import { Link } from 'react-router-dom';
@@ -16,11 +17,12 @@ import authService from "../services/authService";
 const AccreditationRatings = () => {
   // State declarations
   const [selectedSchool, setSelectedSchool] = useState(null);
+  const [selectedSchoolForModal, setSelectedSchoolForModal] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProgramType, setSelectedProgramType] = useState("");
   const [selectedAccreditationLevel, setSelectedAccreditationLevel] = useState("");
   const [selectedRecognition, setSelectedRecognition] = useState("");
-  const [activeTab, setActiveTab] = useState("programs");
+  const [activeTab, setActiveTab] = useState("schools");
   const [showFilters, setShowFilters] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
@@ -38,6 +40,10 @@ const AccreditationRatings = () => {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const [usingMockData, setUsingMockData] = useState(false);
+
+  // Add state for modals
+  const [schoolsToCompare, setSchoolsToCompare] = useState([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   // Fetch data useEffect - needs to be before animation useEffect for consistent hooks order
   useEffect(() => {
@@ -146,14 +152,6 @@ const AccreditationRatings = () => {
   // Handle tab switching animation
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === "statistics") {
-      // Reset the animation state first
-      setStatsVisible(false);
-      // Then trigger animation after a small delay
-      setTimeout(() => {
-        setStatsVisible(true);
-      }, 100);
-    }
   };
 
   // Helper function to get all programs from a school
@@ -191,6 +189,17 @@ const AccreditationRatings = () => {
   const coePrograms = filteredPrograms.filter(p => p.recognition === "COE").length;
   const codPrograms = filteredPrograms.filter(p => p.recognition === "COD").length;
   const totalPrograms = filteredPrograms.length;
+
+  // Handle school comparison
+  const handleCompareSchools = (schools) => {
+    setSchoolsToCompare(schools);
+    setShowCompareModal(true);
+  };
+
+  // Handle view programs
+  const handleViewPrograms = (school) => {
+    setSelectedSchoolForModal(school);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -299,63 +308,75 @@ const AccreditationRatings = () => {
       />
 
       {/* Main content area with tabs */}
-      <div className={`max-w-7xl mx-auto px-4 pb-16 transition-all duration-700 ease-out transform ${contentAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left Sidebar - Schools List */}
-          <SchoolsList 
-            schools={schools}
-            selectedSchool={selectedSchool}
-            setSelectedSchool={setSelectedSchool}
-            contentAnimated={contentAnimated}
-          />
-
-          {/* Right Content */}
-          <div className="lg:w-3/4">
-            {/* Tabs */}
-            <div className="border-b border-gray-200">
-              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-                <button
-                  onClick={() => handleTabChange("programs")}
-                  className={`${activeTab === "programs" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
-                >
-                  Programs
-                </button>
-                <button
-                  onClick={() => handleTabChange("statistics")}
-                  className={`${activeTab === "statistics" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
-                >
-                  Statistics
-                </button>
-                <button
-                  onClick={() => handleTabChange("about")}
-                  className={`${activeTab === "about" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
-                >
-                  About Accreditation
-                </button>
-              </nav>
-            </div>
-
-            {/* Tab Content */}
-            <div className="mt-6">
-              {activeTab === "programs" && (
-                <ProgramsTab 
-                  filteredPrograms={filteredPrograms}
-                  contentAnimated={contentAnimated}
-                />
-              )}
-              
-              {activeTab === "statistics" && (
-                <StatisticsTab 
-                  filteredPrograms={filteredPrograms}
-                  statsVisible={statsVisible}
-                />
-              )}
-              
-              {activeTab === "about" && <AboutTab />}
-            </div>
-          </div>
+      <div className={`w-full px-4 pb-16 transition-all duration-700 ease-out transform ${contentAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            <button
+              onClick={() => handleTabChange("schools")}
+              className={`${activeTab === "schools" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+            >
+              Schools
+            </button>
+            <button
+              onClick={() => handleTabChange("programs")}
+              className={`${activeTab === "programs" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+            >
+              Programs
+            </button>
+            <button
+              onClick={() => handleTabChange("about")}
+              className={`${activeTab === "about" ? "border-yellow-500 text-yellow-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"} whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors duration-300`}
+            >
+              About Accreditation
+            </button>
+          </nav>
         </div>
+
+        {/* Tab Content */}
+        {activeTab === "schools" && (
+          <div className="flex flex-col gap-6">
+            <SchoolsList 
+              schools={schools}
+              selectedSchool={selectedSchool}
+              setSelectedSchool={setSelectedSchool}
+              contentAnimated={contentAnimated}
+              onViewPrograms={handleViewPrograms}
+              onCompare={handleCompareSchools}
+            />
+          </div>
+        )}
+
+        {activeTab === "programs" && (
+          <div className="flex flex-col gap-6">
+            {/* Programs Tab Content */}
+            <ProgramsTab 
+              filteredPrograms={filteredPrograms}
+              contentAnimated={contentAnimated}
+            />
+          </div>
+        )}
+        
+        {activeTab === "about" && <AboutTab />}
       </div>
+
+      {/* Modals at root level */}
+      {showCompareModal && (
+        <CompareSchools
+          schools={schoolsToCompare}
+          onClose={() => {
+            setShowCompareModal(false);
+            setSchoolsToCompare([]);
+          }}
+        />
+      )}
+
+      {selectedSchoolForModal && (
+        <ProgramsModal 
+          school={selectedSchoolForModal} 
+          onClose={() => setSelectedSchoolForModal(null)} 
+        />
+      )}
 
       {/* Animation styling */}
       <style jsx="true">{`

@@ -2,7 +2,7 @@ import React from "react";
 
 const StatsCards = ({ totalSchools, coePrograms, codPrograms, totalPrograms, cardsAnimated }) => {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+    <div className="w-full px-4 py-6 relative z-10">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Schools Card */}
         <div className={`bg-white rounded-xl shadow-sm p-6 flex items-center transition-all duration-700 ease-out transform ${cardsAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
