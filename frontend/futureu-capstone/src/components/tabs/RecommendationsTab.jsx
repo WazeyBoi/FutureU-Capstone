@@ -363,15 +363,15 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <div className="relative">
             {/* Overlapping tip container */}
             {showTip && (
-              <div className="absolute -top-8 -left-15 z-20 w-90 h-28 flex flex-row items-center px-2 py-4 rounded-3xl shadow-lg bg-white animate-fade-in-up">
-                <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-6" />
+              <div className="absolute -top-4 -left-15 z-20 w-90 h-28 flex flex-row items-center px-2 py-4 rounded-2xl shadow-lg bg-[#FFB71B] animate-fade-in-up">
+                <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-2" />
                 <div className="flex-1 flex flex-col">
-                <span className="text-left text-xs font-semibold text-[#2B3E4E] text-center flex-1 pr-2">
-                  <p className='text-lg'><b>Tip</b></p> Click the Program to expand and see the list of schools offering it.
+                <span className="text-left text-xs font-semibold text-white text-center flex-1 pr-2">
+                  <p className='text-lg text-[#2B3E4E]'><b>Tip</b></p> You can lick the Program to expand and see the list of schools offering it.
                 </span>
                 <div className='text-right pr-6'>
                   <span
-                    className="text-xs font-bold text-[#FFB71B] cursor-pointer hover:underline"
+                    className="text-xs font-bold text-[#2B3E4E] cursor-pointer hover:underline"
                     onClick={() => setShowTip(false)}
                   >
                     Okay
