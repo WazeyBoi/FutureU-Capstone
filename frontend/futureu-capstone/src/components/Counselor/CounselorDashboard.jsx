@@ -13,6 +13,7 @@ import SearchFilterBar from './SearchFilterBar';
 import AssessmentResultsInsights from './AssessmentResultsInsights';
 import AssessmentResultsGrid from './AssessmentResultsGrid';
 import StudentReportPage from './StudentReportPage';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Change component name to match the file name
 const CounselorDashboard = () => {
@@ -205,6 +206,82 @@ const CounselorDashboard = () => {
     setPage(1);
   };
 
+  // RIASEC and Career/Program aggregation logic
+  const getRiasecTopCode = (result) => {
+    const scores = [
+      { code: 'R', value: result.realisticScore },
+      { code: 'I', value: result.investigativeScore },
+      { code: 'A', value: result.artisticScore },
+      { code: 'S', value: result.socialScore },
+      { code: 'E', value: result.enterprisingScore },
+      { code: 'C', value: result.conventionalScore },
+    ];
+    return scores
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 3)
+      .map(s => s.code)
+      .join('');
+  };
+
+  const nonRiasecFields = [
+    { key: 'stemScore', label: 'STEM' },
+    { key: 'abmScore', label: 'ABM' },
+    { key: 'humssScore', label: 'HUMSS' },
+    { key: 'sportsTrackScore', label: 'Sports' },
+    { key: 'artsDesignTrackScore', label: 'Arts & Design' },
+    { key: 'academicTrackScore', label: 'Academic Track' },
+    { key: 'otherTrackScore', label: 'Other Track' },
+    { key: 'overallScore', label: 'Overall' },
+  ];
+
+  const aggregateDashboardInsights = (results) => {
+    // RIASEC aggregation
+    const riasecTopCodes = {};
+    results.forEach(r => {
+      const code = getRiasecTopCode(r);
+      if (code) riasecTopCodes[code] = (riasecTopCodes[code] || 0) + 1;
+    });
+    const mostCommonRiasec = Object.entries(riasecTopCodes).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+    // Non-RIASEC averages
+    const nonRiasecAverages = {};
+    nonRiasecFields.forEach(f => {
+      const vals = results.map(r => Number(r[f.key]) || 0).filter(v => !isNaN(v));
+      nonRiasecAverages[f.key] = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '0.00';
+    });
+
+    // Career recommendations aggregation
+    const careerCounts = {};
+    results.forEach(r => {
+      (r.careerRecommendations || []).forEach(rec => {
+        const title = rec.careerPath?.careerTitle || rec.careerTitle || rec.name;
+        if (title) careerCounts[title] = (careerCounts[title] || 0) + 1;
+      });
+    });
+    const topCareers = Object.entries(careerCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([title, count]) => ({ title, count }));
+
+    // Program recommendations aggregation
+    const programCounts = {};
+    results.forEach(r => {
+      (r.programRecommendations || []).forEach(rec => {
+        const name = rec.program?.programName || rec.programName;
+        if (name) programCounts[name] = (programCounts[name] || 0) + 1;
+      });
+    });
+    const topPrograms = Object.entries(programCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([name, count]) => ({ name, count }));
+
+    return { mostCommonRiasec, nonRiasecAverages, topCareers, topPrograms };
+  };
+
+  // Aggregate insights for dashboard summary
+  const dashboardInsights = aggregateDashboardInsights(assessmentResults);
+
   // Show loading spinner
   if (isLoading) {
     return (
@@ -242,6 +319,52 @@ const CounselorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Insights Summary Section */}
+      <section className="w-full px-15 pt-6 pb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {/* Most Common RIASEC */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
+            <div className="text-xs text-gray-500 mb-1">Most Common Personality</div>
+            <div className="text-2xl font-bold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
+            <div className="text-xs text-gray-400">(Top RIASEC code)</div>
+          </div>
+          {/* Non-RIASEC Averages */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B] w-full">
+            <div className="text-xs text-gray-500 mb-2">Average Scores (Non-RIASEC)</div>
+            <ResponsiveContainer width="100%" height={60}>
+              <BarChart data={nonRiasecFields.map(f => ({ name: f.label, value: Number(dashboardInsights.nonRiasecAverages[f.key]) }))} layout="vertical" margin={{ left: 10, right: 10, top: 0, bottom: 0 }}>
+                <XAxis type="number" hide domain={[0, 100]} />
+                <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 10 }} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#1D63A1" radius={[4, 4, 4, 4]} barSize={8} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Most Recommended Careers */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
+            <div className="text-xs text-gray-500 mb-2">Most Recommended Careers</div>
+            {dashboardInsights.topCareers.length === 0 ? (
+              <div className="text-gray-400 text-xs">No data</div>
+            ) : dashboardInsights.topCareers.map((c, i) => (
+              <div key={i} className="text-sm font-semibold text-[#1D63A1] flex items-center gap-2">
+                <span className="text-base font-bold">{i + 1}.</span> {c.title} <span className="text-xs text-gray-400">({c.count})</span>
+              </div>
+            ))}
+          </div>
+          {/* Most Recommended Programs */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B]">
+            <div className="text-xs text-gray-500 mb-2">Most Recommended Programs</div>
+            {dashboardInsights.topPrograms.length === 0 ? (
+              <div className="text-gray-400 text-xs">No data</div>
+            ) : dashboardInsights.topPrograms.map((p, i) => (
+              <div key={i} className="text-sm font-semibold text-[#FFB71B] flex items-center gap-2">
+                <span className="text-base font-bold">{i + 1}.</span> {p.name} <span className="text-xs text-gray-400">({p.count})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Header */}
       <header>
         <div className="px-15 py-4">
