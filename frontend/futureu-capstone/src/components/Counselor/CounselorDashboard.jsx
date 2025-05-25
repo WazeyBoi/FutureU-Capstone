@@ -12,7 +12,7 @@ import {
 import SearchFilterBar from './SearchFilterBar';
 import AssessmentResultsInsights from './AssessmentResultsInsights';
 import AssessmentResultsGrid from './AssessmentResultsGrid';
-import StudentReportModal from './StudentReportModal';
+import StudentReportPage from './StudentReportPage';
 
 // Change component name to match the file name
 const CounselorDashboard = () => {
@@ -143,6 +143,11 @@ const CounselorDashboard = () => {
     }
   };
 
+  // View summary handler for navigation
+  const handleViewSummary = (result) => {
+    navigate('/counselor/student-report', { state: { result } });
+  };
+
   // Quick stats for the dashboard
   const quickStats = [
     {
@@ -178,8 +183,7 @@ const CounselorDashboard = () => {
 
   // Modal handlers
   const handleViewReport = (result) => {
-    setSelectedResult(result);
-    setModalOpen(true);
+    navigate('/counselor/student-report', { state: { result } });
   };
   const handleCloseModal = () => {
     setModalOpen(false);
@@ -274,7 +278,7 @@ const CounselorDashboard = () => {
         <div className="flex-1 min-w-0">
           {/* Selected Assessment Heading */}
           <div className="text-left my-5">
-            <h2 className="text-lg font-bold text-[#1D63A1]">
+            <h2 className="text-3xl font-bold text-[#1D63A1]">
               Showing results for: <span className="text-[#FFB71B]">{selectedAssessmentLabel}</span>
             </h2>
           </div>
@@ -282,7 +286,7 @@ const CounselorDashboard = () => {
           {/* Assessment Results Grid */}
           <AssessmentResultsGrid
             results={filteredResults}
-            onViewReport={handleViewReport}
+            onViewReport={handleViewSummary}
             page={page}
             pageSize={pageSize}
             totalResults={totalResults}
@@ -291,7 +295,7 @@ const CounselorDashboard = () => {
           />
 
           {/* Student Report Modal */}
-          <StudentReportModal open={modalOpen} onClose={handleCloseModal} result={selectedResult} />
+          {/* <StudentReportModal open={modalOpen} onClose={handleCloseModal} result={selectedResult} /> */}
         </div>
 
         {/* Sidebar: Quick Stats + Recent Activity */}

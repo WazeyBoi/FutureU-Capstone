@@ -42,7 +42,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
   return (
     <>
       {/* Grouping toggle */}
-      <div className="mb-4 flex items-center gap-4">
+      <div className="my-8 flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
           <input
             type="checkbox"
@@ -130,26 +130,67 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                   </div>
                 </div>
                 {/* Details */}
-                <div className="flex-1 flex flex-col justify-between px-6 py-4 gap-2">
-                  <div className="flex flex-wrap gap-2 mb-1 justify-center">
-                    <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold animate-badge shadow">{assessment.title}</span>
-                    <span className="px-2 py-1 rounded bg-green-100 text-green-700 text-xs font-semibold animate-badge shadow flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
+                <div className="flex-1 flex flex-col justify-between px-6 py-4 gap-2 items-start text-left">
+                  {/* Assessment Title & Date */}
+                  <div className="flex flex-wrap gap-2 mb-1 justify-start w-full">
+                    <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold shadow-sm border border-blue-200 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 0 1 8 0v2"/><circle cx="12" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M6 21v-2a4 4 0 0 1 8 0v2"/></svg>
+                      {assessment.title}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold shadow-sm border border-green-200 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
                       {result.userAssessment?.dateCompleted?.split('T')[0]}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 mb-1 justify-center">
-                    <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-700 text-xs font-bold animate-badge shadow">Overall: <span className="text-base align-middle">{result.overallScore}</span></span>
-                    <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-700 text-xs font-semibold animate-badge shadow">RIASEC: {result.realisticScore}/{result.investigativeScore}/{result.artisticScore}/{result.socialScore}/{result.enterprisingScore}/{result.conventionalScore}</span>
+                  {/* Scores */}
+                  <div className="flex flex-col gap-2 mb-1 w-full">
+                    {/* Overall Row */}
+                    <div className="flex items-center w-full justify-between">
+                      <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-bold shadow-sm border border-emerald-200 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 12V4"/></svg>
+                        Overall:
+                      </span>
+                      <span className="text-lg font-extrabold align-middle text-emerald-700">{typeof result.overallScore === 'number' ? result.overallScore.toFixed(2) : result.overallScore}</span>
+                    </div>
+                    {/* RIASEC Row */}
+                    {(() => {
+                      const scores = [
+                        { code: 'R', value: result.realisticScore },
+                        { code: 'I', value: result.investigativeScore },
+                        { code: 'A', value: result.artisticScore },
+                        { code: 'S', value: result.socialScore },
+                        { code: 'E', value: result.enterprisingScore },
+                        { code: 'C', value: result.conventionalScore },
+                      ];
+                      const top3 = scores
+                        .sort((a, b) => b.value - a.value)
+                        .slice(0, 3)
+                        .map(s => s.code)
+                        .join('');
+                      return (
+                        <div className="flex items-center w-full justify-between">
+                          <span className="px-3 py-1 rounded-full bg-yellow-50 text-yellow-700 text-sm font-semibold shadow-sm border border-yellow-200 flex items-center gap-2">
+                            <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 15h8M8 11h8M8 7h8"/></svg>
+                            RIASEC:
+                          </span>
+                          <span className="font-bold text-yellow-700 flex items-center gap-1">
+                            {top3}
+                            <span className="text-xs text-gray-500 ml-1">(
+                              {result.realisticScore}/{result.investigativeScore}/{result.artisticScore}/{result.socialScore}/{result.enterprisingScore}/{result.conventionalScore}
+                            )</span>
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 {/* Action Button */}
                 <div className="px-6 pb-5 pt-2 flex justify-center">
                   <button
-                    className="w-full py-2 rounded-lg bg-[#1D63A1] text-white font-bold hover:bg-[#FFB71B] hover:text-[#2B3E4E] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
+                    className="w-full py-2 rounded-lg bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white font-bold hover:bg-[#FFB71B] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
                     onClick={() => onViewReport(result)}
                   >
-                    View Report
+                    View Summary
                   </button>
                 </div>
               </div>
