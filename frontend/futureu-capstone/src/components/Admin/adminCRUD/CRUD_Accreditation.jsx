@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import adminAccreditationService from '../../services/adminAccreditationService';
-import adminSchoolService from '../../services/adminSchoolService';
-import adminSchoolProgramService from '../../services/adminSchoolProgramService';
+import adminAccreditationService from '../../../services/adminAccreditationService';
+import adminSchoolService from '../../../services/adminSchoolService';
+import adminSchoolProgramService from '../../../services/adminSchoolProgramService';
 import {
   Award,
   Search,

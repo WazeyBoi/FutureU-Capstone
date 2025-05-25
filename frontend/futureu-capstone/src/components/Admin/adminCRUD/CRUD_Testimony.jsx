@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import adminTestimonyService from '../../services/adminTestimonyService';
-import adminSchoolService from '../../services/adminSchoolService';
-import adminUserService from '../../services/adminUserService';
+import adminTestimonyService from '../../../services/adminTestimonyService';
+import adminSchoolService from '../../../services/adminSchoolService';
+import adminUserService from '../../../services/adminUserService';
 
 const CRUD_Testimony = () => {
   // State variables

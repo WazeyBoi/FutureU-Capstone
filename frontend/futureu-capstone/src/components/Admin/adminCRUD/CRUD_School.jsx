@@ -1,7 +1,9 @@
+"use client"
+
 import React, { useState, useEffect } from 'react';
-import adminProgramService from '../../services/adminProgramService';
+import adminSchoolService from '../../../services/adminSchoolService.js';
 import {
-  BookOpen,
+  School,
   Search,
   Plus,
   Edit,
@@ -14,14 +16,18 @@ import {
   X,
   Check,
   AlertTriangle,
-  FileText,
+  MapPin,
+  Globe,
+  Info,
+  Building,
   Loader,
   ChevronDown,
 } from 'lucide-react';
 
-const CRUD_Program = () => {
-  const [programs, setPrograms] = useState([]);
-  const [filteredPrograms, setFilteredPrograms] = useState([]);
+const CRUD_School = () => {
+  // State variables
+  const [schools, setSchools] = useState([]);
+  const [filteredSchools, setFilteredSchools] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -33,34 +39,39 @@ const CRUD_Program = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogTitle, setDialogTitle] = useState('');
   const [dialogMode, setDialogMode] = useState(''); // 'add' or 'edit'
-  const [selectedProgram, setSelectedProgram] = useState(null);
+  const [selectedSchool, setSelectedSchool] = useState(null);
   
   // Form states
   const [formData, setFormData] = useState({
-    programName: '',
-    description: ''
+    name: '',
+    location: '',
+    type: '',
+    description: '',
+    schoolWebsiteUrl: '',
+    latitude: '',
+    longitude: '',
   });
 
   // Delete confirmation dialog
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [programToDelete, setProgramToDelete] = useState(null);
-
-  // Fetch programs on component mount
+  const [schoolToDelete, setSchoolToDelete] = useState(null);
+  
+  // Fetch schools on component mount
   useEffect(() => {
-    fetchPrograms();
+    fetchSchools();
   }, []);
-
+  
   // Apply filters when search query changes
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredPrograms(programs);
+      setFilteredSchools(schools);
     } else {
-      const filtered = programs.filter(program => 
-        program.programName.toLowerCase().includes(searchQuery.toLowerCase())
+      const filtered = schools.filter(school => 
+        school.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredPrograms(filtered);
+      setFilteredSchools(filtered);
     }
-  }, [searchQuery, programs]);
+  }, [searchQuery, schools]);
   
   // Auto-dismiss notifications after 5 seconds
   useEffect(() => {
@@ -80,22 +91,54 @@ const CRUD_Program = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
-
-  const fetchPrograms = async () => {
+  
+  // Fetch all schools with error handling improvements
+  const fetchSchools = async () => {
     setLoading(true);
     try {
-      const data = await adminProgramService.getAllPrograms();
-      setPrograms(data);
-      setFilteredPrograms(data);
+      const token = localStorage.getItem('futureu_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      const data = await adminSchoolService.getAllSchools();
+      setSchools(data);
+      setFilteredSchools(data);
       setError(null);
-    } catch (error) {
-      setError('Failed to fetch programs');
-      console.error('Error fetching programs:', error);
+    } catch (err) {
+      console.error('Error fetching schools:', err);
+      setError(`Failed to fetch schools: ${err.message || 'Unknown error'}`);
+
+      // Show detailed error information if available
+      if (err.response) {
+        console.error('Server response:', err.response.status, err.response.data);
+        setError(`Server error: ${err.response.status} ${err.response.statusText}`);
+      }
     } finally {
       setLoading(false);
     }
   };
+  
+  // Search schools by name
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      fetchSchools();
+      return;
+    }
 
+    setLoading(true);
+    try {
+      const response = await adminSchoolService.searchSchoolsByName(searchQuery);
+      setFilteredSchools(response);
+      setError(null);
+    } catch (err) {
+      console.error('Error searching schools:', err);
+      setError('Failed to search schools. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle input change for form fields
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -103,130 +146,130 @@ const CRUD_Program = () => {
       [name]: value
     });
   };
-
+  
+  // Open dialog for adding a new school
   const handleAddClick = () => {
     setFormData({
-      programName: '',
-      description: ''
+      name: '',
+      location: '',
+      type: '',
+      description: '',
+      schoolWebsiteUrl: '',
+      latitude: '',
+      longitude: '',
     });
-    setDialogTitle('Add New Program');
+    setDialogTitle('Add New School');
     setDialogMode('add');
-    setSelectedProgram(null);
     setOpenDialog(true);
   };
-
-  const handleEditClick = (program) => {
-    setSelectedProgram(program);
+  
+  // Open dialog for editing a school
+  const handleEditClick = (school) => {
+    setSelectedSchool(school);
     setFormData({
-      programName: program.programName || '',
-      description: program.description || ''
+      name: school.name || '',
+      location: school.location || '',
+      type: school.type || '',
+      description: school.description || '',
+      schoolWebsiteUrl: school.schoolWebsiteUrl || '',
+      latitude: school.latitude || '',
+      longitude: school.longitude || '',
     });
-    setDialogTitle('Edit Program');
+    setDialogTitle('Edit School');
     setDialogMode('edit');
     setOpenDialog(true);
   };
-
-  const handleDeleteClick = (program) => {
-    setProgramToDelete(program);
+  
+  // Handle delete button click
+  const handleDeleteClick = (school) => {
+    setSchoolToDelete(school);
     setDeleteConfirmOpen(true);
+  };
+  
+  // Confirm delete school
+  const confirmDelete = async () => {
+    if (!schoolToDelete) return;
+    
+    setLoading(true);
+    try {
+      await adminSchoolService.deleteSchool(schoolToDelete.schoolId);
+      fetchSchools(); // Refresh the list
+      setSuccess('School deleted successfully');
+      setDeleteConfirmOpen(false);
+      setSchoolToDelete(null);
+    } catch (err) {
+      console.error('Error deleting school:', err);
+      setError('Failed to delete school. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Cancel delete
+  const cancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setSchoolToDelete(null);
   };
 
   const closeDialog = () => {
     setOpenDialog(false);
     setFormData({
-      programName: '',
-      description: ''
+      name: '',
+      location: '',
+      type: '',
+      description: '',
+      schoolWebsiteUrl: '',
+      latitude: '',
+      longitude: '',
     });
   };
-
-  const cancelDelete = () => {
-    setDeleteConfirmOpen(false);
-    setProgramToDelete(null);
-  };
-
-  const confirmDelete = async () => {
-    if (!programToDelete) return;
-    
-    setLoading(true);
-    try {
-      await adminProgramService.deleteProgram(programToDelete.programId);
-      fetchPrograms(); // Refresh the list
-      setSuccess('Program deleted successfully');
-      setDeleteConfirmOpen(false);
-      setProgramToDelete(null);
-    } catch (error) {
-      console.error('Error deleting program:', error);
-      setError('Failed to delete program. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
+  // Submit form for adding or editing a school
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.programName || !formData.description) {
-      setError('Program name and description are required');
+    if (!formData.name || !formData.location || !formData.type) {
+      setError('Name, location, and type are required');
       return;
     }
     
     setLoading(true);
     try {
-      if (dialogMode === 'edit') {
-        // Update existing program
-        await adminProgramService.updateProgram(selectedProgram.programId, {
-          ...formData,
-          programId: selectedProgram.programId
-        });
-        setSuccess('Program updated successfully');
+      if (dialogMode === 'add') {
+        // Create a new school
+        await adminSchoolService.createSchool(formData);
+        setSuccess('School added successfully');
       } else {
-        // Create new program
-        await adminProgramService.createProgram(formData);
-        setSuccess('Program created successfully');
+        // Update existing school
+        await adminSchoolService.updateSchool(selectedSchool.schoolId, {
+          ...formData,
+          schoolId: selectedSchool.schoolId
+        });
+        setSuccess('School updated successfully');
       }
-      fetchPrograms(); // Refresh the list
+      fetchSchools(); // Refresh the list
       setOpenDialog(false);
-    } catch (error) {
-      console.error('Error saving program:', error);
-      setError(`Failed to ${dialogMode === 'edit' ? 'update' : 'create'} program. Please try again later.`);
+    } catch (err) {
+      console.error('Error saving school:', err);
+      setError(`Failed to ${dialogMode === 'add' ? 'add' : 'update'} school. Please try again later.`);
     } finally {
       setLoading(false);
     }
   };
-
+  
   // Handle page change
   const handleChangePage = (newPage) => {
     setPage(newPage);
   };
-
+  
   // Calculate pagination
-  const paginatedPrograms = filteredPrograms.slice(
+  const paginatedSchools = filteredSchools.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
-
-  const totalPages = Math.ceil(filteredPrograms.length / rowsPerPage);
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      fetchPrograms();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Assuming there's a search method in your service
-      const response = await adminProgramService.searchPrograms(searchQuery);
-      setFilteredPrograms(response);
-      setError(null);
-    } catch (err) {
-      console.error('Error searching programs:', err);
-      setError('Failed to search programs. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add this helper function after your state declarations
+  
+  const totalPages = Math.ceil(filteredSchools.length / rowsPerPage);
+  
+  // Helper function for pagination
   const getPaginationRange = (current, totalPages) => {
     const MAX_VISIBLE_PAGES = 5;
     let start = Math.max(0, current - Math.floor(MAX_VISIBLE_PAGES / 2));
@@ -244,23 +287,37 @@ const CRUD_Program = () => {
     
     return range;
   };
-
+  
+  // Get badge color based on school type
+  const getTypeBadgeColor = (type) => {
+    switch (type) {
+      case "Public":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "Private":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "Special":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+  
   return (
     <div className="container mx-auto px-6 py-8 max-w-[1400px]">
       {/* Header Section */}
       <div className="mb-10">
         <div className="flex items-center mb-4">
           <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
-            <BookOpen className="h-6 w-6 text-[#FFB71B]" />
+            <School className="h-6 w-6 text-[#FFB71B]" />
           </div>
-          <h1 className="text-3xl font-bold text-[#2B3E4E]">Program Management</h1>
+          <h1 className="text-3xl font-bold text-[#2B3E4E]">School Management</h1>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          Manage all educational programs in the system. Add new programs, edit details, or remove programs as needed.
+          Manage all educational institutions in the system. Add new schools, edit details, or remove schools as needed.
         </p>
         <div className="w-24 h-1 bg-[#FFB71B] mt-4"></div>
       </div>
-      
+
       {/* Search and Add Section */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -271,7 +328,7 @@ const CRUD_Program = () => {
             <input
               type="text"
               className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-md"
-              placeholder="Search programs by name..."
+              placeholder="Search schools by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -289,62 +346,94 @@ const CRUD_Program = () => {
             className="w-full md:w-auto flex items-center justify-center px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Add New Program
+            Add New School
           </button>
         </div>
       </div>
-      
-      {/* Programs Table */}
+
+      {/* Schools Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white text-left">
                 <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">ID</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Program Name</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Description</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Name</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Location</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Type</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Website</th>
                 <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {loading && !filteredPrograms.length ? (
+            <tbody className="divide-y divide-gray-200">
+              {loading && !filteredSchools.length ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center">
+                  <td colSpan={6} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader className="h-8 w-8 text-[#FFB71B] animate-spin mb-2" />
-                      <p className="text-gray-500">Loading programs...</p>
+                      <p className="text-gray-500">Loading schools...</p>
                     </div>
                   </td>
                 </tr>
-              ) : filteredPrograms.length === 0 ? (
+              ) : filteredSchools.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center">
+                  <td colSpan={6} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <BookOpen className="h-12 w-12 text-gray-300 mb-2" />
-                      <p className="text-gray-500 font-medium">No programs found</p>
-                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new program</p>
+                      <School className="h-12 w-12 text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-medium">No schools found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new school</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                paginatedPrograms.map((program) => (
-                  <tr key={program.programId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-500 font-mono text-left">{program.programId}</td>
-                    <td className="px-6 py-4 font-medium text-[#2B3E4E] text-left">{program.programName}</td>
-                    <td className="px-6 py-4 text-gray-600 text-left truncate max-w-xs">{program.description}</td>
+                paginatedSchools.map((school) => (
+                  <tr key={school.schoolId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 font-mono text-left">{school.schoolId}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-medium text-[#2B3E4E] text-left">{school.name}</div>
+                    </td>
+                    <td className="px-6 py-4 text-left">
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 text-gray-400 mt-1 mr-1 flex-shrink-0" />
+                        <span className="text-gray-600 text-sm">{school.location}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeBadgeColor(school.type)}`}
+                      >
+                        {school.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      {school.schoolWebsiteUrl ? (
+                        <a
+                          href={school.schoolWebsiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-[#FFB71B] hover:text-[#FFB71B]/80 transition-colors"
+                        >
+                          <Globe className="h-4 w-4 mr-1" />
+                          <span className="underline">Visit</span>
+                          <ExternalLink className="h-3 w-3 ml-1" />
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-sm">Not available</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center space-x-3">
                         <button
-                          onClick={() => handleEditClick(program)}
+                          onClick={() => handleEditClick(school)}
                           className="p-2 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
-                          title="Edit Program"
+                          title="Edit School"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(program)}
+                          onClick={() => handleDeleteClick(school)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Program"
+                          title="Delete School"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -357,13 +446,13 @@ const CRUD_Program = () => {
           </table>
         </div>
       </div>
-      
+
       {/* Pagination */}
       <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-600">
-            Showing {filteredPrograms.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
-            {Math.min((page + 1) * rowsPerPage, filteredPrograms.length)} of {filteredPrograms.length} programs
+            Showing {filteredSchools.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
+            {Math.min((page + 1) * rowsPerPage, filteredSchools.length)} of {filteredSchools.length} schools
           </div>
 
           <div className="flex items-center space-x-1">
@@ -446,11 +535,11 @@ const CRUD_Program = () => {
           </div>
         </div>
       </div>
-      
-      {/* Add/Edit Program Dialog */}
+
+      {/* Add/Edit School Dialog */}
       {openDialog && (
         <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-auto animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-auto animate-fadeIn">
             <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 flex justify-between items-center">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
@@ -470,41 +559,120 @@ const CRUD_Program = () => {
               </button>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Program Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">School Name *</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <BookOpen className="h-5 w-5 text-gray-400" />
+                      <Building className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                       type="text"
-                      name="programName"
-                      value={formData.programName}
+                      name="name"
+                      value={formData.name}
                       onChange={handleInputChange}
                       className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                       required
-                      placeholder="Enter program name"
+                      placeholder="Enter school name"
                     />
                   </div>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 pt-3 pointer-events-none">
-                      <FileText className="h-5 w-5 text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className="h-5 w-5 text-gray-400" />
                     </div>
-                    <textarea
-                      name="description"
-                      value={formData.description}
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
                       onChange={handleInputChange}
-                      rows="4"
                       className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                       required
-                      placeholder="Enter program description"
-                    ></textarea>
+                      placeholder="Enter school address"
+                    />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">School Type *</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Info className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                      required
+                    >
+                      <option value="">Select Type</option>
+                      <option value="Public">Public</option>
+                      <option value="Private">Private</option>
+                      <option value="Special">Special</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Website URL</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Globe className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      name="schoolWebsiteUrl"
+                      value={formData.schoolWebsiteUrl}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                  <input
+                    type="number"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleInputChange}
+                    step="any"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="e.g. 10.3157"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                  <input
+                    type="number"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleInputChange}
+                    step="any"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="e.g. 123.8854"
+                  />
+                </div>
+
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="Enter school description..."
+                  ></textarea>
                 </div>
               </div>
             </div>
@@ -528,7 +696,7 @@ const CRUD_Program = () => {
                 ) : (
                   <div className="flex items-center">
                     <Check className="h-4 w-4 mr-2" />
-                    Save Program
+                    Save School
                   </div>
                 )}
               </button>
@@ -536,7 +704,7 @@ const CRUD_Program = () => {
           </div>
         </div>
       )}
-      
+
       {/* Delete Confirmation Dialog */}
       {deleteConfirmOpen && (
         <div className="fixed inset-0 bg-transparent backdrop-blur-sm flex justify-center items-center p-4 z-50">
@@ -550,7 +718,7 @@ const CRUD_Program = () => {
             <div className="p-6">
               <p className="text-gray-700">
                 Are you sure you want to delete{" "}
-                <span className="font-medium text-[#2B3E4E]">{programToDelete?.programName}</span>? This action cannot be
+                <span className="font-medium text-[#2B3E4E]">{schoolToDelete?.name}</span>? This action cannot be
                 undone.
               </p>
             </div>
@@ -582,7 +750,7 @@ const CRUD_Program = () => {
           </div>
         </div>
       )}
-      
+
       {/* Success Notification */}
       {success && (
         <div className="fixed bottom-4 right-4 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
@@ -606,7 +774,7 @@ const CRUD_Program = () => {
           </div>
         </div>
       )}
-      
+
       {/* Error Notification */}
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg max-w-md z-50 animate-slideInRight">
@@ -634,4 +802,4 @@ const CRUD_Program = () => {
   );
 };
 
-export default CRUD_Program;
+export default CRUD_School;

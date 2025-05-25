@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import adminQuizSubCatService from '../../services/adminQuizSubCatService';
-import adminAssessmentSubCategoryService from '../../services/adminAssessmentSubCategoryService';
+import adminQuizSubCatService from '../../../services/adminQuizSubCatService';
+import adminAssessmentSubCategoryService from '../../../services/adminAssessmentSubCategoryService';
 import {
   Layers,
   Search,

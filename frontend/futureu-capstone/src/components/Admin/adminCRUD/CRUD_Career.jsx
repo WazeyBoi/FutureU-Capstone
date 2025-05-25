@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import adminAssessmentService from '../../services/adminAssessmentService';
+import adminCareerService from '../../../services/adminCareerService';
+import adminProgramService from '../../../services/adminProgramService';
 import {
-  ClipboardList,
+  Briefcase,
+  Building,
   Search,
   Plus,
   Edit,
@@ -15,36 +17,39 @@ import {
   ChevronsRight,
   FileText,
   Loader,
-  BookOpen,
-  Tag,
-  Settings,
-  Activity,
-  ChevronDown
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  BookOpen
 } from 'lucide-react';
 
-const CRUD_Assessment = () => {
+const CRUD_Career = () => {
   // State variables
-  const [assessments, setAssessments] = useState([]);
-  const [filteredAssessments, setFilteredAssessments] = useState([]);
+  const [careers, setCareers] = useState([]);
+  const [filteredCareers, setFilteredCareers] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [selectedCareer, setSelectedCareer] = useState(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    type: '',
-    status: ''
+    careerTitle: '',
+    industry: '',
+    salary: '',
+    jobTrend: '',
+    programId: '',
+    careerDescription: ''
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+  const [careerToDelete, setCareerToDelete] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterValue, setFilterValue] = useState('');
 
   // Auto-dismiss notifications after 5 seconds
   useEffect(() => {
@@ -65,52 +70,80 @@ const CRUD_Assessment = () => {
     }
   }, [error]);
 
-  // Fetch assessments on component mount
+  // Fetch careers and programs on component mount
   useEffect(() => {
-    fetchAssessments();
+    fetchCareers();
+    fetchPrograms();
   }, []);
 
   // Apply filters when search query changes
   useEffect(() => {
-    if (searchQuery.trim() === '' && !filterType && !filterStatus) {
-      setFilteredAssessments(assessments);
+    if (searchQuery.trim() === '' && filterType === '' && filterValue === '') {
+      setFilteredCareers(careers);
     } else {
-      let filtered = [...assessments];
+      let filtered = careers;
       
-      // Apply text search if provided
+      // Apply search query filter
       if (searchQuery.trim() !== '') {
-        filtered = filtered.filter(assessment => 
-          assessment.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (assessment.description && assessment.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        filtered = filtered.filter(career => 
+          career.careerTitle.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
       
-      // Apply type filter if selected
-      if (filterType) {
-        filtered = filtered.filter(assessment => assessment.type === filterType);
+      // Apply specific filter
+      if (filterType && filterValue) {
+        switch(filterType) {
+          case 'industry':
+            filtered = filtered.filter(career => 
+              career.industry.toLowerCase().includes(filterValue.toLowerCase())
+            );
+            break;
+          case 'jobTrend':
+            filtered = filtered.filter(career => 
+              career.jobTrend.toLowerCase().includes(filterValue.toLowerCase())
+            );
+            break;
+          case 'program':
+            filtered = filtered.filter(career => 
+              career.program && career.program.programId === parseInt(filterValue)
+            );
+            break;
+          default:
+            break;
+        }
       }
       
-      // Apply status filter if selected
-      if (filterStatus) {
-        filtered = filtered.filter(assessment => assessment.status === filterStatus);
-      }
-      
-      setFilteredAssessments(filtered);
+      setFilteredCareers(filtered);
     }
-  }, [searchQuery, filterType, filterStatus, assessments]);
+  }, [searchQuery, filterType, filterValue, careers]);
 
-  const fetchAssessments = async () => {
+  const fetchCareers = async () => {
     setLoading(true);
     try {
-      const data = await adminAssessmentService.getAllAssessments();
-      setAssessments(data);
-      setFilteredAssessments(data);
+      const data = await adminCareerService.getAllCareers();
+      // Ensure data is an array
+      const careerArray = Array.isArray(data) ? data : [];
+      console.log('Career data from API:', careerArray);
+      setCareers(careerArray);
+      setFilteredCareers(careerArray);
       setError(null);
     } catch (error) {
-      setError('Failed to fetch assessments');
-      console.error('Error fetching assessments:', error);
+      console.error('Error fetching careers:', error);
+      setError('Failed to fetch careers');
+      // Initialize with empty arrays on error
+      setCareers([]);
+      setFilteredCareers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPrograms = async () => {
+    try {
+      const data = await adminProgramService.getAllPrograms();
+      setPrograms(data);
+    } catch (error) {
+      console.error('Error fetching programs:', error);
     }
   };
 
@@ -118,36 +151,40 @@ const CRUD_Assessment = () => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: name === 'salary' ? (value === '' ? '' : parseFloat(value)) : value
     });
   };
 
   const handleAddClick = () => {
     setFormData({
-      title: '',
-      description: '',
-      type: '',
-      status: 'Active'
+      careerTitle: '',
+      industry: '',
+      salary: '',
+      jobTrend: '',
+      programId: '',
+      careerDescription: ''
     });
     setIsEditing(false);
-    setSelectedAssessment(null);
+    setSelectedCareer(null);
     setIsModalVisible(true);
   };
 
-  const handleEditClick = (assessment) => {
-    setSelectedAssessment(assessment);
+  const handleEditClick = (career) => {
+    setSelectedCareer(career);
     setFormData({
-      title: assessment.title || '',
-      description: assessment.description || '',
-      type: assessment.type || '',
-      status: assessment.status || 'Active'
+      careerTitle: career.careerTitle || '',
+      industry: career.industry || '',
+      salary: career.salary || '',
+      jobTrend: career.jobTrend || '',
+      programId: career.program ? career.program.programId : '',
+      careerDescription: career.careerDescription || ''
     });
     setIsEditing(true);
     setIsModalVisible(true);
   };
 
-  const handleDeleteClick = (assessment) => {
-    setAssessmentToDelete(assessment);
+  const handleDeleteClick = (career) => {
+    setCareerToDelete(career);
     setDeleteConfirmOpen(true);
   };
 
@@ -157,22 +194,22 @@ const CRUD_Assessment = () => {
 
   const cancelDelete = () => {
     setDeleteConfirmOpen(false);
-    setAssessmentToDelete(null);
+    setCareerToDelete(null);
   };
 
   const confirmDelete = async () => {
-    if (!assessmentToDelete) return;
+    if (!careerToDelete) return;
     
     setLoading(true);
     try {
-      await adminAssessmentService.deleteAssessment(assessmentToDelete.assessmentId);
-      fetchAssessments(); // Refresh the list
-      setSuccess('Assessment deleted successfully');
+      await adminCareerService.deleteCareer(careerToDelete.careerId);
+      fetchCareers(); // Refresh the list
+      setSuccess('Career deleted successfully');
       setDeleteConfirmOpen(false);
-      setAssessmentToDelete(null);
+      setCareerToDelete(null);
     } catch (error) {
-      console.error('Error deleting assessment:', error);
-      setError('Failed to delete assessment. Please try again later.');
+      console.error('Error deleting career:', error);
+      setError('Failed to delete career. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -180,37 +217,45 @@ const CRUD_Assessment = () => {
 
   const handleSubmit = async () => {
     // Basic validation
-    if (!formData.title || !formData.type || !formData.status) {
-      setError('Title, type, and status are required');
+    if (!formData.careerTitle || !formData.industry || !formData.jobTrend) {
+      setError('Title, industry, and job trend are required');
       return;
     }
     
     setLoading(true);
     try {
-      const assessmentData = {
-        title: formData.title,
-        description: formData.description,
-        type: formData.type,
-        status: formData.status
+      const careerData = {
+        careerTitle: formData.careerTitle,
+        industry: formData.industry,
+        salary: formData.salary,
+        jobTrend: formData.jobTrend,
+        careerDescription: formData.careerDescription || ''
       };
       
+      // Get program ID if one is selected
+      const programId = formData.programId ? parseInt(formData.programId) : null;
+      
       if (isEditing) {
-        // Update existing assessment
-        await adminAssessmentService.updateAssessment(selectedAssessment.assessmentId, {
-          ...assessmentData,
-          assessmentId: selectedAssessment.assessmentId
-        });
-        setSuccess('Assessment updated successfully');
+        // Update existing career
+        await adminCareerService.updateCareer(
+          selectedCareer.careerId, 
+          {
+            ...careerData,
+            careerId: selectedCareer.careerId
+          },
+          programId
+        );
+        setSuccess('Career updated successfully');
       } else {
-        // Create new assessment
-        await adminAssessmentService.createAssessment(assessmentData);
-        setSuccess('Assessment created successfully');
+        // Create new career
+        await adminCareerService.createCareer(careerData, programId);
+        setSuccess('Career created successfully');
       }
-      fetchAssessments(); // Refresh the list
+      fetchCareers(); // Refresh the list
       setIsModalVisible(false);
     } catch (error) {
-      console.error('Error saving assessment:', error);
-      setError(`Failed to ${isEditing ? 'update' : 'create'} assessment. Please try again later.`);
+      console.error('Error saving career:', error);
+      setError(`Failed to ${isEditing ? 'update' : 'create'} career. Please try again later.`);
     } finally {
       setLoading(false);
     }
@@ -221,31 +266,21 @@ const CRUD_Assessment = () => {
     setPage(newPage);
   };
 
-  // Handle filter changes
-  const handleFilterTypeChange = (e) => {
-    setFilterType(e.target.value);
-  };
-
-  const handleFilterStatusChange = (e) => {
-    setFilterStatus(e.target.value);
-  };
-
   // Calculate pagination
-  const paginatedAssessments = filteredAssessments.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const paginatedCareers = Array.isArray(filteredCareers) 
+    ? filteredCareers.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    : [];
 
-  const totalPages = Math.ceil(filteredAssessments.length / rowsPerPage);
-  
+  const totalPages = Math.ceil((Array.isArray(filteredCareers) ? filteredCareers.length : 0) / rowsPerPage);
+
   // Helper function to get pagination range
-  const getPaginationRange = (current, totalPages) => {
+  const getPaginationRange = () => {
     const MAX_VISIBLE_PAGES = 5;
-    let start = Math.max(0, current - Math.floor(MAX_VISIBLE_PAGES / 2));
-    let end = Math.min(totalPages - 1, start + MAX_VISIBLE_PAGES - 1);
+    let start = Math.max(0, Math.min(page - Math.floor(MAX_VISIBLE_PAGES / 2), totalPages - MAX_VISIBLE_PAGES));
+    let end = Math.min(start + MAX_VISIBLE_PAGES - 1, totalPages - 1);
     
-    // Adjust start if we're near the end
-    if (end - start + 1 < MAX_VISIBLE_PAGES) {
+    // Adjust start if we're at the end
+    if (end === totalPages - 1 && totalPages > MAX_VISIBLE_PAGES) {
       start = Math.max(0, end - MAX_VISIBLE_PAGES + 1);
     }
     
@@ -257,130 +292,104 @@ const CRUD_Assessment = () => {
     return range;
   };
 
-  // Get assessment types for filter dropdown
-  const assessmentTypes = [...new Set(assessments.map(assessment => assessment.type))].filter(Boolean);
-
-  // Get assessment statuses for filter dropdown
-  const assessmentStatuses = [...new Set(assessments.map(assessment => assessment.status))].filter(Boolean);
-
-  // Helper function to get status badge style
-  const getStatusBadgeStyle = (status) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "Draft":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "Inactive":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
-  // Helper function to get type badge style
-  const getTypeBadgeStyle = (type) => {
-    switch (type) {
-      case "Standard":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "Career":
-        return "bg-purple-100 text-purple-800 border-purple-200";
-      case "Personality":
-        return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case "Aptitude":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "Interest":
-        return "bg-amber-100 text-amber-800 border-amber-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
-
   return (
     <div className="container mx-auto px-6 py-8 max-w-[1400px]">
       {/* Header Section */}
       <div className="mb-10">
         <div className="flex items-center mb-4">
           <div className="p-2.5 rounded-lg bg-[#FFB71B]/20 mr-3">
-            <ClipboardList className="h-6 w-6 text-[#FFB71B]" />
+            <Briefcase className="h-6 w-6 text-[#FFB71B]" />
           </div>
-          <h1 className="text-3xl font-bold text-[#2B3E4E]">Assessment Management</h1>
+          <h1 className="text-3xl font-bold text-[#2B3E4E]">Career Management</h1>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          Manage assessments that students can take to evaluate their skills and interests. Create, edit, or delete assessments across different types.
+          Manage career opportunities in the system. Add, edit, or remove career information as needed.
         </p>
         <div className="w-32 h-1.5 bg-[#FFB71B] mt-4"></div>
       </div>
       
       {/* Search and Filter Section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row gap-4 mb-4 items-center">
-          <div className="w-full md:w-1/2 relative">
+      <div className="bg-white rounded-xl shadow-md p-6 mb-8 border border-gray-100 overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="w-full md:w-2/3 relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              className="w-full pl-10 pr-28 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
-              placeholder="Search assessments..."
+              className="w-full pl-10 pr-16 py-3 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
+              placeholder="Search careers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <button
-              type="button"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 px-5 py-1.5 bg-[#FFB71B] text-[#2B3E4E] font-medium rounded-lg hover:bg-[#FFB71B]/90 transition-colors shadow-sm"
-            >
-              Search
-            </button>
           </div>
           
-          {/* Filter Dropdowns */}
-          <div className="w-full md:w-1/2 flex flex-col sm:flex-row gap-2">
-            <div className="flex items-center w-full sm:w-1/2">
+          {/* Filter Options */}
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
+            <select
+              value={filterType}
+              onChange={(e) => {
+                setFilterType(e.target.value);
+                setFilterValue('');
+              }}
+              className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
+            >
+              <option value="">Filter by...</option>
+              <option value="industry">Industry</option>
+              <option value="jobTrend">Job Trend</option>
+              <option value="program">Program</option>
+            </select>
+            
+            {filterType === 'industry' && (
+              <input
+                type="text"
+                placeholder="Enter industry"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
+              />
+            )}
+            
+            {filterType === 'jobTrend' && (
               <select
-                value={filterType}
-                onChange={handleFilterTypeChange}
-                className="px-4 py-3 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
               >
-                <option value="">All Types</option>
-                <option value="Skills & Interests">Skills & Interests</option>
-                <option value="Career Aptitude">Career Aptitude</option>
-                <option value="Personality">Personality</option>
+                <option value="">Select trend</option>
+                <option value="Growing">Growing</option>
+                <option value="Stable">Stable</option>
+                <option value="Declining">Declining</option>
               </select>
-              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border border-l-0 border-gray-200 py-3">
-                <Tag className="h-5 w-5 text-gray-500" />
-              </div>
-            </div>
-
-            <div className="flex items-center w-full sm:w-1/2">
+            )}
+            
+            {filterType === 'program' && (
               <select
-                value={filterStatus}
-                onChange={handleFilterStatusChange}
-                className="px-4 py-3 border border-gray-200 rounded-l-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm flex-grow"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+                className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors shadow-sm"
               >
-                <option value="">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Draft">Draft</option>
+                <option value="">Select program</option>
+                {programs.map(program => (
+                  <option key={program.programId} value={program.programId}>
+                    {program.programName}
+                  </option>
+                ))}
               </select>
-              <div className="bg-gray-100 px-3 h-full flex items-center rounded-r-xl border border-l-0 border-gray-200 py-3">
-                <Activity className="h-5 w-5 text-gray-500" />
-              </div>
-            </div>
+            )}
+            
+            <button
+              onClick={handleAddClick}
+              className="whitespace-nowrap h-12 w-full sm:w-auto flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all shadow-sm"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              Add Career
+            </button>
           </div>
-        </div>
-        
-        <div className="flex justify-end">
-          <button
-            onClick={handleAddClick}
-            className="flex items-center justify-center px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] font-medium rounded-xl hover:shadow-lg transition-all shadow-sm"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            Add Assessment
-          </button>
         </div>
       </div>
       
-      {/* Assessments Table */}
+      {/* Careers Table */}
       <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8 border border-gray-100">
         <div className="overflow-x-auto">
           <table className="w-full table-auto">
@@ -388,70 +397,102 @@ const CRUD_Assessment = () => {
               <tr className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white text-left">
                 <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">ID</th>
                 <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Title</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Type</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Status</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Description</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Industry</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Salary</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Job Trend</th>
+                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Program</th>
                 <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {loading && !filteredAssessments.length ? (
+              {loading && !filteredCareers.length ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
+                  <td colSpan={7} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader className="h-8 w-8 text-[#FFB71B] animate-spin mb-2" />
-                      <p className="text-gray-500">Loading assessments...</p>
+                      <p className="text-gray-500">Loading careers...</p>
                     </div>
                   </td>
                 </tr>
-              ) : filteredAssessments.length === 0 ? (
+              ) : filteredCareers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
+                  <td colSpan={7} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <ClipboardList className="h-12 w-12 text-gray-300 mb-2" />
-                      <p className="text-gray-500 font-medium">No assessments found</p>
-                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new assessment</p>
+                      <FileText className="h-12 w-12 text-gray-300 mb-2" />
+                      <p className="text-gray-500 font-medium">No careers found</p>
+                      <p className="text-gray-400 text-sm mt-1">Try adjusting your search or add a new career</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                paginatedAssessments.map((assessment) => (
-                  <tr key={assessment.assessmentId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-500 font-mono text-sm text-left">{assessment.assessmentId}</td>
+                paginatedCareers.map((career) => (
+                  <tr key={career.careerId} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-gray-500 font-mono text-sm text-left">{career.careerId}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-start">
-                        <BookOpen className="h-4 w-4 text-[#FFB71B] mt-1 mr-2 flex-shrink-0" />
-                        <div className="font-medium text-[#2B3E4E] text-left">{assessment.title}</div>
+                        <Briefcase className="h-4 w-4 text-[#FFB71B] mt-1 mr-2 flex-shrink-0" />
+                        <div className="font-medium text-[#2B3E4E] text-left">{career.careerTitle}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getTypeBadgeStyle(assessment.type)}`}>
-                          {assessment.type || 'Unknown'}
-                        </span>
+                      <div className="flex items-center">
+                        <Building className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                        <span className="text-gray-700">{career.industry}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadgeStyle(assessment.status)}`}>
-                          {assessment.status || 'Unknown'}
-                        </span>
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                        <span className="text-gray-700">₱{career.salary?.toLocaleString()}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 truncate max-w-xs text-gray-600 text-sm">{assessment.description || 'No description'}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {career.jobTrend === 'Growing' && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            Growing
+                          </span>
+                        )}
+                        {career.jobTrend === 'Stable' && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <Minus className="h-3 w-3 mr-1" />
+                            Stable
+                          </span>
+                        )}
+                        {career.jobTrend === 'Declining' && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <TrendingDown className="h-3 w-3 mr-1" />
+                            Declining
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center">
+                        {career.program ? (
+                          <>
+                            <BookOpen className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                            <span className="text-gray-700">{career.program.programName}</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-400 italic">N/A</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center space-x-3">
                         <button
-                          onClick={() => handleEditClick(assessment)}
+                          onClick={() => handleEditClick(career)}
                           className="p-2 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
-                          title="Edit Assessment"
+                          title="Edit Career"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteClick(assessment)}
+                          onClick={() => handleDeleteClick(career)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Assessment"
+                          title="Delete Career"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -469,10 +510,10 @@ const CRUD_Assessment = () => {
       <div className="bg-white rounded-xl shadow-md p-4 border border-gray-100">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-600">
-            Showing {filteredAssessments.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
-            {Math.min((page + 1) * rowsPerPage, filteredAssessments.length)} of {filteredAssessments.length} assessments
+            Showing {filteredCareers.length > 0 ? page * rowsPerPage + 1 : 0} to{" "}
+            {Math.min((page + 1) * rowsPerPage, filteredCareers.length)} of {filteredCareers.length} careers
           </div>
-          
+
           <div className="flex items-center space-x-1">
             {totalPages > 0 && (
               <div className="flex space-x-1 items-center">
@@ -485,7 +526,7 @@ const CRUD_Assessment = () => {
                 >
                   <ChevronsLeft className="h-5 w-5" />
                 </button>
-                
+
                 {/* Previous page button */}
                 <button
                   onClick={() => handleChangePage(Math.max(0, page - 1))}
@@ -495,9 +536,9 @@ const CRUD_Assessment = () => {
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                
+
                 {/* Page numbers */}
-                {getPaginationRange(page, totalPages).map((pageNum) => (
+                {getPaginationRange().map((pageNum) => (
                   <button
                     key={pageNum}
                     onClick={() => handleChangePage(pageNum)}
@@ -510,7 +551,7 @@ const CRUD_Assessment = () => {
                     {pageNum + 1}
                   </button>
                 ))}
-                
+
                 {/* Next page button */}
                 <button
                   onClick={() => handleChangePage(Math.min(totalPages - 1, page + 1))}
@@ -520,7 +561,7 @@ const CRUD_Assessment = () => {
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
-                
+
                 {/* Last page button */}
                 <button
                   onClick={() => handleChangePage(totalPages - 1)}
@@ -533,7 +574,7 @@ const CRUD_Assessment = () => {
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">Rows per page:</span>
             <select
@@ -554,10 +595,10 @@ const CRUD_Assessment = () => {
         </div>
       </div>
       
-      {/* Add/Edit Assessment Modal */}
+      {/* Add/Edit Career Dialog */}
       {isModalVisible && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
             <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 flex justify-between items-center">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
@@ -567,9 +608,7 @@ const CRUD_Assessment = () => {
                     <Plus className="h-5 w-5 text-[#FFB71B]" />
                   )}
                 </div>
-                <h3 className="text-xl font-semibold text-[#2B3E4E]">
-                  {isEditing ? 'Edit Assessment' : 'Add New Assessment'}
-                </h3>
+                <h3 className="text-xl font-semibold text-[#2B3E4E]">{isEditing ? 'Edit Career' : 'Add New Career'}</h3>
               </div>
               <button
                 onClick={handleCancel}
@@ -583,82 +622,119 @@ const CRUD_Assessment = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <BookOpen className="h-5 w-5 text-gray-400" />
+                    <Briefcase className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    name="title"
-                    value={formData.title}
+                    name="careerTitle"
+                    value={formData.careerTitle}
                     onChange={handleInputChange}
                     className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                     required
-                    placeholder="Enter assessment title"
+                    placeholder="Enter career title"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Tag className="h-5 w-5 text-gray-400" />
+                    <Building className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="industry"
+                    value={formData.industry}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    required
+                    placeholder="Enter industry"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <DollarSign className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="number"
+                    name="salary"
+                    value={formData.salary}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="1000"
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                    placeholder="Enter salary"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Trend *</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <TrendingUp className="h-5 w-5 text-gray-400" />
                   </div>
                   <select
-                    name="type"
-                    value={formData.type}
+                    name="jobTrend"
+                    value={formData.jobTrend}
                     onChange={handleInputChange}
                     className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
                     required
                   >
-                    <option value="">Select a type</option>
-                    <option value="Standard">Standard</option>
-                    <option value="Career">Career</option>
-                    <option value="Personality">Personality</option>
-                    <option value="Aptitude">Aptitude</option>
-                    <option value="Interest">Interest</option>
+                    <option value="">Select job trend</option>
+                    <option value="Growing">Growing</option>
+                    <option value="Stable">Stable</option>
+                    <option value="Declining">Declining</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
                   </div>
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Associated Program</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Activity className="h-5 w-5 text-gray-400" />
+                    <BookOpen className="h-5 w-5 text-gray-400" />
                   </div>
                   <select
-                    name="status"
-                    value={formData.status}
+                    name="programId"
+                    value={formData.programId}
                     onChange={handleInputChange}
                     className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
-                    required
                   >
-                    <option value="Active">Active</option>
-                    <option value="Draft">Draft</option>
-                    <option value="Inactive">Inactive</option>
+                    <option value="">None</option>
+                    {programs.map(program => (
+                      <option key={program.programId} value={program.programId}>
+                        {program.programName}
+                      </option>
+                    ))}
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
                   </div>
                 </div>
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Career Description</label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 pt-3 flex items-start pointer-events-none">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FileText className="h-5 w-5 text-gray-400" />
                   </div>
                   <textarea
-                    name="description"
-                    value={formData.description}
+                    name="careerDescription"
+                    value={formData.careerDescription || ""}
                     onChange={handleInputChange}
-                    rows={4}
                     className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
-                    placeholder="Enter assessment description"
+                    placeholder="Enter career description"
+                    rows="3"
                   ></textarea>
                 </div>
               </div>
@@ -683,7 +759,7 @@ const CRUD_Assessment = () => {
                 ) : (
                   <div className="flex items-center">
                     <Check className="h-4 w-4 mr-2" />
-                    {isEditing ? 'Update Assessment' : 'Save Assessment'}
+                    {isEditing ? 'Update' : 'Save'}
                   </div>
                 )}
               </button>
@@ -704,13 +780,9 @@ const CRUD_Assessment = () => {
             </div>
             <div className="p-6">
               <p className="text-gray-700">
-                Are you sure you want to delete this assessment? This action cannot be undone.
+                Are you sure you want to delete the career{" "}
+                <span className="font-medium text-[#2B3E4E]">{careerToDelete?.careerTitle}</span>? This action cannot be undone.
               </p>
-              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-sm text-gray-800 italic">
-                  <span className="font-medium text-[#2B3E4E] not-italic">Assessment:</span> {assessmentToDelete?.title}
-                </p>
-              </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
               <button
@@ -792,4 +864,4 @@ const CRUD_Assessment = () => {
   );
 };
 
-export default CRUD_Assessment;
+export default CRUD_Career;
