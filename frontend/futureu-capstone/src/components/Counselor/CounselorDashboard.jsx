@@ -24,8 +24,6 @@ const CounselorDashboard = () => {
   // States for storing data counts
   const [studentCount, setStudentCount] = useState(0);
   const [assessmentCount, setAssessmentCount] = useState(0);
-  const [appointmentCount, setAppointmentCount] = useState(0); // For future use
-  const [counselingSessionCount, setCounselingSessionCount] = useState(0); // For future use
 
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +36,11 @@ const CounselorDashboard = () => {
   const [selectedAssessment, setSelectedAssessment] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(16); // 16 per page for grid
+  const [totalResults, setTotalResults] = useState(0);
 
   // Fetch counts on component mount
   useEffect(() => {
@@ -57,10 +60,6 @@ const CounselorDashboard = () => {
         // Update state with actual counts
         setStudentCount(students.length);
         setAssessmentCount(assessments.length);
-
-        // Placeholder values for features that might be implemented later
-        setAppointmentCount(0);
-        setCounselingSessionCount(0);
       } catch (err) {
         console.error("Error fetching counts:", err);
         setError("Failed to load dashboard data. Please try again later.");
@@ -72,19 +71,42 @@ const CounselorDashboard = () => {
     fetchCounts();
   }, []);
 
-  // Fetch assessment results on mount
+  // Fetch assessment results on mount (fetch all, paginate/filter in-memory)
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const results = await userAssessmentService.getAllAssessmentResults();
-        setAssessmentResults(results);
-        setFilteredResults(results);
+        setIsLoading(true);
+        const allResults = await userAssessmentService.getAllAssessmentResults();
+        setAssessmentResults(allResults);
+        setTotalResults(allResults.length);
       } catch (err) {
         setError("Failed to load assessment results. Please try again later.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchResults();
   }, []);
+
+  // Filter and paginate results in-memory
+  useEffect(() => {
+    let results = [...assessmentResults];
+    if (searchStudent) {
+      results = results.filter(r => {
+        const user = r.userAssessment?.user || {};
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+        return fullName.includes(searchStudent.toLowerCase()) || (user.email || '').toLowerCase().includes(searchStudent.toLowerCase());
+      });
+    }
+    if (selectedAssessment) {
+      results = results.filter(r => (r.userAssessment?.assessment?.title || '') === selectedAssessment);
+    }
+    setTotalResults(results.length);
+    // Paginate in-memory
+    const startIdx = (page - 1) * pageSize;
+    const endIdx = startIdx + pageSize;
+    setFilteredResults(results.slice(startIdx, endIdx));
+  }, [searchStudent, selectedAssessment, assessmentResults, page, pageSize]);
 
   // Update time every minute
   useEffect(() => {
@@ -128,42 +150,20 @@ const CounselorDashboard = () => {
       value: studentCount.toString(),
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
-      increase: "+12%", // Placeholder
-      isUp: true,
     },
     {
       name: "Assessments",
       value: assessmentCount.toString(),
       icon: <FileText className="h-6 w-6" />,
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
-      increase: "+8%",
-      isUp: true,
-    },
-    {
-      name: "Appointments",
-      value: appointmentCount.toString(),
-      icon: <Calendar className="h-6 w-6" />,
-      color: "bg-gradient-to-br from-purple-500 to-purple-600",
-      increase: "+5%",
-      isUp: true,
-    },
-    {
-      name: "Counseling Sessions",
-      value: counselingSessionCount.toString(),
-      icon: <MessageSquare className="h-6 w-6" />,
-      color: "bg-gradient-to-br from-amber-500 to-amber-600",
-      increase: "+15%",
-      isUp: true,
     },
   ];
 
-  // Counselor tools
+  // Counselor tools (dynamic counts)
   const counselorTools = [
     { name: 'Students', icon: <Users className="h-8 w-8 mb-3" />, count: studentCount },
     { name: 'Assessments', icon: <FileText className="h-8 w-8 mb-3" />, count: assessmentCount },
-    { name: 'Appointments', icon: <Calendar className="h-8 w-8 mb-3" />, count: appointmentCount },
-    { name: 'Counseling Sessions', icon: <MessageSquare className="h-8 w-8 mb-3" />, count: counselingSessionCount },
-    { name: 'Reports', icon: <BarChart2 className="h-8 w-8 mb-3" />, count: 0 },
+    { name: 'Reports', icon: <BarChart2 className="h-8 w-8 mb-3" />, count: assessmentResults.length },
     { name: 'Career Guidance', icon: <BookOpen className="h-8 w-8 mb-3" />, count: 0 }
   ];
 
@@ -172,24 +172,9 @@ const CounselorDashboard = () => {
     return tool.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // Filter logic
-  useEffect(() => {
-    let results = [...assessmentResults];
-    if (searchStudent) {
-      results = results.filter(r => {
-        const user = r.userAssessment?.user || {};
-        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
-        return fullName.includes(searchStudent.toLowerCase()) || (user.email || '').toLowerCase().includes(searchStudent.toLowerCase());
-      });
-    }
-    if (selectedAssessment) {
-      results = results.filter(r => (r.userAssessment?.assessment?.title || '') === selectedAssessment);
-    }
-    setFilteredResults(results);
-  }, [searchStudent, selectedAssessment, assessmentResults]);
-
   // Get unique assessment titles for filter dropdown
   const assessmentTitles = Array.from(new Set(assessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean)));
+  const selectedAssessmentLabel = selectedAssessment || 'All Assessments';
 
   // Modal handlers
   const handleViewReport = (result) => {
@@ -199,6 +184,21 @@ const CounselorDashboard = () => {
   const handleCloseModal = () => {
     setModalOpen(false);
     setSelectedResult(null);
+  };
+
+  // Replace Recent Activity section with real recent completions
+  const recentActivities = assessmentResults
+    .filter(r => r.userAssessment?.dateCompleted)
+    .sort((a, b) => new Date(b.userAssessment.dateCompleted) - new Date(a.userAssessment.dateCompleted))
+    .slice(0, 5);
+
+  // Pagination handlers
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setPage(1);
   };
 
   // Show loading spinner
@@ -239,11 +239,11 @@ const CounselorDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-6 py-4">
+      <header>
+        <div className="px-15 py-4">
           <div className="flex items-center justify-between">
             <div className="flex flex-col items-start">
-              <p className="text-lg font-bold text-[#2B3E4E]">
+              <p className="text-2xl font-bold text-[#2B3E4E]">
                 Welcome back, <span className="text-[#1D63A1]">
                   {counselorUser && counselorUser.firstName ? counselorUser.firstName : "Career Guide"}
                 </span>
@@ -256,106 +256,89 @@ const CounselorDashboard = () => {
               </div>
             </div>
 
-            <div className="relative w-2/5 mx-auto">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search tools..."
-                className="pl-12 pr-4 py-3 rounded-xl border border-gray-200 w-full bg-white text-gray-900 shadow-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          {/* Search & Filter Bar */}
+          <SearchFilterBar
+            searchTerm={searchStudent}
+            onSearchChange={setSearchStudent}
+            filterOptions={assessmentTitles}
+            selectedFilter={selectedAssessment}
+            onFilterChange={setSelectedAssessment}
+          />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {quickStats.map((stat, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`p-3 rounded-xl ${stat.color} mr-4 shadow-lg`}>
-                    <div className="text-white">{stat.icon}</div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">{stat.name}</p>
-                    <h3 className="text-2xl font-bold text-[#2B3E4E]">{stat.value}</h3>
-                  </div>
-                </div>
-                {stat.increase && (
-                  <div className={`text-sm font-medium ${stat.isUp ? 'text-green-600' : 'text-red-600'}`}>
-                    {stat.increase}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Aggregated Insights */}
-        <AssessmentResultsInsights results={filteredResults} />
-
-        {/* Search & Filter Bar */}
-        <SearchFilterBar
-          searchTerm={searchStudent}
-          onSearchChange={setSearchStudent}
-          filterOptions={assessmentTitles}
-          selectedFilter={selectedAssessment}
-          onFilterChange={setSelectedAssessment}
-        />
-
-        {/* Assessment Results Grid */}
-        <AssessmentResultsGrid results={filteredResults} onViewReport={handleViewReport} />
-
-        {/* Student Report Modal */}
-        <StudentReportModal open={modalOpen} onClose={handleCloseModal} result={selectedResult} />
-
-        {/* Career Guidance Tools Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mt-8">
-          <div className="flex items-center justify-between mb-6">
-            {/* Update the section title */}
-            <h2 className="text-xl font-bold text-[#2B3E4E]">Career Guidance Tools</h2>
-            <div className="text-sm text-gray-500">
-              {filteredTools.length} tools available
-            </div>
+      <main className="w-full flex flex-col lg:flex-row gap-8 px-15">
+        {/* Main Content Column */}
+        <div className="flex-1 min-w-0">
+          {/* Selected Assessment Heading */}
+          <div className="text-left my-5">
+            <h2 className="text-lg font-bold text-[#1D63A1]">
+              Showing results for: <span className="text-[#FFB71B]">{selectedAssessmentLabel}</span>
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {filteredTools.map((tool, index) => (
+          {/* Assessment Results Grid */}
+          <AssessmentResultsGrid
+            results={filteredResults}
+            onViewReport={handleViewReport}
+            page={page}
+            pageSize={pageSize}
+            totalResults={totalResults}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+
+          {/* Student Report Modal */}
+          <StudentReportModal open={modalOpen} onClose={handleCloseModal} result={selectedResult} />
+        </div>
+
+        {/* Sidebar: Quick Stats + Recent Activity */}
+        <aside className="w-full lg:w-72 flex-shrink-0">
+          {/* Small Quick Stats */}
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {quickStats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#FFB71B] cursor-pointer group overflow-hidden transform hover:-translate-y-1"
-                onClick={() => handleToolClick(tool.name)}
+                className="bg-white rounded-lg shadow p-3 flex flex-col items-center border border-gray-100"
               >
-                <div className="p-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="p-4 rounded-xl bg-[#2B3E4E]/5 group-hover:bg-[#FFB71B]/10 mb-4 transition-colors">
-                      <div className="text-[#2B3E4E] group-hover:text-[#FFB71B] transition-colors">
-                        {tool.icon}
-                      </div>
-                    </div>
-                    <h3 className="text-base font-semibold text-gray-800 group-hover:text-[#2B3E4E]">
-                      {tool.name}
-                    </h3>
-                    <span className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {tool.count} items
-                    </span>
-                  </div>
+                <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-sm`}>
+                  <div className="text-white">{stat.icon}</div>
                 </div>
-                <div className="h-1 w-full bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                <div className="text-xs text-gray-500 text-center">{stat.name}</div>
+                <div className="text-lg font-bold text-[#2B3E4E] text-center">{stat.value}</div>
               </div>
             ))}
           </div>
-        </div>
+          {/* Recent Activity */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 animate-fade-in max-h-[340px] overflow-y-auto">
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-3">Recent Activity</h3>
+            <div className="space-y-2">
+              {recentActivities.length === 0 ? (
+                <div className="flex flex-col items-center py-4">
+                  <img src="/src/assets/Students.png" alt="No activity" className="w-12 mb-1 opacity-80 animate-fade-in" />
+                  <div className="text-gray-400 text-xs text-center">No recent activity yet.</div>
+                </div>
+              ) : recentActivities.map((activity, idx) => {
+                const user = activity.userAssessment?.user || {};
+                const assessment = activity.userAssessment?.assessment || {};
+                return (
+                  <div key={idx} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors animate-pop-in" style={{ animationDelay: `${idx * 60}ms` }}>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">
+                      {user.firstName?.[0]}{user.lastName?.[0]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium text-xs text-gray-800">{user.firstName} {user.lastName}</div>
+                      <div className="truncate text-[11px] text-gray-500">{assessment.title}</div>
+                    </div>
+                    <div className="text-[10px] text-gray-400 whitespace-nowrap">{activity.userAssessment?.dateCompleted ? new Date(activity.userAssessment.dateCompleted).toLocaleDateString() : ''}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
       </main>
     </div>
   );
