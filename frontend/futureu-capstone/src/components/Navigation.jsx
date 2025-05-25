@@ -1,55 +1,70 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-import FutureULogo from '../assets/FutureU_Logo_Header_Display.png'; // Import the logo - adjust path/extension if needed
- 
+import FutureULogo from '../assets/header_logo_normal.svg';
+import FutureULogo2 from '../assets/header_logo_yellow.svg'; // Import the logo - adjust path/extension if needed
+import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
+
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
- 
+  const [logoHover, setLogoHover] = useState(false);
+
   useEffect(() => {
     // Check authentication status and role when component mounts or location changes
     setIsAuthenticated(authService.isAuthenticated());
     setUserRole(authService.getUserRole());
   }, [location]);
- 
+
   const handleLogout = () => {
+    // Clear recommendations for the current user (if any)
+    const userId = authService.getCurrentUserId();
+    if (userId) {
+      // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
+      // If you have a way to get the user's last assessmentId, use it here
+      // For now, clear all possible keys for this user
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     authService.signout();
     setIsAuthenticated(false);
     navigate('/user-landing-page');
   };
- 
+
   const isActive = (path) => {
     return location.pathname === path;
   };
- 
+
   return (
-    <nav className="bg-transparent border-b border-[#2B3E4E]/20 shadow-lg backdrop-blur-md nav-override">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
+    <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
+      <div className=" container mx-auto">
+        <div className=" flex items-center justify-between h-16 w-full">
           {/* Brand with Logo */}
           <Link 
             to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} 
             className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+            onMouseEnter={() => setLogoHover(true)}
+            onMouseLeave={() => setLogoHover(false)}
           >
             {/* Real Logo - Increased Size */}
             <img 
-              src={FutureULogo} 
+              src={logoHover ? FutureULogo2 : FutureULogo} 
               alt="FutureU Logo" 
               className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
             />
             
-            <div className="text-black text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
+            <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
               FutureU
             </div>
             {userRole === 'ADMIN' && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md">
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
                 Admin
-              </span>
+              </div>
             )}
           </Link>
 
@@ -192,7 +207,7 @@ const Navigation = () => {
             )}
            
             {/* Authentication buttons */}
-            <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#2B3E4E]/30">
+            <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#FFB71B]/80">
               {isAuthenticated ? (
                 <button
                   onClick={handleLogout}
