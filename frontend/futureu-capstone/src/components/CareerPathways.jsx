@@ -151,14 +151,84 @@ const CareerPathways = () => {
     return allPrograms;
   }, [selectedSchool, programSearch, allPrograms, schoolPrograms]);
 
-  // Unique industries and job trends
-  const industries = Array.from(new Set(careers.map((c) => c.industry).filter(Boolean)));
+  // Helper functions for industry filtering
+  const getMainIndustry = (industry) => {
+    // For industries with parentheses like "Healthcare (Surgery)"
+    if (industry.includes('(')) {
+      return industry.split('(')[0].trim();
+    }
+    // For industries with slashes like "Mining/Energy/Environment"
+    return industry;
+  };
+
+  // Update the industry matching logic to handle both cases correctly
+  const matchesIndustryFilter = (careerIndustry, filterIndustry) => {
+    if (!filterIndustry) return true;
+    if (careerIndustry === filterIndustry) return true;
+    
+    // Case 1: If career industry has slashes (like "Construction/Maintenance")
+    // Show it when any of its parts match the filter
+    if (careerIndustry.includes('/')) {
+      const parts = careerIndustry.split('/').map(part => part.trim());
+      return parts.includes(filterIndustry);
+    }
+    
+    // Case 2: If career industry has parentheses (like "Healthcare (Surgery)")
+    // and filter is the main category (like "Healthcare")
+    if (careerIndustry.includes('(')) {
+      const mainCategory = careerIndustry.split('(')[0].trim();
+      return mainCategory === filterIndustry;
+    }
+    
+    return false;
+  };
+
+  // Update the industries array generation to correctly extract and display industries
+  const industries = React.useMemo(() => {
+    if (!careers || careers.length === 0) return [];
+    
+    // Get all unique industry strings
+    const allIndustries = careers.map((c) => c.industry).filter(Boolean);
+    
+    // Set to store unique industry names
+    const uniqueIndustries = new Set();
+    
+    // Process each industry
+    allIndustries.forEach(industry => {
+      if (!industry) return;
+      
+      // Case 1: Industries with parentheses like "Healthcare (Surgery)"
+      if (industry.includes('(')) {
+        // Extract only the main category (before the parenthesis)
+        const mainCategory = industry.split('(')[0].trim();
+        uniqueIndustries.add(mainCategory);
+      }
+      // Case 2: Industries with slashes like "Academe/Corporate Governance"
+      else if (industry.includes('/')) {
+        // Split by slash and add each part as a separate industry
+        industry.split('/').forEach(part => {
+          uniqueIndustries.add(part.trim());
+        });
+        // Do NOT add the combined version to the filter list
+        // The line "uniqueIndustries.add(industry);" has been removed
+      }
+      // Case 3: Normal industries
+      else {
+        uniqueIndustries.add(industry);
+      }
+    });
+    
+    // Convert set to array and sort
+    return Array.from(uniqueIndustries).sort();
+  }, [careers]);
+
+  // Get unique job trends
   const jobTrends = Array.from(new Set(careers.map((c) => c.jobTrend).filter(Boolean)));
 
   // Filtering logic for careers
   const filteredCareers = React.useMemo(() => {
     return careers.filter((career) => {
-      const matchesIndustry = !selectedIndustry || career.industry === selectedIndustry;
+      const matchesIndustry = matchesIndustryFilter(career.industry, selectedIndustry);
       
       const matchesProgram = !selectedProgram || careerHasProgram(career, selectedProgram);
       
@@ -412,20 +482,51 @@ const CareerPathways = () => {
             </div>
             
             {/* Clear Filters */}
-            <button
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-2 rounded mt-2"
-              onClick={() => {
-                setSelectedIndustry("");
-                setSelectedProgram("");
-                setSelectedSchool("");
-                setSelectedJobTrend("");
-                setSearchTerm("");
-                setProgramSearch("");
-                setSchoolSearch("");
-              }}
-            >
-              Clear Filters
-            </button>
+            <div className="bg-white rounded-lg shadow p-4 my-4">
+              <div className="flex flex-col gap-2">
+                <h3 className="text-base font-semibold text-gray-700">Active Filters</h3>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedIndustry && (
+                    <span className="bg-yellow-100 px-3 py-1.5 rounded-lg text-xs font-medium text-yellow-800">
+                      Industry: {selectedIndustry}
+                    </span>
+                  )}
+                  {selectedProgram && (
+                    <span className="bg-yellow-100 px-3 py-1.5 rounded-lg text-xs font-medium text-yellow-800">
+                      Program: {filteredPrograms.find(p => String(p.programId) === selectedProgram)?.programName || selectedProgram}
+                    </span>
+                  )}
+                  {selectedJobTrend && (
+                    <span className="bg-yellow-100 px-3 py-1.5 rounded-lg text-xs font-medium text-yellow-800">
+                      Job Trend: {selectedJobTrend}
+                    </span>
+                  )}
+                  {searchTerm && (
+                    <span className="bg-yellow-100 px-3 py-1.5 rounded-lg text-xs font-medium text-yellow-800">
+                      Search: {searchTerm}
+                    </span>
+                  )}
+                  {!selectedIndustry && !selectedProgram && !selectedJobTrend && !searchTerm && (
+                    <span className="text-gray-500 text-sm">No active filters</span>
+                  )}
+                </div>
+                <button
+                  className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-4 py-3 rounded mt-2 flex items-center justify-center shadow-md"
+                  onClick={() => {
+                    setSelectedIndustry("");
+                    setSelectedProgram("");
+                    setSelectedSchool("");
+                    setSelectedJobTrend("");
+                    setSearchTerm("");
+                    setProgramSearch("");
+                    setSchoolSearch("");
+                  }}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All Filters
+                </button>
+              </div>
+            </div>
           </aside>
 
           {/* Main Content */}
@@ -510,7 +611,8 @@ const CareerPathways = () => {
                                 <div className="flex-shrink-0 h-8 w-8 rounded-full bg-[#2B3E4E]/10 flex items-center justify-center mr-3">
                                   <Briefcase className="h-4 w-4 text-[#2B3E4E]" />
                                 </div>
-                                <div className="text-sm font-medium text-gray-900">{career.careerTitle}</div>
+                                {/* Change this div to center the text */}
+                                <div className="text-sm font-medium text-gray-900 text-center w-full">{career.careerTitle}</div>
                               </div>
                             </td>
                             
@@ -623,88 +725,114 @@ const CareerPathways = () => {
             {showCareerModal && selectedCareer && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
                 <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full relative border border-gray-200 overflow-hidden animate-fade-in-up">
-                  {/* Gradient header with improved design */}
-                  <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1a2530] h-32 flex items-center justify-center overflow-hidden relative">
-                    <div className="absolute inset-0 opacity-10"></div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-4 text-center border border-white/20 shadow-lg">
-                      <div className="text-xs uppercase tracking-wider text-yellow-300 font-semibold mb-1">
-                        Career Path
-                      </div>
-                      <h2 className="text-2xl font-bold text-white">{selectedCareer.careerTitle}</h2>
-                    </div>
+                  {/* Header with navy blue background similar to Academic Explorer */}
+                  <div className="h-32 bg-[#2B3E4E] relative overflow-hidden w-full">
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#2B3E4E]/60 to-[#2B3E4E]/90"></div>
+                    
+                    {/* Close button */}
                     <button
-                      className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-colors"
                       onClick={() => setShowCareerModal(false)}
+                      className="absolute top-3 right-3 bg-white/80 text-gray-700 p-1.5 rounded-full hover:bg-white z-10 shadow"
                       aria-label="Close"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
 
-                  {/* Card Content */}
-                  <div className="px-8 py-6">
-                    {/* Info Grid with improved styling */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 hover:bg-gray-100 transition-colors">
-                        <div className="flex items-start">
-                          <div className="bg-[#2B3E4E]/10 p-2 rounded-lg mr-3 flex-shrink-0">
-                            <Building className="h-5 w-5 text-[#2B3E4E]" />
+                  {/* Career Icon centered on the header bottom border */}
+                  <div className="absolute top-32 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                    <div className="w-20 h-20 rounded-full bg-[#2B3E4E] flex items-center justify-center mx-auto border-4 border-white shadow-lg">
+                      <Briefcase className="w-10 h-10 text-[#FFB71B]" />
+                    </div>
+                  </div>
+
+                  {/* Content with padding for the icon */}
+                  <div className="px-8 py-6 pt-12">
+                    {/* ACADEMIC PROGRAM text */}
+                    <div className="text-sm uppercase tracking-wider text-[#2B3E4E] font-semibold text-center mb-1">
+                      CAREER PATH
+                    </div>
+                    
+                    {/* Career Title */}
+                    <h2 className="text-2xl font-bold text-gray-900 text-center mb-6">
+                      {selectedCareer.careerTitle}
+                    </h2>
+                    
+                    {/* Rest of your content - keep the grid and cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+                      {/* Industry Card - With text wrapping and color scheme */}
+                      <div className="rounded-lg shadow-sm bg-white hover:bg-gray-50 transition-all duration-200 p-3 flex flex-col border border-gray-100 hover:border-[#2B3E4E]/30 hover:shadow">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <div className="bg-[#2B3E4E]/10 p-1.5 rounded-md">
+                            <Building className="h-3.5 w-3.5 text-[#2B3E4E]" />
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-500 font-semibold mb-1">Industry</div>
-                            <div className="text-base text-gray-800">{selectedCareer.industry}</div>
-                          </div>
+                          <p className="text-xs font-medium text-gray-600">Industry</p>
                         </div>
+                        <div className="text-base font-bold text-[#2B3E4E] mt-1 break-words">
+                          {selectedCareer.industry}
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                          Career field classification
+                        </p>
                       </div>
 
-                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 hover:bg-gray-100 transition-colors">
-                        <div className="flex items-start">
-                          <div className="bg-yellow-100 p-2 rounded-lg mr-3 flex-shrink-0">
-                            <BookOpen className="h-5 w-5 text-yellow-700" />
+                      {/* Salary Range Card - With color scheme */}
+                      <div className="rounded-lg shadow-sm bg-white hover:bg-gray-50 transition-all duration-200 p-3 flex flex-col border border-gray-100 hover:border-[#FFB71B]/30 hover:shadow">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <div className="bg-[#FFB71B]/10 p-1.5 rounded-md">
+                            <BookOpen className="h-3.5 w-3.5 text-[#FFB71B]" />
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-500 font-semibold mb-1">Salary</div>
-                            <div className="text-base text-yellow-600 font-bold">
-                              {selectedCareer.salary ? `₱${selectedCareer.salary.toLocaleString()}` : 'N/A'}
-                            </div>
-                          </div>
+                          <p className="text-xs font-medium text-gray-600">Salary Range</p>
                         </div>
+                        <div className="text-base font-bold text-[#FFB71B] mt-1">
+                          {selectedCareer.salary ? `₱${selectedCareer.salary.toLocaleString()}` : 'N/A'}
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                          Monthly compensation in PHP
+                        </p>
                       </div>
 
-                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-gray-200 hover:bg-gray-100 transition-colors">
-                        <div className="flex items-start">
-                          <div className="bg-blue-100 p-2 rounded-lg mr-3 flex-shrink-0">
-                            {selectedCareer.jobTrend === 'Growing' && <TrendingUp className="h-5 w-5 text-green-600" />}
-                            {selectedCareer.jobTrend === 'Stable' && <Minus className="h-5 w-5 text-blue-600" />}
-                            {selectedCareer.jobTrend === 'Declining' && <TrendingDown className="h-5 w-5 text-red-600" />}
-                            {!selectedCareer.jobTrend && <Info className="h-5 w-5 text-gray-500" />}
+                      {/* Job Trend Card - With color scheme based on trend */}
+                      <div className="rounded-lg shadow-sm bg-white hover:bg-gray-50 transition-all duration-200 p-3 flex flex-col border border-gray-100 hover:shadow">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <div className={`p-1.5 rounded-md ${
+                            selectedCareer.jobTrend === 'Growing' ? 'bg-green-50' : 
+                            selectedCareer.jobTrend === 'Stable' ? 'bg-blue-50' : 
+                            selectedCareer.jobTrend === 'Declining' ? 'bg-red-50' : 
+                            'bg-gray-50'
+                          }`}>
+                            {selectedCareer.jobTrend === 'Growing' && <TrendingUp className="h-3.5 w-3.5 text-green-600" />}
+                            {selectedCareer.jobTrend === 'Stable' && <Minus className="h-3.5 w-3.5 text-blue-600" />}
+                            {selectedCareer.jobTrend === 'Declining' && <TrendingDown className="h-3.5 w-3.5 text-red-600" />}
+                            {!selectedCareer.jobTrend && <Info className="h-3.5 w-3.5 text-gray-500" />}
                           </div>
-                          <div>
-                            <div className="text-xs text-gray-500 font-semibold mb-1">Job Trend</div>
-                            <div className="text-base text-gray-800">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                selectedCareer.jobTrend === 'Growing' ? 'bg-green-100 text-green-800' :
-                                selectedCareer.jobTrend === 'Stable' ? 'bg-blue-100 text-blue-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {selectedCareer.jobTrend || 'N/A'}
-                              </span>
-                            </div>
-                          </div>
+                          <p className="text-xs font-medium text-gray-600">Job Trend</p>
                         </div>
+                        <div className={`text-base font-bold mt-1 ${
+                          selectedCareer.jobTrend === 'Growing' ? 'text-green-600' : 
+                          selectedCareer.jobTrend === 'Stable' ? 'text-blue-600' : 
+                          selectedCareer.jobTrend === 'Declining' ? 'text-red-600' : 
+                          'text-gray-600'
+                        }`}>
+                          {selectedCareer.jobTrend || 'N/A'}
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-1">
+                          Current employment market trend
+                        </p>
                       </div>
                     </div>
                     
                     {/* Description */}
                     {selectedCareer.careerDescription && (
-                      <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 mb-6">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 mb-6">
                         <div className="flex items-start">
-                          <div className="bg-indigo-100 p-2 rounded-lg mr-3 flex-shrink-0">
-                            <Info className="h-5 w-5 text-indigo-700" />
+                          {/* Fixed icon alignment */}
+                          <div className="bg-indigo-50 p-2 rounded-lg mr-3 flex-shrink-0 mt-0.5">
+                            <Info className="h-4 w-4 text-indigo-600" />
                           </div>
                           <div>
-                            <div className="text-xs text-gray-500 font-semibold mb-1">Description</div>
-                            <div className="text-sm text-gray-800 leading-relaxed">
+                            <div className="text-sm font-medium text-gray-700 mb-1">Description</div>
+                            <div className="text-sm text-gray-600 leading-relaxed">
                               {selectedCareer.careerDescription}
                             </div>
                           </div>
@@ -806,8 +934,9 @@ const CareerPathways = () => {
                       </div>
                     </div>
                     <button
-                      className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-colors"
+                      className="absolute top-4 right-4 bg-black !text-white hover:bg-gray-800 p-1.5 rounded-full transition-colors shadow-md border border-white/20"
                       onClick={() => setShowProgramsModal(false)}
+                      aria-label="Close"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -902,7 +1031,7 @@ const CareerPathways = () => {
 
                     <div className="border-t border-gray-200 pt-6 flex justify-end">
                       <button
-                        className="bg-[#2B3E4E] hover:bg-[#1a2530] text-white px-5 py-2.5 rounded-lg transition-colors shadow-sm hover:shadow flex items-center"
+                        className="bg-black !text-white hover:bg-gray-800 px-5 py-2.5 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center"
                         onClick={() => {
                           setShowProgramsModal(false);
                           // Navigate to Academic Explorer
@@ -911,6 +1040,7 @@ const CareerPathways = () => {
                             window.location.href = `/academic-explorer?programId=${firstProgram.programId}`;
                           }
                         }}
+                        style={{ backgroundColor: 'black' }} // Force black background with inline style
                       >
                         Explore Programs
                         <ChevronRight className="w-4 h-4 ml-1.5" />
@@ -1019,55 +1149,23 @@ const CareerPathways = () => {
             )}
 
             {/* Legend Section */}
-            <div className="lg:w-full bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Legend</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
-                    Job Trend
-                  </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-600 text-white text-xs mr-2">
-                        High Demand
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Careers with strong job market growth
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs mr-2">
-                        Growing
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Careers with steady growth
-                      </span>
-                    </li>
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
-                        Stable
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Careers with consistent opportunities
-                      </span>
-                    </li>
-                  </ul>
+            <div className="bg-white rounded-lg shadow p-4 mb-6">
+              <div className="flex flex-wrap gap-3 items-center">
+                <span className="text-sm font-medium text-gray-700">Job Trends:</span>
+                <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full">
+                  <TrendingUp className="w-3.5 h-3.5 text-green-600 mr-1.5" />
+                  <span className="text-xs font-medium text-green-800">Growing</span>
                 </div>
-                <div>
-                  <h4 className="text-md font-medium text-gray-800 mb-2">
-                    Salary
-                  </h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-500 text-white text-xs mr-2">
-                        ₱
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        Estimated monthly salary (PHP)
-                      </span>
-                    </li>
-                  </ul>
+                <div className="flex items-center px-3 py-1.5 bg-blue-100 rounded-full">
+                  <Minus className="w-3.5 h-3.5 text-blue-600 mr-1.5" />
+                  <span className="text-xs font-medium text-blue-800">Stable</span>
                 </div>
+                <div className="flex items-center px-3 py-1.5 bg-red-100 rounded-full">
+                  <TrendingDown className="w-3.5 h-3.5 text-red-600 mr-1.5" />
+                  <span className="text-xs font-medium text-red-800">Declining</span>
+                </div>
+                <span className="ml-4 text-sm font-medium text-gray-700 border-l border-gray-300 pl-4">Salary:</span>
+                <span className="text-xs text-gray-600">All values shown in PHP (₱)</span>
               </div>
             </div>
           </section>
