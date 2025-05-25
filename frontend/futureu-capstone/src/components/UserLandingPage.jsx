@@ -18,6 +18,7 @@ import {
   FaUniversity,
   FaLaptop,
   FaChevronRight,
+  FaUserCircle,
 } from "react-icons/fa";
 //import Footer from './Footer';
 
@@ -52,19 +53,17 @@ const LandingPage = () => {
       name: "Maria Santos",
       role: "Computer Science Graduate, 2022",
       school: "University of San Carlos",
-      image: "/placeholder.svg?height=100&width=100",
       quote:
-        "FutureU helped me find the perfect program that matched my skills and interests. Now I'm working at my dream tech company!",
+        "The career assessment in FutureU was spot-on! The school comparison feature made it easy to find top-rated Schools!",
       rating: 5,
     },
     {
       id: 2,
       name: "John Reyes",
       role: "Business Administration Student",
-      school: "Cebu Institute of Technology",
-      image: "/placeholder.svg?height=100&width=100",
+      school: "University of the Visayas",
       quote:
-        "The career assessment tools were incredibly accurate. I discovered career paths I hadn't even considered before.",
+        "The career assessment tools were incredibly accurate.",
       rating: 5,
     },
     {
@@ -72,9 +71,8 @@ const LandingPage = () => {
       name: "Sophia Cruz",
       role: "Nursing Graduate, 2021",
       school: "Cebu Doctors' University",
-      image: "/placeholder.svg?height=100&width=100",
       quote:
-        "The alumni insights helped me prepare for what to expect in my program. I felt confident in my choice from day one.",
+        "The alumni insights was helpful as it prepares for what to expect in the program and school.",
       rating: 4,
     },
   ];
@@ -108,10 +106,10 @@ const LandingPage = () => {
   });
 
   const targetCounters = {
-    schools: 25,
-    programs: 150,
-    alumni: 5000,
-    students: 10000,
+    schools: 11,
+    programs: 200,
+    alumni: 1000,
+    students: 2000,
   };
 
   useEffect(() => {
@@ -296,8 +294,8 @@ const LandingPage = () => {
             {[
               { label: "Schools", value: counters.schools, icon: <FaUniversity className="text-4xl mb-3" /> },
               { label: "Programs", value: counters.programs, icon: <FaGraduationCap className="text-4xl mb-3" /> },
-              { label: "Alumni", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
-              { label: "Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
+              { label: "Future Alumni", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
+              { label: "Future Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -472,12 +470,8 @@ const LandingPage = () => {
                         <div className="flex flex-col md:flex-row items-center">
                           <div className="md:w-1/3 mb-6 md:mb-0 flex justify-center">
                             <div className="relative">
-                              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-500">
-                                <img
-                                  src={testimonial.image}
-                                  alt={testimonial.name}
-                                  className="w-full h-full object-cover"
-                                />
+                              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-500 bg-gray-100 flex items-center justify-center">
+                                <FaUserCircle className="w-20 h-20 text-gray-400" />
                               </div>
                               <div className="absolute -bottom-2 -right-2 bg-yellow-500 rounded-full p-1">
                                 <FaGraduationCap className="text-white text-lg" />

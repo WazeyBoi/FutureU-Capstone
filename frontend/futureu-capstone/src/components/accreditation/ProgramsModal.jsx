@@ -95,8 +95,8 @@ const ProgramsModal = ({ school, onClose }) => {
   const schoolLogo = schoolLogosMap[school.id];
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl my-8 relative transform transition-all">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl relative transform transition-all">
         {/* Header with Background Image */}
         <div className="relative h-64 rounded-t-2xl overflow-hidden">
           {/* Background Image */}

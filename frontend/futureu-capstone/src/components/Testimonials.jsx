@@ -6,9 +6,80 @@ import SchoolFilter from './testimonials/SchoolFilter';
 import TestimonialHero from './testimonials/TestimonialHero';
 import TestimonialForm from './testimonials/TestimonialForm';
 import SchoolsSection from './testimonials/SchoolsSection';
-import { FaSearch, FaFilter, FaArrowLeft, FaPlus, FaTimes, FaStar } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaArrowLeft, FaPlus, FaTimes, FaStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { getAllTestimonials, getTestimonialsBySchool, deleteTestimonial, createTestimonial, updateTestimonial } from '../services/testimonialService';
 import authService from '../services/authService';
+// Import Swiper and required modules
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Navigation } from 'swiper/modules';
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
+
+// Add custom styles for Swiper
+const swiperStyles = `
+  .testimonials-swiper {
+    padding: 0 50px !important; /* Add padding for navigation buttons */
+  }
+
+  .swiper-pagination-bullet {
+    width: 8px;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    opacity: 1;
+    transition: all 0.3s ease;
+  }
+
+  .swiper-pagination-bullet-active {
+    width: 24px;
+    border-radius: 4px;
+    background: #2B3E4E;
+  }
+
+  .swiper-button-next,
+  .swiper-button-prev {
+    color: #2B3E4E;
+    background: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .swiper-button-prev {
+    left: 0;
+  }
+
+  .swiper-button-next {
+    right: 0;
+  }
+
+  .swiper-button-next:hover,
+  .swiper-button-prev:hover {
+    background: #2B3E4E;
+    color: white;
+  }
+
+  .swiper-button-next:after,
+  .swiper-button-prev:after {
+    font-size: 18px;
+  }
+
+  .swiper-button-disabled {
+    opacity: 0;
+    cursor: default;
+    pointer-events: none;
+  }
+`;
+
+// Add the styles to the document
+const styleSheet = document.createElement("style");
+styleSheet.innerText = swiperStyles;
+document.head.appendChild(styleSheet);
 
 // Animation variants
 const fadeIn = {
@@ -133,6 +204,22 @@ const Testimonials = () => {
                schoolName.toLowerCase().includes(query);
       });
     }
+
+    // Enhanced sorting logic for testimonials
+    filtered = filtered.sort((a, b) => {
+      // Get dates from various possible fields
+      const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+      const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+      
+      // If dates are the same, use ID as secondary sort
+      if (dateA.getTime() === dateB.getTime()) {
+        const idA = a.testimonyId || a.id || 0;
+        const idB = b.testimonyId || b.id || 0;
+        return idB - idA; // Higher ID = newer
+      }
+      
+      return dateB.getTime() - dateA.getTime();
+    });
 
     setFilteredTestimonials(filtered);
   }, [selectedSchool, searchQuery, testimonials]);
@@ -259,14 +346,27 @@ const Testimonials = () => {
     
     // Find the name of the selected school for display
     const selectedSchool = schools.find(s => s.schoolId && s.schoolId.toString() === schoolId.toString());
-    console.log('Selected school:', selectedSchool);
     setSelectedSchoolName(selectedSchool ? (selectedSchool.name || selectedSchool.schoolName) : '');
     
     // Fetch testimonials specifically for this school
     getTestimonialsBySchool(schoolId)
       .then(response => {
-        console.log('School testimonials response:', response.data);
-        setFilteredTestimonials(response.data);
+        // Enhanced sorting logic for fetched testimonials
+        const sortedTestimonials = response.data.sort((a, b) => {
+          // Get dates from various possible fields
+          const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+          const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+          
+          // If dates are the same, use ID as secondary sort
+          if (dateA.getTime() === dateB.getTime()) {
+            const idA = a.testimonyId || a.id || 0;
+            const idB = b.testimonyId || b.id || 0;
+            return idB - idA; // Higher ID = newer
+          }
+          
+          return dateB.getTime() - dateA.getTime();
+        });
+        setFilteredTestimonials(sortedTestimonials);
       })
       .catch(error => {
         console.error(`Error fetching testimonials for school ID ${schoolId}:`, error);
@@ -307,8 +407,6 @@ const Testimonials = () => {
 
   const handleSubmitTestimonial = async (formData) => {
     try {
-      // The form data should already include the necessary school and student references
-      
       let updatedTestimonial;
       if (formData.testimonyId) {
         // Update existing testimonial
@@ -316,23 +414,36 @@ const Testimonials = () => {
           const response = await updateTestimonial(formData.testimonyId, formData);
           updatedTestimonial = response.data;
           
-          // If API call was successful, update the local state
-          setTestimonials(prev => prev.map(t => 
-            (t.testimonyId === updatedTestimonial.testimonyId) ? updatedTestimonial : t
-          ));
+          // Update local state with proper sorting
+          setTestimonials(prev => {
+            const updated = prev.map(t => 
+              (t.testimonyId === updatedTestimonial.testimonyId) ? updatedTestimonial : t
+            );
+            return updated.sort((a, b) => {
+              const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+              const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+              return dateB.getTime() - dateA.getTime();
+            });
+          });
         } catch (error) {
           console.error('Error updating testimonial:', error);
-          // Show the specific error message from the backend if available
           alert(error.message || 'Failed to update your review. Please try again.');
-          return; // Stop execution on error
+          return;
         }
       } else {
         // Create new testimonial
         try {
           const response = await createTestimonial(formData);
-          // Just add new testimonial to state if successful
           if (response && response.data) {
-            setTestimonials(prev => [...prev, response.data]);
+            // Add new testimonial to state with proper sorting
+            setTestimonials(prev => {
+              const updated = [...prev, response.data];
+              return updated.sort((a, b) => {
+                const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+                const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+                return dateB.getTime() - dateA.getTime();
+              });
+            });
             
             // Update count for this school
             const schoolId = formData.schoolId || 
@@ -347,36 +458,25 @@ const Testimonials = () => {
           }
         } catch (error) {
           console.error('Error creating testimonial:', error);
-          // Show the specific error message from the backend if available
           alert(error.message || 'Failed to submit your review. Please try again.');
-          return; // Stop execution if there's an error
+          return;
         }
       }
       
-      // Refresh testimonials from server to get the complete data
-      try {
-        // If we're viewing a specific school's testimonials, refresh that specific view
-        if (selectedSchool !== 'all') {
-          const response = await getTestimonialsBySchool(parseInt(selectedSchool));
-          if (response && response.data) {
-            setFilteredTestimonials(response.data);
-          }
-        } else {
-          // Otherwise refresh all testimonials
-          const response = await getAllTestimonials();
-          if (response && response.data) {
-            setTestimonials(response.data);
-            setFilteredTestimonials(response.data);
-          }
+      // Refresh testimonials with proper sorting
+      if (selectedSchool !== 'all') {
+        const response = await getTestimonialsBySchool(parseInt(selectedSchool));
+        if (response && response.data) {
+          const sortedTestimonials = response.data.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+            const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+            return dateB.getTime() - dateA.getTime();
+          });
+          setFilteredTestimonials(sortedTestimonials);
         }
-      } catch (refreshError) {
-        // Just log the refresh error but don't show it to the user
-        // since the primary operation already succeeded
-        console.error('Error refreshing testimonial list:', refreshError);
       }
     } catch (error) {
       console.error('Error submitting testimonial:', error);
-      // Show the specific error message from the backend if available
       alert(error.message || 'Failed to submit your review. Please try again.');
     }
   };
@@ -464,29 +564,39 @@ const Testimonials = () => {
             <div className="mb-6 flex items-center justify-between">
               <button
                 onClick={handleBackToSchools}
-                className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+                className="flex items-center text-[#2B3E4E] hover:text-[#1a2630] transition-colors"
               >
                 <FaArrowLeft className="mr-2" />
                 <span>Back to Schools</span>
               </button>
               
-              {selectedSchoolName && (
-                <h2 className="text-2xl font-bold text-gray-800">{selectedSchoolName}</h2>
-              )}
+              <div></div>
               
               <button
                 onClick={() => handleAddReview(selectedSchool !== 'all' ? parseInt(selectedSchool) : null)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                style={{
+                  backgroundColor: '#FFB71B',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e09b00'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#FFB71B'}
+                className="shadow-sm"
               >
                 <FaPlus size={14} />
                 <span>Add Review</span>
               </button>
             </div>
 
-            {/* School Header with Background Image */}
+            {/* School Header with Background Image - Increased height */}
             {selectedSchool !== 'all' && (
               <div className="mb-8 overflow-hidden rounded-xl shadow-lg">
-                <div className="h-64 relative">
+                <div className="h-80 relative">
                   {/* Background Image with Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.3)] to-[rgba(0,0,0,0.7)]"></div>
                   
@@ -652,90 +762,77 @@ const Testimonials = () => {
               </div>
             )}
 
-            {/* Search and Filter Section */}
-            <div className="mb-8">
-              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="w-full md:w-1/2 relative">
-                  <input
-                    type="text"
-                    placeholder="Search in testimonials..."
-                    className="w-full py-3 px-12 rounded-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  
-                  {searchQuery && (
-                    <button
-                      onClick={handleClearSearch}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <FaTimes />
-                    </button>
-                  )}
-                </div>
-                <button
-                  className="flex items-center gap-2 py-3 px-6 rounded-full bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <FaFilter />
-                  <span>Filters</span>
-                </button>
-              </div>
-
-              {/* Filters */}
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="mt-4 p-4 bg-white rounded-lg shadow-md"
-                >
-                  <SchoolFilter 
-                    schools={schools} 
-                    selectedSchool={selectedSchool}
-                    setSelectedSchool={setSelectedSchool}
-                  />
-                </motion.div>
-              )}
-            </div>
-
-            {/* Testimonials Grid */}
+            {/* Testimonials Grid with Swiper */}
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              >
-                {filteredTestimonials.length > 0 ? (
-                  filteredTestimonials.map((testimonial) => {
-                    // Check if the current user owns this testimonial
-                    const testimonialUserId = testimonial.userId || 
-                                            (testimonial.student && testimonial.student.userId);
-                    const isUserOwned = currentUser && testimonialUserId === currentUser.id;
-                    
-                    return (
-                    <TestimonialCard 
-                        key={testimonial.id || testimonial.testimonyId} 
-                      testimonial={testimonial}
-                        isUserOwned={isUserOwned}
-                      onEdit={handleEditTestimonial}
-                      onDelete={handleDeleteTestimonial}
-                    />
-                    );
-                  })
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <h3 className="text-xl text-gray-600">No testimonials found matching your criteria.</h3>
-                    <p className="text-gray-500 mt-2">Try adjusting your filters or search query.</p>
-                  </div>
-                )}
-              </motion.div>
+              <div className="relative">
+                <Swiper
+                  modules={[Pagination, Navigation]}
+                  spaceBetween={24}
+                  slidesPerView={3}
+                  navigation={{
+                    prevEl: '.swiper-button-prev',
+                    nextEl: '.swiper-button-next',
+                  }}
+                  pagination={{
+                    clickable: true,
+                    dynamicBullets: true,
+                  }}
+                  breakpoints={{
+                    // when window width is >= 320px
+                    320: {
+                      slidesPerView: 1,
+                      slidesPerGroup: 1
+                    },
+                    // when window width is >= 768px
+                    768: {
+                      slidesPerView: 2,
+                      slidesPerGroup: 2
+                    },
+                    // when window width is >= 1024px
+                    1024: {
+                      slidesPerView: 3,
+                      slidesPerGroup: 3
+                    }
+                  }}
+                  className="testimonials-swiper"
+                >
+                  {filteredTestimonials.length > 0 ? (
+                    filteredTestimonials.map((testimonial) => {
+                      const testimonialUserId = testimonial.userId || 
+                                              (testimonial.student && testimonial.student.userId);
+                      const isUserOwned = currentUser && testimonialUserId === currentUser.id;
+                      
+                      return (
+                        <SwiperSlide key={testimonial.id || testimonial.testimonyId}>
+                          <div className="px-2 py-4">
+                            <TestimonialCard 
+                              testimonial={testimonial}
+                              isUserOwned={isUserOwned}
+                              onEdit={handleEditTestimonial}
+                              onDelete={handleDeleteTestimonial}
+                            />
+                          </div>
+                        </SwiperSlide>
+                      );
+                    })
+                  ) : (
+                    <SwiperSlide>
+                      <div className="text-center py-12">
+                        <h3 className="text-xl text-gray-600">No testimonials found.</h3>
+                        <p className="text-gray-500 mt-2">Be the first to add a review!</p>
+                      </div>
+                    </SwiperSlide>
+                  )}
+                </Swiper>
+                
+                {/* Custom navigation buttons */}
+                <div className="swiper-button-prev !hidden md:!flex"></div>
+                <div className="swiper-button-next !hidden md:!flex"></div>
+              </div>
             )}
           </div>
         )}

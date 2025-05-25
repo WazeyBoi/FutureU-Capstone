@@ -1,8 +1,80 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FaTimes, FaStar } from 'react-icons/fa';
+import { FaTimes, FaStar, FaGraduationCap } from 'react-icons/fa';
 import { createTestimonial, updateTestimonial } from '../../services/testimonialService';
 import authService from '../../services/authService';
+
+// Import school images
+import citu_school_image from '../../assets/school_images/citu_school_image.jpg';
+import cdu_school_image from '../../assets/school_images/cdu_school_image.jpg';
+import cnu_school_image from '../../assets/school_images/cnu_school_image.jpg';
+import ctu_school_image from '../../assets/school_images/ctu_school_image.jpg';
+import swu_school_image from '../../assets/school_images/swu_school_image.jpg';
+import usc_school_image from '../../assets/school_images/usc_school_image.jpg';
+import usjr_school_image from '../../assets/school_images/usjr_school_image.jpg';
+import up_school_image from '../../assets/school_images/up_school_image.jpg';
+import uc_school_image from '../../assets/school_images/uc_school_image.jpg';
+import uv_school_image from '../../assets/school_images/uv_school_image.jpg';
+import iau_school_image from '../../assets/school_images/iau_school_image.jpg';
+
+// Import school logos
+import citu_school_logo from '../../assets/school_logos/citu_school_logo.png';
+import cdu_school_logo from '../../assets/school_logos/cdu_school_logo.png';
+import cnu_school_logo from '../../assets/school_logos/cnu_school_logo.png';
+import ctu_school_logo from '../../assets/school_logos/ctu_school_logo.png';
+import swu_school_logo from '../../assets/school_logos/swu_school_logo.png';
+import usc_school_logo from '../../assets/school_logos/usc_school_logo.png';
+import usjr_school_logo from '../../assets/school_logos/usjr_school_logo.png';
+import up_school_logo from '../../assets/school_logos/up_school_logo.png';
+import uc_school_logo from '../../assets/school_logos/uc_school_logo.png';
+import uv_school_logo from '../../assets/school_logos/uv_school_logo.png';
+import iau_school_logo from '../../assets/school_logos/iau_school_logo.png';
+
+// Create a mapping for school name detection to their background images
+const schoolBackgroundMap = {
+  "Cebu Institute of Technology": citu_school_image,
+  "Cebu Doctors'": cdu_school_image,
+  "Cebu Normal University": cnu_school_image,
+  "Cebu Technological University": ctu_school_image,
+  "Southwestern University": swu_school_image,
+  "University of San Carlos": usc_school_image,
+  "University of San Jose": usjr_school_image,
+  "University of the Philippines": up_school_image,
+  "University of Cebu": uc_school_image,
+  "University of the Visayas": uv_school_image,
+  "Indiana Aerospace University": iau_school_image,
+};
+
+// Create a mapping of school IDs to logos
+const schoolLogos = {
+  1: cdu_school_logo,
+  2: citu_school_logo,
+  3: cnu_school_logo,
+  4: ctu_school_logo,
+  5: iau_school_logo,
+  6: swu_school_logo,
+  7: uc_school_logo,
+  8: usc_school_logo,
+  9: usjr_school_logo,
+  10: up_school_logo,
+  11: uv_school_logo,
+};
+
+// Function to get the school background based on name
+const getSchoolBackground = (schoolName) => {
+  if (!schoolName) return null;
+  
+  const normalizedName = schoolName.toLowerCase();
+  
+  // Check each key in our map to see if it's in the school name
+  for (const [key, background] of Object.entries(schoolBackgroundMap)) {
+    if (normalizedName.includes(key.toLowerCase())) {
+      return background;
+    }
+  }
+  
+  return null;
+};
 
 const StarRating = ({ rating, onRatingChange }) => {
   const [hover, setHover] = useState(0);
@@ -38,6 +110,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
   const [formData, setFormData] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedSchool, setSelectedSchool] = useState(null);
 
   // If testimonialToEdit is provided, it means we're editing an existing testimonial
   useEffect(() => {
@@ -49,10 +122,14 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
         schoolId: testimonialToEdit.schoolId || testimonialToEdit.school?.schoolId || '',
         rating: testimonialToEdit.rating || 0,
       });
+      // Find and set the selected school
+      const school = schools.find(s => s.schoolId === (testimonialToEdit.schoolId || testimonialToEdit.school?.schoolId));
+      setSelectedSchool(school);
     } else {
       setFormData(initialFormState);
+      setSelectedSchool(null);
     }
-  }, [testimonialToEdit]);
+  }, [testimonialToEdit, schools]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,6 +137,12 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
       ...prev,
       [name]: value
     }));
+
+    // Update selected school when school changes
+    if (name === 'schoolId') {
+      const school = schools.find(s => s.schoolId.toString() === value);
+      setSelectedSchool(school);
+    }
   };
 
   const handleRatingChange = (rating) => {
@@ -152,38 +235,60 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
         exit={{ scale: 0.9, opacity: 0 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-4 overflow-hidden relative flex flex-col max-h-[90vh]"
       >
-        {/* Header with gradient */}
-        <div className="flex justify-between items-center p-6 bg-[#2B3E4E] text-white sticky top-0 z-10 shadow-md">
-          <div className="flex items-center space-x-3">
-            <h2 className="text-xl font-bold">
-              {testimonialToEdit && !testimonialToEdit.isNewTestimonial ? 'Edit Your Review' : 'Share Your Experience'}
-            </h2>
+        {/* Header with School Background */}
+        <div className="relative">
+          {/* School Background Image */}
+          <div className="h-56 relative overflow-hidden">
+            {selectedSchool && (
+              <>
+                {/* Background Image with Gradient Overlay */}
+                <div className="absolute inset-0">
+                  {(() => {
+                    const bgImage = getSchoolBackground(selectedSchool.name || selectedSchool.schoolName);
+                    return bgImage ? (
+                      <img 
+                        src={bgImage} 
+                        alt={`${selectedSchool.name || selectedSchool.schoolName} campus`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-[#2B3E4E] to-[#1b2d3d]"></div>
+                    );
+                  })()}
+                  <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.3)] to-[rgba(0,0,0,0.7)]"></div>
+                </div>
+
+                {/* School Name and Form Title */}
+                <div className="absolute inset-0 flex items-center px-8">
+                  <div>
+                    <h2 className="text-3xl font-bold text-white mb-3 text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                      {selectedSchool.name || selectedSchool.schoolName}
+                    </h2>
+                    <h3 className="text-xl text-white/90 text-shadow-md" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+                      {testimonialToEdit && !testimonialToEdit.isNewTestimonial ? 'Edit Your Review' : 'Share Your Experience'}
+                    </h3>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Default Header when no school is selected */}
+            {!selectedSchool && (
+              <div className="absolute inset-0 bg-[#2B3E4E] flex items-center px-8">
+                <h2 className="text-2xl font-bold text-white">
+                  {testimonialToEdit && !testimonialToEdit.isNewTestimonial ? 'Edit Your Review' : 'Share Your Experience'}
+                </h2>
+              </div>
+            )}
+
+            {/* Close button */}
+            <button 
+              onClick={onClose}
+              className="absolute top-4 right-4 bg-white/80 text-[#FF4B4B] p-2 rounded-full hover:bg-white transition-colors shadow-md"
+            >
+              <FaTimes size={16} />
+            </button>
           </div>
-          <button 
-            onClick={onClose}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'white',
-              color: '#FF4B4B',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#FFF5F5';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <FaTimes size={16} />
-          </button>
         </div>
 
         <div className="overflow-y-auto flex-grow">
