@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import FutureULogo from '../assets/header_logo_normal.svg';
-import FutureULogo2 from '../assets/header_logo_yellow.svg'; // Import the logo - adjust path/extension if needed
+import FutureULogo2 from '../assets/header_logo_yellow.svg';
 import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
+import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -23,8 +24,6 @@ const Navigation = () => {
     const userId = authService.getCurrentUserId();
     if (userId) {
       // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
-      // If you have a way to get the user's last assessmentId, use it here
-      // For now, clear all possible keys for this user
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
           localStorage.removeItem(key);
@@ -40,10 +39,102 @@ const Navigation = () => {
     return location.pathname === path;
   };
 
+  // Don't render the navigation bar for Counselor routes
+  if (userRole === 'CAREER_GUIDANCE' && location.pathname.includes('/counselor')) {
+    return (
+      <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between h-16 w-full">
+            {/* Brand with Logo */}
+            <Link 
+              to="/counselor-dashboard" 
+              className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+              onMouseEnter={() => setLogoHover(true)}
+              onMouseLeave={() => setLogoHover(false)}
+            >
+              {/* Real Logo - Increased Size */}
+              <img 
+                src={logoHover ? FutureULogo2 : FutureULogo} 
+                alt="FutureU Logo" 
+                className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+              />
+              
+              <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
+                FutureU
+              </div>
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
+                Counselor
+              </div>
+            </Link>
+            
+            {/* Counselor Navigation Links */}
+            <div className="flex items-center space-x-1">
+              <Link
+                to="/counselor-dashboard"
+                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  isActive('/counselor-dashboard')
+                    ? 'bg-[#FFB71B] text-black shadow-lg'
+                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                }`}
+              >
+                <span className="relative z-10">
+                  <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
+                  Dashboard
+                </span>
+              </Link>
+              
+              <Link
+                to="/counselor/students"
+                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  isActive('/counselor/students')
+                    ? 'bg-[#FFB71B] text-black shadow-lg'
+                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                }`}
+              >
+                <span className="relative z-10">
+                  <Users className="w-4 h-4 inline-block mr-1.5" />
+                  Students
+                </span>
+              </Link>
+              
+              <Link
+                to="/counselor/assessments"
+                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  isActive('/counselor/assessments')
+                    ? 'bg-[#FFB71B] text-black shadow-lg'
+                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                }`}
+              >
+                <span className="relative z-10">
+                  <FileText className="w-4 h-4 inline-block mr-1.5" />
+                  Assessments
+                </span>
+              </Link>
+              
+              {/* Authentication buttons */}
+              <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#FFB71B]/80">
+                <button
+                  onClick={handleLogout}
+                  className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
+                >
+                  <span className="relative z-10">
+                    <LogOut className="w-4 h-4 inline-block mr-1.5" />
+                    Logout
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  // Default navigation for other roles (Students and Admin)
   return (
     <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
-      <div className=" container mx-auto">
-        <div className=" flex items-center justify-between h-16 w-full">
+      <div className="container mx-auto">
+        <div className="flex items-center justify-between h-16 w-full">
           {/* Brand with Logo */}
           <Link 
             to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} 
@@ -213,7 +304,10 @@ const Navigation = () => {
                   onClick={handleLogout}
                   className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
                 >
-                  <span className="relative z-10">Logout</span>
+                  <span className="relative z-10">
+                    <LogOut className="w-4 h-4 inline-block mr-1.5" />
+                    Logout
+                  </span>
                 </button>
               ) : (
                 <>
