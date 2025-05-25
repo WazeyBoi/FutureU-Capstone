@@ -4,6 +4,7 @@ import authService from '../../services/authService';
 import adminUserService from '../../services/adminUserService';
 import adminAssessmentService from '../../services/adminAssessmentService';
 import userAssessmentService from '../../services/userAssessmentService';
+import { fetchAllCareerRecommendations } from '../../services/recommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
   BookOpen, User, LogOut, MessageSquare,
@@ -37,6 +38,7 @@ const CounselorDashboard = () => {
   const [selectedAssessment, setSelectedAssessment] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
+  const [allCareerRecommendations, setAllCareerRecommendations] = useState([]);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -87,6 +89,20 @@ const CounselorDashboard = () => {
       }
     };
     fetchResults();
+  }, []);
+
+  // Fetch all career recommendations for dashboard summary
+  useEffect(() => {
+    const fetchCareers = async () => {
+      try {
+        const res = await fetchAllCareerRecommendations();
+        setAllCareerRecommendations(res.data || []);
+      } catch (err) {
+        // Optionally handle error
+        setAllCareerRecommendations([]);
+      }
+    };
+    fetchCareers();
   }, []);
 
   // Filter and paginate results in-memory
@@ -223,19 +239,23 @@ const CounselorDashboard = () => {
       .join('');
   };
 
+  // Only include these fields in the vertical bar chart:
   const nonRiasecFields = [
+    { key: 'scientificAbilityScore', label: 'Scientific' },
+    { key: 'readingComprehensionScore', label: 'Reading' },
+    { key: 'verbalAbilityScore', label: 'Verbal' },
+    { key: 'mathematicalAbilityScore', label: 'Math' },
+    { key: 'logicalReasoningScore', label: 'Logic' },
     { key: 'stemScore', label: 'STEM' },
     { key: 'abmScore', label: 'ABM' },
     { key: 'humssScore', label: 'HUMSS' },
+    { key: 'tvlScore', label: 'TVL' },
     { key: 'sportsTrackScore', label: 'Sports' },
     { key: 'artsDesignTrackScore', label: 'Arts & Design' },
-    { key: 'academicTrackScore', label: 'Academic Track' },
-    { key: 'otherTrackScore', label: 'Other Track' },
-    { key: 'overallScore', label: 'Overall' },
   ];
 
-  const aggregateDashboardInsights = (results) => {
-    // RIASEC aggregation
+  const aggregateDashboardInsights = (results, allCareers) => {
+    // RIASEC aggregation (from assessmentResults)
     const riasecTopCodes = {};
     results.forEach(r => {
       const code = getRiasecTopCode(r);
@@ -243,31 +263,29 @@ const CounselorDashboard = () => {
     });
     const mostCommonRiasec = Object.entries(riasecTopCodes).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
-    // Non-RIASEC averages
+    // Non-RIASEC averages (from assessmentResults)
     const nonRiasecAverages = {};
     nonRiasecFields.forEach(f => {
       const vals = results.map(r => Number(r[f.key]) || 0).filter(v => !isNaN(v));
       nonRiasecAverages[f.key] = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '0.00';
     });
 
-    // Career recommendations aggregation
+    // Career recommendations aggregation (from allCareerRecommendations)
     const careerCounts = {};
-    results.forEach(r => {
-      (r.careerRecommendations || []).forEach(rec => {
-        const title = rec.careerPath?.careerTitle || rec.careerTitle || rec.name;
-        if (title) careerCounts[title] = (careerCounts[title] || 0) + 1;
-      });
+    allCareers.forEach(rec => {
+      const title = rec.careerPath?.careerTitle || rec.careerTitle || rec.name || rec.title;
+      if (title) careerCounts[title] = (careerCounts[title] || 0) + 1;
     });
     const topCareers = Object.entries(careerCounts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([title, count]) => ({ title, count }));
 
-    // Program recommendations aggregation
+    // Program recommendations aggregation (from assessmentResults)
     const programCounts = {};
     results.forEach(r => {
       (r.programRecommendations || []).forEach(rec => {
-        const name = rec.program?.programName || rec.programName;
+        const name = rec.program?.programName || rec.programName || rec.name || rec.title;
         if (name) programCounts[name] = (programCounts[name] || 0) + 1;
       });
     });
@@ -280,7 +298,61 @@ const CounselorDashboard = () => {
   };
 
   // Aggregate insights for dashboard summary
-  const dashboardInsights = aggregateDashboardInsights(assessmentResults);
+  const dashboardInsights = aggregateDashboardInsights(assessmentResults, allCareerRecommendations);
+
+  // Define grouped fields for the chart (must be after dashboardInsights)
+  const gsaFields = [
+    { key: 'scientificAbilityScore', label: 'Scientific' },
+    { key: 'readingComprehensionScore', label: 'Reading' },
+    { key: 'verbalAbilityScore', label: 'Verbal' },
+    { key: 'mathematicalAbilityScore', label: 'Math' },
+    { key: 'logicalReasoningScore', label: 'Logic' },
+  ];
+  const academicFields = [
+    { key: 'stemScore', label: 'STEM' },
+    { key: 'abmScore', label: 'ABM' },
+    { key: 'humssScore', label: 'HUMSS' },
+  ];
+  const nonAcademicFields = [
+    { key: 'tvlScore', label: 'TVL' },
+    { key: 'sportsTrackScore', label: 'Sports' },
+    { key: 'artsDesignTrackScore', label: 'Arts & Design' },
+  ];
+  // For chart rendering, combine with section info
+  const chartSections = [
+    { name: 'General Scholastic Aptitude', color: '#1D63A1', fields: gsaFields },
+    { name: 'Academic Track', color: '#FFB71B', fields: academicFields },
+    { name: 'Non-Academic Track', color: '#4CAF50', fields: nonAcademicFields },
+  ];
+  // Flatten for chart, but keep section info for custom rendering
+  const chartData = chartSections.flatMap(section =>
+    section.fields.map(f => ({
+      ...f,
+      value: Number(dashboardInsights.nonRiasecAverages[f.key]),
+      section: section.name,
+      sectionColor: section.color,
+    }))
+  );
+
+  // Custom XAxis tick to add section labels and dividers
+  const CustomXAxisTick = (props) => {
+    const { x, y, payload, index } = props;
+    // Section label positions
+    const sectionLabels = [
+      { idx: 2, label: 'GSA', color: '#1D63A1' },
+      { idx: 6, label: 'Academic', color: '#FFB71B' },
+      { idx: 9, label: 'Non-Academic', color: '#4CAF50' },
+    ];
+    const label = sectionLabels.find(l => l.idx === index);
+    return (
+      <g>
+        <text x={x} y={y + 15} textAnchor="middle" fontSize="11" fill="#333">{payload.value}</text>
+        {label && (
+          <text x={x} y={y + 35} textAnchor="middle" fontSize="12" fontWeight="bold" fill={label.color}>{label.label}</text>
+        )}
+      </g>
+    );
+  };
 
   // Show loading spinner
   if (isLoading) {
@@ -321,28 +393,41 @@ const CounselorDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Insights Summary Section */}
       <section className="w-full px-15 pt-6 pb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Most Common RIASEC */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
-            <div className="text-xs text-gray-500 mb-1">Most Common Personality</div>
-            <div className="text-2xl font-bold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
-            <div className="text-xs text-gray-400">(Top RIASEC code)</div>
-          </div>
-          {/* Non-RIASEC Averages */}
+        {/* Average Scores (Non-RIASEC) at the top, full width */}
+        <div className="mb-4">
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B] w-full">
-            <div className="text-xs text-gray-500 mb-2">Average Scores (Non-RIASEC)</div>
-            <ResponsiveContainer width="100%" height={60}>
-              <BarChart data={nonRiasecFields.map(f => ({ name: f.label, value: Number(dashboardInsights.nonRiasecAverages[f.key]) }))} layout="vertical" margin={{ left: 10, right: 10, top: 0, bottom: 0 }}>
-                <XAxis type="number" hide domain={[0, 100]} />
-                <YAxis type="category" dataKey="name" width={70} tick={{ fontSize: 10 }} />
+            <div className="text-4xl font-bold text-[#2B3E4E] mb-2">Average Scoring of each Category</div>
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={chartData} layout="horizontal" margin={{ left: 10, right: 10, top: 10, bottom: 30 }}>
+                <XAxis dataKey="label" tick={CustomXAxisTick} interval={0} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" fill="#1D63A1" radius={[4, 4, 4, 4]} barSize={8} />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}
+                  isAnimationActive={false}
+                  fill="#FFB71B"
+                >
+                  {chartData.map((entry, idx) => (
+                    <cell key={`cell-${idx}`} fill={entry.sectionColor} />
+                  ))}
+                </Bar>
+                {/* Divider lines between sections */}
+                <line x1={573} y1={40} x2={573} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
+                <line x1={875} y1={40} x2={875} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+        {/* The 3 summary cards below in a row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Most Common RIASEC */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
+            <div className="text-xs text-gray-500 mb-1 flex items-center gap-1"><UserCheck className="w-4 h-4 text-[#1D63A1]" /> Most Common Personality</div>
+            <div className="text-2xl font-bold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
+            <div className="text-xs text-gray-400">(Top RIASEC code)</div>
+          </div>
           {/* Most Recommended Careers */}
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
-            <div className="text-xs text-gray-500 mb-2">Most Recommended Careers</div>
+            <div className="text-xs text-gray-500 mb-2 flex items-center gap-1"><BarChart2 className="w-4 h-4 text-[#1D63A1]" /> Most Recommended Careers</div>
             {dashboardInsights.topCareers.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
             ) : dashboardInsights.topCareers.map((c, i) => (
@@ -353,7 +438,7 @@ const CounselorDashboard = () => {
           </div>
           {/* Most Recommended Programs */}
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B]">
-            <div className="text-xs text-gray-500 mb-2">Most Recommended Programs</div>
+            <div className="text-xs text-gray-500 mb-2 flex items-center gap-1"><BookOpen className="w-4 h-4 text-[#FFB71B]" /> Most Recommended Programs</div>
             {dashboardInsights.topPrograms.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
             ) : dashboardInsights.topPrograms.map((p, i) => (

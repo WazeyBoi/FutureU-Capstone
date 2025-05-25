@@ -177,4 +177,10 @@ public class CareerRecommendationService {
 
         return recommendations;
     }
+
+    public List<CareerRecommendationEntity> getAllCareerRecommendations() {
+        List<CareerRecommendationEntity> recommendations = new ArrayList<>();
+        recommendationRepository.findAll().forEach(recommendations::add);
+        return recommendations;
+    }
 }
