@@ -5,6 +5,7 @@ import adminUserService from '../../services/adminUserService';
 import adminAssessmentService from '../../services/adminAssessmentService';
 import userAssessmentService from '../../services/userAssessmentService';
 import { fetchAllCareerRecommendations } from '../../services/recommendationService';
+import programRecommendationService from '../../services/programRecommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
   BookOpen, User, LogOut, MessageSquare,
@@ -39,6 +40,7 @@ const CounselorDashboard = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [allCareerRecommendations, setAllCareerRecommendations] = useState([]);
+  const [allProgramRecommendations, setAllProgramRecommendations] = useState([]);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -103,6 +105,19 @@ const CounselorDashboard = () => {
       }
     };
     fetchCareers();
+  }, []);
+
+  // Fetch all program recommendations for dashboard summary
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const res = await programRecommendationService.fetchAllProgramRecommendations();
+        setAllProgramRecommendations(res.data || []);
+      } catch (err) {
+        setAllProgramRecommendations([]);
+      }
+    };
+    fetchPrograms();
   }, []);
 
   // Filter and paginate results in-memory
@@ -254,7 +269,7 @@ const CounselorDashboard = () => {
     { key: 'artsDesignTrackScore', label: 'Arts & Design' },
   ];
 
-  const aggregateDashboardInsights = (results, allCareers) => {
+  const aggregateDashboardInsights = (results, allCareers, allPrograms) => {
     // RIASEC aggregation (from assessmentResults)
     const riasecTopCodes = {};
     results.forEach(r => {
@@ -281,13 +296,11 @@ const CounselorDashboard = () => {
       .slice(0, 3)
       .map(([title, count]) => ({ title, count }));
 
-    // Program recommendations aggregation (from assessmentResults)
+    // Program recommendations aggregation (from allProgramRecommendations)
     const programCounts = {};
-    results.forEach(r => {
-      (r.programRecommendations || []).forEach(rec => {
-        const name = rec.program?.programName || rec.programName || rec.name || rec.title;
-        if (name) programCounts[name] = (programCounts[name] || 0) + 1;
-      });
+    allPrograms.forEach(rec => {
+      const name = rec.program?.programName || rec.programName || rec.name || rec.title;
+      if (name) programCounts[name] = (programCounts[name] || 0) + 1;
     });
     const topPrograms = Object.entries(programCounts)
       .sort((a, b) => b[1] - a[1])
@@ -298,7 +311,7 @@ const CounselorDashboard = () => {
   };
 
   // Aggregate insights for dashboard summary
-  const dashboardInsights = aggregateDashboardInsights(assessmentResults, allCareerRecommendations);
+  const dashboardInsights = aggregateDashboardInsights(assessmentResults, allCareerRecommendations, allProgramRecommendations);
 
   // Define grouped fields for the chart (must be after dashboardInsights)
   const gsaFields = [
