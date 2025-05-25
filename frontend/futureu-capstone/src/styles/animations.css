@@ -100,3 +100,123 @@
   50% { background-position: 100% 50% }
   100% { background-position: 0% 50% }
 }
+
+/* Custom up-and-down bounce for OhMy mascot */
+.animate-bounce-updown {
+  animation: bounce-updown 2s infinite cubic-bezier(0.77, 0, 0.175, 1);
+}
+@keyframes bounce-updown {
+  0%   { transform: translateY(0); }
+  1%   { transform: translateY(-1px); }
+  2%   { transform: translateY(-2px); }
+  3%   { transform: translateY(-3px); }
+  4%   { transform: translateY(-4px); }
+  5%   { transform: translateY(-5px); }
+  6%   { transform: translateY(-6px); }
+  7%   { transform: translateY(-7px); }
+  8%   { transform: translateY(-8px); }
+  9%   { transform: translateY(-9px); }
+  10%  { transform: translateY(-10px); }
+  11%  { transform: translateY(-12px); }
+  12%  { transform: translateY(-14px); }
+  13%  { transform: translateY(-16px); }
+  14%  { transform: translateY(-18px); }
+  15%  { transform: translateY(-20px); }
+  16%  { transform: translateY(-22px); }
+  17%  { transform: translateY(-24px); }
+  18%  { transform: translateY(-26px); }
+  19%  { transform: translateY(-28px); }
+  20%  { transform: translateY(-30px); }
+  21%  { transform: translateY(-32px); }
+  22%  { transform: translateY(-34px); }
+  23%  { transform: translateY(-36px); }
+  24%  { transform: translateY(-38px); }
+  25%  { transform: translateY(-40px); }
+  26%  { transform: translateY(-42px); }
+  27%  { transform: translateY(-44px); }
+  28%  { transform: translateY(-46px); }
+  29%  { transform: translateY(-48px); }
+  30%  { transform: translateY(-50px); }
+  31%  { transform: translateY(-52px); }
+  32%  { transform: translateY(-54px); }
+  33%  { transform: translateY(-56px); }
+  34%  { transform: translateY(-58px); }
+  35%  { transform: translateY(-60px); }
+  36%  { transform: translateY(-58px); }
+  37%  { transform: translateY(-56px); }
+  38%  { transform: translateY(-54px); }
+  39%  { transform: translateY(-52px); }
+  40%  { transform: translateY(-50px); }
+  41%  { transform: translateY(-48px); }
+  42%  { transform: translateY(-46px); }
+  43%  { transform: translateY(-44px); }
+  44%  { transform: translateY(-42px); }
+  45%  { transform: translateY(-40px); }
+  46%  { transform: translateY(-38px); }
+  47%  { transform: translateY(-36px); }
+  48%  { transform: translateY(-34px); }
+  49%  { transform: translateY(-32px); }
+  50%  { transform: translateY(-30px); }
+  51%  { transform: translateY(-28px); }
+  52%  { transform: translateY(-26px); }
+  53%  { transform: translateY(-24px); }
+  54%  { transform: translateY(-22px); }
+  55%  { transform: translateY(-20px); }
+  56%  { transform: translateY(-18px); }
+  57%  { transform: translateY(-16px); }
+  58%  { transform: translateY(-14px); }
+  59%  { transform: translateY(-12px); }
+  60%  { transform: translateY(-10px); }
+  61%  { transform: translateY(-9px); }
+  62%  { transform: translateY(-8px); }
+  63%  { transform: translateY(-7px); }
+  64%  { transform: translateY(-6px); }
+  65%  { transform: translateY(-5px); }
+  66%  { transform: translateY(-4px); }
+  67%  { transform: translateY(-3px); }
+  68%  { transform: translateY(-2px); }
+  69%  { transform: translateY(-1px); }
+  70%  { transform: translateY(0); }
+  71%  { transform: translateY(0px); }
+  72%  { transform: translateY(0px); }
+  73%  { transform: translateY(0px); }
+  74%  { transform: translateY(0); }
+  75%  { transform: translateY(0px); }
+  76%  { transform: translateY(0px); }
+  77%  { transform: translateY(0px); }
+  78%  { transform: translateY(0); }
+  79%  { transform: translateY(0); }
+  80%  { transform: translateY(0); }
+  81%  { transform: translateY(0); }
+  82%  { transform: translateY(0); }
+  83%  { transform: translateY(0); }
+  84%  { transform: translateY(0); }
+  85%  { transform: translateY(0); }
+  86%  { transform: translateY(0); }
+  87%  { transform: translateY(0); }
+  88%  { transform: translateY(0); }
+  89%  { transform: translateY(0); }
+  90%  { transform: translateY(0); }
+  91%  { transform: translateY(0); }
+  92%  { transform: translateY(0); }
+  93%  { transform: translateY(0); }
+  94%  { transform: translateY(0); }
+  95%  { transform: translateY(0); }
+  96%  { transform: translateY(0); }
+  97%  { transform: translateY(0); }
+  98%  { transform: translateY(0); }
+  99%  { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+
+/* Per-letter bounce animation for loading message */
+.animate-bounce-letter {
+  animation: bounce-letter 1.2s infinite cubic-bezier(0.77, 0, 0.175, 1);
+}
+@keyframes bounce-letter {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-12px); }
+  40% { transform: translateY(0); }
+  60% { transform: translateY(0px); }
+  80% { transform: translateY(0); }
+}

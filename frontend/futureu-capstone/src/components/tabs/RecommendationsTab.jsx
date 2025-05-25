@@ -350,7 +350,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
             <h3 className="text-xl font-bold text-[#232D35] mb-2">Career Recommendations</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score
+              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score and your Personality
             </p>
             <div className="space-y-6">
               {aiRecommendations.recommendations.careers
