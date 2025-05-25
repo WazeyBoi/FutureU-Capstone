@@ -20,27 +20,27 @@ import StudentRegister from './components/Authentication/StudentRegister.jsx';
 import StudentLogin from './components/Authentication/StudentLogin.jsx';
 import AdminLogin from './components/Admin/AdminLogin.jsx';
 import AdminDashboardTest from './components/Admin/AdminDashboard.jsx';
-import PrivateRoute from './components/PrivateRoute';
-import PublicRoute from './components/PublicRoute';
-import AdminRoute from './components/AdminRoute';
+import PrivateRoute from './components/routes/PrivateRoute';
+import PublicRoute from './components/routes/PublicRoute';
+import AdminRoute from './components/routes/AdminRoute';
 import Unauthorized from './components/Admin/Unauthorized.jsx';
 import './styles/animations.css'; 
 import './App.css';
 import 'leaflet/dist/leaflet.css';
-import CRUD_School from './components/Admin/CRUD_School.jsx';
-import CRUD_Program from './components/Admin/CRUD_Program.jsx';
-import CRUD_Accreditation from './components/Admin/CRUD_Accreditation.jsx';
-import CRUD_SchoolProgram from './components/Admin/CRUD_SchoolProgram.jsx';
-import CRUD_User from './components/Admin/CRUD_User.jsx';
-import CRUD_Career from './components/Admin/CRUD_Career.jsx';
-import CRUD_Testimony from './components/Admin/CRUD_Testimony.jsx';
-import CRUD_Assessment from './components/Admin/CRUD_Assessment.jsx';
-import CRUD_AssessmentCategory from './components/Admin/CRUD_AssessmentCategory.jsx';
-import CRUD_UserAssessment from './components/Admin/CRUD_UserAssessment.jsx';
-import CRUD_AssessmentSubCategory from './components/Admin/CRUD_AssessmentSubCategory.jsx'
-import CRUD_QuizSubCategory from './components/Admin/CRUD_QuizSubCategory.jsx'
-import CRUD_Question from './components/Admin/CRUD_Question.jsx'
-import CRUD_Choice from './components/Admin/CRUD_Choice.jsx'
+import CRUD_School from './components/Admin/adminCRUD/CRUD_School.jsx';
+import CRUD_Program from './components/Admin/adminCRUD/CRUD_Program.jsx';
+import CRUD_Accreditation from './components/Admin/adminCRUD/CRUD_Accreditation.jsx';
+import CRUD_SchoolProgram from './components/Admin/adminCRUD/CRUD_SchoolProgram.jsx';
+import CRUD_User from './components/Admin/adminCRUD/CRUD_User.jsx';
+import CRUD_Career from './components/Admin/adminCRUD/CRUD_Career.jsx';
+import CRUD_Testimony from './components/Admin/adminCRUD/CRUD_Testimony.jsx';
+import CRUD_Assessment from './components/Admin/adminCRUD/CRUD_Assessment.jsx';
+import CRUD_AssessmentCategory from './components/Admin/adminCRUD/CRUD_AssessmentCategory.jsx';
+import CRUD_UserAssessment from './components/Admin/adminCRUD/CRUD_UserAssessment.jsx';
+import CRUD_AssessmentSubCategory from './components/Admin/adminCRUD/CRUD_AssessmentSubCategory.jsx'
+import CRUD_QuizSubCategory from './components/Admin/adminCRUD/CRUD_QuizSubCategory.jsx'
+import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
+import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
 // Add any other admin CRUD components you need
 
 function App() {
