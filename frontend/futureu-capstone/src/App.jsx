@@ -23,6 +23,7 @@ import AdminDashboardTest from './components/Admin/AdminDashboard.jsx';
 import PrivateRoute from './components/routes/PrivateRoute';
 import PublicRoute from './components/routes/PublicRoute';
 import AdminRoute from './components/routes/AdminRoute';
+import CounselorRoute from './components/routes/CounselorRoute.jsx';
 import Unauthorized from './components/Admin/Unauthorized.jsx';
 import './styles/animations.css'; 
 import './App.css';
@@ -41,6 +42,9 @@ import CRUD_AssessmentSubCategory from './components/Admin/adminCRUD/CRUD_Assess
 import CRUD_QuizSubCategory from './components/Admin/adminCRUD/CRUD_QuizSubCategory.jsx'
 import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
+import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
+import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
+
 // Add any other admin CRUD components you need
 
 function App() {
@@ -62,6 +66,7 @@ function App() {
             <StudentRegister />
           </PublicRoute>
         } />
+        
         
         {/* Admin routes */}
         <Route path="/admin/login" element={
@@ -254,6 +259,18 @@ function App() {
           <AdminRoute>
             <CRUD_Career />
           </AdminRoute>
+        } />
+        
+        {/* Counselor routes */}
+        <Route path="/counselor/login" element={
+          <PublicRoute>
+            <CounselorLogin />
+          </PublicRoute>
+        } />
+        <Route path="/counselor-dashboard" element={
+          <CounselorRoute>
+            <CounselorDashboard />
+          </CounselorRoute>
         } />
         
         {/* For any route that doesn't match */}

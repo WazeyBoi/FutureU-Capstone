@@ -3,9 +3,19 @@ import { Navigate } from 'react-router-dom';
 import authService from '../../services/authService';
 
 const PublicRoute = ({ children }) => {
-  // If user is already authenticated, redirect to landing page
+  // If user is already authenticated, redirect based on role
   if (authService.isAuthenticated()) {
-    return <Navigate to="/user-landing-page" replace />;
+    const role = authService.getUserRole();
+    
+    // Redirect based on user role
+    if (role === 'ADMIN') {
+      return <Navigate to="/admin-dashboard" replace />;
+    } else if (role === 'CAREER_GUIDANCE') {
+      return <Navigate to="/counselor-dashboard" replace />;
+    } else {
+      // Default for STUDENT or other roles
+      return <Navigate to="/user-landing-page" replace />;
+    }
   }
 
   // Otherwise render the public route (login/register)
