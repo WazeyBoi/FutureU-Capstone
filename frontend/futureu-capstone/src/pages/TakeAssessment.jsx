@@ -871,16 +871,45 @@ const TakeAssessment = () => {
   // Loading state
   if (loading) {
     return (
-          <div className='flex flex-col items-center justify-center min-h-screen h-full'>
-            <div>
-              <img 
-                src="/src/assets/characters/quirky.svg" 
-                alt="Quirky mascot" 
-                className="quirky-bounce h-50 mx-auto"
-              />
-            </div>
-            <p className="text-lg font-bold text-gray-600">Setting up the assessment...</p>
-          </div>
+      <div className='flex flex-col items-center justify-center min-h-screen h-full'>
+        <div className="relative flex items-center justify-center">
+          <img 
+            src="/src/assets/characters/quirky.svg" 
+            alt="Quirky mascot" 
+            className="quirky-bounce h-50 mx-auto animate-bounce-slow"
+            style={{ zIndex: 2, position: 'relative' }}
+          />
+          {/* <img
+            src="/src/assets/characters/ohmy.svg"
+            alt="OhMy mascot"
+            className="animate-bounce-updown absolute left-[290px] bottom-[-70px] h-20 w-20"
+            style={{ zIndex: 1 }}
+          /> */}
+          {/* <img
+            src="/src/assets/characters/lazy.svg"
+            alt="Lazy mascot"
+            className="absolute right-[120px] bottom-[-85px] h-32 w-32"
+            style={{ zIndex: 1 }}
+          /> */}
+        </div>
+        {/* Animated message with bouncing letters */}
+        <p className="text-lg font-bold text-gray-600 mt-8 flex gap-1 justify-center">
+          {"Setting up assessment...".split("").map((char, i, arr) => {
+            // Delay the first character until the last finishes
+            let delay = i * 0.04;
+            if (i === 0) delay = arr.length * 0.10;
+            return (
+              <span
+                key={i}
+                className="inline-block animate-bounce-letter"
+                style={{ animationDelay: `${delay}s` }}
+              >
+                {char === " " ? '\u00A0' : char}
+              </span>
+            );
+          })}
+        </p>
+      </div>
     );
   }
   

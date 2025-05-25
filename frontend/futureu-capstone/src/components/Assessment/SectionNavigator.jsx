@@ -146,7 +146,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                   ${isCurrent
                     ? 'bg-[#1D63A1] text-white border-[#1D63A1]'
                     : isAnswered
-                      ? 'bg-gradient-to-r from-green-50 to-green-50 text-green-700'
+                      ? 'bg-gradient-to-r from-green-200 to-green-200 text-green-700'
                       : 'bg-white text-[#232D35] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'
                   }`}
                 onClick={() => {
