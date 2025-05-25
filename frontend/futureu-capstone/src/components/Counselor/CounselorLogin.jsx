@@ -30,7 +30,7 @@ const CounselorLogin = () => {
       // Check if user has guidance counselor role (case-insensitive)
       const role = authService.getUserRole();
 
-      if (!role || role.toUpperCase() !== 'GUIDANCE_COUNCILOR') {
+      if (!role || role.toUpperCase() !== 'GUIDANCE_COUNSELOR') {
         setError('Access denied. Guidance Counselor privileges required.');
         customSignout(); // Use custom signout without redirect
         setLoading(false);
