@@ -99,7 +99,6 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
           level: program.level,
           accreditingBody: program.accreditingBody,
           recognition: program.recognition,
-          status: program.status
         }
       };
       setSelectedProgram(programWithAccreditation);

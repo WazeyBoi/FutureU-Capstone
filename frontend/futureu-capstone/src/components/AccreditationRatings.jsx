@@ -45,6 +45,12 @@ const AccreditationRatings = () => {
   const [schoolsToCompare, setSchoolsToCompare] = useState([]);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
+  // Add new state for search results after the existing state declarations
+  const [searchResults, setSearchResults] = useState({
+    schools: [],
+    programs: []
+  });
+
   // Fetch data useEffect - needs to be before animation useEffect for consistent hooks order
   useEffect(() => {
     const fetchAccreditationData = async () => {
@@ -201,6 +207,40 @@ const AccreditationRatings = () => {
     setSelectedSchoolForModal(school);
   };
 
+  // Add new search handler function before the return statement
+  const handleSearch = (query) => {
+    const searchTerm = query.toLowerCase();
+    
+    if (!searchTerm.trim()) {
+      setSearchResults({ schools: [], programs: [] });
+      return;
+    }
+
+    // Search in schools
+    const matchingSchools = schools.filter(school =>
+      school.name.toLowerCase().includes(searchTerm)
+    );
+
+    // Search in programs
+    const matchingPrograms = schools.flatMap(school =>
+      getAllPrograms(school)
+    ).filter(program =>
+      program.name.toLowerCase().includes(searchTerm)
+    );
+
+    setSearchResults({
+      schools: matchingSchools,
+      programs: matchingPrograms
+    });
+
+    // Auto-switch tab based on results
+    if (matchingPrograms.length > 0 && matchingSchools.length === 0) {
+      setActiveTab("programs");
+    } else if (matchingSchools.length > 0 && matchingPrograms.length === 0) {
+      setActiveTab("schools");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Authentication warning banner */}
@@ -254,9 +294,12 @@ const AccreditationRatings = () => {
           <input
             type="text"
             className="w-full pl-10 pr-4 py-3 border border-gray-100 rounded-full text-sm bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="Search programs..."
+            placeholder="Search schools or programs..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              handleSearch(e.target.value);
+            }}
           />
         </div>
         <button
@@ -337,7 +380,7 @@ const AccreditationRatings = () => {
         {activeTab === "schools" && (
           <div className="flex flex-col gap-6">
             <SchoolsList 
-              schools={schools}
+              schools={searchTerm && searchResults.schools.length > 0 ? searchResults.schools : schools}
               selectedSchool={selectedSchool}
               setSelectedSchool={setSelectedSchool}
               contentAnimated={contentAnimated}
@@ -349,9 +392,10 @@ const AccreditationRatings = () => {
 
         {activeTab === "programs" && (
           <div className="flex flex-col gap-6">
-            {/* Programs Tab Content */}
             <ProgramsTab 
-              filteredPrograms={filteredPrograms}
+              filteredPrograms={searchTerm && searchResults.programs.length > 0 
+                ? searchResults.programs 
+                : filteredPrograms}
               contentAnimated={contentAnimated}
             />
           </div>

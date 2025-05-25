@@ -183,19 +183,19 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
                 className="absolute right-0 bottom-10 w-32 bg-white rounded-lg shadow-lg overflow-hidden z-50 border border-gray-200"
               >
                 <button
-                onClick={handleEdit}
-                  className="w-full px-4 py-2 text-left flex items-center text-sm text-gray-700 hover:bg-[#2B3E4E] hover:text-white"
-              >
+                  onClick={handleEdit}
+                  className="w-full px-4 py-2 text-left flex items-center text-sm hover:bg-gray-100"
+                >
                   <FaEdit className="text-[#FFB71B] mr-2" />
-                  <span>Edit</span>
+                  <span className="text-gray-700">Edit</span>
                 </button>
               
                 <button
-                onClick={handleDelete}
-                  className="w-full px-4 py-2 text-left flex items-center text-sm text-gray-700 hover:bg-[#2B3E4E] hover:text-white"
-              >
+                  onClick={handleDelete}
+                  className="w-full px-4 py-2 text-left flex items-center text-sm hover:bg-gray-100"
+                >
                   <FaTrash className="text-red-500 mr-2" />
-                  <span>Delete</span>
+                  <span className="text-gray-700">Delete</span>
                 </button>
               </div>
             )}
