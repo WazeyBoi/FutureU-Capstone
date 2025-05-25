@@ -189,7 +189,9 @@ public class UserAssessmentService {
         userAssessment.setStatus("COMPLETED");
         userAssessment.setProgressPercentage(100.0);
         userAssessment.setTimeSpentSeconds(timeSpentSeconds);
-        
+        // Store the user's final answers and sections/questions as JSON
+        userAssessment.setSavedAnswers(objectMapper.writeValueAsString(answers));
+        userAssessment.setSavedSections(sectionsJson);
         // Set the dateCompleted field
         LocalDateTime now = LocalDateTime.now();
         userAssessment.setDateCompleted(now);
