@@ -19,7 +19,7 @@ public class CareerRecommendationEntity {
     private AssessmentResultEntity assessmentResult;
 
     // One-to-one relationship with Career (optional, can be null)
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "careerId")
     private CareerEntity careerPath;
 

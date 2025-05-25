@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Need to install: npm install framer-motion
+import { BarChart2, Info, AlertTriangle } from 'lucide-react';
+
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
 import AssessmentSection from '../components/assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
-import ResumeAssessmentModal from '../components/assessment/ResumeAssessmentModal';
+import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModal';
 import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
 import ohMySVG from '../assets/characters/ohMy.svg';
+import diplomaSVG from '../assets/characters/diploma.svg';
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -72,6 +75,9 @@ const TakeAssessment = () => {
 
   // Add state to control showing the assessment tips/instructions
   const [showAssessmentTips, setShowAssessmentTips] = useState(true);
+
+  // Add state to store the last submitted userAssessmentId
+  const [lastUserAssessmentId, setLastUserAssessmentId] = useState(null);
 
   // Timer logic for countdown timer (if time limit exists)
   useEffect(() => {
@@ -760,10 +766,26 @@ const TakeAssessment = () => {
       setCompleted(true);
       setSubmitting(false);
       
-      // Redirect to results after 5 seconds
-      setTimeout(() => {
-        navigate(`/assessment-results/${result.userAssessmentId}`);
-      }, 5000);
+      // Store the userAssessmentId for navigation after completion
+      setLastUserAssessmentId(result.userAssessmentId);
+      
+      // Poll for results before redirecting
+      // REMOVE this block to prevent auto-redirect
+      // const pollResults = async (userAssessmentId, maxAttempts = 10, delayMs = 1000) => {
+      //   for (let i = 0; i < maxAttempts; i++) {
+      //     try {
+      //       const res = await userAssessmentService.getAssessmentResults(userAssessmentId);
+      //       if (res && res.assessmentResult) {
+      //         return true;
+      //       }
+      //     } catch (e) {}
+      //     await new Promise(r => setTimeout(r, delayMs));
+      //   }
+      //   return false;
+      // };
+      // pollResults(result.userAssessmentId).then(() => {
+      //   navigate(`/assessment-results/${result.userAssessmentId}`);
+      // });
       
     } catch (err) {
       setSubmitting(false);
@@ -874,9 +896,7 @@ const TakeAssessment = () => {
         >
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg className="h-8 w-8 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
+              <AlertTriangle className="h-8 w-8 text-red-400" />
             </div>
             <div className="ml-6">
               <h3 className="text-xl font-medium text-red-800">Something went wrong</h3>
@@ -901,36 +921,27 @@ const TakeAssessment = () => {
   // Completed state
   if (completed) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-indigo-100 via-purple-100 to-pink-100 py-10">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-white-100 via-blue-100 to-blue-100 py-10 pt-40 overflow-hidden">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
-          className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-hidden"
+          className="text-center py-10 px-10 bg-white rounded-2xl shadow-xl max-w-md w-full relative overflow-visible"
         >
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.2, 1] }}
-            transition={{ delay: 0.3, duration: 0.8, type: "spring" }}
-            className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 relative"
-          >
-            <svg className="w-12 h-12 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-            
-            {/* Animated circles */}
-            <div className="absolute inset-0 rounded-full border-4 border-green-200 animate-ping" style={{ animationDuration: '2s' }}></div>
-          </motion.div>
-          
+          <img
+            src={diplomaSVG}
+            alt="Diploma"
+            className="absolute -top-70 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl pointer-events-none"
+            style={{ zIndex: 60 }}
+          />
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.5 }}
-            className="text-3xl font-bold text-gray-800 mb-2"
+            className="text-5xl font-bold text-[#FFB71B] mb-10 pt-10"
           >
             Congratulations!
           </motion.h2>
-          
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -939,38 +950,28 @@ const TakeAssessment = () => {
           >
             You've completed the assessment!
           </motion.p>
-          
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.5 }}
-            className="text-gray-500 mb-8"
+            className="text-gray-500 mb-8 "
           >
-            Your answers have been submitted successfully. We're analyzing your responses to provide personalized recommendations.
+            Your answers have been submitted successfully. Click on Continue to see assessment summry.
           </motion.p>
-          
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.5 }}
             className="inline-block"
           >
-            <div className="text-sm bg-blue-50 border border-blue-100 text-blue-700 px-4 py-3 rounded-lg">
-              Redirecting to your results in a few seconds...
-              <span className="inline-block ml-2">
-                <span className="animate-bounce inline-block h-2 w-2 rounded-full bg-blue-600 mr-1"></span>
-                <span className="animate-bounce inline-block h-2 w-2 rounded-full bg-blue-600 mr-1" style={{ animationDelay: '0.2s' }}></span>
-                <span className="animate-bounce inline-block h-2 w-2 rounded-full bg-blue-600" style={{ animationDelay: '0.4s' }}></span>
-              </span>
-            </div>
+            <button
+              onClick={() => navigate(`/assessment-results/${lastUserAssessmentId || ''}`)}
+              className="px-6 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-full font-semibold shadow transition-colors"
+              disabled={!lastUserAssessmentId}
+            >
+              Continue
+            </button>
           </motion.div>
-          
-          {/* Confetti effect */}
-          <div className="absolute -top-10 left-0 w-full">
-            <div className="absolute left-1/4 animate-float" style={{animationDuration: '3s'}}><span className="text-4xl">🎉</span></div>
-            <div className="absolute left-1/2 animate-float" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}><span className="text-3xl">🎊</span></div>
-            <div className="absolute left-3/4 animate-float" style={{animationDuration: '3.5s', animationDelay: '1s'}}><span className="text-4xl">🏆</span></div>
-          </div>
         </motion.div>
       </div>
     );
@@ -987,9 +988,7 @@ const TakeAssessment = () => {
         >
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-6 w-6 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
+              <Info className="h-6 w-6 text-yellow-400" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">No Questions Available</h3>
@@ -1063,7 +1062,8 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 2 0 002 2h14a2 2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      {/* Replaced invalid path with valid Heroicons save icon */}
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
                     </svg>
                     Save & Exit
                   </>
@@ -1073,6 +1073,7 @@ const TakeAssessment = () => {
               {/* Elapsed time indicator */}
               <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-lg text-[#1D63A1] flex shadow-sm">
                 <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  {/* Replaced invalid path with valid Heroicons clock icon */}
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="text-sm font-medium">
@@ -1084,6 +1085,7 @@ const TakeAssessment = () => {
               {timeRemaining && (
                 <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
                   <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {/* Replaced invalid path with valid Heroicons clock icon */}
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-sm font-medium">
@@ -1130,9 +1132,7 @@ const TakeAssessment = () => {
           className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
         >
           <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
-            <svg className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-            </svg>
+            <BarChart2 className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" />
             <span className="truncate">Your Assessment Progress</span>
           </h4>
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-grow">
@@ -1238,11 +1238,13 @@ const TakeAssessment = () => {
                   className="absolute bg-gradient-to-r from-white to-white top-3 right-3 text-gray-400 hover:text-[#FFB71B] transition-colors p-1"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[#FFB71B]">
+                    {/* Replaced invalid path with valid Heroicons X (close) icon */}
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
                 <h3 className="text-lg font-bold text-[#232D35] mb-4 flex items-center mt-8">
                   <svg className="w-6 h-6 mr-2 text-[#FFB71B]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    {/* Replaced invalid path with valid Heroicons info icon */}
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   Assessment Instructions

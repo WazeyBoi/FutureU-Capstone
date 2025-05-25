@@ -35,8 +35,8 @@ public class CareerEntity {
     private List<CareerProgramEntity> careerPrograms;
 
     @JsonIgnore
-    @OneToOne(mappedBy = "careerPath")
-    private CareerRecommendationEntity recommendation;
+    @OneToMany(mappedBy = "careerPath")
+    private List<CareerRecommendationEntity> recommendation;
 
     public CareerEntity() {
     }
@@ -97,13 +97,6 @@ public class CareerEntity {
         this.careerPrograms = careerPrograms;
     }
 
-    public CareerRecommendationEntity getRecommendation() {
-        return recommendation;
-    }
-
-    public void setRecommendation(CareerRecommendationEntity recommendation) {
-        this.recommendation = recommendation;
-    }
     
     // For backward compatibility - returns the first associated program
     @Transient
@@ -118,4 +111,12 @@ public class CareerEntity {
     public void setProgram(ProgramEntity program) {
         // Implementation handled by service layer
     }
+
+    public List<CareerRecommendationEntity> getRecommendation() {
+        return recommendation;
+    }
+
+    public void setRecommendation(List<CareerRecommendationEntity> recommendation) {
+        this.recommendation = recommendation;
+    }     
 }
