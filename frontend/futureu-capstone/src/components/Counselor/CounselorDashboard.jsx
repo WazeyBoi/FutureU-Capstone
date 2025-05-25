@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import adminUserService from '../../services/adminUserService';
 import adminAssessmentService from '../../services/adminAssessmentService';
-import { 
-  Heart, Users, FileText, Search, Clock, 
-  BookOpen, User, LogOut, MessageSquare, 
+import userAssessmentService from '../../services/userAssessmentService';
+import {
+  Heart, Users, FileText, Search, Clock,
+  BookOpen, User, LogOut, MessageSquare,
   BarChart2, Calendar, UserCheck
 } from 'lucide-react';
+import SearchFilterBar from './SearchFilterBar';
+import AssessmentResultsInsights from './AssessmentResultsInsights';
+import AssessmentResultsGrid from './AssessmentResultsGrid';
+import StudentReportModal from './StudentReportModal';
 
 // Change component name to match the file name
 const CounselorDashboard = () => {
@@ -15,16 +20,24 @@ const CounselorDashboard = () => {
   const counselorUser = authService.getCurrentUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
-  
+
   // States for storing data counts
   const [studentCount, setStudentCount] = useState(0);
   const [assessmentCount, setAssessmentCount] = useState(0);
   const [appointmentCount, setAppointmentCount] = useState(0); // For future use
   const [counselingSessionCount, setCounselingSessionCount] = useState(0); // For future use
-  
+
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Add state for assessment results, search/filter, and modal
+  const [assessmentResults, setAssessmentResults] = useState([]);
+  const [filteredResults, setFilteredResults] = useState([]);
+  const [searchStudent, setSearchStudent] = useState("");
+  const [selectedAssessment, setSelectedAssessment] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedResult, setSelectedResult] = useState(null);
 
   // Fetch counts on component mount
   useEffect(() => {
@@ -37,14 +50,14 @@ const CounselorDashboard = () => {
           adminUserService.getAllUsers(),
           adminAssessmentService.getAllAssessments()
         ]);
-        
+
         // Filter only student users
         const students = users.filter(user => user.role === 'STUDENT');
-        
+
         // Update state with actual counts
         setStudentCount(students.length);
         setAssessmentCount(assessments.length);
-        
+
         // Placeholder values for features that might be implemented later
         setAppointmentCount(0);
         setCounselingSessionCount(0);
@@ -57,6 +70,20 @@ const CounselorDashboard = () => {
     };
 
     fetchCounts();
+  }, []);
+
+  // Fetch assessment results on mount
+  useEffect(() => {
+    const fetchResults = async () => {
+      try {
+        const results = await userAssessmentService.getAllAssessmentResults();
+        setAssessmentResults(results);
+        setFilteredResults(results);
+      } catch (err) {
+        setError("Failed to load assessment results. Please try again later.");
+      }
+    };
+    fetchResults();
   }, []);
 
   // Update time every minute
@@ -145,6 +172,35 @@ const CounselorDashboard = () => {
     return tool.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  // Filter logic
+  useEffect(() => {
+    let results = [...assessmentResults];
+    if (searchStudent) {
+      results = results.filter(r => {
+        const user = r.userAssessment?.user || {};
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+        return fullName.includes(searchStudent.toLowerCase()) || (user.email || '').toLowerCase().includes(searchStudent.toLowerCase());
+      });
+    }
+    if (selectedAssessment) {
+      results = results.filter(r => (r.userAssessment?.assessment?.title || '') === selectedAssessment);
+    }
+    setFilteredResults(results);
+  }, [searchStudent, selectedAssessment, assessmentResults]);
+
+  // Get unique assessment titles for filter dropdown
+  const assessmentTitles = Array.from(new Set(assessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean)));
+
+  // Modal handlers
+  const handleViewReport = (result) => {
+    setSelectedResult(result);
+    setModalOpen(true);
+  };
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setSelectedResult(null);
+  };
+
   // Show loading spinner
   if (isLoading) {
     return (
@@ -169,8 +225,8 @@ const CounselorDashboard = () => {
           </div>
           <h2 className="text-xl font-bold text-center mb-4">Dashboard Error</h2>
           <p className="text-gray-600 text-center mb-6">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="w-full py-2 px-4 bg-[#1D63A1] text-white rounded-lg hover:bg-[#1D63A1]/90 transition-colors"
           >
             Retry
@@ -245,56 +301,26 @@ const CounselorDashboard = () => {
           ))}
         </div>
 
-        {/* Recent Activity Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-[#2B3E4E]">Recent Activity</h2>
-            <div className="text-sm text-[#1D63A1] hover:underline cursor-pointer">View All</div>
-          </div>
+        {/* Aggregated Insights */}
+        <AssessmentResultsInsights results={filteredResults} />
 
-          <div className="space-y-4">
-            {/* Placeholder for recent activities - would be populated from real data */}
-            <div className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center">
-                <div className="p-2 rounded-full bg-blue-100 mr-3">
-                  <UserCheck className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800">New Student Assessment</h3>
-                  <p className="text-sm text-gray-500">Juan Dela Cruz completed Career Assessment</p>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">2 hours ago</div>
-              </div>
-            </div>
-            <div className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center">
-                <div className="p-2 rounded-full bg-green-100 mr-3">
-                  <Calendar className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800">Scheduled Appointment</h3>
-                  <p className="text-sm text-gray-500">Maria Santos scheduled career counseling</p>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">5 hours ago</div>
-              </div>
-            </div>
-            <div className="p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center">
-                <div className="p-2 rounded-full bg-purple-100 mr-3">
-                  <MessageSquare className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800">Counseling Session Completed</h3>
-                  <p className="text-sm text-gray-500">Follow-up with Pedro Reyes on career path</p>
-                </div>
-                <div className="ml-auto text-xs text-gray-400">Yesterday</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Search & Filter Bar */}
+        <SearchFilterBar
+          searchTerm={searchStudent}
+          onSearchChange={setSearchStudent}
+          filterOptions={assessmentTitles}
+          selectedFilter={selectedAssessment}
+          onFilterChange={setSelectedAssessment}
+        />
 
-        {/* Counselor Tools Section */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        {/* Assessment Results Grid */}
+        <AssessmentResultsGrid results={filteredResults} onViewReport={handleViewReport} />
+
+        {/* Student Report Modal */}
+        <StudentReportModal open={modalOpen} onClose={handleCloseModal} result={selectedResult} />
+
+        {/* Career Guidance Tools Section */}
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mt-8">
           <div className="flex items-center justify-between mb-6">
             {/* Update the section title */}
             <h2 className="text-xl font-bold text-[#2B3E4E]">Career Guidance Tools</h2>
