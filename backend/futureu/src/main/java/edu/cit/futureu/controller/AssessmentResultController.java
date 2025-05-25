@@ -27,6 +27,12 @@ public class AssessmentResultController {
     @Autowired
     private GeminiAIService geminiAIService;
 
+
+    @GetMapping("/getAllAssessmentResults")
+    public List<AssessmentResultEntity> getAllAssessmentResults() {
+        return assessmentResultService.getAllAssessmentResults();
+    }
+    
     /**
      * Get results for a specific user assessment
      */
