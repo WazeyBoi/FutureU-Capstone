@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import adminAssessmentCategoryService from '../../services/adminAssessmentCategoryService';
-import adminAssessmentService from '../../services/adminAssessmentService';
+import adminAssessmentCategoryService from '../../../services/adminAssessmentCategoryService';
+import adminAssessmentService from '../../../services/adminAssessmentService';
 import {
   Folders,
   Search,

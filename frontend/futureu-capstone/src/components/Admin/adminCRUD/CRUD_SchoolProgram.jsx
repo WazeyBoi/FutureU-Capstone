@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import adminSchoolProgramService from '../../services/adminSchoolProgramService';
-import adminSchoolService from '../../services/adminSchoolService';
-import adminProgramService from '../../services/adminProgramService';
-import adminAccreditationService from '../../services/adminAccreditationService';
+import adminSchoolProgramService from '../../../services/adminSchoolProgramService';
+import adminSchoolService from '../../../services/adminSchoolService';
+import adminProgramService from '../../../services/adminProgramService';
+import adminAccreditationService from '../../../services/adminAccreditationService';
 import {
   School,
   Search,

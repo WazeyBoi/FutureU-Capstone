@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import authService from '../services/authService';
+import authService from '../../services/authService';
 
 const PublicRoute = ({ children }) => {
   // If user is already authenticated, redirect to landing page
