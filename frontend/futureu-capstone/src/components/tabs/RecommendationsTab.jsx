@@ -689,4 +689,11 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   );
 };
 
+// Utility to clear recommendations from localStorage for a given assessmentId
+export function clearRecommendationsFromLocalStorage(userAssessmentId) {
+  if (!userAssessmentId) return;
+  localStorage.removeItem(`futureu_recommendations_${userAssessmentId}`);
+  localStorage.removeItem(`futureu_program_recommendations_${userAssessmentId}`);
+}
+
 export default RecommendationsTab;

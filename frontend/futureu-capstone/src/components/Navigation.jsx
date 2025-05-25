@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import FutureULogo from '../assets/header_logo_normal.svg';
 import FutureULogo2 from '../assets/header_logo_yellow.svg'; // Import the logo - adjust path/extension if needed
+import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
 
 const Navigation = () => {
   const location = useLocation();
@@ -18,6 +19,18 @@ const Navigation = () => {
   }, [location]);
 
   const handleLogout = () => {
+    // Clear recommendations for the current user (if any)
+    const userId = authService.getCurrentUserId();
+    if (userId) {
+      // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
+      // If you have a way to get the user's last assessmentId, use it here
+      // For now, clear all possible keys for this user
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
+          localStorage.removeItem(key);
+        }
+      });
+    }
     authService.signout();
     setIsAuthenticated(false);
     navigate('/user-landing-page');
