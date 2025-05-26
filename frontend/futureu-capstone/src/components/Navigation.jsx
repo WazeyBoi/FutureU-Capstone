@@ -16,7 +16,10 @@ const Navigation = () => {
   useEffect(() => {
     // Check authentication status and role when component mounts or location changes
     setIsAuthenticated(authService.isAuthenticated());
-    setUserRole(authService.getUserRole());
+    let role = authService.getUserRole();
+    // Normalize role for counselor
+    if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
+    setUserRole(role);
   }, [location]);
 
   const handleLogout = () => {
@@ -40,7 +43,7 @@ const Navigation = () => {
   };
 
   // Don't render the navigation bar for Counselor routes
-  if (userRole === 'CAREER_GUIDANCE' && location.pathname.includes('/counselor')) {
+  if ((userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') && location.pathname.startsWith('/counselor')) {
     return (
       <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
         <div className="container mx-auto">
@@ -72,7 +75,7 @@ const Navigation = () => {
               <Link
                 to="/counselor-dashboard"
                 className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                  isActive('/counselor-dashboard')
+                  location.pathname.startsWith('/counselor-dashboard')
                     ? 'bg-[#FFB71B] text-black shadow-lg'
                     : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                 }`}
@@ -83,7 +86,7 @@ const Navigation = () => {
                 </span>
               </Link>
               
-              <Link
+              {/* <Link
                 to="/counselor/students"
                 className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                   isActive('/counselor/students')
@@ -109,7 +112,7 @@ const Navigation = () => {
                   <FileText className="w-4 h-4 inline-block mr-1.5" />
                   Assessments
                 </span>
-              </Link>
+              </Link> */}
               
               {/* Authentication buttons */}
               <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#FFB71B]/80">
@@ -162,7 +165,7 @@ const Navigation = () => {
           {/* Navigation Links */}
           <div className="flex items-center space-x-1">
             {/* Admin-specific navigation */}
-            {isAuthenticated && userRole === 'ADMIN' && (
+            {isAuthenticated && (userRole === 'ADMIN' || userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') && (
               <>
                 <Link
                   to="/admin-dashboard"
@@ -173,6 +176,17 @@ const Navigation = () => {
                   }`}
                 >
                   <span className="relative z-10">Dashboard</span>
+                </Link>
+                
+                <Link
+                  to="/counselor-dashboard"
+                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    isActive('/counselor-dashboard')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">Counselor Dashboard</span>
                 </Link>
                 
                 <Link

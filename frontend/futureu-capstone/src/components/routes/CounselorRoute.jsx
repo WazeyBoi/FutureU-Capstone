@@ -11,7 +11,7 @@ const CounselorRoute = ({ children }) => {
     return <Navigate to="/counselor/login" state={{ from: location.pathname }} />;
   }
   
-  if (userRole !== 'GUIDANCE_COUNSELOR') {
+  if (userRole !== 'GUIDANCE_COUNSELOR' && userRole !== 'CAREER_COUNSELOR' && userRole !== 'ADMIN') {
     return <Navigate to="/unauthorized" />;
   }
 
