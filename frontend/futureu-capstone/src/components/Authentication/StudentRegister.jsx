@@ -277,7 +277,7 @@ const StudentRegister = () => {
                     className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
                     placeholder="Password"
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 right-2.5 pr-3 flex items-center pointer-events-none">
                     <button
                       type="button"
                       className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
@@ -308,9 +308,9 @@ const StudentRegister = () => {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className="pl-12 w-full py-3 pr-14 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
-                    placeholder="Confirm Password"
+                    placeholder="Confirm Pass"
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 right-2.5 pr-3 flex items-center pointer-events-none">
                     <button
                       type="button"
                       className="text-gray-400 hover:text-[#2B3E4E] dark:hover:text-[#2B3E4E] bg-transparent pointer-events-auto"
