@@ -99,7 +99,7 @@ const AssessmentDashboard = () => {
         
         // Fetch completed assessments with their results
         const completedData = await userAssessmentService.getCompletedAssessments(userId);
-        console.log('Completed assessments data:', completedData); // Debug log
+        // console.log('Completed assessments data:', completedData); // Debug log
         setCompletedAssessments(completedData);
         
         // For each completed assessment, fetch its results if not already included
@@ -165,7 +165,7 @@ const AssessmentDashboard = () => {
           }
         });
         
-        console.log('Processed assessment stats:', statsMap); // Debug log
+        // console.log('Processed assessment stats:', statsMap); // Debug log
         setCompletedByAssessment(groupedAssessments);
         setAssessmentStats(statsMap);
 

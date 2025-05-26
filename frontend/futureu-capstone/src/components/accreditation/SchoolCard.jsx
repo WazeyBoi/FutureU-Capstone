@@ -76,12 +76,12 @@ const getSchoolBackground = (schoolName) => {
 const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
   const [isHovered, setIsHovered] = useState(false);
   
-  console.log('Full school object:', school); // Added temporary debug log
+  // console.log('Full school object:', school); // Added temporary debug log
   
   const schoolBackground = getSchoolBackground(school.name);
   const schoolLogo = schoolLogos[school.id];
   
-  console.log('School ID:', school.id, 'School Name:', school.name, 'Logo:', schoolLogo);
+  // console.log('School ID:', school.id, 'School Name:', school.name, 'Logo:', schoolLogo);
 
   return (
     <div
