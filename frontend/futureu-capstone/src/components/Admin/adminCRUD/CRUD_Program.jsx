@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import adminProgramService from '../../../services/adminServices/adminProgramService';
 import {
   BookOpen,
@@ -20,6 +21,8 @@ import {
 } from 'lucide-react';
 
 const CRUD_Program = () => {
+  const navigate = useNavigate();
+  
   const [programs, setPrograms] = useState([]);
   const [filteredPrograms, setFilteredPrograms] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -249,11 +252,23 @@ const CRUD_Program = () => {
     <div className="container mx-auto px-6 py-8 max-w-[1400px]">
       {/* Header Section */}
       <div className="mb-10">
-        <div className="flex items-center mb-4">
-          <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
-            <BookOpen className="h-6 w-6 text-[#FFB71B]" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          <div className="flex items-center">
+            <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
+              <BookOpen className="h-6 w-6 text-[#FFB71B]" />
+            </div>
+            <h1 className="text-3xl font-bold text-[#2B3E4E]">Program Management</h1>
           </div>
-          <h1 className="text-3xl font-bold text-[#2B3E4E]">Program Management</h1>
+          
+          <button
+            onClick={() => navigate('/admin/dashboard')}
+            className="inline-flex items-center px-6 py-3 mt-4 md:mt-0 bg-gradient-to-r from-white to-white text-[#2B3E4E] font-bold rounded-xl shadow-md hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#FFB71B] animate-bounce-short"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Dashboard
+          </button>
         </div>
         <p className="text-gray-600 max-w-3xl">
           Manage all educational programs in the system. Add new programs, edit details, or remove programs as needed.
