@@ -139,7 +139,7 @@ const CRUD_Question = () => {
     try {
       // Use the enriched method to get complete data for questions
       const data = await adminQuestionService.getAllQuestionsEnriched();
-      console.log('Enriched questions data:', data);
+      // console.log('Enriched questions data:', data);
       setQuestions(data);
       setFilteredQuestions(data);
       setError(null);
@@ -163,7 +163,7 @@ const CRUD_Question = () => {
   const fetchSubCategories = async () => {
     try {
       const data = await adminAssessmentSubCategoryService.getAllAssessmentSubCategories();
-      console.log('Initial load of all sub-categories:', data);
+      // console.log('Initial load of all sub-categories:', data);
       if (Array.isArray(data)) {
         setSubCategories(data);
       } else {
@@ -179,12 +179,12 @@ const CRUD_Question = () => {
   const fetchQuizSubCategories = async () => {
     try {
       const data = await adminQuizSubCatService.getAllQuizSubCategories();
-      console.log('Initial load of all quiz sub-categories:', data);
+      // console.log('Initial load of all quiz sub-categories:', data);
       if (Array.isArray(data)) {
         // Log the structure of the first item if available
         if (data.length > 0) {
-          console.log('Sample quiz sub-category structure:', data[0]);
-          console.log('Property names in sample:', Object.keys(data[0]));
+          // console.log('Sample quiz sub-category structure:', data[0]);
+          // console.log('Property names in sample:', Object.keys(data[0]));
         }
         setQuizSubCategories(data);
       } else {
