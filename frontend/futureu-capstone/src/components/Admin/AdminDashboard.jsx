@@ -42,64 +42,125 @@ const AdminDashboardTest = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Cache key and expiry
+  const CACHE_KEY = 'admin_dashboard_data';
+  const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  // Last updated state
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Move fetchCounts outside of useEffect
+  const fetchCounts = async (forceFetch = false) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Check if we have cached data that's not expired
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const now = new Date().getTime();
+      
+      if (!forceFetch && cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        
+        // If cache is still valid
+        if (now - timestamp < CACHE_EXPIRY) {
+          // Use cached data
+          setSchoolCount(data.schoolCount);
+          setProgramCount(data.programCount);
+          setUserCount(data.userCount);
+          setAssessmentCount(data.assessmentCount);
+          setAccreditationCount(data.accreditationCount);
+          setCareerCount(data.careerCount);
+          setQuestionCount(data.questionCount);
+          setChoiceCount(data.choiceCount);
+          setAssessmentCategoryCount(data.assessmentCategoryCount);
+          setAssessmentSubCategoryCount(data.assessmentSubCategoryCount);
+          setQuizSubCategoryCount(data.quizSubCategoryCount);
+          setLastUpdated(new Date(timestamp));
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Fetch all data in parallel
+      const [
+        schools,
+        programs,
+        users,
+        assessments,
+        accreditations,
+        careers,
+        questions,
+        choices,
+        assessmentCategories,
+        assessmentSubCategories,
+        quizSubCategories
+      ] = await Promise.all([
+        // Your existing API calls
+        adminSchoolService.getAllSchools(),
+        adminProgramService.getAllPrograms(),
+        adminUserService.getAllUsers(),
+        adminAssessmentService.getAllAssessments(),
+        adminAccreditationService.getAllAccreditations(),
+        adminCareerService.getAllCareers(),
+        adminQuestionService.getAllQuestions(),
+        adminChoiceService.getAllChoices(),
+        adminAssessmentCategoryService.getAllAssessmentCategories(),
+        adminAssessmentSubCategoryService.getAllAssessmentSubCategories(),
+        adminQuizSubCatService.getAllQuizSubCategories()
+      ]);
+      
+      // Create a data object for caching
+      const dashboardData = {
+        schoolCount: schools.length,
+        programCount: programs.length,
+        userCount: users.length,
+        assessmentCount: assessments.length,
+        accreditationCount: accreditations.length,
+        careerCount: careers.length,
+        questionCount: questions.length,
+        choiceCount: choices.length,
+        assessmentCategoryCount: assessmentCategories.length,
+        assessmentSubCategoryCount: assessmentSubCategories.length,
+        quizSubCategoryCount: quizSubCategories.length
+      };
+      
+      // Update state with actual counts
+      setSchoolCount(dashboardData.schoolCount);
+      setProgramCount(dashboardData.programCount);
+      setUserCount(dashboardData.userCount);
+      setAssessmentCount(dashboardData.assessmentCount);
+      setAccreditationCount(dashboardData.accreditationCount);
+      setCareerCount(dashboardData.careerCount);
+      setQuestionCount(dashboardData.questionCount);
+      setChoiceCount(dashboardData.choiceCount);
+      setAssessmentCategoryCount(dashboardData.assessmentCategoryCount);
+      setAssessmentSubCategoryCount(dashboardData.assessmentSubCategoryCount);
+      setQuizSubCategoryCount(dashboardData.quizSubCategoryCount);
+      
+      // Cache the data
+      const timestamp = now;
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        data: dashboardData,
+        timestamp
+      }));
+      
+      setLastUpdated(new Date(timestamp));
+    } catch (err) {
+      console.error("Error fetching counts:", err);
+      setError("Failed to load dashboard data. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Log the admin user data to see what's available
   useEffect(() => {
-    console.log("Admin user data:", adminUser);
   }, [adminUser]);
 
   // Fetch all counts on component mount
   useEffect(() => {
-    const fetchCounts = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        // Fetch all data in parallel
-        const [
-          schools,
-          programs,
-          users,
-          assessments,
-          accreditations,
-          careers,
-          questions,
-          choices,
-          assessmentCategories,
-          assessmentSubCategories,
-          quizSubCategories
-        ] = await Promise.all([
-          adminSchoolService.getAllSchools(),
-          adminProgramService.getAllPrograms(),
-          adminUserService.getAllUsers(),
-          adminAssessmentService.getAllAssessments(),
-          adminAccreditationService.getAllAccreditations(),
-          adminCareerService.getAllCareers(),
-          adminQuestionService.getAllQuestions(),
-          adminChoiceService.getAllChoices(),
-          adminAssessmentCategoryService.getAllAssessmentCategories(),
-          adminAssessmentSubCategoryService.getAllAssessmentSubCategories(),
-          adminQuizSubCatService.getAllQuizSubCategories()
-        ]);
-        
-        // Update state with actual counts
-        setSchoolCount(schools.length);
-        setProgramCount(programs.length);
-        setUserCount(users.length);
-        setAssessmentCount(assessments.length);
-        setAccreditationCount(accreditations.length);
-        setCareerCount(careers.length);
-        setQuestionCount(questions.length);
-        setChoiceCount(choices.length);
-        setAssessmentCategoryCount(assessmentCategories.length);
-        setAssessmentSubCategoryCount(assessmentSubCategories.length);
-        setQuizSubCategoryCount(quizSubCategories.length);
-      } catch (err) {
-        console.error("Error fetching counts:", err);
-        setError("Failed to load dashboard data. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+    // Call fetchCounts here (without redefining it)
     fetchCounts();
   }, []);
 
@@ -321,6 +382,24 @@ const AdminDashboardTest = () => {
             <div className="text-sm text-gray-500">
               {filteredTools.length} tools available
             </div>
+          </div>
+
+          {/* Replace the existing refresh button with this one */}
+          <div className="flex items-center gap-2 mb-6">
+            <button
+              onClick={() => fetchCounts(true)}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-white to-white text-[#2B3E4E] font-bold rounded-xl shadow-md hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-[#FFB71B] animate-bounce-short"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh Data
+            </button>
+            {lastUpdated && (
+              <span className="text-sm text-gray-500">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">

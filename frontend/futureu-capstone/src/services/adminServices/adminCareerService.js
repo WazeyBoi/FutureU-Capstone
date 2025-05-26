@@ -25,7 +25,6 @@ class AdminCareerService {
   async getAllCareers() {
     try {
       const response = await apiClient.get('/career/getAllCareers');
-      console.log('API response for getAllCareers:', response.data);
       return response.data;
     } catch (error) {
       this.handleError(error, 'Fetching all careers');
