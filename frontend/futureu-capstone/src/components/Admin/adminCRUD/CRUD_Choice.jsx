@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import adminChoiceService from '../../../services/adminChoiceService';
-import adminQuestionService from '../../../services/adminQuestionService';
+import adminChoiceService from '../../../services/adminServices/adminChoiceService';
+import adminQuestionService from '../../../services/adminServices/adminQuestionService';
 import {
   CheckCircle2, 
   Search,

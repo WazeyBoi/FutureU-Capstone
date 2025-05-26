@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
-import adminUserService from '../../services/adminUserService';
-import adminAssessmentService from '../../services/adminAssessmentService';
+import adminUserService from '../../services/adminServices/adminUserService';
+import adminAssessmentService from '../../services/adminServices/adminAssessmentService';
 import userAssessmentService from '../../services/userAssessmentService';
 import { fetchAllCareerRecommendations } from '../../services/recommendationService';
 import programRecommendationService from '../../services/programRecommendationService';

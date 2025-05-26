@@ -1,4 +1,4 @@
-import apiClient from './api';
+import apiClient from '../api';
 
 /**
  * Service for handling assessment-related API requests for admin use
