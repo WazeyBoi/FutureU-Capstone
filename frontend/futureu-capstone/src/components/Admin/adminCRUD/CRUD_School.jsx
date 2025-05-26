@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import adminSchoolService from '../../../services/adminSchoolService.js';
+import adminSchoolService from '../../../services/adminServices/adminSchoolService.js';
 import {
   School,
   Search,

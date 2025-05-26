@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import adminQuestionService from '../../../services/adminQuestionService';
-import adminAssessmentCategoryService from '../../../services/adminAssessmentCategoryService';
-import adminAssessmentSubCategoryService from '../../../services/adminAssessmentSubCategoryService';
-import adminQuizSubCatService from '../../../services/adminQuizSubCatService';
+import adminQuestionService from '../../../services/adminServices/adminQuestionService';
+import adminAssessmentCategoryService from '../../../services/adminServices/adminAssessmentCategoryService';
+import adminAssessmentSubCategoryService from '../../../services/adminServices/adminAssessmentSubCategoryService';
+import adminQuizSubCatService from '../../../services/adminServices/adminQuizSubCatService';
 import {
   HelpCircle,
   Search,

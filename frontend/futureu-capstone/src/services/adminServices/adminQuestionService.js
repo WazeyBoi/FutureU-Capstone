@@ -1,4 +1,4 @@
-import apiClient from './api';
+import apiClient from '../api';
 
 /**
  * Service for handling question-related API requests for admin use

@@ -1,6 +1,6 @@
 import axios from 'axios';
-import apiClient from './api';
-import authService from './authService';
+import apiClient from '../api';
+import authService from '../authService';
 
 /**
  * Service for handling school-related API requests

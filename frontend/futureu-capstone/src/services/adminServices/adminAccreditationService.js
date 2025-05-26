@@ -1,5 +1,5 @@
 
-import apiClient from './api';
+import apiClient from '../api';
 
 /**
  * Service for handling accreditation-related API requests for admin use

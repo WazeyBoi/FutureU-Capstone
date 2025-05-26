@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import adminAssessmentService from '../../../services/adminAssessmentService';
+import adminAssessmentService from '../../../services/adminServices/adminAssessmentService';
 import {
   ClipboardList,
   Search,

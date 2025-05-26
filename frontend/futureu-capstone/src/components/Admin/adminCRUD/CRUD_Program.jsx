@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import adminProgramService from '../../../services/adminProgramService';
+import adminProgramService from '../../../services/adminServices/adminProgramService';
 import {
   BookOpen,
   Search,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import adminUserAssessmentService from '../../../services/adminUserAssessmentService';
-import adminUserService from '../../../services/adminUserService';
-import adminAssessmentService from '../../../services/adminAssessmentService';
+import adminUserAssessmentService from '../../../services/adminServices/adminUserAssessmentService';
+import adminUserService from '../../../services/adminServices/adminUserService';
+import adminAssessmentService from '../../../services/adminServices/adminAssessmentService';
 
 const CRUD_UserAssessment = () => {
   // State variables

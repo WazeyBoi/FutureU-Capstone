@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
-import adminUserService from '../../services/adminUserService';
-import adminSchoolService from '../../services/adminSchoolService';
-import adminProgramService from '../../services/adminProgramService';
-import adminAccreditationService from '../../services/adminAccreditationService';
-import adminCareerService from '../../services/adminCareerService';
-import adminQuestionService from '../../services/adminQuestionService';
-import adminChoiceService from '../../services/adminChoiceService';
-import adminAssessmentService from '../../services/adminAssessmentService';
-import adminAssessmentCategoryService from '../../services/adminAssessmentCategoryService';
-import adminAssessmentSubCategoryService from '../../services/adminAssessmentSubCategoryService';
-import adminQuizSubCatService from '../../services/adminQuizSubCatService';
+import adminUserService from '../../services/adminServices/adminUserService';
+import adminSchoolService from '../../services/adminServices/adminSchoolService';
+import adminProgramService from '../../services/adminServices/adminProgramService';
+import adminAccreditationService from '../../services/adminServices/adminAccreditationService';
+import adminCareerService from '../../services/adminServices/adminCareerService';
+import adminQuestionService from '../../services/adminServices/adminQuestionService';
+import adminChoiceService from '../../services/adminServices/adminChoiceService';
+import adminAssessmentService from '../../services/adminServices/adminAssessmentService';
+import adminAssessmentCategoryService from '../../services/adminServices/adminAssessmentCategoryService';
+import adminAssessmentSubCategoryService from '../../services/adminServices/adminAssessmentSubCategoryService';
+import adminQuizSubCatService from '../../services/adminServices/adminQuizSubCatService';
 import { 
   Shield, Users, Settings, FileText, Search,
   School, GraduationCap, BookOpen, Award, Clock,

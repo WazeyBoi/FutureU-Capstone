@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import adminCareerService from '../../../services/adminCareerService';
-import adminProgramService from '../../../services/adminProgramService';
+import adminCareerService from '../../../services/adminServices/adminCareerService';
+import adminProgramService from '../../../services/adminServices/adminProgramService';
 import {
   Briefcase,
   Building,
