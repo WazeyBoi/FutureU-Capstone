@@ -43,7 +43,7 @@ const Navigation = () => {
   };
 
   // Don't render the navigation bar for Counselor routes
-  if ((userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') && location.pathname.startsWith('/counselor')) {
+  if (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') {
     return (
       <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
         <div className="container mx-auto">

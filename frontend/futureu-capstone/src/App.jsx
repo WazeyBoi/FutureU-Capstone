@@ -45,6 +45,7 @@ import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
 import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
+import StudentRoute from './components/routes/StudentRoute.jsx';
 
 // Add any other admin CRUD components you need
 
@@ -83,73 +84,73 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         
         {/* Public routes */}
-        <Route path="/virtual-campus-tours" element={<VirtualCampusToursPage />} />
-        <Route path="/user-landing-page" element={<UserLandingPage />} />
+        <Route path="/virtual-campus-tours" element={
+          <StudentRoute>
+            <VirtualCampusToursPage />
+          </StudentRoute>
+        } />
+        <Route path="/user-landing-page" element={
+          <StudentRoute>
+            <UserLandingPage />
+          </StudentRoute>
+        } />
         {/* Protected routes */}
         <Route path="/academic-explorer" element={
-          <PrivateRoute>
+          <StudentRoute>
             <AcademicExplorer />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/accreditation" element={
-          <PrivateRoute>
+          <StudentRoute>
             <AccreditationRatings />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/accreditation/:section" element={
-          <PrivateRoute>
+          <StudentRoute>
             <AccreditationSection />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/testimonials" element={
-          <PrivateRoute>
+          <StudentRoute>
             <Testimonials />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/career-pathways" element={
-          <PrivateRoute>
+          <StudentRoute>
             <CareerPathways />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/assessments" element={
-          <PrivateRoute>
+          <StudentRoute>
             <Assessments />
-          </PrivateRoute>
+          </StudentRoute>
         } />
-        <Route path="/assessment-categories" element={
-          <PrivateRoute>
-            <AssessmentCategories />
-          </PrivateRoute>
-        } />
+        
         <Route path="/assessment-subcategories" element={
-          <PrivateRoute>
+          <StudentRoute>
             <AssessmentSubCategories />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/quiz-subcategories" element={
-          <PrivateRoute>
+          <StudentRoute>
             <QuizSubCategories />
-          </PrivateRoute>
+          </StudentRoute>
         } />
-        <Route path="/questions" element={
-          <PrivateRoute>
-            <Questions />
-          </PrivateRoute>
-        } />
+        
         <Route path="/take-assessment/:assessmentId" element={
-          <PrivateRoute>
+          <StudentRoute>
             <TakeAssessment />
-          </PrivateRoute>
+          </StudentRoute>
         } />
         <Route path="/assessment-dashboard" element={
-          <PrivateRoute>
+          <StudentRoute>
             <AssessmentDashboard />
-          </PrivateRoute>
+          </StudentRoute>
         } />
           <Route path="/assessment-results/:userAssessmentId" element={
-            <PrivateRoute>
+            <StudentRoute>
               <AssessmentResults />
-            </PrivateRoute>
+            </StudentRoute>
           } />
         
         {/* Admin CRUD Routes */}
@@ -157,6 +158,18 @@ function App() {
           <AdminRoute>
             <CRUD_User />
           </AdminRoute>
+        } />
+
+        <Route path="/assessment-categories" element={
+          <AdminRoute>
+            <AssessmentCategories />
+          </AdminRoute>
+        } />
+
+        <Route path="/questions" element={
+          <PrivateRoute>
+            <Questions />
+          </PrivateRoute>
         } />
         
         {/* Add routes for all other admin tools
