@@ -126,7 +126,7 @@ const CRUD_Career = () => {
       const data = await adminCareerService.getAllCareers();
       // Ensure data is an array
       const careerArray = Array.isArray(data) ? data : [];
-      console.log('Career data from API:', careerArray);
+      // console.log('Career data from API:', careerArray);
       setCareers(careerArray);
       setFilteredCareers(careerArray);
       setError(null);
