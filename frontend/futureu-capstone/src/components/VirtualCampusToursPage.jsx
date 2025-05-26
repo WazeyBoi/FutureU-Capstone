@@ -192,7 +192,7 @@ const VirtualCampusToursPage = () => {
       try {
         // First try the getAllSchools endpoint
         const response = await apiClient.get('/school/getAllSchools');
-        console.log("API Response:", response.data);
+        // console.log("API Response:", response.data);
         
         setApiSchools(response.data);
         
@@ -201,7 +201,7 @@ const VirtualCampusToursPage = () => {
         
         response.data.forEach(school => {
           // Debug each school object
-          console.log("Processing school:", school);
+          // console.log("Processing school:", school);
           
           // The API might return school data in different formats
           // Let's check the possible property names
@@ -210,7 +210,7 @@ const VirtualCampusToursPage = () => {
           const schoolType = school.schoolType || school.type || "";
           const schoolDescription = school.description || school.about || "";
           
-          console.log(`School data: Name=${schoolName}, Location=${schoolLocation}, Type=${schoolType}`);
+          // console.log(`School data: Name=${schoolName}, Location=${schoolLocation}, Type=${schoolType}`);
           
           // Try to match this school to our existing data
           const matchedName = findMatchingSchool(schoolName) || schoolName;
@@ -222,14 +222,14 @@ const VirtualCampusToursPage = () => {
               description: schoolDescription
             };
             
-            console.log(`Matched school ${schoolName} to ${matchedName}`);
+            // console.log(`Matched school ${schoolName} to ${matchedName}`);
           }
         });
         
-        console.log("Final school mapping:", schoolMap);
+        // console.log("Final school mapping:", schoolMap);
         setRealSchoolData(schoolMap);
       } catch (error) {
-        console.error("Error fetching from getAllSchools:", error);
+        // console.error("Error fetching from getAllSchools:", error);
         
         // If the first endpoint fails, try another one
         try {
@@ -252,7 +252,7 @@ const VirtualCampusToursPage = () => {
 
   // Log the enhanced campuses for debugging
   useEffect(() => {
-    console.log("Enhanced campuses with real data:", enhancedCampuses);
+    // console.log("Enhanced campuses with real data:", enhancedCampuses);
   }, [enhancedCampuses]);
 
   useEffect(() => {

@@ -22,9 +22,9 @@ class AssessmentTakingService {
           try {
             const choices = await choiceService.getChoicesByQuestion(question.questionId);
             question.choices = choices || [];
-            console.log(`Loaded ${choices.length} choices for question ${question.questionId}`);
+            // console.log(`Loaded ${choices.length} choices for question ${question.questionId}`);
           } catch (err) {
-            console.error(`Error fetching choices for question ${question.questionId}:`, err);
+            // console.error(`Error fetching choices for question ${question.questionId}:`, err);
             question.choices = [];
           }
         }

@@ -171,7 +171,7 @@ class AccreditationService {
         headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
       });
       const schools = schoolsResponse.data;
-      console.log('Retrieved schools:', schools);
+      // console.log('Retrieved schools:', schools);
       
       // For each school, get programs and accreditation details
       const schoolsWithAccreditation = await Promise.all(
@@ -182,7 +182,7 @@ class AccreditationService {
               headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
             });
             const schoolPrograms = schoolProgramsResponse.data;
-            console.log(`Programs for school ${school.name}:`, schoolPrograms);
+            // console.log(`Programs for school ${school.name}:`, schoolPrograms);
             
             // Get all programs for this school
             const allPrograms = [];
@@ -215,7 +215,7 @@ class AccreditationService {
             allPrograms.length = 0;
             uniquePrograms.forEach(item => allPrograms.push(item));
             
-            console.log(`Total programs found for ${school.name}:`, allPrograms.length);
+            // console.log(`Total programs found for ${school.name}:`, allPrograms.length);
             
             // Group programs by category
             const programCategories = {};
@@ -257,15 +257,15 @@ class AccreditationService {
                 }
               }
               
-              // Debug log
-              if (item.accreditation) {
-                console.log(`Accreditation found for ${program.programName}:`, {
-                  accredId: item.accreditation.accredId,
-                  level: level,
-                  accreditingBody: accreditingBody,
-                  recognitionStatus: recognitionStatus
-                });
-              }
+              // // Debug log
+              // if (item.accreditation) {
+              //   console.log(`Accreditation found for ${program.programName}:`, {
+              //     accredId: item.accreditation.accredId,
+              //     level: level,
+              //     accreditingBody: accreditingBody,
+              //     recognitionStatus: recognitionStatus
+              //   });
+              // }
               
               // Create program object
               programCategories[category].push({
