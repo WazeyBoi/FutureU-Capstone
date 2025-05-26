@@ -15,7 +15,7 @@ import SearchFilterBar from './SearchFilterBar';
 import AssessmentResultsInsights from './AssessmentResultsInsights';
 import AssessmentResultsGrid from './AssessmentResultsGrid';
 import StudentReportPage from './StudentReportPage';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // Change component name to match the file name
 const CounselorDashboard = () => {
@@ -403,29 +403,26 @@ const CounselorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-10">
       {/* Insights Summary Section */}
       <section className="w-full px-15 pt-6 pb-2">
         {/* Average Scores (Non-RIASEC) at the top, full width */}
         <div className="mb-4">
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B] w-full">
-            <div className="text-4xl font-bold text-[#2B3E4E] mb-2">Average Scoring of each Category</div>
+            <div className="text-4xl font-bold text-[#2B3E4E] mb-2">Average Scoring for each Category</div>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={chartData} layout="horizontal" margin={{ left: 10, right: 10, top: 10, bottom: 30 }}>
                 <XAxis dataKey="label" tick={CustomXAxisTick} interval={0} />
                 <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}
-                  isAnimationActive={false}
-                  fill="#FFB71B"
-                >
+                <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={false}>
                   {chartData.map((entry, idx) => (
-                    <cell key={`cell-${idx}`} fill={entry.sectionColor} />
+                    <Cell key={`cell-${idx}`} fill={entry.sectionColor} />
                   ))}
                 </Bar>
                 {/* Divider lines between sections */}
-                <line x1={573} y1={40} x2={573} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
-                <line x1={875} y1={40} x2={875} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
+                {/* <line x1={573} y1={40} x2={573} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
+                <line x1={875} y1={40} x2={875} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" /> */}
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -433,32 +430,83 @@ const CounselorDashboard = () => {
         {/* The 3 summary cards below in a row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Most Common RIASEC */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
-            <div className="text-xs text-gray-500 mb-1 flex items-center gap-1"><UserCheck className="w-4 h-4 text-[#1D63A1]" /> Most Common Personality</div>
-            <div className="text-2xl font-bold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
-            <div className="text-xs text-gray-400">(Top RIASEC code)</div>
+          <div className="flex flex-col items-center bg-white rounded-xl shadow py-5 px-10 flex flex-col items-center border-t-4 border-[#1D63A1] relative">
+            <UserCheck className="w-8 h-8 text-[#1D63A1] mb-2" />
+            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Common Personality</div>
+            <div className="text-4xl font-extrabold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
+            <div className="text-xs text-gray-400 mb-2">(Top RIASEC code)</div>
+            {/* Short RIASEC description */}
+            <div className="text-xs text-gray-500 text-center">
+              {dashboardInsights.mostCommonRiasec === 'RIA' && 'Realistic, Investigative, Artistic'}
+              {dashboardInsights.mostCommonRiasec === 'SEC' && 'Social, Enterprising, Conventional'}
+              {/* Add more mappings as needed */}
+            </div>
+            {/* Percentage of students with this code */}
+            <div className="mt-2 text-xs text-[#1D63A1] font-semibold">
+              {(() => {
+                const total = assessmentResults.length;
+                const codeCount = assessmentResults.filter(r => {
+                  const scores = [
+                    { code: 'R', value: r.realisticScore },
+                    { code: 'I', value: r.investigativeScore },
+                    { code: 'A', value: r.artisticScore },
+                    { code: 'S', value: r.socialScore },
+                    { code: 'E', value: r.enterprisingScore },
+                    { code: 'C', value: r.conventionalScore },
+                  ];
+                  const top3 = scores.sort((a, b) => b.value - a.value).slice(0, 3).map(s => s.code).join('');
+                  return top3 === dashboardInsights.mostCommonRiasec;
+                }).length;
+                return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
+              })()}
+            </div>
           </div>
           {/* Most Recommended Careers */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#1D63A1]">
-            <div className="text-xs text-gray-500 mb-2 flex items-center gap-1"><BarChart2 className="w-4 h-4 text-[#1D63A1]" /> Most Recommended Careers</div>
+          <div className="bg-white rounded-xl shadow py-5 px-10 flex flex-col items-center border-t-4 border-[#1D63A1] relative">
+            <BarChart2 className="w-8 h-8 text-[#1D63A1] mb-2" />
+            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Recommended Careers</div>
             {dashboardInsights.topCareers.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
-            ) : dashboardInsights.topCareers.map((c, i) => (
-              <div key={i} className="text-sm font-semibold text-[#1D63A1] flex items-center gap-2">
-                <span className="text-base font-bold">{i + 1}.</span> {c.title} <span className="text-xs text-gray-400">({c.count})</span>
-              </div>
-            ))}
+            ) : dashboardInsights.topCareers.map((c, i) => {
+              const total = allCareerRecommendations.length;
+              const percent = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0.0';
+              return (
+                <div key={i} className="flex justify-between w-full text-sm font-semibold text-[#1D63A1] items-center mb-1">
+                  <span className="flex items-center gap-2">
+                    <span className="text-base font-bold">{i + 1}.</span> {c.title}
+                  </span>
+                  <span className="text-xs text-gray-400">{c.count} ({percent}%)</span>
+                </div>
+              );
+            })}
           </div>
           {/* Most Recommended Programs */}
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B]">
-            <div className="text-xs text-gray-500 mb-2 flex items-center gap-1"><BookOpen className="w-4 h-4 text-[#FFB71B]" /> Most Recommended Programs</div>
+          <div className="bg-white rounded-xl shadow py-5 px-10  flex flex-col items-center border-t-4 border-[#FFB71B] relative">
+            <BookOpen className="w-8 h-8 text-[#FFB71B] mb-2" />
+            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Recommended Programs</div>
             {dashboardInsights.topPrograms.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
-            ) : dashboardInsights.topPrograms.map((p, i) => (
-              <div key={i} className="text-sm font-semibold text-[#FFB71B] flex items-center gap-2">
-                <span className="text-base font-bold">{i + 1}.</span> {p.name} <span className="text-xs text-gray-400">({p.count})</span>
-              </div>
-            ))}
+            ) : dashboardInsights.topPrograms.map((p, i) => {
+              const total = allProgramRecommendations.length;
+              const percent = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0.0';
+              // Find a short description if available
+              let desc = '';
+              const found = allProgramRecommendations.find(rec => (rec.program?.programName || rec.programName) === p.name);
+              if (found && (found.program?.description || found.description)) {
+                desc = found.program?.description || found.description;
+              }
+              return (
+                <div key={i} className="flex flex-col w-full mb-1">
+                  <div className="flex justify-between items-center text-sm font-semibold text-[#FFB71B]">
+                    <span className="text-left flex items-center gap-2">
+                      <span className="text-base font-bold">{i + 1}.</span> {p.name}
+                    </span>
+                    <span className="text-xs text-gray-400">{p.count} ({percent}%)</span>
+                  </div>
+                  {desc && <div className="text-left text-xs text-gray-500 ml-6">{desc}</div>}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

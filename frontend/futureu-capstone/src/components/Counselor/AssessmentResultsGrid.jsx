@@ -144,6 +144,16 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                   </div>
                   {/* Scores */}
                   <div className="flex flex-col gap-2 mb-1 w-full">
+                    {/* Time Spent Row */}
+                    {typeof result.userAssessment?.timeSpentSeconds === 'number' && (
+                      <div className="flex items-center w-full justify-between">
+                        <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-sm font-semibold shadow-sm border border-purple-200 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
+                          Time Spent:
+                        </span>
+                        <span className="text-lg font-extrabold align-middle text-purple-700">{Math.round(result.userAssessment.timeSpentSeconds / 60)} min</span>
+                      </div>
+                    )}
                     {/* Overall Row */}
                     <div className="flex items-center w-full justify-between">
                       <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-bold shadow-sm border border-emerald-200 flex items-center gap-2">
