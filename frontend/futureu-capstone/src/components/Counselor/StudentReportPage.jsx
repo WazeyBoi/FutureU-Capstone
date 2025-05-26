@@ -193,11 +193,11 @@ const StudentReportPage = () => {
     .join("");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] mt-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] pt-8">
       {/* Back Button */}
       <div className="mb-8 flex justify-start w-full max-w-7xl">
         <button
-          className="flex items-center gap-2 text-white hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E]"
+          className="flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
           onClick={() =>
             window.history.length > 1
               ? window.history.back()
@@ -220,7 +220,7 @@ const StudentReportPage = () => {
           Back to Main Dashboard
         </button>
       </div>
-      <div className="borderbg-white rounded-3xl shadow-2xl max-w-7xl w-full border border-[#FFB71B]/30 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full border border-[#FFB71B]/30 overflow-y-auto animate-fade-in">
         {/* Header with Overall & RIASEC */}
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
           {/* Decorative playful icon */}
@@ -244,7 +244,7 @@ const StudentReportPage = () => {
             </div>
           </div>
           {/* Overall & RIASEC summary */}
-          <div className="border flex flex-row gap-8 items-end mt-4 md:mt-0 z-10 h-full">
+          <div className="flex flex-row gap-8 items-end mt-4 md:mt-0 z-10 h-full">
             <div className="absolute right-25 top-5">
               <div className="text-2xl text-[#2B3E4E] font-bold rounded-lg py-2">
                 {assessment.title} |{" "}

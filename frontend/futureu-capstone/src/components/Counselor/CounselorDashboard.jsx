@@ -180,6 +180,21 @@ const CounselorDashboard = () => {
     navigate('/counselor/student-report', { state: { result } });
   };
 
+  // Calculate average time spent (in minutes) for all completed assessments
+  const getAverageTimeSpent = (results) => {
+    // Use timeSpentSeconds from userAssessment if available
+    const times = results
+      .map(r => {
+        const seconds = Number(r.userAssessment?.timeSpentSeconds);
+        return (!isNaN(seconds) && seconds > 0) ? seconds : null;
+      })
+      .filter(v => v !== null);
+    if (!times.length) return 0;
+    // Average in minutes
+    return times.reduce((a, b) => a + b, 0) / times.length / 60;
+  };
+  const averageTimeSpent = getAverageTimeSpent(assessmentResults);
+
   // Quick stats for the dashboard
   const quickStats = [
     {
@@ -193,6 +208,12 @@ const CounselorDashboard = () => {
       value: assessmentCount.toString(),
       icon: <FileText className="h-6 w-6" />,
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+    },
+    {
+      name: "Avg Time",
+      value: <>{averageTimeSpent.toFixed(1)}<span className="text-xs front-light ml-1">min</span></>,
+      icon: <Clock className="h-6 w-6" />,
+      color: "bg-gradient-to-br from-green-400 to-green-600",
     },
   ];
 
@@ -270,13 +291,31 @@ const CounselorDashboard = () => {
   ];
 
   const aggregateDashboardInsights = (results, allCareers, allPrograms) => {
-    // RIASEC aggregation (from assessmentResults)
-    const riasecTopCodes = {};
+    // RIASEC aggregation (new algorithm)
+    const riasecCodeCounts = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
     results.forEach(r => {
-      const code = getRiasecTopCode(r);
-      if (code) riasecTopCodes[code] = (riasecTopCodes[code] || 0) + 1;
+      const scores = [
+        { code: 'R', value: r.realisticScore },
+        { code: 'I', value: r.investigativeScore },
+        { code: 'A', value: r.artisticScore },
+        { code: 'S', value: r.socialScore },
+        { code: 'E', value: r.enterprisingScore },
+        { code: 'C', value: r.conventionalScore },
+      ];
+      const max = Math.max(...scores.map(s => s.value));
+      scores.filter(s => s.value === max).forEach(s => {
+        if (s.value !== undefined && s.value !== null && !isNaN(s.value)) {
+          riasecCodeCounts[s.code] = (riasecCodeCounts[s.code] || 0) + 1;
+        }
+      });
     });
-    const mostCommonRiasec = Object.entries(riasecTopCodes).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+    // Find the most common code(s)
+    const maxCount = Math.max(...Object.values(riasecCodeCounts));
+    const mostCommonCodes = Object.entries(riasecCodeCounts)
+      .filter(([code, count]) => count === maxCount && count > 0)
+      .map(([code]) => code);
+    // For display, join with comma if tie
+    const mostCommonRiasec = mostCommonCodes.length > 0 ? mostCommonCodes.join(', ') : 'N/A';
 
     // Non-RIASEC averages (from assessmentResults)
     const nonRiasecAverages = {};
@@ -307,7 +346,7 @@ const CounselorDashboard = () => {
       .slice(0, 3)
       .map(([name, count]) => ({ name, count }));
 
-    return { mostCommonRiasec, nonRiasecAverages, topCareers, topPrograms };
+    return { mostCommonRiasec, nonRiasecAverages, topCareers, topPrograms, riasecCodeCounts, mostCommonCodes };
   };
 
   // Aggregate insights for dashboard summary
@@ -352,20 +391,82 @@ const CounselorDashboard = () => {
     const { x, y, payload, index } = props;
     // Section label positions
     const sectionLabels = [
-      { idx: 2, label: 'GSA', color: '#1D63A1' },
-      { idx: 6, label: 'Academic', color: '#FFB71B' },
-      { idx: 9, label: 'Non-Academic', color: '#4CAF50' },
+      { idx: 2, label: 'General Scholastic Aptitude', color: '#1D63A1' },
+      { idx: 6, label: 'Academic Track', color: '#FFB71B' },
+      { idx: 9, label: 'Non-Academic Track', color: '#4CAF50' },
     ];
     const label = sectionLabels.find(l => l.idx === index);
     return (
       <g>
         <text x={x} y={y + 15} textAnchor="middle" fontSize="11" fill="#333">{payload.value}</text>
         {label && (
-          <text x={x} y={y + 35} textAnchor="middle" fontSize="12" fontWeight="bold" fill={label.color}>{label.label}</text>
+          <text x={x} y={y + 50} textAnchor="middle" fontSize="12" fontWeight="bold" fill={label.color}>{label.label}</text>
         )}
       </g>
     );
   };
+
+  // --- REAL DATA for students ---
+  const [students, setStudents] = useState([]);
+
+  // Fetch all students on mount (replace mockStudents)
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const users = await adminUserService.getAllUsers();
+        const studentUsers = users.filter(user => user.role === 'STUDENT');
+        setStudents(studentUsers);
+      } catch (err) {
+        setStudents([]); // fallback to empty
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  // Normalize user id for matching (id or userId)
+  const getUserId = user => user?.id || user?.userId;
+
+  // Assessment Completion Rate (real data, robust id matching)
+  const studentsWithResultsIds = new Set(
+    assessmentResults.map(r => getUserId(r.userAssessment?.user)).filter(Boolean)
+  );
+  const studentsWithNoResults = students.filter(s => !studentsWithResultsIds.has(getUserId(s)));
+  const completionRate = students.length > 0 ? ((students.length - studentsWithNoResults.length) / students.length * 100).toFixed(1) : '0.0';
+
+  // Students Needing Attention (not started, not completed, or low scores)
+  // Only include students whose most recent attempt is < 50 in any nonRiasecFields, or have no results
+  const userIdMap = user => user?.id || user?.userId;
+
+  // Map: userId -> all their results (sorted by dateCompleted or dateComputed desc)
+  const userResultsMap = {};
+  assessmentResults.forEach(r => {
+    const user = r.userAssessment?.user;
+    const id = userIdMap(user);
+    if (!id) return;
+    if (!userResultsMap[id]) userResultsMap[id] = [];
+    userResultsMap[id].push(r);
+  });
+  // Sort each user's results by dateCompleted or dateComputed desc
+  Object.values(userResultsMap).forEach(arr => arr.sort((a, b) => {
+    const aDate = new Date(b.userAssessment?.dateCompleted || b.dateComputed || 0);
+    const bDate = new Date(a.userAssessment?.dateCompleted || a.dateComputed || 0);
+    return aDate - bDate;
+  }));
+
+  // Students with low most recent score
+  const studentsWithLowRecentScores = students.filter(s => {
+    const id = userIdMap(s);
+    const results = userResultsMap[id];
+    if (!results || results.length === 0) return false; // skip, handled by studentsWithNoResults
+    const mostRecent = results[0];
+    // Low score is < 50 in any nonRiasecFields
+    return nonRiasecFields.some(f => Number(mostRecent[f.key]) < 50);
+  });
+
+  const studentsNeedingAttention = [
+    ...studentsWithNoResults,
+    ...studentsWithLowRecentScores
+  ];
 
   // Show loading spinner
   if (isLoading) {
@@ -403,13 +504,30 @@ const CounselorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+    <div className="min-h-screen bg-gray-50 pb-5">
+      <div className="px-15 pt-10 flex flex-col items-start">
+        <p className="text-2xl font-bold text-[#2B3E4E]">
+          Welcome back, <span className="text-[#1D63A1]">
+            {counselorUser && counselorUser.firstName ? counselorUser.firstName : "Career Guide"}
+          </span>
+        </p>
+        <div className="flex items-center text-gray-500 mt-1">
+          <Clock className="h-4 w-4 mr-1.5" />
+          <span className="text-xs">{formattedTime}</span>
+          <span className="mx-1.5">•</span>
+          <span className="text-xs">{formattedDate}</span>
+        </div>
+      </div>
       {/* Insights Summary Section */}
       <section className="w-full px-15 pt-6 pb-2">
-        {/* Average Scores (Non-RIASEC) at the top, full width */}
-        <div className="mb-4">
-          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center border-t-4 border-[#FFB71B] w-full">
-            <div className="text-4xl font-bold text-[#2B3E4E] mb-2">Average Scoring for each Category</div>
+        {/* Average Scores (Non-RIASEC) at the top, full width, styled as a card */}
+        <div className="flex flex-row gap-2 mb-8 items-start">
+          {/* Chart container */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col items-center w-full max-w-[calc(100%-280px)]">
+            <div className="flex items-center w-full mb-4">
+              <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">Average Scoring for each Category</div>
+              {/* Optionally add a small legend or icon here */}
+            </div>
             <ResponsiveContainer width="100%" height={320}>
               <BarChart data={chartData} layout="horizontal" margin={{ left: 10, right: 10, top: 10, bottom: 30 }}>
                 <XAxis dataKey="label" tick={CustomXAxisTick} interval={0} />
@@ -420,58 +538,93 @@ const CounselorDashboard = () => {
                     <Cell key={`cell-${idx}`} fill={entry.sectionColor} />
                   ))}
                 </Bar>
-                {/* Divider lines between sections */}
-                {/* <line x1={573} y1={40} x2={573} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" />
-                <line x1={875} y1={40} x2={875} y2={260} stroke="#2B3E4E" strokeDasharray="4 2" /> */}
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-        {/* The 3 summary cards below in a row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Most Common RIASEC */}
-          <div className="flex flex-col items-center bg-white rounded-xl shadow py-5 px-10 flex flex-col items-center border-t-4 border-[#1D63A1] relative">
-            <UserCheck className="w-8 h-8 text-[#1D63A1] mb-2" />
-            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Common Personality</div>
-            <div className="text-4xl font-extrabold text-[#1D63A1] mb-1">{dashboardInsights.mostCommonRiasec}</div>
-            <div className="text-xs text-gray-400 mb-2">(Top RIASEC code)</div>
-            {/* Short RIASEC description */}
-            <div className="text-xs text-gray-500 text-center">
-              {dashboardInsights.mostCommonRiasec === 'RIA' && 'Realistic, Investigative, Artistic'}
-              {dashboardInsights.mostCommonRiasec === 'SEC' && 'Social, Enterprising, Conventional'}
-              {/* Add more mappings as needed */}
+
+          {/* Small Quick Stats - now fully independent */}
+          <div className='flex flex-col gap-2 w-[235px]'>
+            <div className="flex flex-wrap gap-2 w-[248px] h-auto self-start" style={{ minWidth: '240px' }}>
+              {quickStats.map((stat, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow p-4 flex flex-col items-center border border-gray-100 w-28 h-28 justify-center transition-all duration-200 hover:shadow-lg"
+                  style={{ aspectRatio: '1 / 1' }}
+                >
+                  <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-sm`}>
+                    <div className="text-white">{stat.icon}</div>
+                  </div>
+                  <div className="text-xs text-gray-500 text-center">{stat.name}</div>
+                  <div className="text-lg font-bold text-[#2B3E4E] text-center">{stat.value}</div>
+                </div>
+              ))}
             </div>
-            {/* Percentage of students with this code */}
-            <div className="mt-2 text-xs text-[#1D63A1] font-semibold">
-              {(() => {
-                const total = assessmentResults.length;
-                const codeCount = assessmentResults.filter(r => {
-                  const scores = [
-                    { code: 'R', value: r.realisticScore },
-                    { code: 'I', value: r.investigativeScore },
-                    { code: 'A', value: r.artisticScore },
-                    { code: 'S', value: r.socialScore },
-                    { code: 'E', value: r.enterprisingScore },
-                    { code: 'C', value: r.conventionalScore },
-                  ];
-                  const top3 = scores.sort((a, b) => b.value - a.value).slice(0, 3).map(s => s.code).join('');
-                  return top3 === dashboardInsights.mostCommonRiasec;
-                }).length;
-                return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
-              })()}
+            {/* Most Common RIASEC */}
+            <div className="bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center py-4 px-4 min-h-0 hover:shadow-lg">
+              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-2">
+                <UserCheck className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-xs uppercase text-gray-400 font-semibold mb-0.5 tracking-wider text-center">Most Common Personality</div>
+              <div className="text-2xl font-bold text-[#1D63A1] mb-0.5 text-center">{dashboardInsights.mostCommonRiasec}</div>
+              <div className="text-xs text-gray-400 mb-0.5 text-center">(Top RIASEC code{dashboardInsights.mostCommonCodes && dashboardInsights.mostCommonCodes.length > 1 ? 's' : ''})</div>
+              <div className="text-xs text-gray-500 text-center mb-0.5">
+                {/* Show code descriptions for all most common codes */}
+                {dashboardInsights.mostCommonCodes && dashboardInsights.mostCommonCodes.map((code, idx) => {
+                  const descMap = {
+                    R: 'Realistic',
+                    I: 'Investigative',
+                    A: 'Artistic',
+                    S: 'Social',
+                    E: 'Enterprising',
+                    C: 'Conventional',
+                  };
+                  return <span key={code}>{descMap[code]}{idx < dashboardInsights.mostCommonCodes.length - 1 ? ', ' : ''}</span>;
+                })}
+              </div>
+              <div className="text-xs text-blue-500 font-semibold text-center">
+                {(() => {
+                  // Count how many assessments had each of the most common codes as their highest (including ties)
+                  const total = assessmentResults.length;
+                  const codeCount = assessmentResults.reduce((acc, r) => {
+                    const scores = [
+                      { code: 'R', value: r.realisticScore },
+                      { code: 'I', value: r.investigativeScore },
+                      { code: 'A', value: r.artisticScore },
+                      { code: 'S', value: r.socialScore },
+                      { code: 'E', value: r.enterprisingScore },
+                      { code: 'C', value: r.conventionalScore },
+                    ];
+                    const max = Math.max(...scores.map(s => s.value));
+                    const topCodes = scores.filter(s => s.value === max).map(s => s.code);
+                    // If any of the most common codes is in this assessment's top codes, count it
+                    if (dashboardInsights.mostCommonCodes && dashboardInsights.mostCommonCodes.some(code => topCodes.includes(code))) {
+                      return acc + 1;
+                    }
+                    return acc;
+                  }, 0);
+                  return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
+                })()}
+              </div>
             </div>
           </div>
+        </div>
+        {/* Divider for visual separation */}
+        <div className="w-full h-2" />
+        {/* The 4 summary cards below in a row, modern dashboard style */}
+        <div className="flex flex-row gap-4">
           {/* Most Recommended Careers */}
-          <div className="bg-white rounded-xl shadow py-5 px-10 flex flex-col items-center border-t-4 border-[#1D63A1] relative">
-            <BarChart2 className="w-8 h-8 text-[#1D63A1] mb-2" />
-            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Recommended Careers</div>
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col items-center py-6 px-8 min-h-[170px]">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 mb-3">
+              <BarChart2 className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-xs uppercase text-gray-400 font-semibold mb-1 tracking-wider">Most Recommended Careers</div>
             {dashboardInsights.topCareers.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
             ) : dashboardInsights.topCareers.map((c, i) => {
               const total = allCareerRecommendations.length;
               const percent = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0.0';
               return (
-                <div key={i} className="flex justify-between w-full text-sm font-semibold text-[#1D63A1] items-center mb-1">
+                <div key={i} className="text-left flex justify-between w-full text-sm font-semibold text-cyan-700 items-center mb-1">
                   <span className="flex items-center gap-2">
                     <span className="text-base font-bold">{i + 1}.</span> {c.title}
                   </span>
@@ -481,15 +634,16 @@ const CounselorDashboard = () => {
             })}
           </div>
           {/* Most Recommended Programs */}
-          <div className="bg-white rounded-xl shadow py-5 px-10  flex flex-col items-center border-t-4 border-[#FFB71B] relative">
-            <BookOpen className="w-8 h-8 text-[#FFB71B] mb-2" />
-            <div className="text-xl font-bold text-[#2B3E4E] mb-5">Most Recommended Programs</div>
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col items-center py-6 px-8 min-h-[170px]">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mb-3">
+              <BookOpen className="w-7 h-7 text-white" />
+            </div>
+            <div className="text-xs uppercase text-gray-400 font-semibold mb-1 tracking-wider">Most Recommended Programs</div>
             {dashboardInsights.topPrograms.length === 0 ? (
               <div className="text-gray-400 text-xs">No data</div>
             ) : dashboardInsights.topPrograms.map((p, i) => {
               const total = allProgramRecommendations.length;
               const percent = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0.0';
-              // Find a short description if available
               let desc = '';
               const found = allProgramRecommendations.find(rec => (rec.program?.programName || rec.programName) === p.name);
               if (found && (found.program?.description || found.description)) {
@@ -497,7 +651,7 @@ const CounselorDashboard = () => {
               }
               return (
                 <div key={i} className="flex flex-col w-full mb-1">
-                  <div className="flex justify-between items-center text-sm font-semibold text-[#FFB71B]">
+                  <div className="flex justify-between items-center text-sm font-semibold text-yellow-700">
                     <span className="text-left flex items-center gap-2">
                       <span className="text-base font-bold">{i + 1}.</span> {p.name}
                     </span>
@@ -515,18 +669,11 @@ const CounselorDashboard = () => {
       <header>
         <div className="px-15 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col items-start">
-              <p className="text-2xl font-bold text-[#2B3E4E]">
-                Welcome back, <span className="text-[#1D63A1]">
-                  {counselorUser && counselorUser.firstName ? counselorUser.firstName : "Career Guide"}
-                </span>
-              </p>
-              <div className="flex items-center text-gray-500 mt-1">
-                <Clock className="h-4 w-4 mr-1.5" />
-                <span className="text-xs">{formattedTime}</span>
-                <span className="mx-1.5">•</span>
-                <span className="text-xs">{formattedDate}</span>
-              </div>
+            {/* Selected Assessment Heading */}
+            <div className="text-left my-5">
+              <h2 className="text-1xl font-medium text-[#2B3E4E]">
+                Showing results for: <br/><span className="text-[#FFB71B] text-3xl font-bold">{selectedAssessmentLabel}</span>
+              </h2>
             </div>
 
           {/* Search & Filter Bar */}
@@ -545,12 +692,6 @@ const CounselorDashboard = () => {
       <main className="w-full flex flex-col lg:flex-row gap-8 px-15">
         {/* Main Content Column */}
         <div className="flex-1 min-w-0">
-          {/* Selected Assessment Heading */}
-          <div className="text-left my-5">
-            <h2 className="text-3xl font-bold text-[#1D63A1]">
-              Showing results for: <span className="text-[#FFB71B]">{selectedAssessmentLabel}</span>
-            </h2>
-          </div>
 
           {/* Assessment Results Grid */}
           <AssessmentResultsGrid
@@ -569,28 +710,45 @@ const CounselorDashboard = () => {
 
         {/* Sidebar: Quick Stats + Recent Activity */}
         <aside className="w-full lg:w-72 flex-shrink-0">
-          {/* Small Quick Stats */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            {quickStats.map((stat, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-lg shadow p-3 flex flex-col items-center border border-gray-100"
-              >
-                <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-sm`}>
-                  <div className="text-white">{stat.icon}</div>
-                </div>
-                <div className="text-xs text-gray-500 text-center">{stat.name}</div>
-                <div className="text-lg font-bold text-[#2B3E4E] text-center">{stat.value}</div>
+          {/* Assessment Completion Rate */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-4 animate-fade-in">
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-1">Assessment Completion Rate</h3>
+            <div className="text-2xl font-bold text-green-600 mb-1">{completionRate}%</div>
+            <div className="text-xs text-gray-500 mb-2">{students.length - studentsWithNoResults.length} of {students.length} students completed at least one assessment</div>
+            {studentsWithNoResults.length > 0 && (
+              <div>
+                <div className="text-xs text-gray-400 mb-1">Students with no results:</div>
+                <ul className="max-h-20 overflow-y-auto text-xs text-gray-700">
+                  {studentsWithNoResults.map((student, idx) => (
+                    <li key={getUserId(student) || idx} className="mb-1 truncate">{student.firstName} {student.lastName || student.lastname}</li>
+                  ))}
+                </ul>
               </div>
-            ))}
+            )}
           </div>
+
+          {/* Students Needing Attention */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-4 animate-fade-in">
+            <h3 className="text-base font-bold text-[#B91C1C] mb-1">Students Needing Attention</h3>
+            {studentsNeedingAttention.length === 0 ? (
+              <div className="text-gray-400 text-xs">No students need attention!</div>
+            ) : (
+              <ul className="max-h-20 overflow-y-auto text-xs text-gray-700">
+                {studentsNeedingAttention.map((student, idx) => (
+                  <li key={userIdMap(student) || idx} className="mb-1 truncate">{student.firstName} {student.lastName || student.lastname}</li>
+                ))}
+              </ul>
+            )}
+            <div className="text-[10px] text-gray-400 mt-1">Includes students with no results or low scores (&lt; 50)</div>
+          </div>
+
           {/* Recent Activity */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 animate-fade-in max-h-[340px] overflow-y-auto">
             <h3 className="text-base font-bold text-[#2B3E4E] mb-3">Recent Activity</h3>
             <div className="space-y-2">
               {recentActivities.length === 0 ? (
                 <div className="flex flex-col items-center py-4">
-                  <img src="/src/assets/Students.png" alt="No activity" className="w-12 mb-1 opacity-80 animate-fade-in" />
+                  <img src="/src/assets/characters/lazy.svg" alt="No activity" className="w-12 mb-1 opacity-80 animate-fade-in" />
                   <div className="text-gray-400 text-xs text-center">No recent activity yet.</div>
                 </div>
               ) : recentActivities.map((activity, idx) => {
@@ -601,9 +759,9 @@ const CounselorDashboard = () => {
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">
                       {user.firstName?.[0]}{user.lastName?.[0]}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="truncate font-medium text-xs text-gray-800">{user.firstName} {user.lastName}</div>
-                      <div className="truncate text-[11px] text-gray-500">{assessment.title}</div>
+                    <div className="flext-start flex-1 min-w-0">
+                      <div className="text-left truncate font-medium text-xs text-gray-800">{user.firstName} {user.lastName}</div>
+                      <div className="text-left truncate text-[11px] text-gray-500">{assessment.title}</div>
                     </div>
                     <div className="text-[10px] text-gray-400 whitespace-nowrap">{activity.userAssessment?.dateCompleted ? new Date(activity.userAssessment.dateCompleted).toLocaleDateString() : ''}</div>
                   </div>
