@@ -2,6 +2,7 @@ package edu.cit.futureu.entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +18,12 @@ public class SchoolProgramEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int schoolProgramId;
+
+    @Column(name = "school_program_url", length = 512)
+    private String schoolProgramURL;
+
+    @Column(name = "school_program_url_type", length = 32)
+    private String schoolProgramURLType;
 
     // Many-to-one relationship with School
     @ManyToOne
@@ -45,6 +52,14 @@ public class SchoolProgramEntity {
         this.schoolProgramId = schoolProgramId;
     }
 
+    public String getSchoolProgramURL() {
+        return schoolProgramURL;
+    }
+
+    public void setSchoolProgramURL(String schoolProgramURL) {
+        this.schoolProgramURL = schoolProgramURL;
+    }
+
     public SchoolEntity getSchool() {
         return school;
     }
@@ -67,5 +82,13 @@ public class SchoolProgramEntity {
 
     public void setAccreditation(AccreditationEntity accreditation) {
         this.accreditation = accreditation;
+    }
+
+    public String getSchoolProgramURLType() {
+        return schoolProgramURLType;
+    }
+
+    public void setSchoolProgramURLType(String schoolProgramURLType) {
+        this.schoolProgramURLType = schoolProgramURLType;
     }
 }
