@@ -100,3 +100,16 @@ export const deleteRecommendation = (recommendationId) => {
     throw error;
   }
 };
+
+/**
+ * Fetch all career recommendations (admin/counselor dashboard aggregate)
+ * @returns {Promise} - Axios response promise with array of all career recommendations
+ */
+export const fetchAllCareerRecommendations = () => {
+  try {
+    return apiClient.get('/recommendation/getAllCareerRecommendations');
+  } catch (error) {
+    console.error('Error fetching all career recommendations:', error);
+    throw error;
+  }
+};

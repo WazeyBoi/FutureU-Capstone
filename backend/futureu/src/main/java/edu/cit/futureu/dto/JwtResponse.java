@@ -6,12 +6,14 @@ public class JwtResponse {
     private int id;
     private String email;
     private String role;
+    private String firstName; // Add this line
 
-    public JwtResponse(String accessToken, int id, String email, String role) {
+    public JwtResponse(String accessToken, int id, String email, String role, String firstName) {
         this.token = accessToken;
         this.id = id;
         this.email = email;
         this.role = role;
+        this.firstName = firstName;
     }
 
     // Getters and Setters
@@ -53,5 +55,13 @@ public class JwtResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 }

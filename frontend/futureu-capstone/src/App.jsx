@@ -44,6 +44,7 @@ import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
+import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 
 // Add any other admin CRUD components you need
 
@@ -270,6 +271,11 @@ function App() {
         <Route path="/counselor-dashboard" element={
           <CounselorRoute>
             <CounselorDashboard />
+          </CounselorRoute>
+        } />
+        <Route path="/counselor/student-report" element={
+          <CounselorRoute>
+            <StudentReportPage />
           </CounselorRoute>
         } />
         

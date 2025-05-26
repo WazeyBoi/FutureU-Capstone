@@ -66,4 +66,8 @@ public class ProgramRecommendationService {
         pre.setConfidenceScore(confidence);
         return programRecommendationRepository.save(pre);
     }
+
+    public List<ProgramRecommendationEntity> getAllProgramRecommendations() {
+        return programRecommendationRepository.findAll();
+    }
 }

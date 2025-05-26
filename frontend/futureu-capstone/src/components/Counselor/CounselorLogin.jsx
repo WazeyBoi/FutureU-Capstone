@@ -27,11 +27,11 @@ const CounselorLogin = () => {
     try {
       const userData = await authService.signin(email, password);
       
-      // Check if user has career guidance role (case-insensitive)
+      // Check if user has guidance counselor role (case-insensitive)
       const role = authService.getUserRole();
 
-      if (!role || role.toUpperCase() !== 'CAREER_GUIDANCE') {
-        setError('Access denied. Career Guidance privileges required.');
+      if (!role || role.toUpperCase() !== 'GUIDANCE_COUNSELOR') {
+        setError('Access denied. Guidance Counselor privileges required.');
         customSignout(); // Use custom signout without redirect
         setLoading(false);
         return;

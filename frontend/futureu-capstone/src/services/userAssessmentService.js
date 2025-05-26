@@ -265,6 +265,20 @@ class UserAssessmentService {
   }
 
   /**
+   * Get all assessment results (for admin/counselor dashboard)
+   * @returns {Promise<Array>} - List of all assessment results
+   */
+  async getAllAssessmentResults() {
+    try {
+      const response = await apiClient.get('/assessment-results/getAllAssessmentResults');
+      return response.data;
+    } catch (error) {
+      this.handleError(error, 'Fetching all assessment results');
+      throw error;
+    }
+  }
+
+  /**
    * Centralized error handling
    * @param {Error} error - The error object
    * @param {string} context - Context where the error occurred

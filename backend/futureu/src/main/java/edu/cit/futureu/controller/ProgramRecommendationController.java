@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/program-recommendation")
@@ -52,5 +55,10 @@ public class ProgramRecommendationController {
     public ResponseEntity<Void> delete(@PathVariable int id) {
         programRecommendationService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/getAllProgramRecommendations")
+    public List<ProgramRecommendationEntity> getAllProgramRecommendations() {
+        return programRecommendationService.getAllProgramRecommendations();
     }
 }
