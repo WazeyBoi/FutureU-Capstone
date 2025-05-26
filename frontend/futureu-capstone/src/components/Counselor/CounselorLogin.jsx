@@ -129,7 +129,7 @@ const CounselorLogin = () => {
                     className="pl-12 pr-14 w-full py-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
                     placeholder="••••••••"
                   />
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <div className="absolute inset-y-0 right-2.5 pr-3 flex items-center pointer-events-none">
                     <button
                       type="button"
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none pointer-events-auto bg-transparent"
