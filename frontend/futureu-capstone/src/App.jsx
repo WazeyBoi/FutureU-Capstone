@@ -6,7 +6,7 @@ import AccreditationSection from './components/AccreditationSection.jsx';
 import VirtualCampusToursPage from './components/VirtualCampusToursPage.jsx';
 import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
-import CareerPathways from './components/CareerPathways.jsx';
+import CareerPathways from './components/CareerPathways/CareerPathways';
 import Testimonials from './components/Testimonials.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
