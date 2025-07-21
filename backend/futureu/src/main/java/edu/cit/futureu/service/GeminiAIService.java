@@ -159,13 +159,13 @@ public class GeminiAIService {
         promptBuilder.append("- Arts and Design Track: ").append(assessmentResult.getArtsDesignTrackScore()).append("\n\n");
         
         // RIASEC Interest Scores
-        promptBuilder.append("INTEREST AREAS (RIASEC):\n");
-        promptBuilder.append("- Realistic (Hands-on, mechanical): ").append(assessmentResult.getRealisticScore()).append("\n");
-        promptBuilder.append("- Investigative (Analytical, intellectual): ").append(assessmentResult.getInvestigativeScore()).append("\n");
-        promptBuilder.append("- Artistic (Creative, original): ").append(assessmentResult.getArtisticScore()).append("\n");
-        promptBuilder.append("- Social (Helping, teaching): ").append(assessmentResult.getSocialScore()).append("\n");
-        promptBuilder.append("- Enterprising (Persuading, leading): ").append(assessmentResult.getEnterprisingScore()).append("\n");
-        promptBuilder.append("- Conventional (Organizing, detail-oriented): ").append(assessmentResult.getConventionalScore()).append("\n\n");
+        promptBuilder.append("INTEREST AREAS (RIASEC) - Based on 60 total interest questions:\n");
+        promptBuilder.append("- Realistic (Hands-on, mechanical): ").append(assessmentResult.getRealisticScore()).append(" agree responses\n");
+        promptBuilder.append("- Investigative (Analytical, intellectual): ").append(assessmentResult.getInvestigativeScore()).append(" agree responses\n");
+        promptBuilder.append("- Artistic (Creative, original): ").append(assessmentResult.getArtisticScore()).append(" agree responses\n");
+        promptBuilder.append("- Social (Helping, teaching): ").append(assessmentResult.getSocialScore()).append(" agree responses\n");
+        promptBuilder.append("- Enterprising (Persuading, leading): ").append(assessmentResult.getEnterprisingScore()).append(" agree responses\n");
+        promptBuilder.append("- Conventional (Organizing, detail-oriented): ").append(assessmentResult.getConventionalScore()).append(" agree responses\n\n");
         
         // Section-specific results
         promptBuilder.append("SECTION RESULTS:\n");

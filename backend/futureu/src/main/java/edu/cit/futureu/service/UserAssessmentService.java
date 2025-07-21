@@ -600,7 +600,7 @@ public class UserAssessmentService {
         }
         
         // Set RIASEC scores - each subsection score is simply the count of "agree" responses
-        // (out of 7 possible statements for each RIASEC type)
+        // from the 60 total interest questions distributed across the 6 RIASEC types
         result.setRealisticScore((double) combinedRiasecAgreeResponses.getOrDefault("realistic", 0));
         result.setInvestigativeScore((double) combinedRiasecAgreeResponses.getOrDefault("investigative", 0));
         result.setArtisticScore((double) combinedRiasecAgreeResponses.getOrDefault("artistic", 0));
@@ -609,9 +609,9 @@ public class UserAssessmentService {
         result.setConventionalScore((double) combinedRiasecAgreeResponses.getOrDefault("conventional", 0));
         
         // Calculate total RIASEC score as a percentage of total possible points
-        // (assuming 7 questions per type × 6 types = 42 total possible points)
+        // (60 total interest questions distributed across 6 RIASEC types)
         int totalAgreeCount = combinedRiasecAgreeResponses.values().stream().mapToInt(Integer::intValue).sum();
-        double maxPossibleScore = 42.0; // 7 questions × 6 RIASEC types
+        double maxPossibleScore = 60.0; // 60 total interest questions
         double riasecPercentageScore = (totalAgreeCount / maxPossibleScore) * 100;
         result.setInterestAreaScore(riasecPercentageScore);
         
