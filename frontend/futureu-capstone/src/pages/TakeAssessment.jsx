@@ -47,9 +47,11 @@ const TakeAssessment = () => {
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [sectionList, setSectionList] = useState([]);
   
-  // New state for tracking elapsed time (in seconds)
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [startTime, setStartTime] = useState(null); // Initialize to null instead of Date.now()
+  // Quiz timer state (countdown timer for quiz sections only)
+  const [quizTimeRemaining, setQuizTimeRemaining] = useState(null);
+  const [quizStartTime, setQuizStartTime] = useState(null);
+  const [isInQuizSection, setIsInQuizSection] = useState(false);
+  const [quizTimerActive, setQuizTimerActive] = useState(false);
   
   // Reference to the assessment section container
   const sectionRef = useRef(null);
@@ -79,7 +81,34 @@ const TakeAssessment = () => {
   // Add state to store the last submitted userAssessmentId
   const [lastUserAssessmentId, setLastUserAssessmentId] = useState(null);
 
-  // Timer logic for countdown timer (if time limit exists)
+  // Helper function to check if a section is a quiz section (not Interest Assessment)
+  const isQuizSection = (sectionId) => {
+    return sectionId !== 'interest-combined' && !sectionId.includes('interest');
+  };
+
+  // Quiz timer logic - countdown timer for quiz sections only
+  useEffect(() => {
+    let timer = null;
+    
+    if (quizTimerActive && quizTimeRemaining !== null && quizTimeRemaining > 0 && !completed) {
+      timer = setInterval(() => {
+        setQuizTimeRemaining(prev => {
+          if (prev <= 1) {
+            // Time's up! Auto-submit the assessment
+            handleComplete();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [quizTimerActive, quizTimeRemaining, completed]);
+
+  // Original timer logic for overall assessment (if endTime exists)
   useEffect(() => {
     let timer = null;
     
@@ -105,32 +134,47 @@ const TakeAssessment = () => {
     };
   }, [assessment, completed]);
   
-  // New effect for elapsed time counter - only start when loading is complete
+  // Effect to handle quiz timer start/stop based on current section
   useEffect(() => {
-    // Only start counting when loading is done and not completed
-    if (!loading && !completed) {
-      // Set the start time when loading completes
-      if (!startTime) {
-        setStartTime(Date.now());
+    if (sectionList.length > 0 && currentSection < sectionList.length) {
+      const currentSectionData = sectionList[currentSection];
+      const isCurrentlyInQuizSection = isQuizSection(currentSectionData?.id);
+      
+      setIsInQuizSection(isCurrentlyInQuizSection);
+      
+      // Start quiz timer when entering first quiz section
+      if (isCurrentlyInQuizSection && !quizTimerActive && quizTimeRemaining === null) {
+        // Set quiz time limit (example: 90 minutes = 5400 seconds for all quiz sections combined)
+        const QUIZ_TIME_LIMIT = 90 * 60; // 90 minutes in seconds
+        setQuizTimeRemaining(QUIZ_TIME_LIMIT);
+        setQuizStartTime(Date.now());
+        setQuizTimerActive(true);
+        console.log(`Quiz timer started - ${QUIZ_TIME_LIMIT} seconds (90 minutes) for all quiz sections`);
       }
       
-      const elapsedTimer = setInterval(() => {
-        // Calculate elapsed time from start time
-        if (startTime) {
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          setElapsedTime(elapsed);
-        }
-      }, 1000);
+      // Stop quiz timer when entering Interest Assessment
+      if (!isCurrentlyInQuizSection && quizTimerActive) {
+        setQuizTimerActive(false);
+        console.log('Quiz timer paused - entered Interest Assessment');
+      }
       
-      // Clean up the timer when component unmounts or assessment completes
-      return () => {
-        clearInterval(elapsedTimer);
-      };
+      // Resume quiz timer when returning to quiz sections
+      if (isCurrentlyInQuizSection && !quizTimerActive && quizTimeRemaining !== null) {
+        setQuizTimerActive(true);
+        console.log('Quiz timer resumed - returned to quiz section');
+      }
     }
-  }, [loading, completed, startTime]);
+  }, [currentSection, sectionList, quizTimerActive, quizTimeRemaining]);
 
-  // Format time as hh:mm:ss for elapsed time
-  const formatElapsedTime = (seconds) => {
+  // Format time as mm:ss for countdown timers
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format quiz time with hours if needed
+  const formatQuizTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -140,13 +184,6 @@ const TakeAssessment = () => {
     } else {
       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
-  };
-  
-  // Existing format time function for countdown timer
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Load assessment data with a check for existing progress first
@@ -219,7 +256,8 @@ const TakeAssessment = () => {
               id: 'gsa-scientific',
               title: 'Scientific Ability',
               description: 'Test your scientific knowledge and reasoning abilities',
-              questions: questionsData.gsa.scientificAbility
+              questions: questionsData.gsa.scientificAbility,
+              isQuizSection: true
             });
             initialIndices['gsa-scientific'] = 0;
           }
@@ -229,7 +267,8 @@ const TakeAssessment = () => {
               id: 'gsa-reading',
               title: 'Reading Comprehension',
               description: 'Assess your ability to understand and interpret written materials',
-              questions: questionsData.gsa.readingComprehension
+              questions: questionsData.gsa.readingComprehension,
+              isQuizSection: true
             });
             initialIndices['gsa-reading'] = 0;
           }
@@ -239,7 +278,8 @@ const TakeAssessment = () => {
               id: 'gsa-verbal',
               title: 'Verbal Ability',
               description: 'Evaluate your command of language and verbal reasoning',
-              questions: questionsData.gsa.verbalAbility
+              questions: questionsData.gsa.verbalAbility,
+              isQuizSection: true
             });
             initialIndices['gsa-verbal'] = 0;
           }
@@ -249,7 +289,8 @@ const TakeAssessment = () => {
               id: 'gsa-math',
               title: 'Mathematical Ability',
               description: 'Test your mathematical skills and numerical reasoning',
-              questions: questionsData.gsa.mathematicalAbility
+              questions: questionsData.gsa.mathematicalAbility,
+              isQuizSection: true
             });
             initialIndices['gsa-math'] = 0;
           }
@@ -259,7 +300,8 @@ const TakeAssessment = () => {
               id: 'gsa-logical',
               title: 'Logical Reasoning',
               description: 'Assess your ability to analyze and solve logical problems',
-              questions: questionsData.gsa.logicalReasoning
+              questions: questionsData.gsa.logicalReasoning,
+              isQuizSection: true
             });
             initialIndices['gsa-logical'] = 0;
           }
@@ -270,7 +312,8 @@ const TakeAssessment = () => {
               id: 'at-stem',
               title: 'STEM',
               description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
-              questions: questionsData.academicTrack.stem
+              questions: questionsData.academicTrack.stem,
+              isQuizSection: true
             });
             initialIndices['at-stem'] = 0;
           }
@@ -280,7 +323,8 @@ const TakeAssessment = () => {
               id: 'at-abm',
               title: 'ABM',
               description: 'Accountancy, Business, and Management aptitude assessment',
-              questions: questionsData.academicTrack.abm
+              questions: questionsData.academicTrack.abm,
+              isQuizSection: true
             });
             initialIndices['at-abm'] = 0;
           }
@@ -290,7 +334,8 @@ const TakeAssessment = () => {
               id: 'at-humss',
               title: 'HUMSS',
               description: 'Humanities and Social Sciences aptitude assessment',
-              questions: questionsData.academicTrack.humss
+              questions: questionsData.academicTrack.humss,
+              isQuizSection: true
             });
             initialIndices['at-humss'] = 0;
           }
@@ -301,7 +346,8 @@ const TakeAssessment = () => {
               id: 'track-tech',
               title: 'Techno-Vocational Livelihood',
               description: 'Assess your aptitude for technical and vocational fields',
-              questions: questionsData.otherTracks.techVoc
+              questions: questionsData.otherTracks.techVoc,
+              isQuizSection: true
             });
             initialIndices['track-tech'] = 0;
           }
@@ -311,7 +357,8 @@ const TakeAssessment = () => {
               id: 'track-sports',
               title: 'Sports Track',
               description: 'Evaluate your sports aptitude and interests',
-              questions: questionsData.otherTracks.sports
+              questions: questionsData.otherTracks.sports,
+              isQuizSection: true
             });
             initialIndices['track-sports'] = 0;
           }
@@ -321,7 +368,8 @@ const TakeAssessment = () => {
               id: 'track-arts',
               title: 'Arts & Design Track',
               description: 'Assess your creative abilities and artistic aptitude',
-              questions: questionsData.otherTracks.artsDesign
+              questions: questionsData.otherTracks.artsDesign,
+              isQuizSection: true
             });
             initialIndices['track-arts'] = 0;
           }
@@ -366,7 +414,6 @@ const TakeAssessment = () => {
   // Handler for resuming saved progress from modal
   const handleResumeAssessment = () => {
     const existingProgress = resumeData;
-    let shouldLoadNewQuestions = false;
 
     // If we have saved sections with questions, use those instead of fetching new ones
     if (existingProgress.savedSections) {
@@ -391,10 +438,18 @@ const TakeAssessment = () => {
       setCurrentSection(existingProgress.currentSectionIndex);
     }
 
-    // Set the saved elapsed time if available
-    if (existingProgress.timeSpentSeconds) {
-      setElapsedTime(existingProgress.timeSpentSeconds);
-      setStartTime(Date.now() - (existingProgress.timeSpentSeconds * 1000));
+    // Restore quiz timer state if it was active
+    if (existingProgress.quizTimeRemaining && existingProgress.quizTimeRemaining > 0) {
+      setQuizTimeRemaining(existingProgress.quizTimeRemaining);
+      setQuizStartTime(Date.now() - ((90 * 60) - existingProgress.quizTimeRemaining) * 1000); // Calculate original start time
+      
+      // Check if current section is a quiz section to determine if timer should be active
+      const savedSectionList = JSON.parse(existingProgress.savedSections);
+      const currentSectionData = savedSectionList[existingProgress.currentSectionIndex];
+      if (currentSectionData && isQuizSection(currentSectionData.id)) {
+        setQuizTimerActive(true);
+        setIsInQuizSection(true);
+      }
     }
 
     // Set the attempt number from the existing progress
@@ -437,7 +492,8 @@ const TakeAssessment = () => {
           id: 'gsa-scientific',
           title: 'Scientific Ability',
           description: 'Test your scientific knowledge and reasoning abilities',
-          questions: questionsData.gsa.scientificAbility
+          questions: questionsData.gsa.scientificAbility,
+          isQuizSection: true
         });
         initialIndices['gsa-scientific'] = 0;
       }
@@ -447,7 +503,8 @@ const TakeAssessment = () => {
           id: 'gsa-reading',
           title: 'Reading Comprehension',
           description: 'Assess your ability to understand and interpret written materials',
-          questions: questionsData.gsa.readingComprehension
+          questions: questionsData.gsa.readingComprehension,
+          isQuizSection: true
         });
         initialIndices['gsa-reading'] = 0;
       }
@@ -457,7 +514,8 @@ const TakeAssessment = () => {
           id: 'gsa-verbal',
           title: 'Verbal Ability',
           description: 'Evaluate your command of language and verbal reasoning',
-          questions: questionsData.gsa.verbalAbility
+          questions: questionsData.gsa.verbalAbility,
+          isQuizSection: true
         });
         initialIndices['gsa-verbal'] = 0;
       }
@@ -467,7 +525,8 @@ const TakeAssessment = () => {
           id: 'gsa-math',
           title: 'Mathematical Ability',
           description: 'Test your mathematical skills and numerical reasoning',
-          questions: questionsData.gsa.mathematicalAbility
+          questions: questionsData.gsa.mathematicalAbility,
+          isQuizSection: true
         });
         initialIndices['gsa-math'] = 0;
       }
@@ -477,7 +536,8 @@ const TakeAssessment = () => {
           id: 'gsa-logical',
           title: 'Logical Reasoning',
           description: 'Assess your ability to analyze and solve logical problems',
-          questions: questionsData.gsa.logicalReasoning
+          questions: questionsData.gsa.logicalReasoning,
+          isQuizSection: true
         });
         initialIndices['gsa-logical'] = 0;
       }
@@ -488,7 +548,8 @@ const TakeAssessment = () => {
           id: 'at-stem',
           title: 'STEM',
           description: 'Science, Technology, Engineering, and Mathematics aptitude assessment',
-          questions: questionsData.academicTrack.stem
+          questions: questionsData.academicTrack.stem,
+          isQuizSection: true
         });
         initialIndices['at-stem'] = 0;
       }
@@ -498,7 +559,8 @@ const TakeAssessment = () => {
           id: 'at-abm',
           title: 'ABM',
           description: 'Accountancy, Business, and Management aptitude assessment',
-          questions: questionsData.academicTrack.abm
+          questions: questionsData.academicTrack.abm,
+          isQuizSection: true
         });
         initialIndices['at-abm'] = 0;
       }
@@ -508,7 +570,8 @@ const TakeAssessment = () => {
           id: 'at-humss',
           title: 'HUMSS',
           description: 'Humanities and Social Sciences aptitude assessment',
-          questions: questionsData.academicTrack.humss
+          questions: questionsData.academicTrack.humss,
+          isQuizSection: true
         });
         initialIndices['at-humss'] = 0;
       }
@@ -519,7 +582,8 @@ const TakeAssessment = () => {
           id: 'track-tech',
           title: 'Techno-Vocational Livelihood',
           description: 'Assess your aptitude for technical and vocational fields',
-          questions: questionsData.otherTracks.techVoc
+          questions: questionsData.otherTracks.techVoc,
+          isQuizSection: true
         });
         initialIndices['track-tech'] = 0;
       }
@@ -529,7 +593,8 @@ const TakeAssessment = () => {
           id: 'track-sports',
           title: 'Sports Track',
           description: 'Evaluate your sports aptitude and interests',
-          questions: questionsData.otherTracks.sports
+          questions: questionsData.otherTracks.sports,
+          isQuizSection: true
         });
         initialIndices['track-sports'] = 0;
       }
@@ -539,7 +604,8 @@ const TakeAssessment = () => {
           id: 'track-arts',
           title: 'Arts & Design Track',
           description: 'Assess your creative abilities and artistic aptitude',
-          questions: questionsData.otherTracks.artsDesign
+          questions: questionsData.otherTracks.artsDesign,
+          isQuizSection: true
         });
         initialIndices['track-arts'] = 0;
       }
@@ -569,8 +635,12 @@ const TakeAssessment = () => {
 
       setUserAnswers({});
       setCurrentSection(0);
-      setElapsedTime(0);
-      setStartTime(null);
+      
+      // Reset quiz timer states
+      setQuizTimeRemaining(null);
+      setQuizStartTime(null);
+      setIsInQuizSection(false);
+      setQuizTimerActive(false);
 
       setLoading(false);
     } catch (err) {
@@ -737,8 +807,7 @@ const TakeAssessment = () => {
     try {
       setSubmitting(true);
       
-      // Track final elapsed time when completing the assessment
-      const finalElapsedTime = Math.floor((Date.now() - startTime) / 1000);
+      console.log('Assessment completed');
       
       // Transform answers into the format expected by the backend
       const formattedAnswers = Object.keys(userAnswers).map(questionId => ({
@@ -747,16 +816,15 @@ const TakeAssessment = () => {
       }));
       
       // Get the current logged-in user ID
-      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      const userId = getCurrentUserId();
       
-      // Create submission payload including sections, elapsed time, and attempt number
+      // Create submission payload including sections and attempt number
       const payload = {
         userId: userId,
         assessmentId: parseInt(assessmentId),
         answers: formattedAnswers,
         sections: JSON.stringify(sectionList),
-        elapsedTime: finalElapsedTime,
-        attemptNo: attemptNo // Include the attempt number in the payload
+        attemptNo: attemptNo
       };
       
       // Submit the complete assessment for scoring
@@ -805,9 +873,9 @@ const TakeAssessment = () => {
       const progressPercentage = Math.round((progress.completed / progress.total) * 100);
       
       // Get the current logged-in user ID
-      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      const userId = getCurrentUserId();
       
-      // Create payload with current state, including sections with questions and elapsed time
+      // Create payload with current state, including quiz timer state
       const payload = {
         userId: userId,
         assessmentId: parseInt(assessmentId),
@@ -817,9 +885,9 @@ const TakeAssessment = () => {
         // Add the complete section list with questions to ensure the same questions 
         // and order are presented when the user resumes
         savedSections: JSON.stringify(sectionList),
-        // Include elapsed time in seconds
-        elapsedTime: elapsedTime,
-        attemptNo: attemptNo // Include the attempt number in the payload
+        // Save quiz timer state if active
+        quizTimeRemaining: quizTimeRemaining,
+        attemptNo: attemptNo
       };
       
       // Call API to save progress using the service
@@ -1099,26 +1167,31 @@ const TakeAssessment = () => {
                 )}
               </button>
               
-              {/* Elapsed time indicator */}
-              <div className="mt-2 sm:mt-0 bg-[#1D63A1]/10 px-4 py-2 rounded-lg text-[#1D63A1] flex shadow-sm">
-                <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  {/* Replaced invalid path with valid Heroicons clock icon */}
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-sm font-medium">
-                  Time elapsed: {formatElapsedTime(elapsedTime)}
-                </span>
-              </div>
-              
-              {/* Remaining time (if applicable) */}
-              {timeRemaining && (
-                <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
+              {/* Quiz timer countdown (only show when in quiz sections and timer is active) */}
+              {isInQuizSection && quizTimeRemaining !== null && (
+                <div className={`mt-2 sm:mt-0 px-4 py-2 rounded-lg flex shadow-sm ${
+                  quizTimeRemaining <= 300 ? 'bg-red-100 text-red-700' : 
+                  quizTimeRemaining <= 900 ? 'bg-yellow-100 text-yellow-700' : 
+                  'bg-[#232D35] text-[#FFB71B]'
+                }`}>
                   <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    {/* Replaced invalid path with valid Heroicons clock icon */}
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-sm font-medium">
-                    Time remaining: {formatTime(timeRemaining)}
+                    Quiz time: {formatQuizTime(quizTimeRemaining)}
+                    {!quizTimerActive && ' (paused)'}
+                  </span>
+                </div>
+              )}
+              
+              {/* Overall assessment time limit (if applicable) */}
+              {timeRemaining && (
+                <div className="mt-2 sm:mt-0 bg-[#232D35] px-4 py-2 rounded-full text-[#FFB71B] flex shadow-sm">
+                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    Total time: {formatTime(timeRemaining)}
                   </span>
                 </div>
               )}
@@ -1241,6 +1314,8 @@ const TakeAssessment = () => {
                   });
                 }}
                 getCurrentPage={() => assessmentSectionRef.current?._currentPage || 1}
+                isInQuizSection={isInQuizSection}
+                quizTimeRemaining={quizTimeRemaining}
               />
             </motion.div>
           </AnimatePresence>
@@ -1283,7 +1358,8 @@ const TakeAssessment = () => {
                   <li>You can navigate between sections using the panel on the left.</li>
                   <li>Use the "Save & Exit" button to save your progress and return later.</li>
                   <li>Click "Complete Assessment" on the final question to submit all your answers.</li>
-                  <li>Elapsed Time, is shown at the top of the screen.</li>
+                  <li><strong>Quiz sections have a 90-minute time limit</strong> - manage your time wisely!</li>
+                  <li>Interest Assessment section is untimed - take your time to reflect on your preferences.</li>
                 </ul>
                 <button
                   onClick={() => setShowAssessmentTips(false)}

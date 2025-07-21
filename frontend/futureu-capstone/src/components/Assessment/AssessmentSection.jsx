@@ -19,6 +19,8 @@ const AssessmentSection = forwardRef(({
   currentSection = 0,
   pageOverride,
   onPageOverrideHandled,
+  isInQuizSection = false,
+  quizTimeRemaining = null,
 }, ref) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -211,6 +213,38 @@ const AssessmentSection = forwardRef(({
             </span>
           </div>
         </div>
+        
+        {/* Quiz timer indicator for quiz sections */}
+        {isInQuizSection && quizTimeRemaining !== null && (
+          <div className={`mt-3 flex items-center px-4 py-2 rounded-lg border ${
+            quizTimeRemaining <= 300 ? 'bg-red-50 border-red-200' : 
+            quizTimeRemaining <= 900 ? 'bg-yellow-50 border-yellow-200' : 
+            'bg-blue-50 border-blue-200'
+          }`}>
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className={`text-sm font-medium ${
+              quizTimeRemaining <= 300 ? 'text-red-700' : 
+              quizTimeRemaining <= 900 ? 'text-yellow-700' : 
+              'text-blue-700'
+            }`}>
+              ⏱️ Quiz sections time limit: {Math.floor(quizTimeRemaining / 60)}:{(quizTimeRemaining % 60).toString().padStart(2, '0')} remaining
+            </span>
+          </div>
+        )}
+        
+        {/* Untimed section indicator for Interest Assessment */}
+        {!isInQuizSection && title === 'Interest Assessment' && (
+          <div className="mt-3 flex items-center bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+            <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-green-700 font-medium">
+              ✨ This section is untimed - Take your time to reflect on your genuine interests and preferences.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Questions Pagination Info */}
