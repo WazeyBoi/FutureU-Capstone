@@ -28,7 +28,7 @@ const CareerProgramsModal = ({
                         </div>
                     </div>
                     <button
-                        className="absolute top-4 right-4 bg-black !text-white hover:bg-gray-800 p-1.5 rounded-full transition-colors shadow-md border border-white/20"
+                        className="absolute top-4 right-4 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 p-1.5 rounded-full transition-colors shadow-lg border border-gray-200"
                         onClick={() => setShowProgramsModal(false)}
                         aria-label="Close"
                     >
