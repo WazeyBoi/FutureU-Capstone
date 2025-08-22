@@ -1,17 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 
 const CounselorRoute = ({ children }) => {
   const location = useLocation();
-  const isAuthenticated = authService.isAuthenticated();
-  const userRole = authService.getUserRole();
+  const [authState, setAuthState] = useState({ loading: true, isAuthenticated: false, userRole: null });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const isAuthenticated = await authService.isAuthenticated();
+        if (isAuthenticated) {
+          const userRole = await authService.getUserRole();
+          setAuthState({ loading: false, isAuthenticated: true, userRole });
+        } else {
+          setAuthState({ loading: false, isAuthenticated: false, userRole: null });
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        setAuthState({ loading: false, isAuthenticated: false, userRole: null });
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  if (authState.loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
   
-  if (!isAuthenticated) {
+  if (!authState.isAuthenticated) {
     return <Navigate to="/counselor/login" state={{ from: location.pathname }} />;
   }
   
-  if (userRole !== 'GUIDANCE_COUNSELOR' && userRole !== 'CAREER_COUNSELOR' && userRole !== 'ADMIN') {
+  if (authState.userRole !== 'GUIDANCE_COUNSELOR' && authState.userRole !== 'CAREER_COUNSELOR' && authState.userRole !== 'ADMIN') {
     return <Navigate to="/unauthorized" />;
   }
 
