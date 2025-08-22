@@ -220,14 +220,12 @@ class UserAssessmentService {
       const response = await apiClient.get(`/assessment-results/user-assessment/${userAssessmentId}`);
       return response.data;
     } catch (error) {
-      // If token expired (401), try to refresh the token and retry the request
+      // If token expired (401), user needs to login again
       if (error.response && error.response.status === 401) {
-        const refreshed = await authService.refreshToken();
-        if (refreshed) {
-          // Retry the request with the new token
-          const response = await apiClient.get(`/assessment-results/user-assessment/${userAssessmentId}`);
-          return response.data;
-        }
+        // Clear user data and redirect to login
+        localStorage.removeItem('futureu_user');
+        window.location.href = '/login';
+        return null;
       }
       
       this.handleError(error, 'Fetching assessment results');
@@ -249,14 +247,12 @@ class UserAssessmentService {
       // Adjust the status check based on your actual data structure
       return response.data.filter(assessment => assessment.status === "COMPLETED");
     } catch (error) {
-      // If token expired (401), try to refresh the token and retry the request
+      // If token expired (401), user needs to login again
       if (error.response && error.response.status === 401) {
-        const refreshed = await authService.refreshToken();
-        if (refreshed) {
-          // Retry the request with the new token
-          const response = await apiClient.get(`/userassessment/getUserAssessmentsByUser/${userId}`);
-          return response.data.filter(assessment => assessment.status === "COMPLETED");
-        }
+        // Clear user data and redirect to login
+        localStorage.removeItem('futureu_user');
+        window.location.href = '/login';
+        return null;
       }
       
       this.handleError(error, 'Fetching completed assessments');

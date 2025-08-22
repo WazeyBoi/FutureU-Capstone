@@ -8,7 +8,7 @@ class AuthService {
     try {
       const response = await apiClient.post('/auth/signin', { email, password });
       if (response.data.token) {
-        localStorage.setItem(TOKEN_KEY, response.data.token);
+        // Store user data only (not the token, as it's now in HttpOnly cookie)
         const userData = {
           id: response.data.id,
           email: response.data.email,
@@ -41,8 +41,7 @@ class AuthService {
    */
 
   signout() {
-    // Clean up all user-specific data to prevent access by next user
-    localStorage.removeItem(TOKEN_KEY);
+    // Clean up all user-specific data from local storage
     localStorage.removeItem(USER_KEY);
     
     // Remove any other user-specific data that might be in localStorage
@@ -50,8 +49,15 @@ class AuthService {
     localStorage.removeItem('current_assessment');
     localStorage.removeItem('assessment_progress');
     
-    // Redirect to login page
-    window.location.href = '/login';
+    // Call backend signout to clear HttpOnly cookie
+    apiClient.post('/auth/signout').then(() => {
+      // Redirect to login page
+      window.location.href = '/login';
+    }).catch((error) => {
+      console.error('Signout error:', error);
+      // Even if the request fails, still redirect to login
+      window.location.href = '/login';
+    });
   }
  
   getCurrentUser() {
@@ -72,11 +78,30 @@ class AuthService {
   }
 
   getToken() {
-    return localStorage.getItem(TOKEN_KEY);
+    // Tokens are now stored in HttpOnly cookies, not accessible to JavaScript
+    // This method is kept for backward compatibility but returns null
+    return null;
   }
  
   isAuthenticated() {
-    return !!this.getToken();
+    // Since JWT is now in HttpOnly cookie, we need to check authentication status via API
+    // For now, check if user data exists as a basic indicator
+    // This should be enhanced with a server-side check
+    return !!this.getCurrentUser();
+  }
+
+  /**
+   * Check authentication status with the server
+   * @returns {Promise<boolean>} - True if authenticated, false otherwise
+   */
+  async checkAuthenticationStatus() {
+    try {
+      const response = await apiClient.get('/auth/status');
+      return response.status === 200;
+    } catch {
+      // Error indicates not authenticated
+      return false;
+    }
   }
  
   getUserRole() {

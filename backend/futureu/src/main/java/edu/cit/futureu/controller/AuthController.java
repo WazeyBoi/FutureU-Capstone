@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 import edu.cit.futureu.dto.JwtResponse;
 import edu.cit.futureu.dto.SigninRequest;
@@ -43,7 +46,7 @@ public class AuthController {
     JwtUtil jwtUtil;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@RequestBody SigninRequest signinRequest) {
+    public ResponseEntity<?> authenticateUser(@RequestBody SigninRequest signinRequest, HttpServletResponse response) {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(signinRequest.getEmail(), signinRequest.getPassword()));
@@ -52,6 +55,14 @@ public class AuthController {
         
         UserEntity userEntity = userRepository.findByEmail(signinRequest.getEmail());
         String jwt = jwtUtil.generateTokenFromUserEntity(userEntity);
+        
+        // Set JWT token as HttpOnly cookie
+        Cookie jwtCookie = new Cookie("futureu_token", jwt);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(false); // Set to true in production with HTTPS
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(24 * 60 * 60); // 24 hours
+        response.addCookie(jwtCookie);
         
         return ResponseEntity.ok(new JwtResponse(jwt,
                                                  userEntity.getUserId(),
@@ -83,5 +94,29 @@ public class AuthController {
         userService.createUser(user);
 
         return ResponseEntity.ok("User registered successfully!");
+    }
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> signoutUser(HttpServletResponse response) {
+        // Clear the JWT cookie
+        Cookie jwtCookie = new Cookie("futureu_token", null);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(false); // Set to true in production with HTTPS
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(0); // Expire immediately
+        response.addCookie(jwtCookie);
+        
+        return ResponseEntity.ok("Signout successful");
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<?> getAuthStatus() {
+        // This endpoint will be used by frontend to check if user is authenticated
+        // The JWT filter will handle authentication, so if this endpoint is reached, user is authenticated
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+            return ResponseEntity.ok("Authenticated");
+        }
+        return ResponseEntity.status(401).body("Not authenticated");
     }
 }
