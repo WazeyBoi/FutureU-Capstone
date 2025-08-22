@@ -21,7 +21,7 @@ import {
 
 const AdminDashboardTest = () => {
   const navigate = useNavigate();
-  const adminUser = authService.getCurrentUser();
+  const [adminUser, setAdminUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -41,6 +41,21 @@ const AdminDashboardTest = () => {
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Fetch admin user info
+  useEffect(() => {
+    const fetchAdminUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        setAdminUser(user);
+      } catch (error) {
+        console.error('Error fetching admin user:', error);
+        setAdminUser(null);
+      }
+    };
+    
+    fetchAdminUser();
+  }, []);
 
   // Cache key and expiry
   const CACHE_KEY = 'admin_dashboard_data';

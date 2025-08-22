@@ -119,8 +119,17 @@ const Testimonials = () => {
 
   useEffect(() => {
     // Get the authenticated user
-    const user = authService.getCurrentUser();
-    setCurrentUser(user);
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+        setCurrentUser(null);
+      }
+    };
+    
+    fetchCurrentUser();
   }, []);
 
   // Fetch schools from the API

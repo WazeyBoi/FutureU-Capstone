@@ -129,18 +129,19 @@ class AccreditationService {
 
   /**
    * Check if user is authenticated
-   * @returns {boolean} True if user is logged in
+   * @returns {Promise<boolean>} True if user is logged in
    */
-  isUserAuthenticated() {
-    return authService.isAuthenticated();
+  async isUserAuthenticated() {
+    return await authService.isAuthenticated();
   }
 
   /**
    * Ensure user is authenticated before making api calls
-   * @returns {boolean} True if user is authenticated, false otherwise
+   * @returns {Promise<boolean>} True if user is authenticated, false otherwise
    */
-  ensureAuthentication() {
-    if (!this.isUserAuthenticated()) {
+  async ensureAuthentication() {
+    const isAuthenticated = await this.isUserAuthenticated();
+    if (!isAuthenticated) {
       console.warn('User is not authenticated. You may need to log in first.');
       return false;
     }
@@ -155,7 +156,7 @@ class AccreditationService {
   async getAllAccreditationData(forceRefresh = false) {
     try {
       // Check if user is authenticated
-      if (!this.ensureAuthentication()) {
+      if (!(await this.ensureAuthentication())) {
         // Return mock data as fallback if available without making API calls
         if (this.mockData) {
           console.warn('Using mock data because user is not authenticated');
@@ -383,7 +384,7 @@ class AccreditationService {
    */
   async getSchoolAccreditationData(schoolId) {
     try {
-      if (!this.ensureAuthentication()) {
+      if (!(await this.ensureAuthentication())) {
         // Return mock data for this school if available
         if (this.mockData) {
           return this.mockData.find(s => s.id === schoolId);
@@ -409,7 +410,7 @@ class AccreditationService {
    */
   async getCOEPrograms() {
     try {
-      if (!this.ensureAuthentication()) {
+      if (!(await this.ensureAuthentication())) {
         // Return filtered mock data if available
         if (this.mockData) {
           const allPrograms = this.mockData.flatMap(school => 
@@ -436,7 +437,7 @@ class AccreditationService {
    */
   async getCODPrograms() {
     try {
-      if (!this.ensureAuthentication()) {
+      if (!(await this.ensureAuthentication())) {
         // Return filtered mock data if available
         if (this.mockData) {
           const allPrograms = this.mockData.flatMap(school => 
@@ -467,7 +468,7 @@ class AccreditationService {
       if (!query) return [];
       
       // If using mock data, search locally
-      if (!this.isUserAuthenticated() && this.mockData) {
+      if (!(await this.isUserAuthenticated()) && this.mockData) {
         const lowerQuery = query.toLowerCase();
         return this.mockData.flatMap(school => 
             school.programs.flatMap(category => 
@@ -509,7 +510,7 @@ class AccreditationService {
   async filterPrograms(filters) {
     try {
       // If using mock data, filter locally
-      if (!this.isUserAuthenticated() && this.mockData) {
+      if (!(await this.isUserAuthenticated()) && this.mockData) {
           let allPrograms = this.mockData.flatMap(school => 
             school.programs.flatMap(category => 
             category.items.map(program => ({

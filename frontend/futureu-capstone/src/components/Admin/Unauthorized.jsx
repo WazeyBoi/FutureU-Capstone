@@ -1,23 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 import authService from '../../services/authService';
 
 const Unauthorized = () => {
-  // Determine redirect path based on user role
-  const getRedirectPath = () => {
-    const userRole = authService.getUserRole();
-    
-    if (userRole === 'ADMIN') {
-      return '/admin-dashboard';
-    } else if (userRole === 'GUIDANCE_COUNSELOR') {
-      return '/counselor-dashboard';
-    } else {
-      return '/user-landing-page'; // Default for students or other roles
-    }
-  };
+  const [redirectPath, setRedirectPath] = useState('/user-landing-page'); // Default path
+  
+  useEffect(() => {
+    // Determine redirect path based on user role
+    const getRedirectPath = async () => {
+      try {
+        const userRole = await authService.getUserRole();
+        
+        if (userRole === 'ADMIN') {
+          setRedirectPath('/admin-dashboard');
+        } else if (userRole === 'GUIDANCE_COUNSELOR') {
+          setRedirectPath('/counselor-dashboard');
+        } else {
+          setRedirectPath('/user-landing-page'); // Default for students or other roles
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error);
+        setRedirectPath('/user-landing-page'); // Default fallback
+      }
+    };
 
-  const redirectPath = getRedirectPath();
+    getRedirectPath();
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

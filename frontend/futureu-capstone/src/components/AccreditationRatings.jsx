@@ -38,7 +38,7 @@ const AccreditationRatings = () => {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usingMockData, setUsingMockData] = useState(false);
 
   // Add state for modals
@@ -58,7 +58,7 @@ const AccreditationRatings = () => {
         setLoading(true);
         
         // Check authentication status
-        const isLoggedIn = authService.isAuthenticated();
+        const isLoggedIn = await authService.isAuthenticated();
         setIsAuthenticated(isLoggedIn);
         
         // Use accreditationService to fetch real data

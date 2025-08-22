@@ -159,7 +159,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
 
     try {
       // Get the current user from auth service
-      const currentUser = authService.getCurrentUser();
+      const currentUser = await authService.getCurrentUser();
       
       if (!currentUser || !currentUser.id) {
         throw new Error('You must be logged in to submit a testimonial');

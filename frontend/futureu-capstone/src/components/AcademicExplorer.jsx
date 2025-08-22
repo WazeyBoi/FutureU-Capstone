@@ -284,9 +284,19 @@ const AcademicExplorer = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/login', { state: { from: location.pathname } });
-    }
+    const checkAuth = async () => {
+      try {
+        const isAuthenticated = await authService.isAuthenticated();
+        if (!isAuthenticated) {
+          navigate('/login', { state: { from: location.pathname } });
+        }
+      } catch (error) {
+        console.error('Error checking authentication:', error);
+        navigate('/login', { state: { from: location.pathname } });
+      }
+    };
+    
+    checkAuth();
   }, [navigate]);
 
   useEffect(() => {

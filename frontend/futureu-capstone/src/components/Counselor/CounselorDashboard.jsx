@@ -20,7 +20,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 // Change component name to match the file name
 const CounselorDashboard = () => {
   const navigate = useNavigate();
-  const counselorUser = authService.getCurrentUser();
+  const [counselorUser, setCounselorUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -31,6 +31,21 @@ const CounselorDashboard = () => {
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Fetch counselor user info
+  useEffect(() => {
+    const fetchCounselorUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        setCounselorUser(user);
+      } catch (error) {
+        console.error('Error fetching counselor user:', error);
+        setCounselorUser(null);
+      }
+    };
+    
+    fetchCounselorUser();
+  }, []);
 
   // Add state for assessment results, search/filter, and modal
   const [assessmentResults, setAssessmentResults] = useState([]);
