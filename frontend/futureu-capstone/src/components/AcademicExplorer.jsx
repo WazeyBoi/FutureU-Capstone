@@ -592,7 +592,7 @@ const AcademicExplorer = () => {
           <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-10 text-center text-white/90">
             Discover, compare, and explore top schools and programs in Cebu. Find your perfect academic path with powerful search and insights.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
             <div className="bg-[#1B2836]/80 bg-opacity-95 backdrop-blur-sm rounded-lg p-6 shadow-lg flex flex-col items-center transition-colors duration-200">
               <BookOpen className="text-[#FFB71B] w-10 h-10 mb-2" />
               <div className="text-3xl font-bold text-white">{totalPrograms}</div>
@@ -602,11 +602,6 @@ const AcademicExplorer = () => {
               <School className="text-[#FFB71B] w-10 h-10 mb-2" />
               <div className="text-3xl font-bold text-white">{totalSchools}</div>
               <div className="text-lg text-gray-100">Schools</div>
-            </div>
-            <div className="bg-[#1B2836]/80 bg-opacity-95 backdrop-blur-sm rounded-lg p-6 shadow-lg flex flex-col items-center transition-colors duration-200">
-              <Compass className="text-[#FFB71B] w-10 h-10 mb-2" />
-              <div className="text-3xl font-bold text-white">Explore</div>
-              <div className="text-lg text-gray-100">Your Future</div>
             </div>
           </div>
         </div>
@@ -1042,7 +1037,7 @@ const AcademicExplorer = () => {
                         Program Description
                       </h4>
                       <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pr-2 text-justify">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pr-2 text-justify whitespace-pre-line">
                           {selectedProgramDetails?.description ||
                             selectedProgramDetails?.programDescription ||
                             "This program prepares students for careers in this field."}
