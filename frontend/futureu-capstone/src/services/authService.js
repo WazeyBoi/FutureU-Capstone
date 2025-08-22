@@ -1,29 +1,17 @@
 import apiClient from './api';
- 
-const USER_KEY = 'futureu_user';
-const TOKEN_KEY = 'futureu_token';
- 
+
 class AuthService {
   async signin(email, password) {
     try {
       const response = await apiClient.post('/auth/signin', { email, password });
-      if (response.data.token) {
-        localStorage.setItem(TOKEN_KEY, response.data.token);
-        const userData = {
-          id: response.data.id,
-          email: response.data.email,
-          role: response.data.role,
-          firstName: response.data.firstName || 'Admin'
-        };
-        localStorage.setItem(USER_KEY, JSON.stringify(userData));
-      }
+      // Token is now stored in HTTPOnly cookie, no need to store in localStorage
       return response.data;
     } catch (error) {
       console.error('Signin error:', error.response ? error.response.data : error.message);
       throw error;
     }
   }
- 
+
   async signup(signupData) {
     try {
       const response = await apiClient.post('/auth/signup', signupData);
@@ -34,55 +22,77 @@ class AuthService {
     }
   }
 
-
   /**
-   * Clear all user-related data from local storage
-   * This is critical for security, especially for assessment progress
+   * Sign out user by calling backend to clear HTTPOnly cookies
+   * This also clears any remaining localStorage data for cleanup
    */
-
-  signout() {
-    // Clean up all user-specific data to prevent access by next user
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  async signout() {
+    try {
+      // Call backend to clear HTTPOnly cookies
+      await apiClient.post('/auth/signout');
+    } catch (error) {
+      console.warn('Signout API call failed:', error.message);
+      // Continue with cleanup even if API call fails
+    }
     
-    // Remove any other user-specific data that might be in localStorage
-    // This is essential to prevent one user from accessing another's assessment progress
+    // Clean up any remaining localStorage data for legacy support
+    localStorage.removeItem('futureu_token');
+    localStorage.removeItem('futureu_user');
     localStorage.removeItem('current_assessment');
     localStorage.removeItem('assessment_progress');
     
     // Redirect to login page
     window.location.href = '/login';
   }
- 
-  getCurrentUser() {
-    const userStr = localStorage.getItem(USER_KEY);
-    if (userStr) {
-      return JSON.parse(userStr);
+
+  /**
+   * Get current user data from server instead of localStorage
+   */
+  async getCurrentUser() {
+    try {
+      const response = await apiClient.get('/auth/me');
+      return response.data;
+    } catch (error) {
+      // User is not authenticated or session expired
+      return null;
     }
-    return null;
   }
 
   /**
    * Get the current user's ID
    * @returns {number|null} - The current user's ID or null if not logged in
    */
-  getCurrentUserId() {
-    const user = this.getCurrentUser();
+  async getCurrentUserId() {
+    const user = await this.getCurrentUser();
     return user ? user.id : null;
   }
 
+  /**
+   * Check if user is authenticated by calling server
+   * Since tokens are in HTTPOnly cookies, we can't check locally
+   */
+  async isAuthenticated() {
+    try {
+      const user = await this.getCurrentUser();
+      return !!user;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Get user role from server
+   */
+  async getUserRole() {
+    const user = await this.getCurrentUser();
+    return user ? user.role : null;
+  }
+
+  // Legacy methods for backward compatibility during transition
+  // These will be removed after all components are updated
   getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-  }
- 
-  isAuthenticated() {
-    return !!this.getToken();
-  }
- 
-  getUserRole() {
-    const user = this.getCurrentUser();
-    const role = user ? user.role : null;
-    return role;
+    console.warn('getToken() is deprecated - tokens are now in HTTPOnly cookies');
+    return null;
   }
 }
  

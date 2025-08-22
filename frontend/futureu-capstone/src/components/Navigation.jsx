@@ -15,27 +15,53 @@ const Navigation = () => {
 
   useEffect(() => {
     // Check authentication status and role when component mounts or location changes
-    setIsAuthenticated(authService.isAuthenticated());
-    let role = authService.getUserRole();
-    // Normalize role for counselor
-    if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
-    setUserRole(role);
+    const checkAuthStatus = async () => {
+      try {
+        const authenticated = await authService.isAuthenticated();
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated) {
+          let role = await authService.getUserRole();
+          // Normalize role for counselor
+          if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
+          setUserRole(role);
+        } else {
+          setUserRole(null);
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        setIsAuthenticated(false);
+        setUserRole(null);
+      }
+    };
+
+    checkAuthStatus();
   }, [location]);
 
-  const handleLogout = () => {
-    // Clear recommendations for the current user (if any)
-    const userId = authService.getCurrentUserId();
-    if (userId) {
-      // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
-          localStorage.removeItem(key);
-        }
-      });
+  const handleLogout = async () => {
+    try {
+      // Clear recommendations for the current user (if any)
+      const userId = await authService.getCurrentUserId();
+      if (userId) {
+        // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+      
+      await authService.signout();
+      setIsAuthenticated(false);
+      setUserRole(null);
+      // Note: authService.signout() will handle the redirect to login
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Force logout even if API call fails
+      setIsAuthenticated(false);
+      setUserRole(null);
+      navigate('/user-landing-page');
     }
-    authService.signout();
-    setIsAuthenticated(false);
-    navigate('/user-landing-page');
   };
 
   const isActive = (path) => {

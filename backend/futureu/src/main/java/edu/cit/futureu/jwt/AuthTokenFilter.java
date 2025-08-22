@@ -70,8 +70,17 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
 
     private String parseJwt(HttpServletRequest request) {
+        // First try to get token from cookie (new HTTPOnly approach)
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("futureu_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        
+        // Fallback to Authorization header for backward compatibility during transition
         String headerAuth = request.getHeader("Authorization");
-
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }

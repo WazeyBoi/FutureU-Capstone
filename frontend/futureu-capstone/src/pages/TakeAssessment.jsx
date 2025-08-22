@@ -7,16 +7,16 @@ import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
-import AssessmentSection from '../components/assessment/AssessmentSection';
-import SectionNavigator from '../components/assessment/SectionNavigator';
+import AssessmentSection from '../components/Assessment/AssessmentSection';
+import SectionNavigator from '../components/Assessment/SectionNavigator';
 import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModal';
-import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
+import SaveExitConfirmationModal from '../components/Assessment/SaveExitConfirmationModal';
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
 
-// Replace the getCurrentUserId function
-const getCurrentUserId = () => {
-  const userId = authService.getCurrentUserId();
+// Replace the getCurrentUserId function  
+const getCurrentUserId = async () => {
+  const userId = await authService.getCurrentUserId();
   if (!userId) {
     // If no user ID found, redirect to login page
     window.location.href = '/login';
@@ -156,7 +156,7 @@ const TakeAssessment = () => {
         setLoading(true);
         
         // Get the current authenticated user ID
-        const userId = getCurrentUserId();
+        const userId = await getCurrentUserId();
         if (!userId) return; // Stop if no valid user
         
         // First, fetch just the assessment details
@@ -415,7 +415,7 @@ const TakeAssessment = () => {
 
     try {
       // Get the current authenticated user ID
-      const userId = getCurrentUserId();
+      const userId = await getCurrentUserId();
       // Check how many times this user has completed this assessment before
       const completedAssessments = await userAssessmentService.getCompletedAssessments(userId);
       const previousAttempts = completedAssessments.filter(
@@ -747,7 +747,7 @@ const TakeAssessment = () => {
       }));
       
       // Get the current logged-in user ID
-      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      const userId = await getCurrentUserId(); // Replace with actual user ID from auth context when implemented
       
       // Create submission payload including sections, elapsed time, and attempt number
       const payload = {
@@ -805,7 +805,7 @@ const TakeAssessment = () => {
       const progressPercentage = Math.round((progress.completed / progress.total) * 100);
       
       // Get the current logged-in user ID
-      const userId = getCurrentUserId(); // Replace with actual user ID from auth context when implemented
+      const userId = await getCurrentUserId(); // Replace with actual user ID from auth context when implemented
       
       // Create payload with current state, including sections with questions and elapsed time
       const payload = {

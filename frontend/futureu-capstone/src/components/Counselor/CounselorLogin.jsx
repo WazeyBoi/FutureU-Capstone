@@ -2,14 +2,25 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
+import apiClient from '../../services/api';
 import { Mail, Lock, LogIn, AlertCircle, Heart, Eye, EyeOff } from 'lucide-react';
 
-const customSignout = () => {
+const customSignout = async () => {
+  try {
+    // Call backend to clear HTTPOnly cookies
+    await apiClient.post('/auth/signout');
+  } catch (error) {
+    console.warn('Signout API call failed:', error.message);
+  }
+  
+  // Clean up any legacy localStorage data
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('futureu_token');
+  localStorage.removeItem('futureu_user');
   localStorage.removeItem('current_assessment');
   localStorage.removeItem('assessment_progress');
-  // No automatic redirect
+  // No automatic redirect - caller handles navigation
 };
 
 const CounselorLogin = () => {
@@ -28,11 +39,11 @@ const CounselorLogin = () => {
       const userData = await authService.signin(email, password);
       
       // Check if user has guidance counselor role (case-insensitive)
-      const role = authService.getUserRole();
+      const role = await authService.getUserRole();
 
       if (!role || role.toUpperCase() !== 'GUIDANCE_COUNSELOR') {
         setError('Access denied. Guidance Counselor privileges required.');
-        customSignout(); // Use custom signout without redirect
+        await customSignout(); // Use custom signout without redirect
         setLoading(false);
         return;
       }
