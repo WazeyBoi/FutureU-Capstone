@@ -44,14 +44,23 @@ const AssessmentDashboard = () => {
   const [completedByAssessment, setCompletedByAssessment] = useState({});
   const [availableAssessments, setAvailableAssessments] = useState([]);
   const [assessmentStats, setAssessmentStats] = useState({});
+  const [userId, setUserId] = useState(null);
 
   const navigate = useNavigate();
 
-  const getCurrentUserId = () => {
-    return authService.getCurrentUserId() || 1; // Fallback to 1 during development
-  };
-
-  const userId = getCurrentUserId();
+  // Get current user ID and set it in state
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const currentUserId = await authService.getCurrentUserId();
+        setUserId(currentUserId || 1); // Fallback to 1 during development
+      } catch (error) {
+        console.error('Error getting user ID:', error);
+        setUserId(1); // Fallback to 1 during development
+      }
+    };
+    fetchUserId();
+  }, []);
 
   // Format date for better display
   const formatDate = (dateString) => {
@@ -83,6 +92,8 @@ const AssessmentDashboard = () => {
   };
 
   useEffect(() => {
+    if (!userId) return; // Don't fetch until userId is available
+    
     const fetchAssessments = async () => {
       try {
         setLoading(true);
