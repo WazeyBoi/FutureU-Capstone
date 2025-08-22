@@ -9,6 +9,11 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  resolve: {
+    alias: {
+      'react-map-gl': 'react-map-gl/dist/esm'
+    }
+  },
   server: {
     proxy: {
       '/api': {
