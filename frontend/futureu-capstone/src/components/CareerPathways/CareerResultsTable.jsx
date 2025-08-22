@@ -70,7 +70,7 @@ const CareerResultsTable = ({
                                 paginatedCareers.map((career) => (
                                     <tr
                                         key={career.careerId}
-                                        className="hover:bg-yellow-100 cursor-pointer transition duration-200"
+                                        className="hover:bg-[#2B3E4E]/5 cursor-pointer transition duration-200"
                                         onClick={(e) => {
                                             if (!e.target.closest('td.programs-cell')) {
                                                 handleItemClick(career); // This triggers opening CareerDetailsModal
@@ -96,12 +96,12 @@ const CareerResultsTable = ({
                                             }}
                                         >
                                             <div className="flex flex-col cursor-pointer group">
-                                                <div className="text-sm text-gray-700 group-hover:text-blue-600 transition-colors">
+                                                <div className="text-sm text-gray-700 group-hover:text-[#2B3E4E] transition-colors">
                                                     {formatProgramsPreview(career)}
                                                 </div>
                                                 {getProgramsForCareer(career).length > 1 && (
                                                     <div className="flex justify-end mt-1">
-                                                        <span className="text-xs text-blue-600 flex items-center">
+                                                        <span className="text-xs text-[#2B3E4E] flex items-center">
                                                             {formatMoreProgramsText(career)}
                                                             <ChevronRight className="w-3 h-3 ml-0.5 mt-px group-hover:translate-x-0.5 transition-transform" />
                                                         </span>
