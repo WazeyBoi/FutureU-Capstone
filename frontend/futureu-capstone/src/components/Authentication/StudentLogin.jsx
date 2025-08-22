@@ -20,12 +20,12 @@ const StudentLogin = () => {
       const userData = await authService.signin(email, password);
       
       // Check if user has admin role (case-insensitive)
-      const role = authService.getUserRole();
+      const role = await authService.getUserRole();
       
       if (role && role.toUpperCase() === 'ADMIN') {
         // If admin tries to use student login, show error and log them out
         setError('Please use the Admin login page for administrator access.');
-        authService.signout(); // Log them out (but don't redirect)
+        await authService.signout(); // Log them out (but don't redirect)
         setLoading(false);
         return;
       }

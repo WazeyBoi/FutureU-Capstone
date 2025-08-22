@@ -15,13 +15,11 @@ const apiClient = axios.create({
   }
 });
 
-// Request interceptor to add JWT token to headers
+// Request interceptor is no longer needed for JWT tokens
+// HTTPOnly cookies are automatically sent by the browser
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('futureu_token'); // Or use AuthService.getToken()
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
+    // No need to add Authorization header - cookies are sent automatically
     return config;
   },
   (error) => {

@@ -15,16 +15,26 @@ const Navigation = () => {
 
   useEffect(() => {
     // Check authentication status and role when component mounts or location changes
-    setIsAuthenticated(authService.isAuthenticated());
-    let role = authService.getUserRole();
-    // Normalize role for counselor
-    if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
-    setUserRole(role);
+    const checkAuth = async () => {
+      const authenticated = await authService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      
+      if (authenticated) {
+        let role = await authService.getUserRole();
+        // Normalize role for counselor
+        if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
+        setUserRole(role);
+      } else {
+        setUserRole(null);
+      }
+    };
+    
+    checkAuth();
   }, [location]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Clear recommendations for the current user (if any)
-    const userId = authService.getCurrentUserId();
+    const userId = await authService.getCurrentUserId();
     if (userId) {
       // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
       Object.keys(localStorage).forEach(key => {
@@ -33,7 +43,7 @@ const Navigation = () => {
         }
       });
     }
-    authService.signout();
+    await authService.signout();
     setIsAuthenticated(false);
     navigate('/user-landing-page');
   };

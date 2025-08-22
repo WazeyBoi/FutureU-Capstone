@@ -21,6 +21,7 @@ import edu.cit.futureu.service.UserDetailsServiceImpl; // Updated import
 import io.jsonwebtoken.Claims; // Updated import
 import jakarta.servlet.FilterChain; // Updated import
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -70,12 +71,30 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     }
 
     private String parseJwt(HttpServletRequest request) {
+        // First try to get JWT from cookie
+        String jwtFromCookie = getJwtFromCookie(request);
+        if (jwtFromCookie != null) {
+            return jwtFromCookie;
+        }
+        
+        // Fallback to Authorization header for backward compatibility during migration
         String headerAuth = request.getHeader("Authorization");
-
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }
 
+        return null;
+    }
+    
+    private String getJwtFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("futureu_token".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
         return null;
     }
 }
