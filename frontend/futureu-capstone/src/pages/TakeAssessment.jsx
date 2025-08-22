@@ -7,10 +7,10 @@ import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
-import AssessmentSection from '../components/assessment/AssessmentSection';
-import SectionNavigator from '../components/assessment/SectionNavigator';
+import AssessmentSection from '../components/Assessment/AssessmentSection';
+import SectionNavigator from '../components/Assessment/SectionNavigator';
 import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModal';
-import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
+import SaveExitConfirmationModal from '../components/Assessment/SaveExitConfirmationModal';
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
 
