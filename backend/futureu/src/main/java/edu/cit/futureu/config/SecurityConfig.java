@@ -91,6 +91,13 @@ public class SecurityConfig {
                     .userService(customOAuth2UserService)
                 )
                 .successHandler(oAuth2SuccessHandler)
+                .failureHandler((request, response, exception) -> {
+                    // Log the OAuth2 failure
+                    System.err.println("OAuth2 login failed: " + exception.getMessage());
+                    exception.printStackTrace();
+                    // Redirect to login with error parameter
+                    response.sendRedirect("http://localhost:5173/login?error=oauth2_failed");
+                })
             );
 
         http.authenticationProvider(authenticationProvider());
