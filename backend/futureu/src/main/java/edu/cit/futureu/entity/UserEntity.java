@@ -31,6 +31,9 @@ public class UserEntity {
     private int age;
     private String address;
     private String contactNumber;
+    private String profilePicture;
+    private String providerId;
+    private String provider;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -121,5 +124,29 @@ public class UserEntity {
     
     public void setTestimonies(List<TestimonyEntity> testimonies) {
         this.testimonies = testimonies;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
+    }
+
+    public String getProvider() {
+        return provider;
+    }
+
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 }

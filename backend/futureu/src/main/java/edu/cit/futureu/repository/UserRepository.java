@@ -9,4 +9,7 @@ import edu.cit.futureu.entity.UserEntity;
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     // Find user by email (useful for authentication)
     UserEntity findByEmail(String email);
+    
+    // Find user by providerId (useful for OAuth2 authentication)
+    UserEntity findByProviderId(String providerId);
 }
