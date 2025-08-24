@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
 import { Mail, Lock, LogIn, AlertCircle, UserPlus, Eye, EyeOff, GraduationCap } from 'lucide-react';
+import { FaGoogle } from 'react-icons/fa';
 
 const StudentLogin = () => {
   const [email, setEmail] = useState('');
@@ -37,6 +38,11 @@ const StudentLogin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    // Redirect to backend OAuth2 endpoint
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
   return (
@@ -172,6 +178,31 @@ const StudentLogin = () => {
               </motion.button>
             </div>
           </form>
+
+          {/* OR Divider */}
+          <div className="mt-8 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                  OR
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Login Button */}
+          <motion.button
+            onClick={handleGoogleLogin}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full flex justify-center items-center py-4 px-5 rounded-2xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFB71B] transition-all shadow-lg hover:shadow-xl text-lg font-medium"
+          >
+            <FaGoogle className="text-red-500 mr-3 text-xl" />
+            <span>Continue with Google</span>
+          </motion.button>
 
           <div className="mt-8 text-center">
             <p className="text-gray-600 dark:text-gray-400">
