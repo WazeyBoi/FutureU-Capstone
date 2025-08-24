@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
 import { User, Mail, Lock, Home, Phone, Calendar, UserPlus, LogIn, AlertCircle, CheckCircle, GraduationCap, Eye, EyeOff } from 'lucide-react';
+import { FaGoogle } from 'react-icons/fa';
 
 const StudentRegister = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,26 @@ const StudentRegister = () => {
   const [success, setSuccess] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [oauth2Status, setOauth2Status] = useState({ configured: false, message: '', loading: true });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check OAuth2 configuration status
+    const checkOAuth2Config = async () => {
+      try {
+        const status = await authService.checkOAuth2Status();
+        setOauth2Status({ ...status, loading: false });
+      } catch (error) {
+        setOauth2Status({ 
+          configured: false, 
+          message: 'Unable to check OAuth2 configuration', 
+          loading: false 
+        });
+      }
+    };
+
+    checkOAuth2Config();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -109,6 +129,15 @@ const StudentRegister = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    if (!oauth2Status.configured) {
+      setError('Google authentication is not configured. Please contact your administrator.');
+      return;
+    }
+    // Redirect to backend OAuth2 endpoint
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
   const inputFields = [
@@ -418,6 +447,47 @@ const StudentRegister = () => {
               </motion.button>
             </div>
           </form>
+
+          {/* OR Divider - only show if OAuth2 is configured */}
+          {oauth2Status.configured && (
+            <div className="mt-8 mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-4 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                    OR
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Google Sign Up Button or Configuration Message */}
+          {oauth2Status.loading ? (
+            <div className="w-full flex justify-center items-center py-4 px-5 rounded-2xl bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+              <span>Checking Google authentication...</span>
+            </div>
+          ) : oauth2Status.configured ? (
+            <motion.button
+              onClick={handleGoogleLogin}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex justify-center items-center py-4 px-5 rounded-2xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFB71B] transition-all shadow-lg hover:shadow-xl text-lg font-medium"
+            >
+              <FaGoogle className="text-red-500 mr-3 text-xl" />
+              <span>Sign up with Google</span>
+            </motion.button>
+          ) : (
+            <div className="w-full py-4 px-5 rounded-2xl bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 text-yellow-800 dark:text-yellow-200 text-center">
+              <div className="flex items-center justify-center mb-2">
+                <AlertCircle className="mr-2 h-5 w-5" />
+                <span className="font-medium">Google Authentication Not Available</span>
+              </div>
+              <p className="text-sm">{oauth2Status.message}</p>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">

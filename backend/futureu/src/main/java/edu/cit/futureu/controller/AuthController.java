@@ -8,6 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -83,5 +84,11 @@ public class AuthController {
         userService.createUser(user);
 
         return ResponseEntity.ok("User registered successfully!");
+    }
+
+    @GetMapping("/oauth2/google")
+    public ResponseEntity<?> googleOAuth2Login() {
+        // This endpoint will be used by the frontend to initiate Google OAuth2 flow
+        return ResponseEntity.ok().body("{\"message\":\"Redirect to /oauth2/authorization/google\",\"url\":\"/oauth2/authorization/google\"}");
     }
 }

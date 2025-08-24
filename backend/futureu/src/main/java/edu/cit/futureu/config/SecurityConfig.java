@@ -17,8 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Ensure this import is present
 
-import edu.cit.futureu.jwt.AuthEntryPointJwt; // Ensure this import is present
-import edu.cit.futureu.jwt.AuthTokenFilter;
+import edu.cit.futureu.jwt.AuthEntryPointJwt;
+import edu.cit.futureu.jwt.AuthTokenFilter; // Ensure this import is present
+import edu.cit.futureu.service.CustomOAuth2UserService;
 import edu.cit.futureu.service.UserDetailsServiceImpl;
 
 
@@ -32,6 +33,12 @@ public class SecurityConfig {
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+
+    @Autowired
+    private CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    private OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -67,6 +74,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll() // For sign-in and sign-up
                 .requestMatchers("/api/test/**").permitAll() // For general API testing
                 .requestMatchers("/api/hello").permitAll() // Allow public access to hello endpoint
+                .requestMatchers("/api/oauth2/status").permitAll() // Allow OAuth2 status check
+                .requestMatchers("/oauth2/**").permitAll() // Allow OAuth2 endpoints
+                .requestMatchers("/login/oauth2/**").permitAll() // Allow OAuth2 login endpoints
                 
                 // Allow public access to read-only school and program endpoints
                 .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
@@ -75,6 +85,19 @@ public class SecurityConfig {
                 // All other API endpoints require authentication (regardless of role)
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                )
+                .successHandler(oAuth2SuccessHandler)
+                .failureHandler((request, response, exception) -> {
+                    // Log the OAuth2 failure
+                    System.err.println("OAuth2 login failed: " + exception.getMessage());
+                    exception.printStackTrace();
+                    // Redirect to login with error parameter
+                    response.sendRedirect("http://localhost:5173/login?error=oauth2_failed");
+                })
             );
 
         http.authenticationProvider(authenticationProvider());
