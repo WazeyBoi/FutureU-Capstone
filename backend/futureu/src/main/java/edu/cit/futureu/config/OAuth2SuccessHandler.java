@@ -43,7 +43,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             String jwt = jwtUtil.generateTokenFromUserEntity(user);
             
             // Redirect to frontend with token
-            String frontendUrl = "http://localhost:5173/auth/callback?token=" + jwt 
+            String frontendUrl = "http://localhost:5173/user-landing-page?token=" + jwt 
                 + "&userId=" + user.getUserId()
                 + "&email=" + user.getEmail()
                 + "&role=" + user.getRole().name()
