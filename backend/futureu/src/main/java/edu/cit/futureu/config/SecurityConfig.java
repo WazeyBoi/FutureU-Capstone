@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll() // For sign-in and sign-up
                 .requestMatchers("/api/test/**").permitAll() // For general API testing
                 .requestMatchers("/api/hello").permitAll() // Allow public access to hello endpoint
+                .requestMatchers("/api/oauth2/status").permitAll() // Allow OAuth2 status check
                 .requestMatchers("/oauth2/**").permitAll() // Allow OAuth2 endpoints
                 .requestMatchers("/login/oauth2/**").permitAll() // Allow OAuth2 login endpoints
                 

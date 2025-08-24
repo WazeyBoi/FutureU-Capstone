@@ -84,6 +84,16 @@ class AuthService {
     const role = user ? user.role : null;
     return role;
   }
+
+  async checkOAuth2Status() {
+    try {
+      const response = await apiClient.get('/oauth2/status');
+      return response.data;
+    } catch (error) {
+      console.error('OAuth2 status check error:', error);
+      return { configured: false, message: 'Unable to check OAuth2 configuration' };
+    }
+  }
 }
  
 export default new AuthService();
