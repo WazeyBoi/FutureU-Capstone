@@ -29,6 +29,11 @@ public class QuestionEntity {
     @JoinColumn(name = "assessmentSubCategoryId", nullable = false)
     private AssessmentSubCategoryEntity assessmentSubCategory;
 
+    // Optional relationship to passage for reading comprehension questions
+    @ManyToOne
+    @JoinColumn(name = "passage_id")
+    private PassageEntity passage;
+
     private String questionText;
     private String category;
     private String difficultyLevel;
@@ -131,6 +136,14 @@ public class QuestionEntity {
 
     public void setAssessmentSubCategory(AssessmentSubCategoryEntity assessmentSubCategory) {
         this.assessmentSubCategory = assessmentSubCategory;
+    }
+
+    public PassageEntity getPassage() {
+        return passage;
+    }
+
+    public void setPassage(PassageEntity passage) {
+        this.passage = passage;
     }
 
     
