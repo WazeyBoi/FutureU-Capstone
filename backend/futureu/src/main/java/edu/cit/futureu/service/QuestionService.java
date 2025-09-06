@@ -36,6 +36,11 @@ public class QuestionService {
                 // Force loading the quiz sub-category name
                 question.getQuizSubCategoryCategory().getQuizSubCategoryCategoryName();
             }
+            if (question.getPassage() != null) {
+                // Force loading the passage data for reading comprehension questions
+                question.getPassage().getTitle();
+                question.getPassage().getPassageText();
+            }
         }
         return questions;
     }

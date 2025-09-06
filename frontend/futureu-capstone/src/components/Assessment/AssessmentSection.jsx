@@ -24,8 +24,40 @@ const AssessmentSection = forwardRef(({
 }, ref) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
-  // Check if this is a RIASEC section - if so, use 7 questions per page, otherwise 5
-  const questionsPerPage = questions.length > 0 && questions[0].isRiasecQuestion ? 7 : 5;
+  
+  // Check question type and determine pagination strategy
+  const isReadingComprehension = questions.length > 0 && questions[0].passageData;
+  const isRiasecSection = questions.length > 0 && questions[0].isRiasecQuestion;
+  
+  // Determine questions per page based on section type
+  let questionsPerPage;
+  let totalPages;
+  let currentQuestions;
+  let indexOfFirstQuestion;
+  let indexOfLastQuestion;
+  
+  if (isReadingComprehension) {
+    // For reading comprehension: 1 passage (5 questions) per page
+    questionsPerPage = 5;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  } else if (isRiasecSection) {
+    // For RIASEC: 7 questions per page
+    questionsPerPage = 7;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  } else {
+    // For other sections: 5 questions per page
+    questionsPerPage = 5;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  }
   
   // Reference to the questions container for scrolling
   const questionsContainerRef = useRef(null);
@@ -40,12 +72,6 @@ const AssessmentSection = forwardRef(({
     getCurrentPage: () => currentPage,
     _currentPage: currentPage
   }), [currentPage]);
-
-  // Calculate pagination values
-  const indexOfLastQuestion = currentPage * questionsPerPage;
-  const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
-  const currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
-  const totalPages = Math.ceil(questions.length / questionsPerPage);
 
   // Format remaining time as mm:ss
   const formatTime = (seconds) => {
@@ -250,11 +276,22 @@ const AssessmentSection = forwardRef(({
       {/* Questions Pagination Info */}
       <div className="flex justify-between items-center mb-4 px-1">
         <div className="text-sm text-gray-500">
-          Showing questions {indexOfFirstQuestion + 1}-{Math.min(indexOfLastQuestion, questions.length)} of {questions.length}
-          {questions.length > 0 && questions[0].isRiasecQuestion && (
-            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-              Interest Assessment
-            </span>
+          {isReadingComprehension ? (
+            <>
+              Showing passage {currentPage} of {totalPages} ({questionsPerPage} questions per passage)
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                Reading Comprehension
+              </span>
+            </>
+          ) : (
+            <>
+              Showing questions {indexOfFirstQuestion + 1}-{Math.min(indexOfLastQuestion, questions.length)} of {questions.length}
+              {questions.length > 0 && questions[0].isRiasecQuestion && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                  Interest Assessment
+                </span>
+              )}
+            </>
           )}
         </div>
         <div className="text-sm text-[#1D63A1]">
@@ -273,12 +310,32 @@ const AssessmentSection = forwardRef(({
             transition={{ duration: 0.3, delay: index * 0.1 }}
             className="mb-8 pb-6 border-b border-gray-200 last:border-0 last:pb-0 last:mb-0"
           >
+            {/* Display passage if this is the first question of a passage */}
+            {question.passageData && question.passageData.isFirstQuestionOfPassage && (
+              <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-semibold text-[#1D63A1] mb-3">
+                  Passage {question.passageData.passageIndex + 1}: {question.passageData.passage.title}
+                </h3>
+                <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line text-justify" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
+                  {question.passageData.passage.passageText}
+                </div>
+                <div className="mt-4 text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full inline-block">
+                  Questions {(question.passageData.passageIndex * 5) + 1}-{(question.passageData.passageIndex * 5) + 5} are based on this passage
+                </div>
+              </div>
+            )}
+            
             <div className="flex items-center mb-2">
               <span className="w-6 h-6 rounded-full bg-gray-100 text-[#232D35] text-xs font-medium flex items-center justify-center mr-2">
                 {indexOfFirstQuestion + index + 1}
               </span>
               <div className="text-sm text-gray-500">
                 Question {indexOfFirstQuestion + index + 1} of {questions.length}
+                {question.passageData && (
+                  <span className="ml-2 text-blue-600">
+                    (Passage {question.passageData.passageIndex + 1}, Q{question.passageData.questionWithinPassage})
+                  </span>
+                )}
               </div>
               {answers[question.questionId] && (
                 <motion.div
