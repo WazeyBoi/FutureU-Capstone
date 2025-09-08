@@ -1264,8 +1264,8 @@ const TakeAssessment = () => {
       
       {/* Updated lower section with better height utilization */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-grow">
-        {/* Section Navigator (sidebar) */}
-        <div className="lg:w-1/4 lg:h-[calc(100vh-16rem)] lg:sticky lg:top-4">
+        {/* Section Navigator (sidebar) - Adjusted width to accommodate text */}
+        <div className="lg:w-80 lg:h-[calc(100vh-16rem)] lg:sticky lg:top-4">
           <SectionNavigator 
             sections={sectionList} 
             currentSection={currentSection} 
@@ -1277,7 +1277,7 @@ const TakeAssessment = () => {
         </div>
         
         {/* Main content - Section and Questions */}
-        <div className="lg:w-3/4 flex flex-col">
+        <div className="lg:flex-1 flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               ref={sectionRef}
