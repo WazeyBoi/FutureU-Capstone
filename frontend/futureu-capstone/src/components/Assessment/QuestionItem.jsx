@@ -120,131 +120,170 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
         </div>
       )}
 
-      {/* RIASEC 5-Point Likert Scale */}
+      {/* RIASEC 5-Point Likert Scale - Table Structure */}
       {isLikert && (
-        <div className="mt-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="bg-[#1D63A1]/10 p-6 rounded-xl border border-[#1D63A1]/30"
-          >
-            <div className="text-center mb-4">
-              <p className="text-sm text-gray-600 font-medium">Rate how much you agree with this statement:</p>
+        <div className="mt-4">
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-600 font-medium">How much do you agree with this statement?</p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    Strongly Disagree
+                  </th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    Disagree
+                  </th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    Neutral
+                  </th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    Agree
+                  </th>
+                  <th className="border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                    Strongly Agree
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {/* Strongly Disagree */}
+                  <td className="border border-gray-300 p-4 text-center">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <label className="cursor-pointer flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
+                          answer === "1" ? 'border-red-500 bg-red-500' : 'border-gray-300 hover:border-red-400'
+                        }`}>
+                          {answer === "1" && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-600">1</span>
+                        <input 
+                          type="radio" 
+                          name={`question-${question.questionId}`} 
+                          value="1" 
+                          checked={answer === "1"} 
+                          onChange={() => onAnswerChange("1")} 
+                          className="sr-only" 
+                        />
+                      </label>
+                    </motion.div>
+                  </td>
+
+                  {/* Disagree */}
+                  <td className="border border-gray-300 p-4 text-center">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <label className="cursor-pointer flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
+                          answer === "2" ? 'border-orange-500 bg-orange-500' : 'border-gray-300 hover:border-orange-400'
+                        }`}>
+                          {answer === "2" && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-600">2</span>
+                        <input 
+                          type="radio" 
+                          name={`question-${question.questionId}`} 
+                          value="2" 
+                          checked={answer === "2"} 
+                          onChange={() => onAnswerChange("2")} 
+                          className="sr-only" 
+                        />
+                      </label>
+                    </motion.div>
+                  </td>
+
+                  {/* Neutral */}
+                  <td className="border border-gray-300 p-4 text-center">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <label className="cursor-pointer flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
+                          answer === "3" ? 'border-gray-500 bg-gray-500' : 'border-gray-300 hover:border-gray-400'
+                        }`}>
+                          {answer === "3" && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-600">3</span>
+                        <input 
+                          type="radio" 
+                          name={`question-${question.questionId}`} 
+                          value="3" 
+                          checked={answer === "3"} 
+                          onChange={() => onAnswerChange("3")} 
+                          className="sr-only" 
+                        />
+                      </label>
+                    </motion.div>
+                  </td>
+
+                  {/* Agree */}
+                  <td className="border border-gray-300 p-4 text-center">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <label className="cursor-pointer flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
+                          answer === "4" ? 'border-blue-500 bg-blue-500' : 'border-gray-300 hover:border-blue-400'
+                        }`}>
+                          {answer === "4" && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-600">4</span>
+                        <input 
+                          type="radio" 
+                          name={`question-${question.questionId}`} 
+                          value="4" 
+                          checked={answer === "4"} 
+                          onChange={() => onAnswerChange("4")} 
+                          className="sr-only" 
+                        />
+                      </label>
+                    </motion.div>
+                  </td>
+
+                  {/* Strongly Agree */}
+                  <td className="border border-gray-300 p-4 text-center">
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <label className="cursor-pointer flex flex-col items-center">
+                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
+                          answer === "5" ? 'border-green-500 bg-green-500' : 'border-gray-300 hover:border-green-400'
+                        }`}>
+                          {answer === "5" && (
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-600">5</span>
+                        <input 
+                          type="radio" 
+                          name={`question-${question.questionId}`} 
+                          value="5" 
+                          checked={answer === "5"} 
+                          onChange={() => onAnswerChange("5")} 
+                          className="sr-only" 
+                        />
+                      </label>
+                    </motion.div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Scale description */}
+          <div className="mt-3 text-center">
+            <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
+              <span>1 = Strongly Disagree</span>
+              <span>•</span>
+              <span>3 = Neutral</span>
+              <span>•</span>
+              <span>5 = Strongly Agree</span>
             </div>
-            
-            <div className="grid grid-cols-5 gap-2 sm:gap-3">
-              {/* Strongly Disagree */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <label className={`flex flex-col items-center justify-center cursor-pointer p-3 h-20 sm:h-24 rounded-lg transition-all text-center ${
-                  answer === "1" 
-                    ? 'bg-red-100 border-2 border-red-500 shadow-md' 
-                    : 'bg-white hover:bg-red-50 border border-gray-200 hover:border-red-300'
-                }`}>
-                  <div className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center mb-1 ${
-                    answer === "1" ? 'border-red-500 bg-red-500' : 'border-gray-300'
-                  }`}>
-                    {answer === "1" && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-red-700">Strongly Disagree</span>
-                  <input type="radio" name={`question-${question.questionId}`} value="1" checked={answer === "1"} onChange={() => onAnswerChange("1")} className="sr-only" />
-                </label>
-              </motion.div>
-
-              {/* Disagree */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <label className={`flex flex-col items-center justify-center cursor-pointer p-3 h-20 sm:h-24 rounded-lg transition-all text-center ${
-                  answer === "2" 
-                    ? 'bg-orange-100 border-2 border-orange-500 shadow-md' 
-                    : 'bg-white hover:bg-orange-50 border border-gray-200 hover:border-orange-300'
-                }`}>
-                  <div className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center mb-1 ${
-                    answer === "2" ? 'border-orange-500 bg-orange-500' : 'border-gray-300'
-                  }`}>
-                    {answer === "2" && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-orange-700">Disagree</span>
-                  <input type="radio" name={`question-${question.questionId}`} value="2" checked={answer === "2"} onChange={() => onAnswerChange("2")} className="sr-only" />
-                </label>
-              </motion.div>
-
-              {/* Neutral */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <label className={`flex flex-col items-center justify-center cursor-pointer p-3 h-20 sm:h-24 rounded-lg transition-all text-center ${
-                  answer === "3" 
-                    ? 'bg-gray-100 border-2 border-gray-500 shadow-md' 
-                    : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
-                }`}>
-                  <div className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center mb-1 ${
-                    answer === "3" ? 'border-gray-500 bg-gray-500' : 'border-gray-300'
-                  }`}>
-                    {answer === "3" && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-gray-700">Neutral</span>
-                  <input type="radio" name={`question-${question.questionId}`} value="3" checked={answer === "3"} onChange={() => onAnswerChange("3")} className="sr-only" />
-                </label>
-              </motion.div>
-
-              {/* Agree */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <label className={`flex flex-col items-center justify-center cursor-pointer p-3 h-20 sm:h-24 rounded-lg transition-all text-center ${
-                  answer === "4" 
-                    ? 'bg-blue-100 border-2 border-blue-500 shadow-md' 
-                    : 'bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-300'
-                }`}>
-                  <div className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center mb-1 ${
-                    answer === "4" ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
-                  }`}>
-                    {answer === "4" && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-blue-700">Agree</span>
-                  <input type="radio" name={`question-${question.questionId}`} value="4" checked={answer === "4"} onChange={() => onAnswerChange("4")} className="sr-only" />
-                </label>
-              </motion.div>
-
-              {/* Strongly Agree */}
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <label className={`flex flex-col items-center justify-center cursor-pointer p-3 h-20 sm:h-24 rounded-lg transition-all text-center ${
-                  answer === "5" 
-                    ? 'bg-green-100 border-2 border-green-500 shadow-md' 
-                    : 'bg-white hover:bg-green-50 border border-gray-200 hover:border-green-300'
-                }`}>
-                  <div className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center mb-1 ${
-                    answer === "5" ? 'border-green-500 bg-green-500' : 'border-gray-300'
-                  }`}>
-                    {answer === "5" && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-1.5 w-1.5 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="text-xs sm:text-sm font-bold text-green-700">Strongly Agree</span>
-                  <input type="radio" name={`question-${question.questionId}`} value="5" checked={answer === "5"} onChange={() => onAnswerChange("5")} className="sr-only" />
-                </label>
-              </motion.div>
-            </div>
-
-            {/* Optional: Visual scale indicator */}
-            <div className="mt-4 flex items-center justify-center">
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <span>Low Interest</span>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 rounded-full bg-red-300"></div>
-                  <div className="w-2 h-2 rounded-full bg-orange-300"></div>
-                  <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                  <div className="w-2 h-2 rounded-full bg-blue-300"></div>
-                  <div className="w-2 h-2 rounded-full bg-green-300"></div>
-                </div>
-                <span>High Interest</span>
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
       )}
 
