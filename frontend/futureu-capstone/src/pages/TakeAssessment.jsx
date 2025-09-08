@@ -7,7 +7,7 @@ import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
-import AssessmentSection from '../components/assessment/AssessmentSection';
+import AssessmentSection from '../components/Assessment/AssessmentSection';
 import SectionNavigator from '../components/assessment/SectionNavigator';
 import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModal';
 import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';

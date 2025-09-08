@@ -198,9 +198,6 @@ const AssessmentSection = forwardRef(({
       <div ref={sectionHeaderRef} className="mb-4 border-b border-gray-200 pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
-            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1D63A1]/15 text-[#1D63A1] flex items-center justify-center text-xs sm:text-sm font-bold mr-2 flex-shrink-0">
-              {currentSection + 1}
-            </span>
             <span className="line-clamp-1">{title}</span>
           </h2>
           {remainingTime && (
@@ -212,7 +209,7 @@ const AssessmentSection = forwardRef(({
             </div>
           )}
         </div>
-        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 sm:ml-10 line-clamp-2">{description}</p>
+        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
         
         {/* Progress indicators */}
         <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -274,7 +271,7 @@ const AssessmentSection = forwardRef(({
       </div>
 
       {/* Questions Pagination Info */}
-      <div className="flex justify-between items-center mb-4 px-1">
+      {/* <div className="flex justify-between items-center mb-4 px-1">
         <div className="text-sm text-gray-500">
           {isReadingComprehension ? (
             <>
@@ -297,7 +294,7 @@ const AssessmentSection = forwardRef(({
         <div className="text-sm text-[#1D63A1]">
           Page {currentPage} of {totalPages}
         </div>
-      </div>
+      </div> */}
 
       {/* Questions Display - keep existing ref */}
       <div ref={questionsContainerRef} className="mb-4">
@@ -326,17 +323,17 @@ const AssessmentSection = forwardRef(({
             )}
             
             <div className="flex items-center mb-2">
-              <span className="w-6 h-6 rounded-full bg-gray-100 text-[#232D35] text-xs font-medium flex items-center justify-center mr-2">
+              {/* <span className="w-6 h-6 rounded-full bg-gray-100 text-[#232D35] text-xs font-medium flex items-center justify-center mr-2">
                 {indexOfFirstQuestion + index + 1}
-              </span>
-              <div className="text-sm text-gray-500">
+              </span> */}
+              {/* <div className="text-sm text-gray-500">
                 Question {indexOfFirstQuestion + index + 1} of {questions.length}
                 {question.passageData && (
                   <span className="ml-2 text-blue-600">
-                    (Passage {question.passageData.passageIndex + 1}, Q{question.passageData.questionWithinPassage})
+                    (Passage s {question.passageData.passageIndex + 1}, Q{question.passageData.questionWithinPassage})
                   </span>
                 )}
-              </div>
+              </div> */}
               {answers[question.questionId] && (
                 <motion.div
                   initial={{ scale: 0 }}
@@ -344,6 +341,7 @@ const AssessmentSection = forwardRef(({
                   transition={{ type: "spring", stiffness: 200, damping: 10 }}
                   className="ml-3 bg-[#FFB71B]/20 text-[#232D35] text-xs font-medium py-1 px-2 rounded-md"
                 >
+                  
                   <span className="flex items-center">
                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -357,6 +355,7 @@ const AssessmentSection = forwardRef(({
               question={question}
               answer={answers[question.questionId]}
               onAnswerChange={(value) => onAnswerChange(question.questionId, value)}
+              questionNumber={indexOfFirstQuestion + index + 1}
             />
           </motion.div>
         ))}
