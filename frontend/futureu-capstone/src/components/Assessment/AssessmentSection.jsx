@@ -44,8 +44,8 @@ const AssessmentSection = forwardRef(({
     indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
     currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
   } else if (isRiasecSection) {
-    // For RIASEC: 7 questions per page
-    questionsPerPage = 7;
+    // For RIASEC: 10 questions per page
+    questionsPerPage = 10;
     totalPages = Math.ceil(questions.length / questionsPerPage);
     indexOfLastQuestion = currentPage * questionsPerPage;
     indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;

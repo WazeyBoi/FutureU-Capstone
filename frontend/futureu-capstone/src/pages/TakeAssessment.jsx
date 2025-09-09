@@ -393,7 +393,7 @@ const TakeAssessment = () => {
               title: 'Interest Assessment',
               description: 'Assess your personal interests and preferences in various activities',
               questions: questionsData.interestAreas,
-              questionsPerPage: 7, // Set to display 7 questions per page for RIASEC
+              questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
               isRiasecSection: true // Marker that this is a RIASEC section
             });
             initialIndices['interest-combined'] = 0;
@@ -629,7 +629,7 @@ const TakeAssessment = () => {
           title: 'Interest Assessment',
           description: 'Assess your personal interests and preferences in various activities',
           questions: questionsData.interestAreas,
-          questionsPerPage: 7, // Set to display 7 questions per page for RIASEC
+          questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
           isRiasecSection: true // Marker that this is a RIASEC section
         });
         initialIndices['interest-combined'] = 0;
@@ -761,7 +761,7 @@ const TakeAssessment = () => {
     setCurrentSection(sectionIndex);
 
     const section = sectionList[sectionIndex];
-    const questionsPerPage = section.questionsPerPage || (section.questions.length > 0 && section.questions[0].isRiasecQuestion ? 7 : 5);
+    const questionsPerPage = section.questionsPerPage || (section.questions.length > 0 && section.questions[0].isRiasecQuestion ? 10 : 5);
     const page = Math.floor(questionIndex / questionsPerPage) + 1;
 
     // If already on the correct section and page, scroll immediately
