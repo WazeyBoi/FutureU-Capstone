@@ -96,8 +96,8 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                     className="sr-only"
                   />
                 </div>
-                <div className="ml-3">
-                  <span className="text-gray-800">{choice.choiceText}</span>
+                <div className="ml-3 flex-1">
+                  <span className="text-gray-800 text-left block">{choice.choiceText}</span>
                 </div>
               </label>
             </motion.div>
