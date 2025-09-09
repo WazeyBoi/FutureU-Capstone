@@ -200,6 +200,18 @@ const TakeAssessment = () => {
         const assessmentData = await assessmentService.getAssessmentById(parseInt(assessmentId));
         setAssessment(assessmentData);
         
+        // SECURITY CHECK: Prevent retaking completed assessments (one-to-one relationship)
+        const completedAssessments = await userAssessmentService.getCompletedAssessments(userId);
+        const isAlreadyCompleted = completedAssessments.some(
+          a => a.assessment.assessmentId.toString() === assessmentId
+        );
+        
+        if (isAlreadyCompleted) {
+          setError("You have already completed this assessment. Each assessment can only be taken once.");
+          setLoading(false);
+          return;
+        }
+        
         // Check for existing progress BEFORE fetching/randomizing questions
         const inProgressAssessments = await userAssessmentService.getInProgressAssessments(userId);
         
@@ -1002,10 +1014,18 @@ const TakeAssessment = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => window.location.reload()}
+                  onClick={() => {
+                    // If error is about assessment already completed, go to dashboard
+                    // Otherwise, try reloading
+                    if (error && error.includes("already completed")) {
+                      navigate('/assessment-dashboard');
+                    } else {
+                      window.location.reload();
+                    }
+                  }}
                   className="inline-flex items-center px-5 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
-                  Try Again
+                  {error && error.includes("already completed") ? "Go to Dashboard" : "Try Again"}
                 </motion.button>
               </div>
             </div>

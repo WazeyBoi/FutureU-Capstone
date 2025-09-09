@@ -169,10 +169,14 @@ const AssessmentDashboard = () => {
         setCompletedByAssessment(groupedAssessments);
         setAssessmentStats(statsMap);
 
-        // Filter out assessments that are in progress from available assessments
+        // Filter out assessments that are in progress OR completed from available assessments
+        // This implements one-to-one relationship - users cannot retake completed assessments
         const inProgressIds = validInProgressAssessments.map(a => a.assessment.assessmentId);
+        const completedIds = completedWithResults.map(a => a.assessment.assessmentId);
+        
         const availableData = allAssessments.filter(assessment =>
-          !inProgressIds.includes(assessment.assessmentId)
+          !inProgressIds.includes(assessment.assessmentId) && 
+          !completedIds.includes(assessment.assessmentId)
         );
         setAvailableAssessments(availableData);
 
@@ -929,17 +933,7 @@ const AssessmentDashboard = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-4 flex justify-end">
-                        <motion.button
-                          whileHover={{ scale: 1.07 }}
-                          whileTap={{ scale: 0.97 }}
-                          onClick={() => handleStartAssessment(assessment.assessmentId)}
-                          className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
-                        >
-                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                          Retake Assessment
-                        </motion.button>
-                      </div>
+                      {/* Retake button removed - assessments can only be taken once (one-to-one relationship) */}
                     </div>
                   </motion.div>
                 );
