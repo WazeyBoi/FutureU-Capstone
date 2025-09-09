@@ -115,7 +115,7 @@ public class UserAssessmentService {
     public UserAssessmentEntity saveProgress(UserEntity user, AssessmentEntity assessment, 
                                             int currentSectionIndex, double progressPercentage,
                                             String savedAnswers, String savedSections, 
-                                            int timeSpentSeconds, Integer attemptNo) {
+                                            Integer attemptNo) {
         // Look for existing in-progress assessment
         List<UserAssessmentEntity> inProgress = userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
         UserAssessmentEntity userAssessment;
@@ -147,7 +147,6 @@ public class UserAssessmentService {
         userAssessment.setProgressPercentage(progressPercentage);
         userAssessment.setSavedAnswers(savedAnswers);
         userAssessment.setSavedSections(savedSections);
-        userAssessment.setTimeSpentSeconds(timeSpentSeconds);
         userAssessment.setLastSavedTime(LocalDateTime.now());
         
         return userAssessmentRepository.save(userAssessment);
@@ -159,7 +158,7 @@ public class UserAssessmentService {
     @Transactional
     public UserAssessmentEntity submitAndScoreAssessment(UserEntity user, AssessmentEntity assessment,
                                                       List<Map<String, Object>> answers, String sectionsJson,
-                                                      int timeSpentSeconds, Integer attemptNo) throws JsonProcessingException {
+                                                      Integer attemptNo) throws JsonProcessingException {
         // Find or create the user assessment record
         List<UserAssessmentEntity> inProgress = userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
         UserAssessmentEntity userAssessment;
@@ -188,7 +187,6 @@ public class UserAssessmentService {
         // Set completion data
         userAssessment.setStatus("COMPLETED");
         userAssessment.setProgressPercentage(100.0);
-        userAssessment.setTimeSpentSeconds(timeSpentSeconds);
         // Store the user's final answers and sections/questions as JSON
         userAssessment.setSavedAnswers(objectMapper.writeValueAsString(answers));
         userAssessment.setSavedSections(sectionsJson);
