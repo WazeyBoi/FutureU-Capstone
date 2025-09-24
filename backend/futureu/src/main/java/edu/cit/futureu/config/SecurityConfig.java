@@ -15,9 +15,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Ensure this import is present
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import edu.cit.futureu.jwt.AuthEntryPointJwt; // Ensure this import is present
+import edu.cit.futureu.jwt.AuthEntryPointJwt;
 import edu.cit.futureu.jwt.AuthTokenFilter;
 import edu.cit.futureu.service.UserDetailsServiceImpl;
 
@@ -67,6 +67,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll() // For sign-in and sign-up
                 .requestMatchers("/api/test/**").permitAll() // For general API testing
                 .requestMatchers("/api/hello").permitAll() // Allow public access to hello endpoint
+                
+                // NEW: Profile endpoints - require authentication
+                .requestMatchers("/api/profile/**").authenticated()
+                
+                // NEW: Static file serving for uploaded profile pictures
+                .requestMatchers("/uploads/**").permitAll()
                 
                 // Allow public access to read-only school and program endpoints
                 .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
