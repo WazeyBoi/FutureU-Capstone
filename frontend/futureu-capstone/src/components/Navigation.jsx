@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import profileService from '../services/profileService';
 import FutureULogo from '../assets/header_logo_normal.svg';
 import FutureULogo2 from '../assets/header_logo_yellow.svg';
 import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
-import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut } from 'lucide-react';
+import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut, User } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -12,21 +13,65 @@ const Navigation = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null);
   const [logoHover, setLogoHover] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    // Check authentication status and role when component mounts or location changes
-    setIsAuthenticated(authService.isAuthenticated());
-    let role = authService.getUserRole();
-    // Normalize role for counselor
-    if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
-    setUserRole(role);
+    const authenticated = authService.isAuthenticated();
+    setIsAuthenticated(authenticated);
+    
+    if (authenticated) {
+      const user = authService.getCurrentUser();
+      setCurrentUser(user);
+      fetchUserProfile(user.id);
+      
+      let role = authService.getUserRole();
+      if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
+      setUserRole(role);
+    } else {
+      setCurrentUser(null);
+      setUserProfile(null);
+      setUserRole(null);
+    }
   }, [location]);
 
+  const fetchUserProfile = async (userId) => {
+    try {
+      const profile = await profileService.getUserProfile(userId);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    }
+  };
+
+  // Enhanced click outside handling
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    // Use capture phase to ensure this runs before other handlers
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('touchstart', handleClickOutside, true);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+    };
+  }, []);
+
+  // Close dropdown when route changes
+  useEffect(() => {
+    setShowDropdown(false);
+  }, [location.pathname]);
+
   const handleLogout = () => {
-    // Clear recommendations for the current user (if any)
     const userId = authService.getCurrentUserId();
     if (userId) {
-      // Try to clear for all possible assessment IDs if you track them, or just clear all keys if needed
       Object.keys(localStorage).forEach(key => {
         if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
           localStorage.removeItem(key);
@@ -35,17 +80,130 @@ const Navigation = () => {
     }
     authService.signout();
     setIsAuthenticated(false);
+    setUserProfile(null);
+    setShowDropdown(false);
     navigate('/user-landing-page');
+  };
+
+  const handleProfileClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(false);
+    navigate('/profile');
+  };
+
+  // Enhanced dropdown toggle with proper event handling
+  const handleDropdownToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowDropdown(prev => !prev);
   };
 
   const isActive = (path) => {
     return location.pathname === path;
   };
 
+  const getProfilePictureUrl = () => {
+    return userProfile?.profilePictureUrl || currentUser?.profilePictureUrl || null;
+  };
+
+  const ProfilePicture = ({ size = "w-10 h-10", showBorder = true, isClickable = false }) => {
+    const [imageError, setImageError] = useState(false);
+    const profilePictureUrl = getProfilePictureUrl();
+    
+    const handleImageError = () => {
+      setImageError(true);
+    };
+
+    const borderClass = showBorder ? "border-2 border-white shadow-lg" : "";
+    const hoverClass = isClickable ? "cursor-pointer hover:ring-2 hover:ring-[#FFB71B] hover:ring-offset-2 transition-all duration-200" : "";
+    
+    return (
+      <div 
+        className={`${size} rounded-full overflow-hidden ${borderClass} ${hoverClass}`}
+        onClick={isClickable ? handleDropdownToggle : undefined}
+      >
+        {profilePictureUrl && !imageError ? (
+          <img
+            src={`http://localhost:8080${profilePictureUrl}`}
+            alt="Profile"
+            className="w-full h-full object-cover"
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80 flex items-center justify-center">
+            <User className={`${size === "w-10 h-10" ? "w-6 h-6" : "w-7 h-7"} text-white`} />
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Simplified ProfileDropdown - just the profile picture circle
+  const ProfileDropdown = () => (
+    <div className="relative" ref={dropdownRef}>
+      {/* Just the profile picture - no container or chevron */}
+      <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
+
+      {/* Enhanced dropdown with higher z-index and better positioning */}
+      {showDropdown && (
+        <>
+          {/* Backdrop overlay to catch clicks */}
+          <div 
+            className="fixed inset-0 z-[9998]" 
+            onClick={() => setShowDropdown(false)}
+          />
+          
+          {/* Dropdown menu with very high z-index */}
+          <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999] animate-fadeIn">
+            {/* User Info Header */}
+            <div className="px-4 py-3 border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                <ProfilePicture size="w-12 h-12" showBorder={false} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-[#232D35] truncate">
+                    {userProfile?.firstName || currentUser?.firstName} {userProfile?.lastname || currentUser?.lastname}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{userProfile?.email || currentUser?.email}</p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFB71B]/20 text-[#232D35] mt-1">
+                    {userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR' ? 'Counselor' : userRole || 'Student'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <div className="py-1">
+              <button
+                onClick={handleProfileClick}
+                onMouseDown={(e) => e.preventDefault()}
+                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#FFB71B]/10 hover:text-[#232D35] transition-colors duration-150 text-left"
+                type="button"
+              >
+                <User className="w-5 h-5 mr-3 text-[#FFB71B]" />
+                <span className="font-medium">My Profile</span>
+              </button>
+              
+              <button
+                onClick={handleLogout}
+                onMouseDown={(e) => e.preventDefault()}
+                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150 text-left"
+                type="button"
+              >
+                <LogOut className="w-5 h-5 mr-3 text-red-500" />
+                <span className="font-medium">Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   // Don't render the navigation bar for Counselor routes
   if (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') {
     return (
-      <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
+      <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
         <div className="container mx-auto">
           <div className="flex items-center justify-between h-16 w-full">
             {/* Brand with Logo */}
@@ -55,7 +213,6 @@ const Navigation = () => {
               onMouseEnter={() => setLogoHover(true)}
               onMouseLeave={() => setLogoHover(false)}
             >
-              {/* Real Logo - Increased Size */}
               <img 
                 src={logoHover ? FutureULogo2 : FutureULogo} 
                 alt="FutureU Logo" 
@@ -86,45 +243,9 @@ const Navigation = () => {
                 </span>
               </Link>
               
-              {/* <Link
-                to="/counselor/students"
-                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                  isActive('/counselor/students')
-                    ? 'bg-[#FFB71B] text-black shadow-lg'
-                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                }`}
-              >
-                <span className="relative z-10">
-                  <Users className="w-4 h-4 inline-block mr-1.5" />
-                  Students
-                </span>
-              </Link>
-              
-              <Link
-                to="/counselor/assessments"
-                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                  isActive('/counselor/assessments')
-                    ? 'bg-[#FFB71B] text-black shadow-lg'
-                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                }`}
-              >
-                <span className="relative z-10">
-                  <FileText className="w-4 h-4 inline-block mr-1.5" />
-                  Assessments
-                </span>
-              </Link> */}
-              
-              {/* Authentication buttons */}
-              <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#FFB71B]/80">
-                <button
-                  onClick={handleLogout}
-                  className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
-                >
-                  <span className="relative z-10">
-                    <LogOut className="w-4 h-4 inline-block mr-1.5" />
-                    Logout
-                  </span>
-                </button>
+              {/* Profile Dropdown for Counselors */}
+              <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
+                <ProfileDropdown />
               </div>
             </div>
           </div>
@@ -135,7 +256,7 @@ const Navigation = () => {
 
   // Default navigation for other roles (Students and Admin)
   return (
-    <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override">
+    <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
       <div className="container mx-auto">
         <div className="flex items-center justify-between h-16 w-full">
           {/* Brand with Logo */}
@@ -145,7 +266,6 @@ const Navigation = () => {
             onMouseEnter={() => setLogoHover(true)}
             onMouseLeave={() => setLogoHover(false)}
           >
-            {/* Real Logo - Increased Size */}
             <img 
               src={logoHover ? FutureULogo2 : FutureULogo} 
               alt="FutureU Logo" 
@@ -311,18 +431,10 @@ const Navigation = () => {
               </>
             )}
            
-            {/* Authentication buttons */}
+            {/* Authentication buttons / Profile Dropdown */}
             <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-[#FFB71B]/80">
               {isAuthenticated ? (
-                <button
-                  onClick={handleLogout}
-                  className="relative overflow-hidden px-6 py-2.5 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg active:scale-95"
-                >
-                  <span className="relative z-10">
-                    <LogOut className="w-4 h-4 inline-block mr-1.5" />
-                    Logout
-                  </span>
-                </button>
+                <ProfileDropdown />
               ) : (
                 <>
                   <Link
@@ -351,5 +463,19 @@ const Navigation = () => {
     </nav>
   );
 };
- 
+
+// Enhanced animation styles for dropdown
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+`;
+document.head.appendChild(style);
+
 export default Navigation;

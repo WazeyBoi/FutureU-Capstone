@@ -46,7 +46,7 @@ import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
 import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
-
+import ProfilePage from './components/Profile/ProfilePage.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -115,6 +115,11 @@ function App() {
             <Testimonials />
           </StudentRoute>
         } />
+          <Route path="/profile" element={
+            <StudentRoute>
+              <ProfilePage />
+            </StudentRoute>
+          } />
         <Route path="/career-pathways" element={
           <StudentRoute>
             <CareerPathways />
