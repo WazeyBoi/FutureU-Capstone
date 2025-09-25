@@ -4,6 +4,8 @@ import choiceService from '../services/choiceService';
 import assessmentCategoryService from '../services/assessmentCategoryService';
 import assessmentSubCategoryService from '../services/assessmentSubCategoryService';
 import quizSubCategoryCategoryService from '../services/quizSubCategoryCategoryService';
+import adminQuestionService from '../services/adminServices/adminQuestionService';
+import adminChoiceService from '../services/adminServices/adminChoiceService';
 
 const Questions = () => {
   const [questions, setQuestions] = useState([]);
@@ -15,6 +17,15 @@ const Questions = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [questionChoices, setQuestionChoices] = useState([]);
   const [expandedDetails, setExpandedDetails] = useState({});
+  
+  // Editing states
+  const [isEditingQuestion, setIsEditingQuestion] = useState(false);
+  const [editingChoice, setEditingChoice] = useState(null);
+  const [editQuestionText, setEditQuestionText] = useState('');
+  const [editChoiceText, setEditChoiceText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Filter states
   const [filterCategory, setFilterCategory] = useState('');
@@ -68,6 +79,8 @@ const Questions = () => {
 
   const handleQuestionClick = async (question) => {
     setSelectedQuestion(question);
+    setIsEditingQuestion(false);
+    setEditingChoice(null);
     
     try {
       // Fetch choices for the selected question
@@ -76,6 +89,142 @@ const Questions = () => {
     } catch (err) {
       console.error('Error fetching choices:', err);
       setQuestionChoices([]);
+    }
+  };
+
+  // Auto-dismiss success/error messages
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(''), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  // Start editing question
+  const startEditingQuestion = () => {
+    setEditQuestionText(selectedQuestion.questionText);
+    setIsEditingQuestion(true);
+  };
+
+  // Cancel editing question
+  const cancelEditingQuestion = () => {
+    setIsEditingQuestion(false);
+    setEditQuestionText('');
+  };
+
+  // Save question changes
+  const saveQuestionChanges = async () => {
+    if (!editQuestionText.trim()) {
+      setErrorMessage('Question text cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updatedQuestionData = {
+        ...selectedQuestion,
+        questionText: editQuestionText.trim()
+      };
+
+      await adminQuestionService.updateQuestion(selectedQuestion.questionId, updatedQuestionData);
+      
+      // Update local state
+      setSelectedQuestion(prev => ({ ...prev, questionText: editQuestionText.trim() }));
+      setQuestions(prev => prev.map(q => 
+        q.questionId === selectedQuestion.questionId 
+          ? { ...q, questionText: editQuestionText.trim() }
+          : q
+      ));
+      
+      setIsEditingQuestion(false);
+      setEditQuestionText('');
+      setSuccessMessage('Question updated successfully!');
+    } catch (error) {
+      console.error('Error updating question:', error);
+      setErrorMessage('Failed to update question. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Start editing choice
+  const startEditingChoice = (choice) => {
+    setEditChoiceText(choice.choiceText);
+    setEditingChoice(choice.choiceId);
+  };
+
+  // Cancel editing choice
+  const cancelEditingChoice = () => {
+    setEditingChoice(null);
+    setEditChoiceText('');
+  };
+
+  // Save choice changes
+  const saveChoiceChanges = async () => {
+    if (!editChoiceText.trim()) {
+      setErrorMessage('Choice text cannot be empty');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const choiceToUpdate = questionChoices.find(c => c.choiceId === editingChoice);
+      const updatedChoiceData = {
+        ...choiceToUpdate,
+        choiceText: editChoiceText.trim()
+      };
+
+      await adminChoiceService.updateChoice(editingChoice, updatedChoiceData);
+      
+      // Update local state
+      setQuestionChoices(prev => prev.map(c => 
+        c.choiceId === editingChoice 
+          ? { ...c, choiceText: editChoiceText.trim() }
+          : c
+      ));
+      
+      setEditingChoice(null);
+      setEditChoiceText('');
+      setSuccessMessage('Choice updated successfully!');
+    } catch (error) {
+      console.error('Error updating choice:', error);
+      setErrorMessage('Failed to update choice. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Toggle choice correctness
+  const toggleChoiceCorrectness = async (choice) => {
+    setSaving(true);
+    try {
+      const updatedChoiceData = {
+        ...choice,
+        correct: !choice.correct
+      };
+
+      await adminChoiceService.updateChoice(choice.choiceId, updatedChoiceData);
+      
+      // Update local state
+      setQuestionChoices(prev => prev.map(c => 
+        c.choiceId === choice.choiceId 
+          ? { ...c, correct: !c.correct }
+          : c
+      ));
+      
+      setSuccessMessage(`Choice marked as ${!choice.correct ? 'correct' : 'incorrect'}!`);
+    } catch (error) {
+      console.error('Error updating choice correctness:', error);
+      setErrorMessage('Failed to update choice correctness. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -167,6 +316,32 @@ const Questions = () => {
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-2xl font-bold mb-6 text-gray-800">Question Management</h1>
       
+      {/* Success/Error Messages - Toast in lower right */}
+      {(successMessage || errorMessage) && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm w-80">
+          {successMessage && (
+            <div className="mb-2 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-lg">
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">{successMessage}</span>
+              </div>
+            </div>
+          )}
+          {errorMessage && (
+            <div className="mb-2 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-lg">
+              <div className="flex items-center">
+                <svg className="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm font-medium">{errorMessage}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Filters */}
       <div className="mb-6 p-5 bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
@@ -174,13 +349,43 @@ const Questions = () => {
           <div className="flex space-x-2">
             <button
               onClick={() => setCategoryView(true)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${categoryView ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: categoryView ? '#2B3E4E' : 'white',
+                color: categoryView ? 'white' : '#2B3E4E',
+                border: '1px solid #2B3E4E'
+              }}
+              onMouseEnter={(e) => {
+                if (!categoryView) {
+                  e.target.style.backgroundColor = '#f9fafb';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!categoryView) {
+                  e.target.style.backgroundColor = 'white';
+                }
+              }}
             >
               Category View
             </button>
             <button
               onClick={() => setCategoryView(false)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${!categoryView ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              style={{
+                backgroundColor: !categoryView ? '#2B3E4E' : 'white',
+                color: !categoryView ? 'white' : '#2B3E4E',
+                border: '1px solid #2B3E4E'
+              }}
+              onMouseEnter={(e) => {
+                if (categoryView) {
+                  e.target.style.backgroundColor = '#f9fafb';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (categoryView) {
+                  e.target.style.backgroundColor = 'white';
+                }
+              }}
             >
               List View
             </button>
@@ -312,7 +517,22 @@ const Questions = () => {
               setFilterType('');
               setSearchTerm('');
             }}
-            className="inline-flex justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex justify-center px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
+            style={{
+              color: '#2B3E4E',
+              backgroundColor: 'white',
+              border: '1px solid #2B3E4E'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#f9fafb';
+              e.target.style.borderColor = '#FFB71B';
+              e.target.style.color = '#FFB71B';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'white';
+              e.target.style.borderColor = '#2B3E4E';
+              e.target.style.color = '#2B3E4E';
+            }}
           >
             Clear Filters
           </button>
@@ -469,16 +689,38 @@ const Questions = () => {
                   <h3 className="text-lg font-medium text-gray-900">
                     Question #{selectedQuestion.questionId}
                   </h3>
-                  <div className="flex gap-1">
-                    {selectedQuestion.difficultyLevel && (
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getDifficultyBadgeColor(selectedQuestion.difficultyLevel)}`}>
-                        {selectedQuestion.difficultyLevel}
-                      </span>
-                    )}
-                    {selectedQuestion.questionType && (
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getQuestionTypeBadgeColor(selectedQuestion.questionType)}`}>
-                        {selectedQuestion.questionType.replace('_', ' ')}
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1">
+                      {selectedQuestion.difficultyLevel && (
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getDifficultyBadgeColor(selectedQuestion.difficultyLevel)}`}>
+                          {selectedQuestion.difficultyLevel}
+                        </span>
+                      )}
+                      {selectedQuestion.questionType && (
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getQuestionTypeBadgeColor(selectedQuestion.questionType)}`}>
+                          {selectedQuestion.questionType.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
+                    {!isEditingQuestion && (
+                      <button
+                        onClick={startEditingQuestion}
+                        className="px-3 py-1 text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+                        style={{
+                          backgroundColor: '#FFB71B',
+                          color: 'white',
+                          border: '1px solid #FFB71B'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#e6a315';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = '#FFB71B';
+                        }}
+                        disabled={saving}
+                      >
+                        Edit Question
+                      </button>
                     )}
                   </div>
                 </div>
@@ -486,9 +728,64 @@ const Questions = () => {
               <div className="px-6 py-5">
                 <dl className="grid grid-cols-1 gap-x-6 gap-y-6">
                   <div>
-                    <dd className="text-start text-sm text-gray-900 p-4 bg-gray-50 rounded-md border border-gray-200 shadow-inner">
-                      {selectedQuestion.questionText}
-                    </dd>
+                    {isEditingQuestion ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+                          <textarea
+                            value={editQuestionText}
+                            onChange={(e) => setEditQuestionText(e.target.value)}
+                            rows={4}
+                            className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] resize-none"
+                            placeholder="Enter question text..."
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={cancelEditingQuestion}
+                            className="px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              color: '#2B3E4E',
+                              backgroundColor: 'white',
+                              border: '1px solid #2B3E4E'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = '#f9fafb';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = 'white';
+                            }}
+                            disabled={saving}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={saveQuestionChanges}
+                            className="px-4 py-2 text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50"
+                            style={{
+                              backgroundColor: '#2B3E4E',
+                              color: 'white',
+                              border: '1px solid transparent'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!saving && editQuestionText.trim()) {
+                                e.target.style.backgroundColor = '#1e2d3a';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = '#2B3E4E';
+                            }}
+                            disabled={saving || !editQuestionText.trim()}
+                          >
+                            {saving ? 'Saving...' : 'Save Question'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <dd className="text-start text-sm text-gray-900 p-4 bg-gray-50 rounded-md border border-gray-200 shadow-inner">
+                        {selectedQuestion.questionText}
+                      </dd>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
@@ -522,29 +819,101 @@ const Questions = () => {
                     
                     {questionChoices && questionChoices.length > 0 && (
                       <div>
-                        <dt className="text-start text-base font-medium text-gray-900 mb-2">Choices</dt>
+                        <dt className="text-start text-base font-medium text-gray-900 mb-2">
+                          Choices
+                          <span className="ml-2 text-sm font-normal text-gray-500">(Click to edit, double-click checkmark to toggle correctness)</span>
+                        </dt>
                         <dd>
                           <ul className="border border-gray-200 rounded-md divide-y divide-gray-200 overflow-hidden">
                             {questionChoices.map((choice, index) => (
                               <li 
                                 key={choice.choiceId}
-                                className={`px-4 py-3 flex items-center text-sm ${
+                                className={`px-4 py-3 flex items-center text-sm transition-colors ${
                                   choice.correct ? 'bg-green-50' : index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                }`}
+                                } ${editingChoice === choice.choiceId ? 'ring-2 ring-[#FFB71B]' : ''}`}
                               >
                                 <div className="mr-3 flex-shrink-0">
                                   {choice.correct ? (
-                                    <svg className="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg 
+                                      className="h-5 w-5 text-green-500 cursor-pointer hover:text-green-600" 
+                                      xmlns="http://www.w3.org/2000/svg" 
+                                      viewBox="0 0 20 20" 
+                                      fill="currentColor"
+                                      onDoubleClick={() => toggleChoiceCorrectness(choice)}
+                                      title="Double-click to mark as incorrect"
+                                    >
                                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                     </svg>
                                   ) : (
-                                    <div className="h-5 w-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                    <div 
+                                      className="h-5 w-5 border-2 border-gray-300 rounded-full flex items-center justify-center cursor-pointer hover:border-[#FFB71B] hover:bg-[#FFB71B] hover:bg-opacity-10"
+                                      onDoubleClick={() => toggleChoiceCorrectness(choice)}
+                                      title="Double-click to mark as correct"
+                                    >
                                       <span className="text-xs font-medium text-gray-500">{String.fromCharCode(65 + index)}</span>
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 text-gray-900 text-start">
-                                  {choice.choiceText}
+                                  {editingChoice === choice.choiceId ? (
+                                    <div className="space-y-2">
+                                      <textarea
+                                        value={editChoiceText}
+                                        onChange={(e) => setEditChoiceText(e.target.value)}
+                                        rows={2}
+                                        className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] resize-none"
+                                        placeholder="Enter choice text..."
+                                      />
+                                      <div className="flex justify-end gap-2">
+                                        <button
+                                          onClick={cancelEditingChoice}
+                                          className="px-3 py-1 text-xs font-medium rounded-md"
+                                          style={{
+                                            color: '#2B3E4E',
+                                            backgroundColor: 'white',
+                                            border: '1px solid #2B3E4E'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.target.style.backgroundColor = '#f9fafb';
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.target.style.backgroundColor = 'white';
+                                          }}
+                                          disabled={saving}
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          onClick={saveChoiceChanges}
+                                          className="px-3 py-1 text-xs font-medium rounded-md disabled:opacity-50"
+                                          style={{
+                                            backgroundColor: '#2B3E4E',
+                                            color: 'white',
+                                            border: '1px solid transparent'
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            if (!saving && editChoiceText.trim()) {
+                                              e.target.style.backgroundColor = '#1e2d3a';
+                                            }
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.target.style.backgroundColor = '#2B3E4E';
+                                          }}
+                                          disabled={saving || !editChoiceText.trim()}
+                                        >
+                                          {saving ? 'Saving...' : 'Save'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span 
+                                      className="cursor-pointer hover:bg-[#FFB71B] hover:bg-opacity-20 px-2 py-1 rounded transition-colors"
+                                      onClick={() => startEditingChoice(choice)}
+                                      title="Click to edit choice text"
+                                    >
+                                      {choice.choiceText}
+                                    </span>
+                                  )}
                                 </div>
                                 {choice.correct && (
                                   <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">

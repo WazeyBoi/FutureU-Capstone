@@ -1,0 +1,168 @@
+/* MapBox3DView Custom Styles */
+
+/* Make the map container take full width and height */
+.mapboxgl-map {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 24px !important; /* Match the parent container's border radius */
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Hide the default Mapbox close button and ensure no elements block school logos */
+.mapboxgl-popup-close-button {
+  display: none !important;
+}
+
+/* Adjust the popup content to prevent overlapping with markers */
+.mapboxgl-popup {
+  z-index: 5 !important; /* Ensure proper stacking */
+}
+
+.mapboxgl-popup-content {
+  margin-top: 10px !important; /* Add more space above the popup content */
+  padding-top: 8px !important; /* Add padding at the top */
+}
+
+/* Position the navigation controls in a better spot */
+.mapboxgl-ctrl-top-right {
+  top: 15px !important;
+  right: 15px !important;
+}
+
+/* Pulsing animation for markers */
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* Custom Popup Styling */
+.futureu-popup .mapboxgl-popup-content {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.futureu-popup .school-popup {
+  padding: 12px 16px;
+  background: white;
+}
+
+.futureu-popup h3 {
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: #1a365d;
+  font-weight: 600;
+}
+
+.futureu-popup p {
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* School marker styling */
+.school-marker-container {
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+.school-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4285F4;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.school-marker:hover, .school-marker.active {
+  border-color: #fbbf24;
+  transform: scale(1.1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+}
+
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(66, 133, 244, 0.3);
+  animation: pulse 2s infinite;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Make style selector look better */
+.map-style-selector {
+  width: 150px;
+  background-color: white;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+.map-style-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.map-style-option:hover {
+  background-color: #f0f5ff;
+}
+
+.map-style-option.active {
+  background-color: #e6f0ff;
+  border-left: 3px solid #4285F4;
+}
+
+/* Custom map control buttons */
+.map-control-button {
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.map-control-button:hover {
+  background-color: #f0f5ff;
+}
+
+.map-control-button.active {
+  background-color: #4285F4;
+  color: white;
+}

@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -23,6 +25,9 @@ public class ProgramEntity {
     private int programId;
 
     private String programName;
+    
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     // One-to-many to SchoolProgram remains unchanged

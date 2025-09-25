@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import apiClient from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
-import CesiumSchoolsGlobe from "./CesiumSchoolsGlobe";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -17,6 +16,7 @@ import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
 import up_school_logo from '../assets/school_logos/up_school_logo.png';
 import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
 import { useClickAway } from "react-use"; // Add this at the top if you want to close dropdown on outside click (optional)
+import MapBox3DView from "./MapBox3DView"; // Import the new 3D map component
 
 // School logo mapping
 const schoolLogos = {
@@ -100,19 +100,16 @@ const VirtualCampusToursPage = () => {
   const [school, setSchool] = useState("");
   const [schoolType, setSchoolType] = useState("");
   const [filteredCampuses, setFilteredCampuses] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [realSchoolData, setRealSchoolData] = useState({});
+  const [showFilters, setShowFilters] = useState(false);  const [realSchoolData, setRealSchoolData] = useState({});
   const [apiSchools, setApiSchools] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [enhancedCampuses, setEnhancedCampuses] = useState([]); // New state for enhanced campuses
-  const [viewMode, setViewMode] = useState("2d"); // "2d" for Leaflet, "3d" for Cesium
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [flyTo, setFlyTo] = useState(defaultMapCenter);
-  const [mapZoom, setMapZoom] = useState(defaultMapZoom);
-  const [tileUrl, setTileUrl] = useState(tileOptions[0].url);
-  const [tileAttribution, setTileAttribution] = useState(tileOptions[0].attribution);
-  const [tours, setTours] = useState([]);
+  const [mapZoom, setMapZoom] = useState(defaultMapZoom);  const [tileUrl, setTileUrl] = useState(tileOptions[0].url);
+  const [tileAttribution, setTileAttribution] = useState(tileOptions[0].attribution);  const [tours, setTours] = useState([]);
   const [schools, setSchools] = useState([]);
+  const [mapView, setMapView] = useState("2d"); // Toggle between 2d and 3d view
   const mapRef = useRef(null);
   const [schoolSearch, setSchoolSearch] = useState("");
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
@@ -362,8 +359,13 @@ const VirtualCampusToursPage = () => {
     setFlyTo(defaultMapCenter);
     setMapZoom(defaultMapZoom);
     if (mapRef.current) {
-      mapRef.current.setView(defaultMapCenter, defaultMapZoom, { animate: true });
+      mapRef.current.setView(defaultMapCenter, defaultMapZoom);
     }
+  };
+
+  // Handler to toggle between 2D and 3D map views
+  const toggleMapView = () => {
+    setMapView(prevView => prevView === "2d" ? "3d" : "2d");
   };
 
   const handleTileChange = (e) => {
@@ -543,52 +545,61 @@ const VirtualCampusToursPage = () => {
         </div>
       </motion.div>
 
-      {/* --- MOVE THIS MAP SECTION UP, right after the hero section --- */}
-      <div className="flex justify-center mb-4 mt-4">
-        <button
-          className={`px-6 py-2 font-semibold rounded-l-full border transition-all duration-200 shadow-sm
-            ${viewMode === "2d"
-              ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white border-blue-700 shadow-lg scale-105 z-10"
-              : "bg-white text-blue-700 border-blue-400 hover:bg-blue-50"}
-          `}
-          onClick={() => setViewMode("2d")}
-        >
-          2D Map
-        </button>
-        <button
-          className={`px-6 py-2 font-semibold rounded-r-full border transition-all duration-200 shadow-sm
-            ${viewMode === "3d"
-              ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white border-blue-700 shadow-lg scale-105 z-10"
-              : "bg-white text-blue-700 border-blue-400 hover:bg-blue-50"}
-          `}
-          onClick={() => setViewMode("3d")}
-        >
-          3D Globe
-        </button>
-      </div>
-      <div className="flex flex-col md:flex-row h-[85vh] items-stretch bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative max-w-7xl mx-auto rounded-3xl shadow-2xl border border-blue-100 mb-8">
-        {viewMode === "2d" ? (
-          <div className="w-full h-full flex items-center justify-center p-4 relative">
-            {/* Map Style Switcher */}
-            <select
-              className="absolute top-6 left-1/2 transform -translate-x-1/2 z-[1000] bg-white border border-gray-200 rounded-full px-4 py-2 shadow"
-              value={tileUrl}
-              onChange={handleTileChange}
-            >
-              {tileOptions.map(opt => (
-                <option key={opt.name} value={opt.url}>{opt.name} Map</option>
-              ))}
-            </select>
-            {/* Clear School Button */}
-            {selectedSchool && (
-              <button
-                onClick={handleClearSchool}
-                className="absolute top-6 right-6 z-[1000] bg-white border border-yellow-200 rounded-full px-4 py-2 shadow hover:bg-yellow-50 transition"
+      {/* Map section - Controls moved to a dedicated bar above the map */}
+      <div className="max-w-7xl mx-auto mb-4 mt-2 px-4">
+        {/* Control Bar - Map style selector and view toggle */}
+        <div className="flex flex-wrap items-center justify-between bg-white rounded-xl shadow-lg border border-blue-100 p-3 mb-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <label className="mr-2 text-sm font-medium text-gray-600">Map Style:</label>
+              <select
+                className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300"
+                value={tileUrl}
+                onChange={handleTileChange}
               >
-                Clear School
-              </button>
-            )}
-            <div className="w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
+                {tileOptions.map(opt => (
+                  <option key={opt.name} value={opt.url}>{opt.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <button
+              onClick={toggleMapView}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1 text-sm font-medium transition-all duration-300 shadow-sm"
+            >
+              <span>{mapView === "2d" ? "3D" : "2D"} View</span>
+              <span className="ml-1">
+                {mapView === "2d" ? 
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
+                  </svg> : 
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd" />
+                  </svg>
+                }
+              </span>
+            </button>
+          </div>
+          
+          {selectedSchool && (
+            <button
+              onClick={handleClearSchool}
+              className="bg-white border border-yellow-200 rounded-lg px-4 py-1.5 shadow-sm hover:bg-yellow-50 transition flex items-center text-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Clear School Selection
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row h-[85vh] items-stretch bg-gradient-to-br from-blue-50 via-yellow-50 to-white relative max-w-7xl mx-auto rounded-3xl shadow-2xl border border-blue-100 mb-8">
+        <div className="w-full h-full flex items-center justify-center p-4 relative">
+          <div className="w-full h-full rounded-3xl shadow-2xl overflow-hidden border border-blue-100">
+            {/* Conditionally render 2D or 3D map based on mapView state */}
+            {mapView === "2d" ? (
               <MapContainer
                 center={flyTo}
                 zoom={mapZoom}
@@ -608,11 +619,6 @@ const VirtualCampusToursPage = () => {
                       click: () => handleSchoolMarkerClick(schoolObj),
                     }}
                   >
-                    {/*<Popup>
-                      <div className="text-center">
-                        <strong className="block text-blue-800">{schoolObj.name}</strong>
-                      </div>
-                    </Popup>*/}
                     <Tooltip
                       direction="top"
                       offset={[0, -20]}
@@ -626,34 +632,23 @@ const VirtualCampusToursPage = () => {
                 {/* Fly to school when selected */}
                 {flyTo && <FlyToSchool position={flyTo} zoom={mapZoom} />}
               </MapContainer>
-            </div>
+            ) : (
+              /* 3D Map View */
+              <MapBox3DView
+                schools={schools}
+                selectedSchool={selectedSchool}
+                setSelectedSchool={setSelectedSchool}
+                flyTo={flyTo}
+                mapZoom={mapZoom}
+                schoolLogos={schoolLogos}
+                mapStyle={tileUrl === "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" ? "streets" :
+                         tileUrl === "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" ? "outdoors" :
+                         tileUrl === "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" ? "dark" : 
+                         tileUrl === "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" ? "satellite" : "streets"}
+              />
+            )}
           </div>
-        ) : (
-          <CesiumSchoolsGlobe
-            schools={schools
-              .map(s => ({
-                ...s,
-                latitude: Number(s.latitude),
-                longitude: Number(s.longitude)
-              }))
-              .filter(s =>
-                !isNaN(s.latitude) &&
-                !isNaN(s.longitude)
-              )
-            }
-            selectedSchool={selectedSchool}
-            setSelectedSchool={schoolObj => {
-              setSelectedSchool(schoolObj);
-              setSchool(schoolObj ? schoolObj.name : "");
-              setFlyTo(
-                schoolObj
-                  ? [Number(schoolObj.latitude), Number(schoolObj.longitude)]
-                  : null
-              );
-            }}
-            goTo2DMap={() => setViewMode("2d")}
-          />
-        )}
+        </div>
         {/* School Details Section (always shown for both 2D and 3D) */}
         <div className="w-full max-w-md h-full min-h-[85vh] flex flex-col justify-center items-center p-0">
           {selectedSchool ? (

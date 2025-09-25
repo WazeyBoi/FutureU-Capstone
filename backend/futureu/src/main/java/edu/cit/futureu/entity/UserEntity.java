@@ -35,6 +35,9 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // NEW: Add only this field for profile picture
+    private String profilePictureUrl;
+
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerEntity> answers;
@@ -121,5 +124,14 @@ public class UserEntity {
     
     public void setTestimonies(List<TestimonyEntity> testimonies) {
         this.testimonies = testimonies;
+    }
+
+    // NEW: Add getter and setter for profile picture
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+    
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
     }
 }
