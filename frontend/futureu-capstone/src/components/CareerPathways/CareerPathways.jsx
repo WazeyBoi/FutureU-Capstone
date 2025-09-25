@@ -318,56 +318,61 @@ const CareerPathways = () => {
         <div className="min-h-screen bg-gray-50">
             <CareerHeader />
 
-            <main className="max-w-[1600px] mx-auto px-4 py-6">
-                <div className="flex flex-col lg:flex-row gap-6">
+            <main className="max-w-[1600px] mx-auto px-4 py-8">
+                <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar Filters */}
-                    <aside className="lg:w-1/4 w-full space-y-6">
-                        <CareerSidebarFilters
-                            industries={industries}
-                            selectedIndustry={selectedIndustry}
-                            setSelectedIndustry={setSelectedIndustry}
-                            filteredProgramsOptions={filteredProgramsOptions}
-                            programSearch={programSearch}
-                            setProgramSearch={setProgramSearch}
-                            selectedProgram={selectedProgram}
-                            setSelectedProgram={setSelectedProgram}
-                            jobTrends={jobTrends}
-                            selectedJobTrend={selectedJobTrend}
-                            setSelectedJobTrend={setSelectedJobTrend}
-                            selectedFilters={{ selectedIndustry, selectedProgram, selectedJobTrend, searchTerm }}
-                            clearAllFilters={() => {
-                                setSelectedIndustry("");
-                                setSelectedProgram("");
-                                setSelectedSchool("");
-                                setSelectedJobTrend("");
-                                setSearchTerm("");
-                                setProgramSearch("");
-                            }}
-                        />
+                    <aside className="lg:w-1/4 w-full">
+                        <div className="sticky top-4">
+                            <CareerSidebarFilters
+                                industries={industries}
+                                selectedIndustry={selectedIndustry}
+                                setSelectedIndustry={setSelectedIndustry}
+                                filteredProgramsOptions={filteredProgramsOptions}
+                                programSearch={programSearch}
+                                setProgramSearch={setProgramSearch}
+                                selectedProgram={selectedProgram}
+                                setSelectedProgram={setSelectedProgram}
+                                jobTrends={jobTrends}
+                                selectedJobTrend={selectedJobTrend}
+                                setSelectedJobTrend={setSelectedJobTrend}
+                                selectedFilters={{ selectedIndustry, selectedProgram, selectedJobTrend, searchTerm }}
+                                clearAllFilters={() => {
+                                    setSelectedIndustry("");
+                                    setSelectedProgram("");
+                                    setSelectedSchool("");
+                                    setSelectedJobTrend("");
+                                    setSearchTerm("");
+                                    setProgramSearch("");
+                                }}
+                            />
+                        </div>
                     </aside>
 
                     {/* Main Content */}
-                    <section className="lg:w-3/4 w-full flex flex-col gap-8">
+                    <section className="lg:w-3/4 w-full flex flex-col gap-6">
                         <CareerSearchBar
                             searchTerm={searchTerm}
                             setSearchTerm={setSearchTerm}
                             filteredCareersLength={filteredCareers.length}
                         />
 
-                        <CareerResultsTable
-                            loading={loading}
-                            paginatedCareers={paginatedCareers}
-                            totalPages={totalPages}
-                            currentPage={currentPage}
-                            setCurrentPage={setCurrentPage}
-                            getPaginationRange={getPaginationRange}
-                            handleItemClick={(career) => { setSelectedCareer(career); setShowCareerModal(true); }}
-                            formatProgramsPreview={formatProgramsPreview}
-                            getProgramsForCareer={getProgramsForCareer}
-                            formatMoreProgramsText={formatMoreProgramsText}
-                            getTrendStyle={getTrendStyle}
-                            getTrendIcon={getTrendIcon}
-                        />
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-xl font-semibold text-[#2B3E4E] mb-4">Career Listings</h2>
+                            <CareerResultsTable
+                                loading={loading}
+                                paginatedCareers={paginatedCareers}
+                                totalPages={totalPages}
+                                currentPage={currentPage}
+                                setCurrentPage={setCurrentPage}
+                                getPaginationRange={getPaginationRange}
+                                handleItemClick={(career) => { setSelectedCareer(career); setShowCareerModal(true); }}
+                                formatProgramsPreview={formatProgramsPreview}
+                                getProgramsForCareer={getProgramsForCareer}
+                                formatMoreProgramsText={formatMoreProgramsText}
+                                getTrendStyle={getTrendStyle}
+                                getTrendIcon={getTrendIcon}
+                            />
+                        </div>
 
                         <CareerLegend
                             getTrendStyle={getTrendStyle}

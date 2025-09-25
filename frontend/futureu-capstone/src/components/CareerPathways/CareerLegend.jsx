@@ -3,31 +3,48 @@ import { TrendingUp, TrendingDown, Minus, Circle, ChevronUp } from "lucide-react
 
 const CareerLegend = ({ getTrendStyle, getTrendIcon }) => {
     return (
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-            <div className="flex flex-wrap gap-3 items-center">
-                <span className="text-sm font-medium text-gray-700">Job Demand:</span>
-                <div className="flex items-center px-3 py-1.5 bg-purple-100 rounded-full">
-                    <TrendingUp className="w-3.5 h-3.5 text-purple-600 mr-1.5" />
-                    <span className="text-xs font-medium text-purple-800">Very High Demand</span>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-wrap gap-4 items-center">
+                <span className="text-sm font-semibold text-[#2B3E4E]">Demand Levels:</span>
+                {/* Very High Demand */}
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#FFB71B] text-white">
+                        Very High
+                    </span>
+                    <span className="text-xs text-gray-600">Very High Demand</span>
                 </div>
-                <div className="flex items-center px-3 py-1.5 bg-green-100 rounded-full">
-                    <ChevronUp className="w-3.5 h-3.5 text-green-600 mr-1.5" />
-                    <span className="text-xs font-medium text-green-800">High Demand</span>
+                {/* Stable Demand */}
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-600 text-white">
+                        Stable
+                    </span>
+                    <span className="text-xs text-gray-600">Stable Demand</span>
                 </div>
-                <div className="flex items-center px-3 py-1.5 bg-blue-100 rounded-full">
-                    <Circle className="w-3.5 h-3.5 text-blue-600 mr-1.5" />
-                    <span className="text-xs font-medium text-blue-800">Moderate Demand</span>
+                {/* High Demand */}
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#FFB71B] text-white">
+                        High
+                    </span>
+                    <span className="text-xs text-gray-600">High Demand</span>
                 </div>
-                <div className="flex items-center px-3 py-1.5 bg-yellow-100 rounded-full">
-                    <Minus className="w-3.5 h-3.5 text-yellow-600 mr-1.5" />
-                    <span className="text-xs font-medium text-yellow-800">Stable Demand</span>
+                {/* Moderate Demand */}
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
+                        Moderate
+                    </span>
+                    <span className="text-xs text-gray-600">Moderate Demand</span>
                 </div>
-                <div className="flex items-center px-3 py-1.5 bg-orange-100 rounded-full">
-                    <TrendingUp className="w-3.5 h-3.5 text-orange-600 mr-1.5" />
-                    <span className="text-xs font-medium text-orange-800">Growing Demand</span>
+                {/* Growing Demand */}
+                <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#2B3E4E] text-white">
+                        Growing
+                    </span>
+                    <span className="text-xs text-gray-600">Growing Demand</span>
                 </div>
-                <span className="ml-4 text-sm font-medium text-gray-700 border-l border-gray-300 pl-4">Salary:</span>
-                <span className="text-xs text-gray-600">All values shown in PHP (₱)</span>
+                <div className="flex items-center gap-2 border-gray-300">
+                    <span className="text-sm font-semibold text-[#2B3E4E]">Salary:</span>
+                    <span className="text-xs text-gray-600">All values shown in PHP (₱)</span>
+                </div>
             </div>
         </div>
     );
