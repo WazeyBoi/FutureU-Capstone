@@ -134,7 +134,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
             }}
           ></div>
         </div>
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {Array.from({ length: numItems }).map((_, idx) => {
             const question = section.questions[idx];
             const isAnswered = userAnswers && question && userAnswers[question.questionId] !== undefined && userAnswers[question.questionId] !== null && userAnswers[question.questionId] !== "";
@@ -180,7 +180,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     const isActive = sectionIndex === currentSection;
 
     // Color refinement for section states
-    let sectionClass = "w-full flex items-center justify-between px-2 py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-all ";
+    let sectionClass = "w-full flex items-center justify-between px-2 py-2 rounded-lg text-sm font-medium transition-all ";
     if (isActive) {
       // Active: blue border, blue bg, white text, subtle shadow
       sectionClass += "border-2 border-[#2563eb] bg-gradient-to-r from-[#2563eb]/60 to-[#1D63A1]/60 text-white shadow-lg";
@@ -207,7 +207,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
           }}
         >
           <div className="flex items-center space-x-1.5 min-w-0">
-            <span className="truncate" title={section.title}>{section.title}</span>
+            <span className="text-xs leading-tight" title={section.title}>{section.title}</span>
           </div>
           <div className="flex items-center ml-auto">
             {/* <span className="ml-2 text-xs">{section.questions ? section.questions.length : 0} items</span> */}
@@ -246,15 +246,15 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-lg p-3 sm:p-5 mb-4 border border-[#1D63A1]/20 flex flex-col"
+      className="bg-white rounded-xl shadow-lg p-2 sm:p-3 mb-4 border border-[#1D63A1]/20 flex flex-col"
     >
-      <div className="mb-4 text-sm font-medium text-[#232D35] flex items-center border-b border-gray-200 pb-3">
+      <div className="mb-3 text-xs font-medium text-[#232D35] flex items-center border-b border-gray-200 pb-2">
         {/* Replaced invalid SVG with Lucide ClipboardList icon */}
-        <ClipboardList className="w-5 h-5 mr-2 text-[#232D35] flex-shrink-0" />
-        <span className="truncate">Assessment Sections</span>
+        <ClipboardList className="w-6 h-6 mr-1 text-[#232D35] flex-shrink-0" />
+        <span className="truncate text-sm p-2">Assessment Sections</span>
       </div>
       
-      <div className="text-xs space-y-4 flex-grow overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+      <div className="text-xs space-y-2 flex-grow overflow-y-auto pr-1 -mr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {/* Map through section groups as accordions */}
         {Object.keys(sectionGroups).map(groupKey => {
           const group = sectionGroups[groupKey];
@@ -270,7 +270,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                 : 'border border-gray-200 shadow-sm'
             } transition-all duration-300`}>
               <button 
-                className={`w-full px-4 py-3 flex items-center transition-colors duration-200 ${
+                className={`w-full px-3 py-2 flex items-center transition-colors duration-200 ${
                   isOpen 
                     ? 'bg-gradient-to-r from-[#1D63A1]/5 to-[#1D63A1]/5 text-[#232D35] shadow-md'
                     : isCompleted
@@ -281,10 +281,10 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
               >
                 {/* Icon and title on the left */}
                 <div className="flex items-center">
-                  <span className={`mr-3 p-2 rounded-full ${isOpen ? 'bg-white' : 'bg-white'}`}>
+                  <span className={`mr-2 p-1.5 rounded-full ${isOpen ? 'bg-white' : 'bg-white'}`}>
                     {group.icon}
                   </span>
-                  <span className="text-black text-start font-medium">{group.title}</span>
+                  <span className="text-black text-start font-medium text-xs leading-tight">{group.title}</span>
                 </div>
                 
                 {/* Flex spacer to push the remaining elements to the right */}
@@ -292,8 +292,8 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                 
                 {/* Completion badge on the right */}
                 {isCompleted && (
-                  <span className={`mr-3 text-xs px-2 py-0.5 font-medium text-green-700 rounded-md bg-green-100`}>
-                    Complete
+                  <span className={`mr-2 text-xs px-1.5 py-0.5 font-medium text-green-700 rounded-md bg-green-100`}>
+                    ✓
                   </span>
                 )}
                 
@@ -331,9 +331,13 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className={`p-3 space-y-1.5 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}>
+                    <div className={`p-2 space-y-1 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}>
                       {group.sections.map((section, globalIndex) => {
                         const index = sections.findIndex(s => s.id === section.id);
+                        // If group has only one section, just render the items directly without section accordion
+                        if (group.sections.length === 1) {
+                          return renderSectionItems(section, index);
+                        }
                         return renderSectionAccordion(section, index, groupKey);
                       })}
                     </div>

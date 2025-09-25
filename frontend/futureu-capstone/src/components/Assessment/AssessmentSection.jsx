@@ -19,11 +19,45 @@ const AssessmentSection = forwardRef(({
   currentSection = 0,
   pageOverride,
   onPageOverrideHandled,
+  isInQuizSection = false,
+  quizTimeRemaining = null,
 }, ref) => {
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
-  // Check if this is a RIASEC section - if so, use 7 questions per page, otherwise 5
-  const questionsPerPage = questions.length > 0 && questions[0].isRiasecQuestion ? 7 : 5;
+  
+  // Check question type and determine pagination strategy
+  const isReadingComprehension = questions.length > 0 && questions[0].passageData;
+  const isRiasecSection = questions.length > 0 && questions[0].isRiasecQuestion;
+  
+  // Determine questions per page based on section type
+  let questionsPerPage;
+  let totalPages;
+  let currentQuestions;
+  let indexOfFirstQuestion;
+  let indexOfLastQuestion;
+  
+  if (isReadingComprehension) {
+    // For reading comprehension: 1 passage (5 questions) per page
+    questionsPerPage = 5;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  } else if (isRiasecSection) {
+    // For RIASEC: 10 questions per page
+    questionsPerPage = 10;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  } else {
+    // For other sections: 5 questions per page
+    questionsPerPage = 5;
+    totalPages = Math.ceil(questions.length / questionsPerPage);
+    indexOfLastQuestion = currentPage * questionsPerPage;
+    indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
+    currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
+  }
   
   // Reference to the questions container for scrolling
   const questionsContainerRef = useRef(null);
@@ -38,12 +72,6 @@ const AssessmentSection = forwardRef(({
     getCurrentPage: () => currentPage,
     _currentPage: currentPage
   }), [currentPage]);
-
-  // Calculate pagination values
-  const indexOfLastQuestion = currentPage * questionsPerPage;
-  const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
-  const currentQuestions = questions.slice(indexOfFirstQuestion, indexOfLastQuestion);
-  const totalPages = Math.ceil(questions.length / questionsPerPage);
 
   // Format remaining time as mm:ss
   const formatTime = (seconds) => {
@@ -170,9 +198,6 @@ const AssessmentSection = forwardRef(({
       <div ref={sectionHeaderRef} className="mb-4 border-b border-gray-200 pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
-            <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#1D63A1]/15 text-[#1D63A1] flex items-center justify-center text-xs sm:text-sm font-bold mr-2 flex-shrink-0">
-              {currentSection + 1}
-            </span>
             <span className="line-clamp-1">{title}</span>
           </h2>
           {remainingTime && (
@@ -184,7 +209,7 @@ const AssessmentSection = forwardRef(({
             </div>
           )}
         </div>
-        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 sm:ml-10 line-clamp-2">{description}</p>
+        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
         
         {/* Progress indicators */}
         <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -211,64 +236,225 @@ const AssessmentSection = forwardRef(({
             </span>
           </div>
         </div>
+        
+        {/* Quiz timer indicator for quiz sections */}
+        {isInQuizSection && quizTimeRemaining !== null && (
+          <div className={`mt-3 flex items-center px-4 py-2 rounded-lg border ${
+            quizTimeRemaining <= 300 ? 'bg-red-50 border-red-200' : 
+            quizTimeRemaining <= 900 ? 'bg-yellow-50 border-yellow-200' : 
+            'bg-blue-50 border-blue-200'
+          }`}>
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className={`text-sm font-medium ${
+              quizTimeRemaining <= 300 ? 'text-red-700' : 
+              quizTimeRemaining <= 900 ? 'text-yellow-700' : 
+              'text-blue-700'
+            }`}>
+              ⏱️ Quiz sections time limit: {Math.floor(quizTimeRemaining / 60)}:{(quizTimeRemaining % 60).toString().padStart(2, '0')} remaining
+            </span>
+          </div>
+        )}
+        
+        {/* Untimed section indicator for Interest Assessment */}
+        {!isInQuizSection && title === 'Interest Assessment' && (
+          <div className="mt-3 flex items-center bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+            <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-green-700 font-medium">
+              ✨ This section is untimed - Take your time to reflect on your genuine interests and preferences.
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Questions Pagination Info */}
-      <div className="flex justify-between items-center mb-4 px-1">
+      {/* <div className="flex justify-between items-center mb-4 px-1">
         <div className="text-sm text-gray-500">
-          Showing questions {indexOfFirstQuestion + 1}-{Math.min(indexOfLastQuestion, questions.length)} of {questions.length}
-          {questions.length > 0 && questions[0].isRiasecQuestion && (
-            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-              Interest Assessment
-            </span>
+          {isReadingComprehension ? (
+            <>
+              Showing passage {currentPage} of {totalPages} ({questionsPerPage} questions per passage)
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                Reading Comprehension
+              </span>
+            </>
+          ) : (
+            <>
+              Showing questions {indexOfFirstQuestion + 1}-{Math.min(indexOfLastQuestion, questions.length)} of {questions.length}
+              {questions.length > 0 && questions[0].isRiasecQuestion && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                  Interest Assessment
+                </span>
+              )}
+            </>
           )}
         </div>
         <div className="text-sm text-[#1D63A1]">
           Page {currentPage} of {totalPages}
         </div>
-      </div>
+      </div> */}
 
       {/* Questions Display - keep existing ref */}
       <div ref={questionsContainerRef} className="mb-4">
-        {currentQuestions.map((question, index) => (
-          <motion.div
-            key={question.questionId}
-            id={`question-${question.questionId}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="mb-8 pb-6 border-b border-gray-200 last:border-0 last:pb-0 last:mb-0"
-          >
-            <div className="flex items-center mb-2">
-              <span className="w-6 h-6 rounded-full bg-gray-100 text-[#232D35] text-xs font-medium flex items-center justify-center mr-2">
-                {indexOfFirstQuestion + index + 1}
-              </span>
-              <div className="text-sm text-gray-500">
-                Question {indexOfFirstQuestion + index + 1} of {questions.length}
+        {isRiasecSection ? (
+          // RIASEC Table Format - One big table for all questions
+          <div className="mt-4">
+            {/* Table Legend */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-gray-600 font-medium mb-4">How much do you like each activity?</p>
+              <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+                <span className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>0 = Strongly Dislike</span>
+                <span className="flex items-center"><span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>1 = Dislike</span>
+                <span className="flex items-center"><span className="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>2 = Unsure</span>
+                <span className="flex items-center"><span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>3 = Like</span>
+                <span className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>4 = Strongly Like</span>
               </div>
-              {answers[question.questionId] && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                  className="ml-3 bg-[#FFB71B]/20 text-[#232D35] text-xs font-medium py-1 px-2 rounded-md"
-                >
-                  <span className="flex items-center">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    Answered
-                  </span>
-                </motion.div>
-              )}
             </div>
-            <QuestionItem
-              question={question}
-              answer={answers[question.questionId]}
-              onAnswerChange={(value) => onAnswerChange(question.questionId, value)}
-            />
-          </motion.div>
-        ))}
+            
+            {/* RIASEC Questions Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-300 px-4 py-3 text-left text-sm font-semibold text-gray-700 w-2/3">
+                      Activity
+                    </th>
+                    <th className="border border-gray-300 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-16">
+                      0
+                    </th>
+                    <th className="border border-gray-300 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-16">
+                      1
+                    </th>
+                    <th className="border border-gray-300 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-16">
+                      2
+                    </th>
+                    <th className="border border-gray-300 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-16">
+                      3
+                    </th>
+                    <th className="border border-gray-300 px-2 py-3 text-center text-xs font-semibold text-gray-700 w-16">
+                      4
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentQuestions.map((question, index) => (
+                    <motion.tr
+                      key={question.questionId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      className="hover:bg-gray-50"
+                    >
+                      {/* Statement Cell */}
+                      <td className="border border-gray-300 px-4 py-3 text-sm text-gray-800">
+                        <div className="flex items-start">
+                          <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                            {indexOfFirstQuestion + index + 1}
+                          </span>
+                          <span className="leading-relaxed">{question.questionText}</span>
+                          {answers[question.questionId] && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                              className="ml-2 bg-green-100 text-green-800 text-xs font-medium py-1 px-2 rounded-full flex-shrink-0"
+                            >
+                              ✓
+                            </motion.div>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Rating Cells */}
+                      {[0, 1, 2, 3, 4].map((rating) => (
+                        <td key={rating} className="border border-gray-300 p-2 text-center">
+                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <label className="cursor-pointer flex justify-center">
+                              <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                answers[question.questionId] === rating.toString()
+                                  ? `border-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-500 bg-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-500`
+                                  : `border-gray-300 hover:border-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-400`
+                              }`}>
+                                {answers[question.questionId] === rating.toString() && (
+                                  <motion.div 
+                                    initial={{ scale: 0 }} 
+                                    animate={{ scale: 1 }} 
+                                    className="h-3 w-3 rounded-full bg-white" 
+                                  />
+                                )}
+                              </div>
+                              <input 
+                                type="radio" 
+                                name={`question-${question.questionId}`} 
+                                value={rating.toString()} 
+                                checked={answers[question.questionId] === rating.toString()} 
+                                onChange={() => onAnswerChange(question.questionId, rating.toString())} 
+                                className="sr-only" 
+                              />
+                            </label>
+                          </motion.div>
+                        </td>
+                      ))}
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          // Regular Question Format (Multiple Choice, Reading Comprehension, etc.)
+          currentQuestions.map((question, index) => (
+            <motion.div
+              key={question.questionId}
+              id={`question-${question.questionId}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="mb-8 pb-6 border-b border-gray-200 last:border-0 last:pb-0 last:mb-0"
+            >
+              {/* Display passage if this is the first question of a passage */}
+              {question.passageData && question.passageData.isFirstQuestionOfPassage && (
+                <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h3 className="text-lg font-semibold text-[#1D63A1] mb-3">
+                    Passage {question.passageData.passageIndex + 1}: {question.passageData.passage.title}
+                  </h3>
+                  <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line text-justify" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
+                    {question.passageData.passage.passageText}
+                  </div>
+                  <div className="mt-4 text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full inline-block">
+                    Questions {(question.passageData.passageIndex * 5) + 1}-{(question.passageData.passageIndex * 5) + 5} are based on this passage
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-center mb-2">
+                {answers[question.questionId] && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="ml-3 bg-[#FFB71B]/20 text-[#232D35] text-xs font-medium py-1 px-2 rounded-md"
+                  >
+                    <span className="flex items-center">
+                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                      </svg>
+                      Answered
+                    </span>
+                  </motion.div>
+                )}
+              </div>
+              <QuestionItem
+                question={question}
+                answer={answers[question.questionId]}
+                onAnswerChange={(value) => onAnswerChange(question.questionId, value)}
+                questionNumber={indexOfFirstQuestion + index + 1}
+              />
+            </motion.div>
+          ))
+        )}
       </div>
 
       {/* Pagination Controls - With Previous on left, Next on right, and counter centered */}

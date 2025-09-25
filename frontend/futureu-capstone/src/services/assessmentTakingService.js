@@ -126,6 +126,11 @@ class AssessmentTakingService {
    * @returns {Array} - Filtered, randomized questions
    */
   filterAndRandomize(questions, subCategoryId, quizSubCategoryId, limit) {
+    // Special handling for Reading Comprehension (subCategoryId 1, quizSubCategoryId 2)
+    if (subCategoryId === 1 && quizSubCategoryId === 2) {
+      return this.filterAndRandomizeReadingComprehension(questions, limit);
+    }
+    
     // Filter questions by assessment sub-category
     let filtered = questions.filter(q => 
       q.assessmentSubCategory && 
@@ -162,6 +167,68 @@ class AssessmentTakingService {
     
     // Take only the number needed, or all if not enough
     return shuffled.slice(0, limit);
+  }
+
+  /**
+   * Filter and randomize reading comprehension questions based on passages
+   * Selects 5 random passages and returns all questions for those passages
+   * @param {Array} questions - All questions
+   * @param {number} limit - Number of questions to return (should be 25)
+   * @returns {Array} - Questions grouped by passages
+   */
+  filterAndRandomizeReadingComprehension(questions, limit) {
+    // Filter for reading comprehension questions that have passages
+    const readingQuestions = questions.filter(q => 
+      q.assessmentSubCategory && 
+      q.assessmentSubCategory.assessmentSubCategoryId === 1 &&
+      q.quizSubCategoryCategory && 
+      q.quizSubCategoryCategory.quizSubCategoryCategoryId === 2 &&
+      q.questionType === 'Multiple Choice' && 
+      q.choices && 
+      q.choices.length > 0 &&
+      q.passage // Must have a passage
+    );
+
+    // Group questions by passage
+    const questionsByPassage = {};
+    readingQuestions.forEach(question => {
+      const passageId = question.passage.id;
+      if (!questionsByPassage[passageId]) {
+        questionsByPassage[passageId] = {
+          passage: question.passage,
+          questions: []
+        };
+      }
+      questionsByPassage[passageId].questions.push(question);
+    });
+
+    // Get array of passages with complete question sets (should have 5 questions each)
+    const completePassages = Object.values(questionsByPassage).filter(
+      passageGroup => passageGroup.questions.length === 5
+    );
+
+    // Randomly select 5 passages
+    const shuffledPassages = [...completePassages].sort(() => Math.random() - 0.5);
+    const selectedPassages = shuffledPassages.slice(0, 5);
+
+    // Flatten questions and mark them with passage info for UI
+    const selectedQuestions = [];
+    selectedPassages.forEach((passageGroup, passageIndex) => {
+      passageGroup.questions.forEach((question, questionIndex) => {
+        // Add passage metadata to questions for UI rendering
+        question.passageData = {
+          passage: passageGroup.passage,
+          isFirstQuestionOfPassage: questionIndex === 0,
+          passageIndex: passageIndex,
+          questionWithinPassage: questionIndex + 1
+        };
+        selectedQuestions.push(question);
+      });
+    });
+
+    console.log(`Selected ${selectedPassages.length} passages with ${selectedQuestions.length} total questions for reading comprehension`);
+    
+    return selectedQuestions;
   }
 
   /**

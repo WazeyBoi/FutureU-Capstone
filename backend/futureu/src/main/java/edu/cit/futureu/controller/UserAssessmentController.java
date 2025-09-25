@@ -134,7 +134,6 @@ public class UserAssessmentController {
             // Parse answers from the payload
             List<Map<String, Object>> answers = (List<Map<String, Object>>) payload.get("answers");
             String sectionsJson = payload.get("sections").toString();
-            int elapsedTime = Integer.parseInt(payload.get("elapsedTime").toString());
             
             // Get attemptNo from payload if present
             Integer attemptNo = null;
@@ -144,7 +143,7 @@ public class UserAssessmentController {
             
             // Submit and score the assessment
             UserAssessmentEntity result = userAssessmentService.submitAndScoreAssessment(
-                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, elapsedTime, attemptNo);
+                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, attemptNo);
             
             // Return the result with success message
             return new ResponseEntity<>(

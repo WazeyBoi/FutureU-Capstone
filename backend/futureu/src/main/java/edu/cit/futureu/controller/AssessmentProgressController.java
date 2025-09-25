@@ -43,7 +43,6 @@ public class AssessmentProgressController {
             double progressPercentage = Double.parseDouble(payload.get("progressPercentage").toString());
             String savedAnswers = payload.get("savedAnswers").toString();
             String savedSections = payload.get("savedSections").toString();
-            int elapsedTime = Integer.parseInt(payload.get("elapsedTime").toString());
             
             // Get attemptNo from payload if present
             Integer attemptNo = null;
@@ -91,9 +90,9 @@ public class AssessmentProgressController {
                 userAssessment.setDateTaken(LocalDateTime.now());
             }
             
-            // Save progress with sections and elapsed time
+            // Save progress with sections
             userAssessment = userAssessmentService.saveProgress(
-                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, elapsedTime, attemptNo);
+                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, attemptNo);
                 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Progress saved successfully");
