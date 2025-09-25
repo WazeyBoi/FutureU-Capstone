@@ -15,7 +15,7 @@ const CareerDetailsModal = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full relative border border-gray-200 overflow-hidden animate-fade-in-up">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative border border-gray-200 animate-fade-in-up flex flex-col">
                 {/* Header with navy blue background similar to Academic Explorer */}
                 <div className="h-32 bg-[#2B3E4E] relative overflow-hidden w-full">
                     <div className="absolute inset-0 bg-gradient-to-b from-[#2B3E4E]/60 to-[#2B3E4E]/90"></div>
@@ -31,14 +31,14 @@ const CareerDetailsModal = ({
                 </div>
 
                 {/* Career Icon centered on the header bottom border */}
-                <div className="absolute top-32 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div className="absolute top-24 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                     <div className="w-20 h-20 rounded-full bg-[#2B3E4E] flex items-center justify-center mx-auto border-4 border-white shadow-lg">
                         <Briefcase className="w-10 h-10 text-[#FFB71B]" />
                     </div>
                 </div>
 
                 {/* Content with padding for the icon */}
-                <div className="px-8 py-6 pt-12">
+                <div className="px-8 py-6 pt-12 flex-1 overflow-y-auto">
                     {/* ACADEMIC PROGRAM text */}
                     <div className="text-sm uppercase tracking-wider text-[#2B3E4E] font-semibold text-center mb-1">
                         CAREER PATH
@@ -122,7 +122,7 @@ const CareerDetailsModal = ({
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium text-gray-700 mb-1">Description</div>
-                                    <div className="text-sm text-gray-600 leading-relaxed">
+                                    <div className="text-sm text-gray-600 leading-relaxed text-left">
                                         {selectedCareer.careerDescription}
                                     </div>
                                 </div>
@@ -154,9 +154,9 @@ const CareerDetailsModal = ({
                                             <BookOpen className="h-4 w-4 text-yellow-700" />
                                         </div>
                                         <div>
-                                            <div className="text-sm font-medium text-gray-800">{program.programName}</div>
+                                            <div className="text-sm font-medium text-gray-800 text-center">{program.programName}</div>
                                             {program.description && (
-                                                <div className="text-xs text-gray-600 mt-0.5 line-clamp-1">{program.description}</div>
+                                                <div className="text-xs text-gray-600 mt-0.5 line-clamp-1 text-left">{program.description}</div>
                                             )}
                                         </div>
                                     </div>
@@ -180,7 +180,7 @@ const CareerDetailsModal = ({
                                     setSelectedProgramsCareer(selectedCareer);
                                     setShowProgramsModal(true);
                                 }}
-                                className="w-full py-2.5 px-4 bg-[#2B3E4E]/10 hover:bg-[#2B3E4E]/20 text-[#2B3E4E] rounded-lg transition-colors flex items-center justify-center group"
+                                className="w-full py-2.5 px-4 bg-[#2B3E4E]/10 hover:bg-[#FFB71B] hover:text-[#2B3E4E] text-[#2B3E4E] rounded-lg transition-colors flex items-center justify-center group border-2 border-[#2B3E4E] hover:border-[#FFB71B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B] active:bg-[#2B3E4E] active:text-[#FFB71B]"
                             >
                                 <BookOpen className="h-4 w-4 mr-2" />
                                 View All Programs
@@ -189,10 +189,10 @@ const CareerDetailsModal = ({
                         )}
                     </div>
 
-                    {/* Action Button */}
-                    <div className="mt-6 border-t border-gray-200 pt-6 flex justify-end">
+                    {/* Action Button - always visible at the bottom */}
+                    <div className="w-full px-8 pb-6 pt-2 border-t border-[#F1F1F1] bg-white flex justify-end flex-shrink-0">
                         <button
-                            className="bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-medium px-6 py-3 rounded-lg transition shadow-md hover:shadow-lg flex items-center justify-center"
+                            className="bg-[#FFB71B] text-[#2B3E4E] font-bold px-6 py-3 rounded-lg transition-colors shadow-md flex items-center justify-center border-2 border-[#FFB71B] hover:bg-[#2B3E4E] hover:text-[#FFB71B] hover:border-[#2B3E4E] active:bg-[#2B3E4E] active:text-[#FFB71B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B]"
                             onClick={() => {
                                 setShowCareerModal(false);
                                 setShowSchoolsModal(true);
