@@ -290,6 +290,48 @@ const CounselorDashboard = () => {
     { key: 'artsDesignTrackScore', label: 'Arts & Design' },
   ];
 
+  // Performance distribution analysis for meaningful counselor insights
+  const calculatePerformanceDistribution = (values, field) => {
+    const validValues = values.filter(v => v > 0 && !isNaN(v));
+    if (validValues.length === 0) return null;
+    
+    const average = validValues.reduce((a, b) => a + b, 0) / validValues.length;
+    const sorted = [...validValues].sort((a, b) => a - b);
+    
+    // Calculate quartiles
+    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    
+    // Performance categories
+    const excellent = validValues.filter(v => v >= 85).length;
+    const strong = validValues.filter(v => v >= 70 && v < 85).length;
+    const average_range = validValues.filter(v => v >= 50 && v < 70).length;
+    const needsSupport = validValues.filter(v => v < 50).length;
+    
+    const total = validValues.length;
+    
+    return {
+      field,
+      average: average.toFixed(1),
+      total,
+      distribution: {
+        excellent: { count: excellent, percent: (excellent / total * 100).toFixed(1) },
+        strong: { count: strong, percent: (strong / total * 100).toFixed(1) },
+        average: { count: average_range, percent: (average_range / total * 100).toFixed(1) },
+        needsSupport: { count: needsSupport, percent: (needsSupport / total * 100).toFixed(1) }
+      },
+      aboveAverage: validValues.filter(v => v > average).length,
+      aboveAveragePercent: (validValues.filter(v => v > average).length / total * 100).toFixed(1),
+      topQuartilePercent: (validValues.filter(v => v >= q3).length / total * 100).toFixed(1),
+      bottomQuartilePercent: (validValues.filter(v => v <= q1).length / total * 100).toFixed(1),
+      // Counselor insights
+      status: needsSupport / total > 0.3 ? 'attention' : 
+              excellent / total > 0.4 ? 'strength' : 'average',
+      insight: needsSupport / total > 0.3 ? 'High intervention needed' :
+               excellent / total > 0.4 ? 'Overall strength' : 'Balanced performance'
+    };
+  };
+
   const aggregateDashboardInsights = (results, allCareers, allPrograms) => {
     // RIASEC aggregation (new algorithm)
     const riasecCodeCounts = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
@@ -317,11 +359,11 @@ const CounselorDashboard = () => {
     // For display, join with comma if tie
     const mostCommonRiasec = mostCommonCodes.length > 0 ? mostCommonCodes.join(', ') : 'N/A';
 
-    // Non-RIASEC averages (from assessmentResults)
-    const nonRiasecAverages = {};
-    nonRiasecFields.forEach(f => {
-      const vals = results.map(r => Number(r[f.key]) || 0).filter(v => !isNaN(v));
-      nonRiasecAverages[f.key] = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '0.00';
+    // Performance distribution analysis for each field
+    const performanceAnalysis = {};
+    nonRiasecFields.forEach(field => {
+      const values = results.map(r => Number(r[field.key])).filter(v => v > 0);
+      performanceAnalysis[field.key] = calculatePerformanceDistribution(values, field.label);
     });
 
     // Career recommendations aggregation (from allCareerRecommendations)
@@ -346,7 +388,25 @@ const CounselorDashboard = () => {
       .slice(0, 3)
       .map(([name, count]) => ({ name, count }));
 
-    return { mostCommonRiasec, nonRiasecAverages, topCareers, topPrograms, riasecCodeCounts, mostCommonCodes };
+    // Identify strengths and areas of concern
+    const strengths = Object.values(performanceAnalysis)
+      .filter(p => p && p.status === 'strength')
+      .map(p => p.field);
+    
+    const concerns = Object.values(performanceAnalysis)
+      .filter(p => p && p.status === 'attention')
+      .map(p => p.field);
+
+    return { 
+      mostCommonRiasec, 
+      performanceAnalysis, 
+      topCareers, 
+      topPrograms, 
+      riasecCodeCounts, 
+      mostCommonCodes, 
+      strengths, 
+      concerns 
+    };
   };
 
   // Aggregate insights for dashboard summary
@@ -370,41 +430,11 @@ const CounselorDashboard = () => {
     { key: 'sportsTrackScore', label: 'Sports' },
     { key: 'artsDesignTrackScore', label: 'Arts & Design' },
   ];
-  // For chart rendering, combine with section info
-  const chartSections = [
-    { name: 'General Scholastic Aptitude', color: '#1D63A1', fields: gsaFields },
-    { name: 'Academic Track', color: '#FFB71B', fields: academicFields },
-    { name: 'Non-Academic Track', color: '#4CAF50', fields: nonAcademicFields },
-  ];
-  // Flatten for chart, but keep section info for custom rendering
-  const chartData = chartSections.flatMap(section =>
-    section.fields.map(f => ({
-      ...f,
-      value: Number(dashboardInsights.nonRiasecAverages[f.key]),
-      section: section.name,
-      sectionColor: section.color,
-    }))
-  );
 
-  // Custom XAxis tick to add section labels and dividers
-  const CustomXAxisTick = (props) => {
-    const { x, y, payload, index } = props;
-    // Section label positions
-    const sectionLabels = [
-      { idx: 2, label: 'General Scholastic Aptitude', color: '#1D63A1' },
-      { idx: 6, label: 'Academic Track', color: '#FFB71B' },
-      { idx: 9, label: 'Non-Academic Track', color: '#4CAF50' },
-    ];
-    const label = sectionLabels.find(l => l.idx === index);
-    return (
-      <g>
-        <text x={x} y={y + 15} textAnchor="middle" fontSize="11" fill="#333">{payload.value}</text>
-        {label && (
-          <text x={x} y={y + 50} textAnchor="middle" fontSize="12" fontWeight="bold" fill={label.color}>{label.label}</text>
-        )}
-      </g>
-    );
-  };
+  // Group performance data for display
+  const gsaPerformance = gsaFields.map(field => dashboardInsights.performanceAnalysis[field.key]).filter(Boolean);
+  const academicPerformance = academicFields.map(field => dashboardInsights.performanceAnalysis[field.key]).filter(Boolean);
+  const nonAcademicPerformance = nonAcademicFields.map(field => dashboardInsights.performanceAnalysis[field.key]).filter(Boolean);
 
   // --- REAL DATA for students ---
   const [students, setStudents] = useState([]);
@@ -520,26 +550,57 @@ const CounselorDashboard = () => {
       </div>
       {/* Insights Summary Section */}
       <section className="w-full px-15 pt-6 pb-2">
-        {/* Average Scores (Non-RIASEC) at the top, full width, styled as a card */}
+        {/* Performance Distribution Charts - Horizontal Layout */}
         <div className="flex flex-row gap-2 mb-8 items-start">
-          {/* Chart container */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col items-center w-full max-w-[calc(100%-280px)]">
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col w-full max-w-[calc(100%-280px)]">
             <div className="flex items-center w-full mb-4">
-              <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">Average Scoring for each Category</div>
-              {/* Optionally add a small legend or icon here */}
+              <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">Performance Distribution Analysis</div>
             </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={chartData} layout="horizontal" margin={{ left: 10, right: 10, top: 10, bottom: 30 }}>
-                <XAxis dataKey="label" tick={CustomXAxisTick} interval={0} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-                  {chartData.map((entry, idx) => (
-                    <Cell key={`cell-${idx}`} fill={entry.sectionColor} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            
+            {/* Three Charts Horizontally Aligned - GSA gets more space */}
+            <div className="flex flex-row gap-4 w-full">
+              {/* GSA Chart - Takes more space due to more fields */}
+              <div className="flex-2" style={{ flex: '2' }}>
+                <h3 className="text-lg font-bold text-[#1D63A1] mb-3">General Scholastic Aptitude</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={gsaPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                    <XAxis dataKey="field" fontSize={10} height={50} />
+                    <YAxis domain={[0, 100]} fontSize={10} />
+                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Academic Tracks - Standard size */}
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-[#FFB71B] mb-3">Academic Tracks</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={academicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                    <XAxis dataKey="field" fontSize={10} height={50} />
+                    <YAxis domain={[0, 100]} fontSize={10} />
+                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Bar dataKey="aboveAveragePercent" fill="#F59E0B" name="Above Average" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Non-Academic Tracks - Standard size */}
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-[#4CAF50] mb-3">Non-Academic Tracks</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={nonAcademicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                    <XAxis dataKey="field" fontSize={10} height={50} />
+                    <YAxis domain={[0, 100]} fontSize={10} />
+                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
           {/* Small Quick Stats - now fully independent */}
@@ -610,54 +671,80 @@ const CounselorDashboard = () => {
         </div>
         {/* Divider for visual separation */}
         <div className="w-full h-2" />
-        {/* The 4 summary cards below in a row, modern dashboard style */}
+        {/* Compact Summary Cards */}
         <div className="flex flex-row gap-4">
-          {/* Most Recommended Careers */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col items-center py-6 px-8 min-h-[170px]">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 mb-3">
-              <BarChart2 className="w-7 h-7 text-white" />
+          {/* Performance Overview */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm font-bold text-gray-700">Performance Overview</div>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1 text-xs">
+                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <span>Strengths</span>
+                </div>
+                <div className="flex items-center gap-1 text-xs">
+                  <div className="w-3 h-3 bg-red-500 rounded"></div>
+                  <span>Concerns</span>
+                </div>
+              </div>
             </div>
-            <div className="text-xs uppercase text-gray-400 font-semibold mb-1 tracking-wider">Most Recommended Careers</div>
+            <div className="grid grid-cols-2 gap-4 flex-1">
+              <div>
+                <div className="text-lg font-bold text-green-600 mb-1">{dashboardInsights.strengths.length}</div>
+                <div className="text-xs text-gray-500 mb-2">Strong Areas</div>
+                {dashboardInsights.strengths.slice(0, 4).map((strength, i) => (
+                  <div key={i} className="text-xs text-green-700 truncate">• {strength}</div>
+                ))}
+                {dashboardInsights.strengths.length > 4 && (
+                  <div className="text-xs text-gray-400 mt-1">+{dashboardInsights.strengths.length - 4} more</div>
+                )}
+              </div>
+              <div>
+                <div className="text-lg font-bold text-red-600 mb-1">{dashboardInsights.concerns.length}</div>
+                <div className="text-xs text-gray-500 mb-2">Need Attention</div>
+                {dashboardInsights.concerns.slice(0, 4).map((concern, i) => (
+                  <div key={i} className="text-xs text-red-700 truncate">• {concern}</div>
+                ))}
+                {dashboardInsights.concerns.length > 4 && (
+                  <div className="text-xs text-gray-400 mt-1">+{dashboardInsights.concerns.length - 4} more</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Most Recommended Careers - Compact */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 mb-2 mx-auto">
+              <BarChart2 className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-sm font-bold text-gray-700 text-center mb-2">Most Recommended Careers</div>
             {dashboardInsights.topCareers.length === 0 ? (
-              <div className="text-gray-400 text-xs">No data</div>
-            ) : dashboardInsights.topCareers.map((c, i) => {
+              <div className="text-gray-400 text-xs text-center">No data</div>
+            ) : dashboardInsights.topCareers.slice(0, 3).map((c, i) => {
               const total = allCareerRecommendations.length;
-              const percent = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0.0';
+              const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
               return (
-                <div key={i} className="text-left flex justify-between w-full text-sm font-semibold text-cyan-700 items-center mb-1">
-                  <span className="flex items-center gap-2">
-                    <span className="text-base font-bold">{i + 1}.</span> {c.title}
-                  </span>
-                  <span className="text-xs text-gray-400">{c.count} ({percent}%)</span>
+                <div key={i} className="flex justify-between items-center text-xs mb-1">
+                  <span className="truncate pr-2">{i + 1}. {c.title}</span>
+                  <span className="text-gray-500 text-right">{percent}%</span>
                 </div>
               );
             })}
           </div>
-          {/* Most Recommended Programs */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col items-center py-6 px-8 min-h-[170px]">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mb-3">
-              <BookOpen className="w-7 h-7 text-white" />
+
+          {/* Most Recommended Programs - Compact */}
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mb-2 mx-auto">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <div className="text-xs uppercase text-gray-400 font-semibold mb-1 tracking-wider">Most Recommended Programs</div>
+            <div className="text-sm font-bold text-gray-700 text-center mb-2">Most Recommended Programs</div>
             {dashboardInsights.topPrograms.length === 0 ? (
-              <div className="text-gray-400 text-xs">No data</div>
-            ) : dashboardInsights.topPrograms.map((p, i) => {
-              const total = allProgramRecommendations.length;
-              const percent = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0.0';
-              let desc = '';
-              const found = allProgramRecommendations.find(rec => (rec.program?.programName || rec.programName) === p.name);
-              if (found && (found.program?.description || found.description)) {
-                desc = found.program?.description || found.description;
-              }
+              <div className="text-gray-400 text-xs text-center">No data</div>
+            ) : dashboardInsights.topPrograms.slice(0, 3).map((p, i) => {
               return (
-                <div key={i} className="flex flex-col w-full mb-1">
-                  <div className="flex justify-between items-center text-sm font-semibold text-yellow-700">
-                    <span className="text-left flex items-center gap-2">
-                      <span className="text-base font-bold">{i + 1}.</span> {p.name}
-                    </span>
-                    <span className="text-xs text-gray-400">{p.count} ({percent}%)</span>
-                  </div>
-                  {desc && <div className="text-left text-xs text-gray-500 ml-6">{desc}</div>}
+                <div key={i} className="flex justify-between items-center text-xs mb-1">
+                  <span className="truncate pr-2">{i + 1}. {p.name}</span>
+                  <span className="text-gray-500 text-right">{p.count}</span>
                 </div>
               );
             })}

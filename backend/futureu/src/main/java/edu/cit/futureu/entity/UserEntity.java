@@ -35,6 +35,9 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // NEW: Add school code field for institutional linking
+    private String schoolCode;
+
     // NEW: Add only this field for profile picture
     private String profilePictureUrl;
 
@@ -108,6 +111,15 @@ public class UserEntity {
     }
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    // NEW: Add getter and setter for school code
+    public String getSchoolCode() {
+        return schoolCode;
+    }
+    
+    public void setSchoolCode(String schoolCode) {
+        this.schoolCode = schoolCode;
     }
 
     public List<AnswerEntity> getAnswers() {

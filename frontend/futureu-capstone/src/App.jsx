@@ -44,6 +44,7 @@ import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
+import InstitutionalDashboard from './components/Counselor/InstitutionalDashboard.jsx';
 import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
 import ProfilePage from './components/Profile/ProfilePage.jsx';
@@ -289,6 +290,11 @@ function App() {
         <Route path="/counselor-dashboard" element={
           <CounselorRoute>
             <CounselorDashboard />
+          </CounselorRoute>
+        } />
+        <Route path="/counselor/institutional-dashboard" element={
+          <CounselorRoute>
+            <InstitutionalDashboard />
           </CounselorRoute>
         } />
         <Route path="/counselor/student-report" element={
