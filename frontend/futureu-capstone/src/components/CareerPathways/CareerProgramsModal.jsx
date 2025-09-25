@@ -1,52 +1,34 @@
-import React, { useState } from 'react';
-import { X, Briefcase, BookOpen, Building, TrendingUp, TrendingDown, Minus, ChevronRight } from "lucide-react";
+import React from 'react';
+import { X, Briefcase, BookOpen, Building, ChevronRight } from "lucide-react";
 
 const CareerProgramsModal = ({
     selectedProgramsCareer,
     setShowProgramsModal,
     getProgramsForCareer,
-    getSchoolsForCareer, 
-    schoolPrograms, 
+    getSchoolsForCareer,
+    schoolPrograms,
     getTrendStyle,
     getTrendIcon
 }) => {
     if (!selectedProgramsCareer) return null;
 
-    const [selectedProgram, setSelectedProgram] = useState(null);
-
-    const handleProgramClick = (program) => {
-        setSelectedProgram(program);
-    };
-
-    const handleExplorePrograms = () => {
-        setShowProgramsModal(false);
-        if (selectedProgram) {
-            window.location.href = `/academic-explorer?programId=${selectedProgram.programId}`;
-        } else {
-            const firstProgram = getProgramsForCareer(selectedProgramsCareer)[0];
-            if (firstProgram) {
-                window.location.href = `/academic-explorer?programId=${firstProgram.programId}`;
-            }
-        }
-    };
-
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full relative border border-gray-200 animate-fade-in-up overflow-hidden">
-                {/* Header with gradient - enhanced with pattern */}
-                <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1a2530] h-24 flex items-center px-8 relative">
-                    <div className="absolute inset-0 opacity-10"></div>
-                    <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 inline-flex items-center border border-white/10">
-                        <div className="bg-yellow-500 rounded-full p-2 mr-3">
-                            <Briefcase className="w-6 h-6 text-white" />
+            <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden relative border border-[#2B3E4E] animate-fade-in-up flex flex-col">
+                {/* Header */}
+                <div className="bg-[#2B3E4E] h-20 flex items-center px-8 relative flex-shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-[#FFB71B] rounded-lg p-2 flex items-center justify-center">
+                            <Briefcase className="w-6 h-6 text-[#2B3E4E]" />
                         </div>
                         <div>
-                            <div className="text-xs text-yellow-300 font-semibold uppercase tracking-wider">Career Programs</div>
-                            <h3 className="text-white font-bold text-lg">{selectedProgramsCareer.careerTitle}</h3>
+                            <div className="text-xs text-white font-semibold uppercase tracking-wider">Career Programs</div>
+                            <h3 className="text-white font-bold text-xl leading-tight">{selectedProgramsCareer.careerTitle}</h3>
                         </div>
                     </div>
                     <button
-                        className="absolute top-4 right-4 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 p-1.5 rounded-full transition-colors shadow-lg border border-gray-200"
+                        className="absolute top-4 right-4 border-2 border-[#FFB71B] bg-white text-[#2B3E4E] p-1.5 rounded-lg transition-colors shadow-md focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B] hover:bg-[#FFB71B] hover:text-[#2B3E4E] active:bg-[#2B3E4E] active:text-[#FFB71B]"
+                        style={{ outlineColor: '#FFB71B', borderColor: '#FFB71B' }}
                         onClick={() => setShowProgramsModal(false)}
                         aria-label="Close"
                     >
@@ -54,146 +36,74 @@ const CareerProgramsModal = ({
                     </button>
                 </div>
 
-                {/* Programs list - enhanced design */}
-                <div className="px-8 py-6">
-                    <div className="mb-6">
-                        <div className="text-sm text-gray-500 mb-1">These academic programs can lead to careers in:</div>
-                        <div className="flex items-center justify-between">
-                            <div className="text-lg font-medium text-[#2B3E4E] flex items-center">
-                                <span className="mr-2">{selectedProgramsCareer.industry}</span>
-                            </div>
-                            <span className={`text-xs px-2.5 py-1.5 rounded-full flex items-center ${
-                                getTrendStyle(selectedProgramsCareer.jobTrend)
-                            }`}>
-                                {getTrendIcon(selectedProgramsCareer.jobTrend)}
-                                {selectedProgramsCareer.jobTrend}
-                            </span>
-                        </div>
+                {/* Career Info Section */}
+                <div className="px-8 pt-6 pb-2 flex-shrink-0">
+                    <div className="flex flex-wrap items-center justify-between mb-2">
+                        <div className="text-xl font-bold text-[#2B3E4E]">{selectedProgramsCareer.industry}</div>
+                        <span className="bg-[#FFB71B] text-[#2B3E4E] font-bold text-xs px-4 py-1 rounded-full ml-2">
+                            {selectedProgramsCareer.jobTrend}
+                        </span>
                     </div>
+                    <div className="text-sm text-[#2B3E4E] mb-4 max-w-4xl text-left">
+                        These academic programs can lead to careers in <span className="font-semibold">{selectedProgramsCareer.industry}</span>. {selectedProgramsCareer.careerDescription}
+                    </div>
+                </div>
 
-                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 mb-6">
-                        {getProgramsForCareer(selectedProgramsCareer).length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">No programs associated with this career.</div>
-                        ) : (
-                            getProgramsForCareer(selectedProgramsCareer).map((program) => (
-                                <div
-                                    key={program.programId}
-                                    className={`rounded-xl p-5 transition-all border cursor-pointer group ${
-                                        selectedProgram?.programId === program.programId
-                                            ? 'bg-[#2B3E4E]/10 border-[#2B3E4E]/30 shadow-md'
-                                            : 'bg-gray-50 hover:bg-[#2B3E4E]/5 border-gray-100 hover:border-[#2B3E4E]/20 hover:shadow-md'
-                                    }`}
-                                    onClick={() => handleProgramClick(program)}
-                                >
-                                    <div className="flex items-start">
-                                        <div className={`p-2.5 rounded-lg mr-3 flex-shrink-0 transition-colors ${
-                                            selectedProgram?.programId === program.programId
-                                                ? 'bg-[#2B3E4E]/20'
-                                                : 'bg-[#2B3E4E]/10 group-hover:bg-[#2B3E4E]/15'
-                                        }`}>
-                                            <BookOpen className={`w-6 h-6 transition-colors ${
-                                                selectedProgram?.programId === program.programId
-                                                    ? 'text-[#2B3E4E]'
-                                                    : 'text-[#2B3E4E] group-hover:text-[#2B3E4E]'
-                                            }`} />
+                {/* Academic Programs Section */}
+                <div className="px-8 pb-8 flex-1 overflow-y-auto">
+                    {getProgramsForCareer(selectedProgramsCareer).map((program) => {
+                        const schools = schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school);
+                        return (
+                            <div key={program.programId} className="bg-white border border-[#2B3E4E]/20 rounded-xl p-6 mb-6">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-[#2B3E4E]/10 p-2 rounded-lg flex items-center justify-center">
+                                            <BookOpen className="w-6 h-6 text-[#2B3E4E]" />
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <h4 className={`font-semibold text-lg transition-colors ${
-                                                    selectedProgram?.programId === program.programId
-                                                        ? 'text-[#2B3E4E]'
-                                                        : 'text-gray-800 group-hover:text-[#2B3E4E]'
-                                                }`}>{program.programName}</h4>
-                                                <ChevronRight className={`w-5 h-5 transition-all ${
-                                                    selectedProgram?.programId === program.programId
-                                                        ? 'text-[#2B3E4E] opacity-100 translate-x-0'
-                                                        : 'text-gray-400 group-hover:text-[#2B3E4E] opacity-0 group-hover:opacity-100 transform translate-x-1 group-hover:translate-x-0'
-                                                }`} />
-                                            </div>
-                                            {program.description && (
-                                                <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-2">{program.description}</p>
-                                            )}
-
-                                            {/* Program stats */}
-                                            <div className="flex flex-wrap gap-2 mt-1 items-center">
-                                                <div className={`rounded-md px-3 py-1.5 text-xs font-medium flex items-center transition-colors ${
-                                                    selectedProgram?.programId === program.programId
-                                                        ? 'bg-[#2B3E4E]/20 text-[#2B3E4E]'
-                                                        : 'bg-[#2B3E4E]/10 group-hover:bg-[#2B3E4E]/15 text-[#2B3E4E]'
-                                                }`}>
-                                                    <Building className="w-3.5 h-3.5 mr-1.5" />
-                                                    {schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school).length} Schools
-                                                </div>
-                                            </div>
+                                        <div>
+                                            <div className="font-bold text-[#2B3E4E] text-base text-left">{program.programName}</div>
+                                            <div className="text-xs text-[#2B3E4E] mt-1 text-left">{program.description}</div>
                                         </div>
                                     </div>
-
-                                    {/* Schools that offer this program */}
-                                    <div className={`mt-4 pl-12 pt-4 border-t transition-colors ${
-                                        selectedProgram?.programId === program.programId
-                                            ? 'border-[#2B3E4E]/30'
-                                            : 'border-gray-200 group-hover:border-[#2B3E4E]/20'
-                                    }`}>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs text-gray-500 font-medium">Available at:</span>
-                                            <span className={`text-xs transition-colors ${
-                                                selectedProgram?.programId === program.programId
-                                                    ? 'text-[#2B3E4E]'
-                                                    : 'text-[#2B3E4E] group-hover:text-[#2B3E4E]'
-                                            }`}>
-                                                {schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school).length} schools
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {schoolPrograms
-                                                .filter(sp => sp.program?.programId === program.programId && sp.school)
-                                                .slice(0, 5)
-                                                .map((sp, i) => (
-                                                    <div
-                                                        key={`${sp.school.schoolId}-${i}`}
-                                                        className="bg-yellow-50 group-hover:bg-yellow-100 border border-yellow-100 group-hover:border-yellow-200 px-2.5 py-1 rounded-md text-xs font-medium text-yellow-800 max-w-[150px] truncate transition-colors"
-                                                        title={sp.school.name}
-                                                    >
-                                                        {sp.school.name}
-                                                    </div>
-                                                ))}
-                                            {schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school).length > 5 && (
-                                                <div className="bg-gray-100 group-hover:bg-gray-200 px-2.5 py-1 rounded-md text-xs font-medium text-gray-600 flex items-center transition-colors">
-                                                    +{schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school).length - 5} more
-                                                </div>
-                                            )}
-                                            {schoolPrograms.filter(sp => sp.program?.programId === program.programId && sp.school).length === 0 && (
-                                                <div className="text-xs text-gray-500 italic">No schools available</div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Click hint */}
-                                    <div className={`mt-3 pl-12 transition-opacity ${
-                                        selectedProgram?.programId === program.programId
-                                            ? 'opacity-100'
-                                            : 'opacity-0 group-hover:opacity-100'
-                                    }`}>
-                                        <div className="text-xs text-[#2B3E4E] font-medium flex items-center">
-                                            {selectedProgram?.programId === program.programId ? 'Selected program' : 'Click to select this program'}
-                                            <ChevronRight className="w-3 h-3 ml-1" />
-                                        </div>
-                                    </div>
+                                    <span className="bg-[#FFB71B] text-[#2B3E4E] font-bold text-xs px-4 py-1 rounded-full ml-2 self-start md:self-auto">
+                                        {schools.length} Schools
+                                    </span>
                                 </div>
-                            ))
-                        )}
-                    </div>
-
-                    <div className="border-t border-gray-200 pt-6 flex justify-end">
-                        <button
-                            className="bg-black !text-white hover:bg-gray-800 px-5 py-2.5 rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center"
-                            onClick={handleExplorePrograms}
-                            style={{ backgroundColor: 'black' }}
-                        >
-                            Explore {selectedProgram ? 'Selected Program' : 'Programs'}
-                            <ChevronRight className="w-4 h-4 ml-1.5" />
-                        </button>
-                    </div>
+                                <div className="text-xs text-[#2B3E4E] font-semibold mb-2 mt-2">Available at:</div>
+                                <div className="flex flex-col gap-2">
+                                    {schools.length === 0 && (
+                                        <div className="text-xs text-[#2B3E4E] italic">No schools available</div>
+                                    )}
+                                    {schools.map((sp, i) => (
+                                        <div key={sp.school.schoolId + '-' + i} className="bg-white shadow-md px-4 py-2 rounded-lg flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="font-semibold text-[#2B3E4E] text-sm truncate">{sp.school.name}</div>
+                                            <div className="flex items-center gap-2 mt-1 sm:mt-0">
+                                                <span className="text-xs text-[#2B3E4E]">{sp.school.city}</span>
+                                                <span className="bg-[#2B3E4E] text-white px-2 py-0.5 rounded-full text-xs ml-1">{sp.school.type || 'public'}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {/* Explore Programs Button - always visible at the bottom, inside the modal card */}
+                <div className="w-full px-8 pb-6 pt-2 border-t border-[#F1F1F1] bg-white flex justify-end">
+                    <button
+                        className="bg-[#2B3E4E] text-[#FFB71B] hover:bg-[#FFB71B] hover:text-[#2B3E4E] active:bg-[#2B3E4E] active:text-[#FFB71B] font-bold px-6 py-2.5 rounded-lg transition-colors shadow-md flex items-center gap-2 border-2 border-[#FFB71B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B]"
+                        style={{ outlineColor: '#FFB71B', borderColor: '#FFB71B' }}
+                        onClick={() => {
+                            setShowProgramsModal(false);
+                            const firstProgram = getProgramsForCareer(selectedProgramsCareer)[0];
+                            if (firstProgram) {
+                                window.location.href = `/academic-explorer?programId=${firstProgram.programId}`;
+                            }
+                        }}
+                    >
+                        Explore Programs
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
             </div>
         </div>
