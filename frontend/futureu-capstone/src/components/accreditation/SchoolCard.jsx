@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building, MapPin, School as SchoolIcon } from 'lucide-react';
+import { Building, MapPin, School as SchoolIcon, ExternalLink } from 'lucide-react';
 
 // Import school images
 import citu_school_image from '../../assets/school_images/citu_school_image.jpg';
@@ -82,6 +82,85 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
   const schoolLogo = schoolLogos[school.id];
   
   // console.log('School ID:', school.id, 'School Name:', school.name, 'Logo:', schoolLogo);
+
+  // Get the data source information for the school
+  const getSchoolDataSource = (school) => {
+    // Debug: Log the school name to see what we're getting
+    console.log('School name:', school.name);
+    
+    // Mapping of schools to their actual data sources
+    const schoolDataSources = {
+    
+      "University of San Carlos Main - Downtown Campus (USC)": {
+        sourceName: "USC accreditations and recognitions",
+        sourceUrl: "https://usc.edu.ph/accreditation-and-recognitions"
+      },
+      "University of San Jose-Recoletos (USJR)": {
+        sourceName: "USJR Rankings ans Achievements",
+        sourceUrl: "https://usjr.edu.ph/"
+      },
+      "Cebu Normal University - Main Campus (CNU)": {
+        sourceName: "CNU Program Accreditation",
+        sourceUrl: "https://cnu.edu.ph/wp-content/uploads/2024/09/ANNUAL_REPORT_2023.pdf"
+      },
+      "University of Cebu - Main Campus (UC)": {
+        sourceName: "Region 7 PACUOA",
+        sourceUrl: "https://www.pacucoa.com/region-7"
+      },
+    
+      "Cebu Institute of Technology University": {
+        sourceName: "CITU accredited programs",
+        sourceUrl: "https://cit.edu/institutional-brochure-for-parents-and-students/"
+      },
+      "Cebu Institute of Technology – University (CIT-U)": {
+        sourceName: "CITU accredited programs",
+        sourceUrl: "https://cit.edu/institutional-brochure-for-parents-and-students/"
+      },
+      "Cebu Technological University - Main Campus (CTU)": {
+        sourceName: "CTU accredited programs",
+        sourceUrl: "https://www.ctu.edu.ph/accredited-programs/"
+      },
+      "Cebu Doctors' University (CDU)": {
+        sourceName: "PAASCU",
+        sourceUrl: "https://paascu.org.ph/cebu-doctors-university/"
+      },
+      "University of the Visayas - Main Campus (UV)": {
+        sourceName: "University of the Visayas Accreditation",
+        sourceUrl: "https://www.pacucoa.com/asian-college-of-technology-facade-15/i-am-a-title-03"
+      },
+      "University of the Philippines Cebu (UP Cebu)": {
+        sourceName: "UP System Official",
+        sourceUrl: "https://www.up.edu.ph/"
+      },
+      "Southwestern University (SWU) PHINMA": {
+        sourceName: "SWU Accreditation",
+        sourceUrl: "https://www.pacucoa.com/region-7"
+      },
+      "Indiana Aerospace University (IAU)": {
+        sourceName: "IAU Accreditation",
+        sourceUrl: "https://www.pacucoa.com/region-7"
+      }
+    };
+
+    // Check for exact match first
+    if (schoolDataSources[school.name]) {
+      console.log('Found mapping for:', school.name, '->', schoolDataSources[school.name]);
+      return schoolDataSources[school.name];
+    }
+
+    // Fallback for other schools
+    console.log('No mapping found for:', school.name, 'using fallback');
+    return {
+      sourceName: "Official Records",
+      sourceUrl: "https://www.ched.gov.ph/"
+    };
+  };
+
+  const handleDataSourceClick = (e) => {
+    e.stopPropagation(); // Prevent card selection when clicking the data source
+    const dataSource = getSchoolDataSource(school);
+    window.open(dataSource.sourceUrl, '_blank');
+  };
 
   return (
     <div
@@ -171,12 +250,62 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
             e.stopPropagation(); // Prevent card selection when clicking the button
             onViewPrograms(school);
           }}
-          className="mt-6 w-full !bg-[#2B3E4E] hover:!bg-[#1a2630] !text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2 !border-0"
-          style={{ backgroundColor: '#2B3E4E' }}
+          className="mt-6 w-full py-3 rounded-lg transition-colors flex items-center justify-center gap-2 border-0 focus:outline-none"
+          style={{ 
+            backgroundColor: '#2B3E4E',
+            color: 'white',
+            outline: 'none'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = 'white';
+            e.target.style.color = '#2B3E4E';
+            e.target.style.border = 'none';
+            e.target.style.outline = 'none';
+            e.target.style.boxShadow = 'none';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#2B3E4E';
+            e.target.style.color = 'white';
+            e.target.style.outline = 'none';
+          }}
         >
           <Building className="w-5 h-5" />
           View Accredited Programs
         </button>
+
+        {/* Data Source */}
+        <div className="mt-3 pt-3 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Data Source:</span>
+            <button
+                  onClick={handleDataSourceClick}
+                  className="text-[6px] text-[#FFB71B] hover:text-[#E6A519] hover:underline transition-colors cursor-pointer flex items-center gap-1 bg-white hover:outline-none focus:outline-none border-0 shadow-none font-normal"
+                  style={{ 
+                    outline: 'none', 
+                    boxShadow: 'none', 
+                    fontWeight: 'normal',
+                    border: '1px solid transparent',
+                    backgroundColor: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.outline = 'none';
+                    e.target.style.border = '1px solid #FFB71B';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.outline = 'none';
+                    e.target.style.border = '1px solid transparent';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                  title={`View ${getSchoolDataSource(school).sourceName}`}
+                >
+                  {getSchoolDataSource(school).sourceName}
+                  <ExternalLink className="w-2 h-2" />
+            </button>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   );
