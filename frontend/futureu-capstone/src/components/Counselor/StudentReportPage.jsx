@@ -14,6 +14,131 @@ const highlightScore = (score, max = 100) => {
   return "text-gray-500";
 };
 
+// Helper function to get performance level description
+const getPerformanceLevel = (score, max = 100) => {
+  const percentage = (score / max) * 100;
+  if (percentage >= 85) return { level: "Excellent", color: "text-green-600", bgColor: "bg-green-100" };
+  if (percentage >= 70) return { level: "Above Average", color: "text-green-600", bgColor: "bg-green-50" };
+  if (percentage >= 50) return { level: "Average", color: "text-yellow-600", bgColor: "bg-yellow-50" };
+  if (percentage >= 30) return { level: "Below Average", color: "text-orange-600", bgColor: "bg-orange-50" };
+  return { level: "Needs Support", color: "text-red-600", bgColor: "bg-red-50" };
+};
+
+// Helper function to get performance insights for GSA scores
+const getGSAInsights = (result) => {
+  return [
+    { 
+      name: "Scientific Ability", 
+      score: result.scientificAbilityScore, 
+      performance: getPerformanceLevel(result.scientificAbilityScore),
+      description: "Problem-solving and analytical thinking in scientific contexts"
+    },
+    { 
+      name: "Reading Comprehension", 
+      score: result.readingComprehensionScore, 
+      performance: getPerformanceLevel(result.readingComprehensionScore),
+      description: "Understanding and interpreting written texts"
+    },
+    { 
+      name: "Verbal Ability", 
+      score: result.verbalAbilityScore, 
+      performance: getPerformanceLevel(result.verbalAbilityScore),
+      description: "Language skills and vocabulary usage"
+    },
+    { 
+      name: "Mathematical Ability", 
+      score: result.mathematicalAbilityScore, 
+      performance: getPerformanceLevel(result.mathematicalAbilityScore),
+      description: "Numerical reasoning and mathematical problem-solving"
+    },
+    { 
+      name: "Logical Reasoning", 
+      score: result.logicalReasoningScore, 
+      performance: getPerformanceLevel(result.logicalReasoningScore),
+      description: "Abstract thinking and logical problem-solving"
+    }
+  ];
+};
+
+// Helper function to get RIASEC insights with top 3 personality types
+const getRIASECInsights = (result) => {
+  const riasecTypes = [
+    { name: "Realistic", score: result.realisticScore, description: "Hands-on, practical, mechanical interests" },
+    { name: "Investigative", score: result.investigativeScore, description: "Scientific, analytical, research-oriented" },
+    { name: "Artistic", score: result.artisticScore, description: "Creative, expressive, innovative thinking" },
+    { name: "Social", score: result.socialScore, description: "People-oriented, helping, teaching interests" },
+    { name: "Enterprising", score: result.enterprisingScore, description: "Leadership, persuasive, business-minded" },
+    { name: "Conventional", score: result.conventionalScore, description: "Organized, detail-oriented, structured work" }
+  ];
+  
+  // Sort by score (no performance levels for personality types)
+  return riasecTypes
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3); // Show only top 3
+};
+
+// Helper function to get Track Performance insights and recommendations
+const getTrackInsights = (result) => {
+  const tracks = [
+    { 
+      name: "STEM", 
+      score: result.stemScore, 
+      description: "Science, Technology, Engineering, Mathematics",
+      careers: ["Engineer", "Data Scientist", "Medical Doctor", "Research Scientist"],
+      fullName: "Science, Technology, Engineering & Mathematics"
+    },
+    { 
+      name: "ABM", 
+      score: result.abmScore, 
+      description: "Accountancy, Business & Management",
+      careers: ["Business Manager", "Accountant", "Entrepreneur", "Marketing Manager"],
+      fullName: "Accountancy, Business & Management"
+    },
+    { 
+      name: "HUMSS", 
+      score: result.humssScore, 
+      description: "Humanities & Social Sciences",
+      careers: ["Teacher", "Lawyer", "Psychologist", "Social Worker"],
+      fullName: "Humanities & Social Sciences"
+    },
+    { 
+      name: "TVL", 
+      score: result.tvlScore, 
+      description: "Technical-Vocational-Livelihood",
+      careers: ["Chef", "IT Technician", "Electrician", "Graphic Designer"],
+      fullName: "Technical-Vocational-Livelihood"
+    },
+    { 
+      name: "Sports", 
+      score: result.sportsTrackScore, 
+      description: "Sports & Physical Education Track",
+      careers: ["Sports Coach", "Physical Therapist", "Fitness Trainer", "Sports Analyst"],
+      fullName: "Sports & Physical Education"
+    },
+    { 
+      name: "Arts & Design", 
+      score: result.artsDesignTrackScore, 
+      description: "Creative Arts & Design Track",
+      careers: ["Graphic Designer", "Architect", "Fine Artist", "Interior Designer"],
+      fullName: "Arts & Design"
+    }
+  ];
+
+  // Sort by score and add performance levels
+  const rankedTracks = tracks
+    .map(track => ({
+      ...track,
+      performance: getPerformanceLevel(track.score, 100)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return {
+    topTrack: rankedTracks[0],
+    topThree: rankedTracks.slice(0, 3),
+    allTracks: rankedTracks
+  };
+};
+
 const StudentReportPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -349,6 +474,27 @@ const StudentReportPage = () => {
                         }}
                       />
                     </div>
+                    
+                    {/* Performance Indicators */}
+                    <div className="w-full mt-4 space-y-2 max-w-sm">
+                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-2">Performance Analysis:</h5>
+                      {getGSAInsights(result).map((insight, index) => (
+                        <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-white/50">
+                          <div className="flex-1">
+                            <div className="text-xs font-medium text-[#2B3E4E]">{insight.name}</div>
+                            <div className="text-xs text-gray-600">{insight.description}</div>
+                          </div>
+                          <div className="text-right ml-2">
+                            <div className={`text-xs font-bold px-2 py-1 rounded ${insight.performance.bgColor} ${insight.performance.color}`}>
+                              {insight.performance.level}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Score: {insight.score}/100
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </motion.div>
                   {/* RIASEC Radar Chart */}
                   <motion.div
@@ -378,6 +524,35 @@ const StudentReportPage = () => {
                             },
                           }}
                         />
+                      </div>
+                    </div>
+                    
+                    {/* Top 3 Personality Types */}
+                    <div className="w-full mt-4 space-y-2 max-w-xs">
+                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-2">Student's Top Personality Types:</h5>
+                      {getRIASECInsights(result).map((insight, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-white/70 border border-blue-100">
+                          <div className="flex-1">
+                            <div className="flex items-center mb-1">
+                              <div className="text-sm font-bold text-[#1D63A1] mr-2">#{index + 1}</div>
+                              <div className="text-sm font-semibold text-[#2B3E4E]">{insight.name}</div>
+                            </div>
+                            <div className="text-xs text-gray-600 ml-6">{insight.description}</div>
+                          </div>
+                          <div className="text-right ml-3">
+                            <div className="text-lg font-bold text-[#1D63A1]">
+                              {insight.score}%
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Strength
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-700 text-center">
+                          These personality traits help identify suitable career environments and work styles.
+                        </p>
                       </div>
                     </div>
                   </motion.div>
@@ -471,6 +646,75 @@ const StudentReportPage = () => {
                         },
                       }}
                     />
+                  </div>
+                  
+                  {/* Track Performance Analysis & Recommendations */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Best Track Match */}
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                      <h5 className="text-lg font-bold text-green-800 mb-3 flex items-center">
+                        <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-2">1</span>
+                        Best Track Match
+                      </h5>
+                      {(() => {
+                        const trackInsights = getTrackInsights(result);
+                        return (
+                          <div>
+                            <div className="mb-2">
+                              <div className="text-xl font-bold text-green-800">{trackInsights.topTrack.name}</div>
+                              <div className="text-sm text-green-700">{trackInsights.topTrack.fullName}</div>
+                            </div>
+                            <div className="mb-3">
+                              <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${trackInsights.topTrack.performance.bgColor} ${trackInsights.topTrack.performance.color}`}>
+                                {trackInsights.topTrack.performance.level} - {trackInsights.topTrack.score}/100
+                              </div>
+                            </div>
+                            <div className="text-sm text-green-700 mb-3">{trackInsights.topTrack.description}</div>
+                            <div>
+                              <div className="text-sm font-semibold text-green-800 mb-1">Suitable Careers:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {trackInsights.topTrack.careers.map((career, idx) => (
+                                  <span key={idx} className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs">
+                                    {career}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Track Rankings */}
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                      <h5 className="text-lg font-bold text-blue-800 mb-3">Track Performance Rankings</h5>
+                      <div className="space-y-2">
+                        {getTrackInsights(result).topThree.map((track, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-white/60">
+                            <div className="flex-1">
+                              <div className="flex items-center mb-1">
+                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-2 ${
+                                  index === 0 ? 'bg-yellow-500 text-white' : 
+                                  index === 1 ? 'bg-gray-400 text-white' : 'bg-orange-600 text-white'
+                                }`}>
+                                  {index + 1}
+                                </span>
+                                <div className="text-sm font-semibold text-blue-800">{track.name}</div>
+                              </div>
+                              <div className="text-xs text-blue-600 ml-8">{track.description}</div>
+                            </div>
+                            <div className="text-right ml-2">
+                              <div className={`text-xs font-bold px-2 py-1 rounded ${track.performance.bgColor} ${track.performance.color}`}>
+                                {track.performance.level}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                {track.score}/100
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               </>
