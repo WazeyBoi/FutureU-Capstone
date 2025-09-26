@@ -481,8 +481,8 @@ const StudentReportPage = () => {
                       {getGSAInsights(result).map((insight, index) => (
                         <div key={index} className="flex justify-between items-center p-2 rounded-lg bg-white/50">
                           <div className="flex-1">
-                            <div className="text-xs font-medium text-[#2B3E4E]">{insight.name}</div>
-                            <div className="text-xs text-gray-600">{insight.description}</div>
+                            <div className="text-xs text-left font-medium text-[#2B3E4E]">{insight.name}</div>
+                            <div className="text-xs text-left text-gray-600">{insight.description}</div>
                           </div>
                           <div className="text-right ml-2">
                             <div className={`text-xs font-bold px-2 py-1 rounded ${insight.performance.bgColor} ${insight.performance.color}`}>
@@ -535,9 +535,9 @@ const StudentReportPage = () => {
                           <div className="flex-1">
                             <div className="flex items-center mb-1">
                               <div className="text-sm font-bold text-[#1D63A1] mr-2">#{index + 1}</div>
-                              <div className="text-sm font-semibold text-[#2B3E4E]">{insight.name}</div>
+                              <div className="text-sm text-left font-semibold text-[#2B3E4E]">{insight.name}</div>
                             </div>
-                            <div className="text-xs text-gray-600 ml-6">{insight.description}</div>
+                            <div className="text-xs text-left text-gray-600 ml-6">{insight.description}</div>
                           </div>
                           <div className="text-right ml-3">
                             <div className="text-lg font-bold text-[#1D63A1]">
@@ -699,9 +699,9 @@ const StudentReportPage = () => {
                                 }`}>
                                   {index + 1}
                                 </span>
-                                <div className="text-sm font-semibold text-blue-800">{track.name}</div>
+                                <div className="text-sm text-left font-semibold text-blue-800">{track.name}</div>
                               </div>
-                              <div className="text-xs text-blue-600 ml-8">{track.description}</div>
+                              <div className="text-xs text-left text-blue-600 ml-8">{track.description}</div>
                             </div>
                             <div className="text-right ml-2">
                               <div className={`text-xs font-bold px-2 py-1 rounded ${track.performance.bgColor} ${track.performance.color}`}>
