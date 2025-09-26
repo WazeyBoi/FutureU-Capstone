@@ -386,45 +386,110 @@ const InstitutionalDashboard = () => {
     { key: 'artsDesignTrackScore', label: 'Arts & Design' },
   ];
 
-  // Performance distribution analysis for meaningful counselor insights
+  // Performance distribution analysis with peer-relative insights within the same institution
   const calculatePerformanceDistribution = (values, field) => {
-    const validValues = values.filter(v => v > 0 && !isNaN(v));
+    const validValues = values.filter(v => v >= 0 && !isNaN(v)); // Include zeros!
     if (validValues.length === 0) return null;
     
-    const average = validValues.reduce((a, b) => a + b, 0) / validValues.length;
+    const institutionAverage = validValues.reduce((a, b) => a + b, 0) / validValues.length;
     const sorted = [...validValues].sort((a, b) => a - b);
+    
+    // Use institution average as the peer comparison baseline
+    const peerAverage = institutionAverage; // Peers = classmates in same institution
     
     // Calculate quartiles
     const q1 = sorted[Math.floor(sorted.length * 0.25)];
     const q3 = sorted[Math.floor(sorted.length * 0.75)];
     
-    // Performance categories
-    const excellent = validValues.filter(v => v >= 85).length;
-    const strong = validValues.filter(v => v >= 70 && v < 85).length;
-    const average_range = validValues.filter(v => v >= 50 && v < 70).length;
-    const needsSupport = validValues.filter(v => v < 50).length;
-    
+    // Fixed performance categories - MUTUALLY EXCLUSIVE approach
     const total = validValues.length;
+    
+    // Define clear, NON-OVERLAPPING categories with reasonable thresholds
+    const wellAboveAvg = validValues.filter(v => v >= institutionAverage + 15).length; // +15 points above avg
+    const aboveAvg = validValues.filter(v => v > institutionAverage + 5 && v < institutionAverage + 15).length; // +5 to +15
+    const atAvg = validValues.filter(v => v >= institutionAverage - 5 && v <= institutionAverage + 5).length; // Within 5 points
+    const belowAvg = validValues.filter(v => v < institutionAverage - 5 && v > institutionAverage - 15).length; // -5 to -15
+    const wellBelowAvg = validValues.filter(v => v <= institutionAverage - 15).length; // -15+ points below avg
+    
+    // Verify totals add up correctly
+    const categorySum = wellAboveAvg + aboveAvg + atAvg + belowAvg + wellBelowAvg;
+    
+    // Optional: Enable for debugging specific fields
+    // console.log(`Debug: Field=${field}, Total=${total}, Categories=${categorySum}, Avg=${institutionAverage.toFixed(1)}`);
+    // console.log(`  WellAbove=${wellAboveAvg}, Above=${aboveAvg}, At=${atAvg}, Below=${belowAvg}, WellBelow=${wellBelowAvg}`);
+    
+    // If categories don't add up to total, we have a logic error - fix it
+    let finalAtAvg = atAvg;
+    if (categorySum !== total) {
+      console.warn(`Category sum mismatch! Expected: ${total}, Got: ${categorySum}`);
+      finalAtAvg = Math.max(0, total - (wellAboveAvg + aboveAvg + belowAvg + wellBelowAvg));
+      console.log(`Adjusted atAvg from ${atAvg} to ${finalAtAvg}`);
+    }
+    
+    // Educational performance levels based on actual distribution categories
+    const getInstitutionalPerformanceLevel = () => {
+      const wellAbovePercent = (wellAboveAvg / total) * 100;
+      const abovePercent = (aboveAvg / total) * 100;
+      const atPercent = (finalAtAvg / total) * 100;
+      const belowPercent = (belowAvg / total) * 100;
+      const wellBelowPercent = (wellBelowAvg / total) * 100;
+      
+      const strugglingPercent = wellBelowPercent + belowPercent;
+      const excellingPercent = wellAbovePercent + abovePercent;
+      
+      // Bimodal distribution: high performers + high strugglers with few in middle
+      if (excellingPercent > 25 && strugglingPercent > 25 && atPercent < 30) {
+        return { level: 'Bimodal Distribution', description: 'Students either excel or struggle - few at average' };
+      }
+      
+      // Strong overall performance
+      if (excellingPercent > 50 && strugglingPercent < 20) {
+        return { level: 'Strong Performance', description: 'Most students above school average' };
+      }
+      
+      // Needs institutional support
+      if (strugglingPercent > 50 && excellingPercent < 20) {
+        return { level: 'Needs Support', description: 'Most students below school average' };
+      }
+      
+      // Balanced normal distribution
+      if (atPercent > 40) {
+        return { level: 'Balanced Distribution', description: 'Normal spread around school average' };
+      }
+      
+      // Default case
+      return { level: 'Mixed Performance', description: 'Varied performance levels across students' };
+    };
+
+    const performanceLevel = getInstitutionalPerformanceLevel();
     
     return {
       field,
-      average: average.toFixed(1),
+      institutionAverage: institutionAverage.toFixed(1),
+      peerAverage: peerAverage.toFixed(1), // Same as institution average
+      institutionVsPeers: "0.0", // Always 0 since we're comparing to self
       total,
       distribution: {
-        excellent: { count: excellent, percent: (excellent / total * 100).toFixed(1) },
-        strong: { count: strong, percent: (strong / total * 100).toFixed(1) },
-        average: { count: average_range, percent: (average_range / total * 100).toFixed(1) },
-        needsSupport: { count: needsSupport, percent: (needsSupport / total * 100).toFixed(1) }
+        wellAbovePeer: { count: wellAboveAvg, percent: (wellAboveAvg / total * 100).toFixed(1) },
+        abovePeer: { count: aboveAvg, percent: (aboveAvg / total * 100).toFixed(1) },
+        atPeerLevel: { count: finalAtAvg, percent: (finalAtAvg / total * 100).toFixed(1) },
+        belowPeer: { count: belowAvg, percent: (belowAvg / total * 100).toFixed(1) },
+        wellBelowPeer: { count: wellBelowAvg, percent: (wellBelowAvg / total * 100).toFixed(1) },
+        needsSupport: { count: wellBelowAvg, percent: (wellBelowAvg / total * 100).toFixed(1) }
       },
-      aboveAverage: validValues.filter(v => v > average).length,
-      aboveAveragePercent: (validValues.filter(v => v > average).length / total * 100).toFixed(1),
+      aboveAveragePercent: ((wellAboveAvg + aboveAvg) / total * 100).toFixed(1),
       topQuartilePercent: (validValues.filter(v => v >= q3).length / total * 100).toFixed(1),
       bottomQuartilePercent: (validValues.filter(v => v <= q1).length / total * 100).toFixed(1),
-      // Counselor insights
-      status: needsSupport / total > 0.3 ? 'attention' : 
-              excellent / total > 0.4 ? 'strength' : 'average',
-      insight: needsSupport / total > 0.3 ? 'High intervention needed' :
-               excellent / total > 0.4 ? 'Institution strength' : 'Balanced performance'
+      // School-relative counselor insights
+      performanceLevel: performanceLevel.level,
+      performanceDescription: performanceLevel.description,
+      status: performanceLevel.level === 'Strong Performance' ? 'strength' :
+              performanceLevel.level === 'Needs Support' ? 'concern' :
+              performanceLevel.level === 'Bimodal Distribution' ? 'concern' :  // Bimodal is concerning, not strength
+              'average',
+      insight: wellBelowAvg / total > 0.25 ? `${(wellBelowAvg / total * 100).toFixed(0)}% students significantly below school average - needs intervention` :
+               wellAboveAvg / total > 0.25 ? `${(wellAboveAvg / total * 100).toFixed(0)}% students well above school average - school strength` : 
+               `Balanced performance distribution around school average`
     };
   };
 
@@ -458,7 +523,7 @@ const InstitutionalDashboard = () => {
     // Performance distribution analysis for each field
     const performanceAnalysis = {};
     nonRiasecFields.forEach(field => {
-      const values = results.map(r => Number(r[field.key])).filter(v => v > 0);
+      const values = results.map(r => Number(r[field.key])).filter(v => v >= 0 && !isNaN(v)); // Include zeros!
       performanceAnalysis[field.key] = calculatePerformanceDistribution(values, field.label);
     });
 
@@ -482,14 +547,14 @@ const InstitutionalDashboard = () => {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
 
-    // Identify strengths and areas of concern
+    // Identify strengths and areas of concern based on peer-relative performance
     const strengths = Object.values(performanceAnalysis)
       .filter(p => p && p.status === 'strength')
-      .map(p => p.field);
+      .map(p => `${p.field} (${p.performanceLevel})`);
     
     const concerns = Object.values(performanceAnalysis)
-      .filter(p => p && p.status === 'attention')
-      .map(p => p.field);
+      .filter(p => p && p.status === 'concern')
+      .map(p => `${p.field} (${p.performanceLevel})`);
 
     return { 
       mostCommonRiasec, 
@@ -518,7 +583,7 @@ const InstitutionalDashboard = () => {
     topPrograms: institutionInsights.topPrograms
   });
 
-  // Enhanced tooltip component with status information
+  // Enhanced tooltip component with within-school peer comparison information
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       // Find the performance data for this field
@@ -531,26 +596,27 @@ const InstitutionalDashboard = () => {
       const getStatusInfo = (fieldData) => {
         if (!fieldData) return { status: 'N/A', icon: '❓', reason: 'No data' };
         
-        const needsSupportPercent = parseFloat(fieldData.distribution.needsSupport.percent);
-        const excellentPercent = parseFloat(fieldData.distribution.excellent.percent);
+        const institutionAvg = parseFloat(fieldData.institutionAverage);
+        const wellBelowPercent = parseFloat(fieldData.distribution.wellBelowPeer.percent);
+        const wellAbovePercent = parseFloat(fieldData.distribution.wellAbovePeer.percent);
         
-        if (needsSupportPercent > 30) {
+        if (fieldData.status === 'concern') {
           return { 
-            status: 'CONCERN', 
+            status: 'NEEDS ATTENTION', 
             icon: '⚠️', 
-            reason: `${needsSupportPercent}% > 30% threshold`
+            reason: `${wellBelowPercent}% students well below school avg (${institutionAvg})`
           };
-        } else if (excellentPercent > 40) {
+        } else if (fieldData.status === 'strength') {
           return { 
-            status: 'STRENGTH', 
+            status: 'SCHOOL STRENGTH', 
             icon: '✅', 
-            reason: `${excellentPercent}% > 40% threshold`
+            reason: `${wellAbovePercent}% students well above school avg (${institutionAvg})`
           };
         } else {
           return { 
-            status: 'AVERAGE', 
+            status: 'BALANCED', 
             icon: '➖', 
-            reason: 'Balanced performance'
+            reason: `Normal distribution around school avg (${institutionAvg})`
           };
         }
       };
@@ -558,21 +624,29 @@ const InstitutionalDashboard = () => {
       const statusInfo = getStatusInfo(fieldData);
 
       return (
-        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg max-w-xs">
           <p className="font-semibold text-gray-800 mb-2">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} style={{ color: entry.color }} className="text-sm">
               {entry.name}: {entry.value}%
             </p>
           ))}
-          <div className="mt-2 pt-2 border-t border-gray-200">
-            <p className="text-xs text-gray-600">
-              <span className="font-semibold">Status:</span> {statusInfo.icon} {statusInfo.status}
-            </p>
-            <p className="text-xs text-gray-500">
-              {statusInfo.reason}
-            </p>
-          </div>
+          {fieldData && (
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <p className="text-xs font-semibold text-gray-700 mb-1">
+                Distribution: {fieldData.performanceLevel}
+              </p>
+              <p className="text-xs text-gray-600 mb-1">
+                {fieldData.performanceDescription}
+              </p>
+              <p className="text-xs text-gray-600">
+                <span className="font-semibold">Status:</span> {statusInfo.icon} {statusInfo.status}
+              </p>
+              <p className="text-xs text-gray-500">
+                {statusInfo.reason}
+              </p>
+            </div>
+          )}
         </div>
       );
     }
@@ -736,15 +810,23 @@ const InstitutionalDashboard = () => {
                 {/* Legend */}
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-500 rounded"></div>
-                    <span>Above Average</span>
+                    <div className="w-4 h-4 bg-green-600 rounded"></div>
+                    <span>Well Above School Avg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    <span>Above School Avg</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                    <span>Below School Avg</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-500 rounded"></div>
-                    <span>Needs Support (&lt;50pts)</span>
+                    <span>Well Below School Avg</span>
                   </div>
                   <div className="text-xs text-gray-500 ml-2">
-                    Status: ⚠️ Concern (&gt;30% needs support) | ✅ Strength (&gt;40% excellent)
+                    Relative to classmates in same school
                   </div>
                 </div>
                 {/* Export Buttons */}
@@ -780,8 +862,10 @@ const InstitutionalDashboard = () => {
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellAbovePeer.percent" fill="#059669" name="Well Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.abovePeer.percent" fill="#3B82F6" name="Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.belowPeer.percent" fill="#F59E0B" name="Below School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 <h3 className="text-lg font-bold text-[#1D63A1] text-center">General Scholastic Aptitude</h3>
@@ -798,8 +882,10 @@ const InstitutionalDashboard = () => {
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="aboveAveragePercent" fill="#F59E0B" name="Above Average" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellAbovePeer.percent" fill="#059669" name="Well Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.abovePeer.percent" fill="#3B82F6" name="Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.belowPeer.percent" fill="#F59E0B" name="Below School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 <h3 className="text-lg font-bold text-[#FFB71B] text-center">Academic Track Performance</h3>
@@ -816,8 +902,10 @@ const InstitutionalDashboard = () => {
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellAbovePeer.percent" fill="#059669" name="Well Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.abovePeer.percent" fill="#3B82F6" name="Above School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.belowPeer.percent" fill="#F59E0B" name="Below School Avg" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 <h3 className="text-lg font-bold text-[#4CAF50] text-center">Non-Academic Track Performance</h3>
@@ -898,19 +986,20 @@ const InstitutionalDashboard = () => {
               <div className="text-sm font-bold text-gray-700">Performance Overview</div>
               <div className="flex gap-2">
                 <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <div className="w-3 h-3 bg-green-600 rounded"></div>
                   <span>Strengths</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs">
                   <div className="w-3 h-3 bg-red-500 rounded"></div>
                   <span>Concerns</span>
                 </div>
+                <div className="text-xs text-gray-400 ml-2">within school distribution</div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 flex-1">
               <div>
                 <div className="text-lg font-bold text-green-600 mb-1">{institutionInsights.strengths.length}</div>
-                <div className="text-xs text-gray-500 mb-2">Strong Areas</div>
+                <div className="text-xs text-gray-500 mb-2">Strong Distribution Areas</div>
                 {institutionInsights.strengths.slice(0, 4).map((strength, i) => (
                   <div key={i} className="text-xs text-green-700 truncate">• {strength}</div>
                 ))}
@@ -920,7 +1009,7 @@ const InstitutionalDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-bold text-red-600 mb-1">{institutionInsights.concerns.length}</div>
-                <div className="text-xs text-gray-500 mb-2">Need Attention</div>
+                <div className="text-xs text-gray-500 mb-2">Areas Needing Support</div>
                 {institutionInsights.concerns.slice(0, 4).map((concern, i) => (
                   <div key={i} className="text-xs text-red-700 truncate">• {concern}</div>
                 ))}

@@ -77,61 +77,88 @@ const getRelativeTrackPerformance = (tracks) => {
   });
 };
 
-// Helper function to get performance insights for GSA scores (peer-relative)
-const getGSAInsights = (result) => {
-  // In a real implementation, these would come from backend peer data
-  // For now, using mock peer averages to demonstrate the concept
-  const peerAverages = {
-    scientificAbility: 65,      // Mock peer average
-    readingComprehension: 70,   // Mock peer average
-    verbalAbility: 62,          // Mock peer average
-    mathematicalAbility: 68,    // Mock peer average
-    logicalReasoning: 59        // Mock peer average
+// Helper function to get performance insights for GSA scores (relative to classmates)
+const getGSAInsights = (result, allStudents = []) => {
+  // Calculate real school averages from all students data
+  const calculateSchoolAverages = (students) => {
+    if (!students || students.length === 0) {
+      // Fallback to mock data if no school data available
+      return {
+        scientificAbility: 65,
+        readingComprehension: 70,
+        verbalAbility: 62,
+        mathematicalAbility: 68,
+        logicalReasoning: 59
+      };
+    }
+
+    const fields = [
+      { key: 'scientificAbilityScore', name: 'scientificAbility' },
+      { key: 'readingComprehensionScore', name: 'readingComprehension' },
+      { key: 'verbalAbilityScore', name: 'verbalAbility' },
+      { key: 'mathematicalAbilityScore', name: 'mathematicalAbility' },
+      { key: 'logicalReasoningScore', name: 'logicalReasoning' }
+    ];
+
+    const averages = {};
+    fields.forEach(field => {
+      const validScores = students
+        .map(student => Number(student[field.key]))
+        .filter(score => !isNaN(score) && score >= 0);
+      
+      averages[field.name] = validScores.length > 0 
+        ? Number((validScores.reduce((sum, score) => sum + score, 0) / validScores.length).toFixed(1))
+        : 65; // fallback average
+    });
+
+    return averages;
   };
 
-  const getPeerRelativePerformance = (studentScore, peerAverage) => {
-    const difference = studentScore - peerAverage;
-    const percentageDiff = (difference / peerAverage) * 100;
+  const schoolAverages = calculateSchoolAverages(allStudents);
+
+  const getSchoolRelativePerformance = (studentScore, schoolAverage) => {
+    const difference = studentScore - schoolAverage;
+    const percentageDiff = (difference / schoolAverage) * 100;
     
     if (percentageDiff >= 20) {
       return { 
-        level: "Well Above Peers", 
+        level: "Well Above School Avg", 
         color: "text-emerald-700", 
         bgColor: "bg-emerald-100",
         percentile: "Top 15%",
-        description: "Significantly higher than peer average"
+        description: "Significantly higher than classmates' average"
       };
     } else if (percentageDiff >= 10) {
       return { 
-        level: "Above Peers", 
+        level: "Above School Avg", 
         color: "text-green-700", 
         bgColor: "bg-green-100",
         percentile: "Top 30%",
-        description: "Above peer average"
+        description: "Above classmates' average"
       };
     } else if (percentageDiff >= -10) {
       return { 
-        level: "Similar to Peers", 
+        level: "Similar to School Avg", 
         color: "text-blue-700", 
         bgColor: "bg-blue-100",
         percentile: "Average Range",
-        description: "Within normal peer range"
+        description: "Within normal range for school"
       };
     } else if (percentageDiff >= -20) {
       return { 
-        level: "Below Peers", 
+        level: "Below School Avg", 
         color: "text-orange-700", 
         bgColor: "bg-orange-100",
         percentile: "Lower 30%",
-        description: "Below peer average"
+        description: "Below classmates' average"
       };
     } else {
       return { 
-        level: "Well Below Peers", 
+        level: "Well Below School Avg", 
         color: "text-red-700", 
         bgColor: "bg-red-100",
         percentile: "Lower 15%",
-        description: "Significantly below peer average"
+        description: "Significantly below classmates' average"
       };
     }
   };
@@ -140,36 +167,36 @@ const getGSAInsights = (result) => {
     { 
       name: "Scientific Ability", 
       score: result.scientificAbilityScore, 
-      peerAverage: peerAverages.scientificAbility,
-      performance: getPeerRelativePerformance(result.scientificAbilityScore, peerAverages.scientificAbility),
+      schoolAverage: schoolAverages.scientificAbility,
+      performance: getSchoolRelativePerformance(result.scientificAbilityScore, schoolAverages.scientificAbility),
       description: "Problem-solving and analytical thinking in scientific contexts"
     },
     { 
       name: "Reading Comprehension", 
       score: result.readingComprehensionScore, 
-      peerAverage: peerAverages.readingComprehension,
-      performance: getPeerRelativePerformance(result.readingComprehensionScore, peerAverages.readingComprehension),
+      schoolAverage: schoolAverages.readingComprehension,
+      performance: getSchoolRelativePerformance(result.readingComprehensionScore, schoolAverages.readingComprehension),
       description: "Understanding and interpreting written texts"
     },
     { 
       name: "Verbal Ability", 
       score: result.verbalAbilityScore, 
-      peerAverage: peerAverages.verbalAbility,
-      performance: getPeerRelativePerformance(result.verbalAbilityScore, peerAverages.verbalAbility),
+      schoolAverage: schoolAverages.verbalAbility,
+      performance: getSchoolRelativePerformance(result.verbalAbilityScore, schoolAverages.verbalAbility),
       description: "Language skills and vocabulary usage"
     },
     { 
       name: "Mathematical Ability", 
       score: result.mathematicalAbilityScore, 
-      peerAverage: peerAverages.mathematicalAbility,
-      performance: getPeerRelativePerformance(result.mathematicalAbilityScore, peerAverages.mathematicalAbility),
+      schoolAverage: schoolAverages.mathematicalAbility,
+      performance: getSchoolRelativePerformance(result.mathematicalAbilityScore, schoolAverages.mathematicalAbility),
       description: "Numerical reasoning and mathematical problem-solving"
     },
     { 
       name: "Logical Reasoning", 
       score: result.logicalReasoningScore, 
-      peerAverage: peerAverages.logicalReasoning,
-      performance: getPeerRelativePerformance(result.logicalReasoningScore, peerAverages.logicalReasoning),
+      schoolAverage: schoolAverages.logicalReasoning,
+      performance: getSchoolRelativePerformance(result.logicalReasoningScore, schoolAverages.logicalReasoning),
       description: "Reasoning and critical thinking abilities"
     }
   ];
@@ -267,6 +294,7 @@ const StudentReportPage = () => {
   const [programRecs, setProgramRecs] = useState([]);
   const [programRecsLoading, setProgramRecsLoading] = useState(false);
   const [programRecsError, setProgramRecsError] = useState(null);
+  const [allStudentsData, setAllStudentsData] = useState([]); // For calculating real school averages
 
   useEffect(() => {
     if (!result) {
@@ -287,6 +315,22 @@ const StudentReportPage = () => {
       }
     }
   }, [result, searchParams]);
+
+  // Fetch all students data for calculating real school averages
+  useEffect(() => {
+    const fetchAllStudentsData = async () => {
+      try {
+        // Using the same API that InstitutionalDashboard uses
+        const allStudents = await userAssessmentService.getAllAssessmentResults();
+        setAllStudentsData(allStudents || []);
+      } catch (err) {
+        console.warn('Could not fetch school averages, using fallback values:', err);
+        setAllStudentsData([]); // Will use fallback averages
+      }
+    };
+
+    fetchAllStudentsData();
+  }, []);
 
   useEffect(() => {
     if (activeTab === 1 && result?.resultId) {
@@ -594,9 +638,9 @@ const StudentReportPage = () => {
                     
                     {/* Performance Indicators */}
                     <div className="w-full lg:w-1/2 space-y-2">
-                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">Peer Comparison Analysis:</h5>
+                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">School Comparison Analysis:</h5>
                       <div className="space-y-2">
-                        {getGSAInsights(result).map((insight, index) => (
+                        {getGSAInsights(result, allStudentsData).map((insight, index) => (
                           <div key={index} className="flex flex-col p-3 rounded-lg bg-white/60 hover:bg-white/80 transition-colors">
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex-1">
@@ -614,7 +658,7 @@ const StudentReportPage = () => {
                             </div>
                             <div className="flex justify-between items-center">
                               <div className="text-xs text-gray-600">
-                                Peer Avg: {insight.peerAverage}/100
+                                School Avg: {insight.schoolAverage}/100
                               </div>
                               <div className={`text-xs font-bold px-2 py-1 rounded-m ${insight.performance.bgColor} ${insight.performance.color}`}>
                                 {insight.performance.level}
