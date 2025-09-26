@@ -23,6 +23,9 @@ public class ProfileService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    @Autowired
+    private InstitutionService institutionService;
+    
     private final String uploadDir = "uploads/profile-pictures/";
     
     public UserEntity getUserProfile(int userId) {
@@ -60,8 +63,21 @@ public class ProfileService {
             if (profileData.getContactNumber() != null) {
                 user.setContactNumber(profileData.getContactNumber());
             }
-            if (profileData.getAge() != null) {
-                user.setAge(profileData.getAge());
+            // Note: Age is primitive int, so we always update it
+            user.setAge(profileData.getAge());
+            
+            // Validate and set school code for counselors only
+            if (profileData.getSchoolCode() != null) {
+                String role = user.getRole() != null ? user.getRole().name() : "";
+                if ("GUIDANCE_COUNSELOR".equals(role) || "CAREER_COUNSELOR".equals(role)) {
+                    String schoolCode = profileData.getSchoolCode().trim();
+                    if (!schoolCode.isEmpty()) {
+                        if (!institutionService.isValidSchoolCode(schoolCode)) {
+                            throw new RuntimeException("Invalid school code. Please verify with your institution.");
+                        }
+                    }
+                }
+                user.setSchoolCode(profileData.getSchoolCode());
             }
             // Don't allow password updates through this method
             

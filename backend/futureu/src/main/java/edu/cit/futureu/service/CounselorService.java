@@ -33,9 +33,18 @@ public class CounselorService {
         UserEntity counselorUser = counselor.get();
         String email = counselorUser.getEmail();
         
+        // First try to find institution by email domain
         if (email != null && email.contains("@")) {
             String domain = email.substring(email.indexOf("@") + 1);
-            return institutionRepository.findByEmailDomain(domain);
+            Optional<InstitutionEntity> institutionByEmail = institutionRepository.findByEmailDomain(domain);
+            if (institutionByEmail.isPresent()) {
+                return institutionByEmail;
+            }
+        }
+        
+        // Fallback: Try to find institution by counselor's school code
+        if (counselorUser.getSchoolCode() != null && !counselorUser.getSchoolCode().trim().isEmpty()) {
+            return institutionRepository.findBySchoolCode(counselorUser.getSchoolCode().trim());
         }
         
         return Optional.empty();

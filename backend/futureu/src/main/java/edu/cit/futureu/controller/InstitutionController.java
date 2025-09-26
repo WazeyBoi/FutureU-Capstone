@@ -46,9 +46,8 @@ public class InstitutionController {
     @GetMapping("/counselor/{counselorId}/institution")
     public ResponseEntity<InstitutionEntity> getCounselorInstitution(@PathVariable int counselorId) {
         Optional<InstitutionEntity> institution = counselorService.getCounselorInstitution(counselorId);
-        return institution
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+        // Return 200 with null body instead of 404 to allow frontend to handle gracefully
+        return ResponseEntity.ok(institution.orElse(null));
     }
     
     @GetMapping("/counselor/{counselorId}/students")

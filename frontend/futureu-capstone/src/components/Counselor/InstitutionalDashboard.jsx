@@ -4,12 +4,14 @@ import { motion } from 'framer-motion';
 import counselorService from '../../services/counselorService';
 import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
-import { fetchAllCareerRecommendations } from '../../services/recommendationService';
+import profileService from '../../services/profileService';
+import institutionService from '../../services/institutionService';
+import { fetchAllCareerRecommendations, fetchRecommendationsByResult } from '../../services/recommendationService';
 import programRecommendationService from '../../services/programRecommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
   BookOpen, User, LogOut, MessageSquare,
-  BarChart2, Calendar, UserCheck, GraduationCap, BarChart3, Download, School, Mail, Hash, ArrowLeft
+  BarChart2, Calendar, UserCheck, GraduationCap, BarChart3, Download, School, Mail, Hash, ArrowLeft, X, Save
 } from 'lucide-react';
 import SearchFilterBar from './SearchFilterBar';
 import AssessmentResultsGrid from './AssessmentResultsGrid';
@@ -40,6 +42,10 @@ const InstitutionalDashboard = () => {
   const [institutionCareerRecommendations, setInstitutionCareerRecommendations] = useState([]);
   const [institutionProgramRecommendations, setInstitutionProgramRecommendations] = useState([]);
   
+  // Show more/less state for top lists
+  const [showMoreCareers, setShowMoreCareers] = useState(false);
+  const [showMorePrograms, setShowMorePrograms] = useState(false);
+  
   // Pagination state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(16);
@@ -48,6 +54,12 @@ const InstitutionalDashboard = () => {
   // Time and stats
   const [currentTime, setCurrentTime] = useState(new Date());
   const [assessmentStats, setAssessmentStats] = useState({});
+  
+  // School code setup modal
+  const [showSchoolCodeModal, setShowSchoolCodeModal] = useState(false);
+  const [schoolCodeInput, setSchoolCodeInput] = useState('');
+  const [schoolCodeLoading, setSchoolCodeLoading] = useState(false);
+  const [schoolCodeError, setSchoolCodeError] = useState(null);
 
   // Fetch institution data and filtered results
   useEffect(() => {
@@ -58,6 +70,15 @@ const InstitutionalDashboard = () => {
 
         // Fetch counselor's institution info
         const institution = await counselorService.getCounselorInstitution(counselorId);
+        
+        // Check if counselor has institutional access
+        if (!institution || (!institution.emailDomain && !institution.schoolCode)) {
+          // Show school code setup modal instead of error
+          setShowSchoolCodeModal(true);
+          setLoading(false);
+          return;
+        }
+        
         setInstitutionInfo(institution);
 
         // Fetch filtered student results for the institution
@@ -101,56 +122,74 @@ const InstitutionalDashboard = () => {
   // Fetch career recommendations for institution students
   useEffect(() => {
     const fetchInstitutionCareers = async () => {
+      if (institutionAssessmentResults.length === 0) {
+        setInstitutionCareerRecommendations([]);
+        return;
+      }
+
       try {
-        const allCareers = await fetchAllCareerRecommendations();
+        console.log('Fetching career recommendations for', institutionAssessmentResults.length, 'assessment results');
         
-        // Filter career recommendations for institution students only
-        const institutionUserIds = new Set(
-          institutionStudents.map(student => student.userId || student.id)
+        // Fetch career recommendations for each assessment result
+        const careerPromises = institutionAssessmentResults.map(result => 
+          fetchRecommendationsByResult(result.resultId).catch(err => {
+            console.error(`Error fetching career recommendations for result ${result.resultId}:`, err);
+            return { data: [] };
+          })
         );
         
-        const filteredCareers = (allCareers.data || []).filter(career => {
-          const userId = career.user?.id || career.user?.userId;
-          return institutionUserIds.has(userId);
-        });
+        const careerResults = await Promise.all(careerPromises);
         
-        setInstitutionCareerRecommendations(filteredCareers);
+        // Flatten all recommendations into a single array
+        const allInstitutionCareers = careerResults.flatMap(response => response.data || []);
+        
+        console.log('Total career recommendations for institution:', allInstitutionCareers.length);
+        console.log('Sample career recommendation:', allInstitutionCareers[0]);
+        
+        setInstitutionCareerRecommendations(allInstitutionCareers);
       } catch (err) {
+        console.error('Error fetching institution career recommendations:', err);
         setInstitutionCareerRecommendations([]);
       }
     };
-    
-    if (institutionStudents.length > 0) {
-      fetchInstitutionCareers();
-    }
-  }, [institutionStudents]);
 
-  // Fetch program recommendations for institution students
+    fetchInstitutionCareers();
+  }, [institutionAssessmentResults]);  // Fetch program recommendations for institution students
   useEffect(() => {
     const fetchInstitutionPrograms = async () => {
+      if (institutionAssessmentResults.length === 0) {
+        setInstitutionProgramRecommendations([]);
+        return;
+      }
+
       try {
-        const allPrograms = await programRecommendationService.fetchAllProgramRecommendations();
+        console.log('Fetching program recommendations for', institutionAssessmentResults.length, 'assessment results');
         
-        // Filter program recommendations for institution students only
-        const institutionUserIds = new Set(
-          institutionStudents.map(student => student.userId || student.id)
+        // Fetch program recommendations for each assessment result
+        const programPromises = institutionAssessmentResults.map(result => 
+          programRecommendationService.fetchProgramRecommendationsByResult(result.resultId).catch(err => {
+            console.error(`Error fetching program recommendations for result ${result.resultId}:`, err);
+            return { data: [] };
+          })
         );
         
-        const filteredPrograms = (allPrograms.data || []).filter(program => {
-          const userId = program.user?.id || program.user?.userId;
-          return institutionUserIds.has(userId);
-        });
+        const programResults = await Promise.all(programPromises);
         
-        setInstitutionProgramRecommendations(filteredPrograms);
+        // Flatten all recommendations into a single array
+        const allInstitutionPrograms = programResults.flatMap(response => response.data || []);
+        
+        console.log('Total program recommendations for institution:', allInstitutionPrograms.length);
+        console.log('Sample program recommendation:', allInstitutionPrograms[0]);
+        
+        setInstitutionProgramRecommendations(allInstitutionPrograms);
       } catch (err) {
+        console.error('Error fetching institution program recommendations:', err);
         setInstitutionProgramRecommendations([]);
       }
     };
-    
-    if (institutionStudents.length > 0) {
-      fetchInstitutionPrograms();
-    }
-  }, [institutionStudents]);
+
+    fetchInstitutionPrograms();
+  }, [institutionAssessmentResults]);
 
   // Filter and paginate results based on search and filter criteria
   useEffect(() => {
@@ -237,6 +276,49 @@ const InstitutionalDashboard = () => {
   const handlePageSizeChange = (e) => {
     setPageSize(Number(e.target.value));
     setPage(1);
+  };
+
+  // School code setup handlers
+  const handleSchoolCodeSave = async () => {
+    if (!schoolCodeInput.trim()) {
+      setSchoolCodeError('Please enter a school code');
+      return;
+    }
+
+    setSchoolCodeLoading(true);
+    setSchoolCodeError(null);
+
+    try {
+      // Validate school code
+      const isValidCode = await institutionService.validateSchoolCode(schoolCodeInput.trim());
+      if (!isValidCode) {
+        setSchoolCodeError('Invalid school code. Please verify with your institution.');
+        return;
+      }
+
+      // Update user profile with school code
+      const currentUser = authService.getCurrentUser();
+      await profileService.updateUserProfile(currentUser.id, { schoolCode: schoolCodeInput.trim() });
+
+      // Close modal and refresh data
+      setShowSchoolCodeModal(false);
+      setSchoolCodeInput('');
+      
+      // Refresh the page to load institutional data
+      window.location.reload();
+    } catch (error) {
+      setSchoolCodeError('Failed to save school code. Please try again.');
+    } finally {
+      setSchoolCodeLoading(false);
+    }
+  };
+
+  const handleSchoolCodeCancel = () => {
+    setShowSchoolCodeModal(false);
+    setSchoolCodeInput('');
+    setSchoolCodeError(null);
+    // Redirect to general counselor dashboard
+    navigate('/counselor-dashboard');
   };
 
   // Calculate average time spent for institution students
@@ -388,7 +470,6 @@ const InstitutionalDashboard = () => {
     });
     const topCareers = Object.entries(careerCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
       .map(([title, count]) => ({ title, count }));
 
     // Program recommendations aggregation
@@ -399,7 +480,6 @@ const InstitutionalDashboard = () => {
     });
     const topPrograms = Object.entries(programCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
       .map(([name, count]) => ({ name, count }));
 
     // Identify strengths and areas of concern
@@ -429,6 +509,75 @@ const InstitutionalDashboard = () => {
     institutionCareerRecommendations, 
     institutionProgramRecommendations
   );
+
+  // Debug logging for career and program counts
+  console.log('Institution insights:', {
+    totalCareers: institutionInsights.topCareers.length,
+    totalPrograms: institutionInsights.topPrograms.length,
+    topCareers: institutionInsights.topCareers,
+    topPrograms: institutionInsights.topPrograms
+  });
+
+  // Enhanced tooltip component with status information
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Find the performance data for this field
+      const fieldData = institutionInsights.performanceAnalysis && institutionInsights.performanceAnalysis[
+        Object.keys(institutionInsights.performanceAnalysis).find(key => 
+          institutionInsights.performanceAnalysis[key] && institutionInsights.performanceAnalysis[key].field === label
+        )
+      ];
+      
+      const getStatusInfo = (fieldData) => {
+        if (!fieldData) return { status: 'N/A', icon: '❓', reason: 'No data' };
+        
+        const needsSupportPercent = parseFloat(fieldData.distribution.needsSupport.percent);
+        const excellentPercent = parseFloat(fieldData.distribution.excellent.percent);
+        
+        if (needsSupportPercent > 30) {
+          return { 
+            status: 'CONCERN', 
+            icon: '⚠️', 
+            reason: `${needsSupportPercent}% > 30% threshold`
+          };
+        } else if (excellentPercent > 40) {
+          return { 
+            status: 'STRENGTH', 
+            icon: '✅', 
+            reason: `${excellentPercent}% > 40% threshold`
+          };
+        } else {
+          return { 
+            status: 'AVERAGE', 
+            icon: '➖', 
+            reason: 'Balanced performance'
+          };
+        }
+      };
+
+      const statusInfo = getStatusInfo(fieldData);
+
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-800 mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">
+              {entry.name}: {entry.value}%
+            </p>
+          ))}
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <p className="text-xs text-gray-600">
+              <span className="font-semibold">Status:</span> {statusInfo.icon} {statusInfo.status}
+            </p>
+            <p className="text-xs text-gray-500">
+              {statusInfo.reason}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Quick stats for institution dashboard
   const quickStats = [
@@ -494,22 +643,48 @@ const InstitutionalDashboard = () => {
 
   // Show error message
   if (error) {
+    const isInstitutionalAccessError = error.includes('No institutional access configured');
+    
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-xl shadow-md max-w-md">
-          <div className="text-red-500 mb-4">
+          <div className={`mb-4 ${isInstitutionalAccessError ? 'text-amber-500' : 'text-red-500'}`}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              {isInstitutionalAccessError ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              )}
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-center mb-4">Dashboard Error</h2>
+          <h2 className="text-xl font-bold text-center mb-4">
+            {isInstitutionalAccessError ? 'Setup Required' : 'Dashboard Error'}
+          </h2>
           <p className="text-gray-600 text-center mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full py-2 px-4 bg-[#1D63A1] text-white rounded-lg hover:bg-[#1D63A1]/90 transition-colors"
-          >
-            Retry
-          </button>
+          
+          {isInstitutionalAccessError ? (
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/profile')}
+                className="w-full py-2 px-4 bg-[#1D63A1] text-white rounded-lg hover:bg-[#1D63A1]/90 transition-colors"
+              >
+                Go to Profile Settings
+              </button>
+              <button
+                onClick={() => navigate('/counselor-dashboard')}
+                className="w-full py-2 px-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                View General Dashboard
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full py-2 px-4 bg-[#1D63A1] text-white rounded-lg hover:bg-[#1D63A1]/90 transition-colors"
+            >
+              Retry
+            </button>
+          )}
         </div>
       </div>
     );
@@ -557,87 +732,95 @@ const InstitutionalDashboard = () => {
               <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">
                 Performance Distribution Analysis
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleExportResults('csv')}
-                  className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  CSV
-                </button>
-                <button
-                  onClick={() => handleExportResults('pdf')}
-                  className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#FFB71B] hover:to-[#FFB71B] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" />
-                  PDF
-                </button>
+              <div className="flex items-center gap-6">
+                {/* Legend */}
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <span>Above Average</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-red-500 rounded"></div>
+                    <span>Needs Support (&lt;50pts)</span>
+                  </div>
+                  <div className="text-xs text-gray-500 ml-2">
+                    Status: ⚠️ Concern (&gt;30% needs support) | ✅ Strength (&gt;40% excellent)
+                  </div>
+                </div>
+                {/* Export Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleExportResults('csv')}
+                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    CSV
+                  </button>
+                  <button
+                    onClick={() => handleExportResults('pdf')}
+                    className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#FFB71B] hover:to-[#FFB71B] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    PDF
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Three Charts Horizontally Aligned - GSA gets more space */}
             <div className="flex flex-row gap-4 w-full">
               {/* General Scholastic Aptitude Chart - Takes more space due to more fields */}
-              <div className="flex-2" style={{ flex: '2' }}>
-                <h3 className="text-lg font-bold text-[#1D63A1] mb-3">General Scholastic Aptitude</h3>
+              <div className="flex-2" style={{ flex: '1.5' }}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={gsaPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={gsaPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis 
                       dataKey="field" 
                       fontSize={10}
                       height={50}
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip 
-                      formatter={(value, name) => [`${value}%`, name]}
-                      labelStyle={{ color: '#333' }}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#1D63A1] text-center">General Scholastic Aptitude</h3>
               </div>
 
               {/* Academic Tracks Chart - Standard size */}
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#FFB71B] mb-3">Academic Track Performance</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={academicPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={academicPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis 
                       dataKey="field" 
                       fontSize={10}
                       height={50}
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip 
-                      formatter={(value, name) => [`${value}%`, name]}
-                      labelStyle={{ color: '#333' }}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#F59E0B" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">Academic Track Performance</h3>
               </div>
 
               {/* Non-Academic Tracks Chart - Standard size */}
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#4CAF50] mb-3">Non-Academic Track Performance</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={nonAcademicPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={nonAcademicPerformance.filter(Boolean)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis 
                       dataKey="field" 
                       fontSize={10}
                       height={50}
                     />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip 
-                      formatter={(value, name) => [`${value}%`, name]}
-                      labelStyle={{ color: '#333' }}
-                    />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#4CAF50] text-center">Non-Academic Track Performance</h3>
               </div>
             </div>
           </div>
@@ -755,17 +938,43 @@ const InstitutionalDashboard = () => {
             </div>
             <div className="text-sm font-bold text-gray-700 text-center mb-2">Top Careers</div>
             {institutionInsights.topCareers.length === 0 ? (
-              <div className="text-gray-400 text-xs text-center">No data</div>
-            ) : institutionInsights.topCareers.slice(0, 3).map((c, i) => {
-              const total = institutionCareerRecommendations.length;
-              const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
-              return (
-                <div key={i} className="flex justify-between items-center text-xs mb-1">
-                  <span className="truncate pr-2">{i + 1}. {c.title}</span>
-                  <span className="text-gray-500 text-right">{percent}%</span>
-                </div>
-              );
-            })}
+              <div className="text-center py-2">
+                {institutionStudents.length === 0 ? (
+                  <div className="text-gray-400 text-xs">No students found</div>
+                ) : (
+                  <>
+                    <div className="text-gray-400 text-xs mb-2">No career data yet</div>
+                    <div className="text-gray-500 text-xs">
+                      Encourage students to complete assessments
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {institutionInsights.topCareers
+                  .slice(0, showMoreCareers ? institutionInsights.topCareers.length : 3)
+                  .map((c, i) => {
+                    const total = institutionCareerRecommendations.length;
+                    const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
+                    return (
+                      <div key={i} className="flex justify-between items-center text-xs mb-1">
+                        <span className="truncate pr-2">{i + 1}. {c.title}</span>
+                        <span className="text-gray-500 text-right">{percent}%</span>
+                      </div>
+                    );
+                  })}
+                {/* Show button if more than 3 items exist */}
+                {institutionInsights.topCareers.length > 3 && (
+                  <button
+                    onClick={() => setShowMoreCareers(!showMoreCareers)}
+                    className="w-full text-xs text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 border border-cyan-200 hover:border-cyan-300"
+                  >
+                    {showMoreCareers ? `Show Less ▲` : `Show All (${institutionInsights.topCareers.length}) ▼`}
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Top Programs - Compact */}
@@ -775,17 +984,43 @@ const InstitutionalDashboard = () => {
             </div>
             <div className="text-sm font-bold text-gray-700 text-center mb-2">Top Programs</div>
             {institutionInsights.topPrograms.length === 0 ? (
-              <div className="text-gray-400 text-xs text-center">No data</div>
-            ) : institutionInsights.topPrograms.slice(0, 3).map((p, i) => {
-              const total = institutionProgramRecommendations.length;
-              const percent = total > 0 ? ((p.count / total) * 100).toFixed(0) : '0';
-              return (
-                <div key={i} className="flex justify-between items-center text-xs mb-1">
-                  <span className="truncate pr-2">{i + 1}. {p.name}</span>
-                  <span className="text-gray-500 text-right">{percent}%</span>
-                </div>
-              );
-            })}
+              <div className="text-center py-2">
+                {institutionStudents.length === 0 ? (
+                  <div className="text-gray-400 text-xs">No students found</div>
+                ) : (
+                  <>
+                    <div className="text-gray-400 text-xs mb-2">No program data yet</div>
+                    <div className="text-gray-500 text-xs">
+                      Encourage students to complete assessments
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {institutionInsights.topPrograms
+                  .slice(0, showMorePrograms ? institutionInsights.topPrograms.length : 3)
+                  .map((p, i) => {
+                    const total = institutionProgramRecommendations.length;
+                    const percent = total > 0 ? ((p.count / total) * 100).toFixed(0) : '0';
+                    return (
+                      <div key={i} className="flex justify-between items-center text-xs mb-1">
+                        <span className="truncate pr-2">{i + 1}. {p.name}</span>
+                        <span className="text-gray-500 text-right">{percent}%</span>
+                      </div>
+                    );
+                  })}
+                {/* Show button if more than 3 items exist */}
+                {institutionInsights.topPrograms.length > 3 && (
+                  <button
+                    onClick={() => setShowMorePrograms(!showMorePrograms)}
+                    className="w-full text-xs text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 border border-yellow-200 hover:border-yellow-300"
+                  >
+                    {showMorePrograms ? `Show Less ▲` : `Show All (${institutionInsights.topPrograms.length}) ▼`}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -915,6 +1150,88 @@ const InstitutionalDashboard = () => {
           </div>
         </aside>
       </main>
+      
+      {/* School Code Setup Modal */}
+      {showSchoolCodeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
+                    <Hash className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-bold">Setup School Code</h3>
+                </div>
+                <button
+                  onClick={handleSchoolCodeCancel}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  To access the institutional dashboard, please enter your school code. 
+                  This will link your account to your institution and allow you to view student assessment data.
+                </p>
+                
+                {schoolCodeError && (
+                  <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded-lg mb-4">
+                    <p className="text-sm font-medium">{schoolCodeError}</p>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">School Code</label>
+                  <input
+                    type="text"
+                    value={schoolCodeInput}
+                    onChange={(e) => setSchoolCodeInput(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors"
+                    placeholder="Enter your school code"
+                    disabled={schoolCodeLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleSchoolCodeCancel}
+                  className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                  disabled={schoolCodeLoading}
+                >
+                  Use General Dashboard
+                </button>
+                <button
+                  onClick={handleSchoolCodeSave}
+                  disabled={schoolCodeLoading || !schoolCodeInput.trim()}
+                  className="flex-1 py-3 px-4 bg-[#1D63A1] text-white rounded-xl hover:bg-[#1D63A1]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {schoolCodeLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save & Continue
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

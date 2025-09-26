@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key } from 'lucide-react';
+import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key, Hash } from 'lucide-react';
 import profileService from '../../services/profileService';
 import authService from '../../services/authService';
+import institutionService from '../../services/institutionService';
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -66,6 +67,23 @@ const ProfilePage = () => {
     setError(null);
 
     try {
+      // Validate school code for counselors if provided
+      const role = user?.role;
+      if ((role === 'GUIDANCE_COUNSELOR' || role === 'CAREER_COUNSELOR') && 
+          editData.schoolCode && editData.schoolCode.trim()) {
+        
+        try {
+          const isValidCode = await institutionService.validateSchoolCode(editData.schoolCode.trim());
+          if (!isValidCode) {
+            setError('Invalid school code. Please verify with your institution.');
+            return;
+          }
+        } catch (validationError) {
+          setError('Failed to validate school code. Please try again.');
+          return;
+        }
+      }
+
       const currentUser = authService.getCurrentUser();
       const updatedUser = await profileService.updateUserProfile(currentUser.id, editData);
       
@@ -590,6 +608,40 @@ const ProfilePage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* School Code field - only for counselors */}
+                  {(user?.role === 'GUIDANCE_COUNSELOR' || user?.role === 'CAREER_COUNSELOR') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        School Code (For Institutional Access)
+                      </label>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          value={editData.schoolCode || ''}
+                          onChange={(e) => handleInputChange('schoolCode', e.target.value)}
+                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
+                          placeholder="Enter your school code (required for institutional dashboard)"
+                        />
+                      ) : (
+                        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                          <div className="flex items-center">
+                            <Hash className="w-5 h-5 mr-3 text-green-600" />
+                            <div>
+                              <p className="text-gray-900 font-medium">
+                                {user?.schoolCode || 'Not provided'}
+                              </p>
+                              {!user?.schoolCode && (
+                                <p className="text-xs text-amber-600 mt-1">
+                                  ⚠️ School code required to access institutional dashboard
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

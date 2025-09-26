@@ -412,6 +412,67 @@ const CounselorDashboard = () => {
   // Aggregate insights for dashboard summary
   const dashboardInsights = aggregateDashboardInsights(assessmentResults, allCareerRecommendations, allProgramRecommendations);
 
+  // Enhanced tooltip component with status information
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      // Find the performance data for this field
+      const fieldData = dashboardInsights.performanceAnalysis && dashboardInsights.performanceAnalysis[
+        Object.keys(dashboardInsights.performanceAnalysis).find(key => 
+          dashboardInsights.performanceAnalysis[key] && dashboardInsights.performanceAnalysis[key].field === label
+        )
+      ];
+      
+      const getStatusInfo = (fieldData) => {
+        if (!fieldData) return { status: 'N/A', icon: '❓', reason: 'No data' };
+        
+        const needsSupportPercent = parseFloat(fieldData.distribution.needsSupport.percent);
+        const excellentPercent = parseFloat(fieldData.distribution.excellent.percent);
+        
+        if (needsSupportPercent > 30) {
+          return { 
+            status: 'CONCERN', 
+            icon: '⚠️', 
+            reason: `${needsSupportPercent}% > 30% threshold`
+          };
+        } else if (excellentPercent > 40) {
+          return { 
+            status: 'STRENGTH', 
+            icon: '✅', 
+            reason: `${excellentPercent}% > 40% threshold`
+          };
+        } else {
+          return { 
+            status: 'AVERAGE', 
+            icon: '➖', 
+            reason: 'Balanced performance'
+          };
+        }
+      };
+
+      const statusInfo = getStatusInfo(fieldData);
+
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-800 mb-2">{label}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }} className="text-sm">
+              {entry.name}: {entry.value}%
+            </p>
+          ))}
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <p className="text-xs text-gray-600">
+              <span className="font-semibold">Status:</span> {statusInfo.icon} {statusInfo.status}
+            </p>
+            <p className="text-xs text-gray-500">
+              {statusInfo.reason}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Define grouped fields for the chart (must be after dashboardInsights)
   const gsaFields = [
     { key: 'scientificAbilityScore', label: 'Scientific' },
@@ -553,52 +614,66 @@ const CounselorDashboard = () => {
         {/* Performance Distribution Charts - Horizontal Layout */}
         <div className="flex flex-row gap-2 mb-8 items-start">
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col w-full max-w-[calc(100%-280px)]">
-            <div className="flex items-center w-full mb-4">
+            <div className="flex items-center justify-between w-full mb-4">
               <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">Performance Distribution Analysis</div>
+              {/* Legend */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span>Above Average</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <span>Needs Support (&lt;50pts)</span>
+                </div>
+                <div className="text-xs text-gray-500 ml-2">
+                  Status: ⚠️ Concern (&gt;30% needs support) | ✅ Strength (&gt;40% excellent)
+                </div>
+              </div>
             </div>
             
             {/* Three Charts Horizontally Aligned - GSA gets more space */}
             <div className="flex flex-row gap-4 w-full">
               {/* GSA Chart - Takes more space due to more fields */}
-              <div className="flex-2" style={{ flex: '2' }}>
-                <h3 className="text-lg font-bold text-[#1D63A1] mb-3">General Scholastic Aptitude</h3>
+              <div className="flex-2" style={{ flex: '1.5' }}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={gsaPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={gsaPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis dataKey="field" fontSize={10} height={50} />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#1D63A1] text-center">General Scholastic Aptitude</h3>
               </div>
 
               {/* Academic Tracks - Standard size */}
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#FFB71B] mb-3">Academic Tracks</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={academicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={academicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis dataKey="field" fontSize={10} height={50} />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#F59E0B" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">Academic Tracks</h3>
               </div>
 
               {/* Non-Academic Tracks - Standard size */}
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-[#4CAF50] mb-3">Non-Academic Tracks</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={nonAcademicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                  <BarChart data={nonAcademicPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <XAxis dataKey="field" fontSize={10} height={50} />
                     <YAxis domain={[0, 100]} fontSize={10} />
-                    <Tooltip formatter={(value, name) => [`${value}%`, name]} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="aboveAveragePercent" fill="#10B981" name="Above Average" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="distribution.needsSupport.percent" fill="#EF4444" name="Needs Support" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                <h3 className="text-lg font-bold text-[#4CAF50] text-center">Non-Academic Tracks</h3>
               </div>
             </div>
           </div>

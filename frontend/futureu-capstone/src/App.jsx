@@ -117,9 +117,9 @@ function App() {
           </StudentRoute>
         } />
           <Route path="/profile" element={
-            <StudentRoute>
+            <PrivateRoute>
               <ProfilePage />
-            </StudentRoute>
+            </PrivateRoute>
           } />
         <Route path="/career-pathways" element={
           <StudentRoute>
