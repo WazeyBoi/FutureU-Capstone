@@ -797,8 +797,34 @@ const InstitutionalDashboard = () => {
         )}
       </div>
 
-      {/* Institution Insights Summary Section */}
+      {/* Legend Section - Moved outside chart */}
       <section className="w-full px-15 pt-6 pb-2">
+        {/* Legend */}
+        <div className="flex items-center justify-left gap-6 mb-4">
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-600 rounded"></div>
+              <span>Well Above School Avg</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded"></div>
+              <span>Above School Avg</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-orange-500 rounded"></div>
+              <span>Below School Avg</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-500 rounded"></div>
+              <span>Well Below School Avg</span>
+            </div>
+            <div className="text-xs text-gray-500 ml-2">
+              Relative to classmates in same school
+            </div>
+          </div>
+        </div>
+
+        {/* Institution Insights Summary Section */}
         <div className="flex flex-row gap-2 mb-8 items-start">
           {/* Performance Distribution Charts */}
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col w-full max-w-[calc(100%-280px)]">
@@ -807,28 +833,6 @@ const InstitutionalDashboard = () => {
                 Performance Distribution Analysis
               </div>
               <div className="flex items-center gap-6">
-                {/* Legend */}
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-600 rounded"></div>
-                    <span>Well Above School Avg</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    <span>Above School Avg</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                    <span>Below School Avg</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-red-500 rounded"></div>
-                    <span>Well Below School Avg</span>
-                  </div>
-                  <div className="text-xs text-gray-500 ml-2">
-                    Relative to classmates in same school
-                  </div>
-                </div>
                 {/* Export Buttons */}
                 <div className="flex gap-2">
                   <button
