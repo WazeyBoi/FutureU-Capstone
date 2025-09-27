@@ -16,6 +16,8 @@
     "chart.js": "^4.4.9",
     "framer-motion": "^12.11.0",
     "futureu-capstone": "file:",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.487.0",
     "mapbox-gl": "^3.13.0",

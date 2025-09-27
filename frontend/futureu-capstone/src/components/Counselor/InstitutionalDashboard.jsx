@@ -130,21 +130,26 @@ const InstitutionalDashboard = () => {
       try {
         console.log('Fetching career recommendations for', institutionAssessmentResults.length, 'assessment results');
         
-        // Fetch career recommendations for each assessment result
+        // Fetch career recommendations for each assessment result and preserve the resultId association
         const careerPromises = institutionAssessmentResults.map(result => 
-          fetchRecommendationsByResult(result.resultId).catch(err => {
+          fetchRecommendationsByResult(result.resultId).then(response => ({
+            resultId: result.resultId,
+            recommendations: response.data || []
+          })).catch(err => {
             console.error(`Error fetching career recommendations for result ${result.resultId}:`, err);
-            return { data: [] };
+            return { resultId: result.resultId, recommendations: [] };
           })
         );
         
         const careerResults = await Promise.all(careerPromises);
         
-        // Flatten all recommendations into a single array
-        const allInstitutionCareers = careerResults.flatMap(response => response.data || []);
+        // Flatten recommendations but add resultId to each recommendation
+        const allInstitutionCareers = careerResults.flatMap(({ resultId, recommendations }) => 
+          recommendations.map(rec => ({ ...rec, associatedResultId: resultId }))
+        );
         
         console.log('Total career recommendations for institution:', allInstitutionCareers.length);
-        console.log('Sample career recommendation:', allInstitutionCareers[0]);
+        console.log('Sample career recommendation with resultId:', allInstitutionCareers[0]);
         
         setInstitutionCareerRecommendations(allInstitutionCareers);
       } catch (err) {
@@ -165,21 +170,26 @@ const InstitutionalDashboard = () => {
       try {
         console.log('Fetching program recommendations for', institutionAssessmentResults.length, 'assessment results');
         
-        // Fetch program recommendations for each assessment result
+        // Fetch program recommendations for each assessment result and preserve the resultId association
         const programPromises = institutionAssessmentResults.map(result => 
-          programRecommendationService.fetchProgramRecommendationsByResult(result.resultId).catch(err => {
+          programRecommendationService.fetchProgramRecommendationsByResult(result.resultId).then(response => ({
+            resultId: result.resultId,
+            recommendations: response.data || []
+          })).catch(err => {
             console.error(`Error fetching program recommendations for result ${result.resultId}:`, err);
-            return { data: [] };
+            return { resultId: result.resultId, recommendations: [] };
           })
         );
         
         const programResults = await Promise.all(programPromises);
         
-        // Flatten all recommendations into a single array
-        const allInstitutionPrograms = programResults.flatMap(response => response.data || []);
+        // Flatten recommendations but add resultId to each recommendation
+        const allInstitutionPrograms = programResults.flatMap(({ resultId, recommendations }) => 
+          recommendations.map(rec => ({ ...rec, associatedResultId: resultId }))
+        );
         
         console.log('Total program recommendations for institution:', allInstitutionPrograms.length);
-        console.log('Sample program recommendation:', allInstitutionPrograms[0]);
+        console.log('Sample program recommendation with resultId:', allInstitutionPrograms[0]);
         
         setInstitutionProgramRecommendations(allInstitutionPrograms);
       } catch (err) {
@@ -235,18 +245,329 @@ const InstitutionalDashboard = () => {
   // Handle export functionality
   const handleExportResults = async (format) => {
     try {
-      const blob = await counselorService.exportInstitutionResults(counselorId, format);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `institution-results.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
+      // Show loading state
+      const exportButton = document.activeElement;
+      const originalText = exportButton.innerHTML;
+      exportButton.innerHTML = '<div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mx-auto"></div>';
+      exportButton.disabled = true;
+
+      if (format === 'csv') {
+        // CSV Export - Generate locally from current data
+        const csvData = generateCSVData();
+        downloadCSV(csvData, 'institution-results.csv');
+      } else if (format === 'pdf') {
+        // Try backend PDF export first, fallback to local generation
+        try {
+          const blob = await counselorService.exportInstitutionResults(counselorId, 'pdf');
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = `institution-results.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        } catch (backendError) {
+          console.warn('Backend PDF export failed, generating basic summary:', backendError);
+          // Generate a simple text summary for PDF
+          generatePDFSummary();
+        }
+      }
+
+      // Reset button state
+      setTimeout(() => {
+        exportButton.innerHTML = originalText;
+        exportButton.disabled = false;
+      }, 1000);
     } catch (error) {
       console.error('Error exporting results:', error);
+      alert(`Export failed: ${error.message || 'Unknown error occurred'}`);
+      
+      // Reset button state on error
+      const exportButton = document.activeElement;
+      exportButton.disabled = false;
     }
+  };
+
+  // Generate CSV data from current dashboard data
+  const generateCSVData = () => {
+    const headers = [
+      'Student Name',
+      'Email',
+      'Assessment',
+      'Date Completed',
+      'Scientific Ability',
+      'Reading Comprehension',
+      'Verbal Ability',
+      'Mathematical Ability',
+      'Logical Reasoning',
+      'STEM Score',
+      'ABM Score',
+      'HUMSS Score',
+      'TVL Score',
+      'Sports Track',
+      'Arts & Design',
+      'RIASEC Code',
+      'Top Career 1',
+      'Top Career 2', 
+      'Top Career 3',
+      'Top Career 4',
+      'Top Career 5',
+      'Least Career 1',
+      'Least Career 2',
+      'Least Career 3', 
+      'Least Career 4',
+      'Least Career 5',
+      'Top Program 1',
+      'Top Program 2',
+      'Top Program 3',
+      'Top Program 4', 
+      'Top Program 5',
+      'Least Program 1',
+      'Least Program 2',
+      'Least Program 3',
+      'Least Program 4',
+      'Least Program 5'
+    ];
+
+    // Remove duplicates by result ID first
+    const uniqueResults = institutionAssessmentResults.filter((result, index, arr) => 
+      arr.findIndex(r => r.resultId === result.resultId) === index
+    );
+
+    console.log('Unique results for CSV:', uniqueResults.length);
+    console.log('Sample career recommendations:', institutionCareerRecommendations.slice(0, 3));
+    console.log('Sample program recommendations:', institutionProgramRecommendations.slice(0, 3));
+    
+    // Debug: Show structure of first recommendation
+    if (institutionCareerRecommendations.length > 0) {
+      console.log('Career recommendation structure:', institutionCareerRecommendations[0]);
+      console.log('Career recommendation keys:', Object.keys(institutionCareerRecommendations[0]));
+    }
+    if (institutionProgramRecommendations.length > 0) {
+      console.log('Program recommendation structure:', institutionProgramRecommendations[0]);
+      console.log('Program recommendation keys:', Object.keys(institutionProgramRecommendations[0]));
+    }
+    
+    // Debug: Show structure of first result
+    if (uniqueResults.length > 0) {
+      console.log('Result structure:', uniqueResults[0]);
+      console.log('Result keys:', Object.keys(uniqueResults[0]));
+      console.log('User from result:', uniqueResults[0].userAssessment?.user);
+    }
+
+    const rows = uniqueResults.map((result, index) => {
+      const user = result.userAssessment?.user || {};
+      const assessment = result.userAssessment?.assessment || {};
+      
+      // Get RIASEC code - Top 3 like in StudentReportPage
+      const riasecScores = [
+        { code: 'R', value: result.realisticScore },
+        { code: 'I', value: result.investigativeScore },
+        { code: 'A', value: result.artisticScore },
+        { code: 'S', value: result.socialScore },
+        { code: 'E', value: result.enterprisingScore },
+        { code: 'C', value: result.conventionalScore },
+      ].filter(s => s.value != null && !isNaN(s.value));
+      
+      // Get top 3 RIASEC codes like in StudentReportPage
+      const topRiasec = riasecScores.length > 0 ? 
+        riasecScores
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 3)
+          .map(s => s.code)
+          .join('') : 'N/A';
+
+      // Get top career and program for this student - use the new associatedResultId
+      let studentCareers = institutionCareerRecommendations.filter(c => 
+        c.associatedResultId === result.resultId
+      );
+
+      let studentPrograms = institutionProgramRecommendations.filter(p => 
+        p.associatedResultId === result.resultId
+      );
+
+      // If no matches found, also try the old matching approaches as fallback
+      if (studentCareers.length === 0) {
+        studentCareers = institutionCareerRecommendations.filter(c => 
+          c.userAssessmentResult?.resultId === result.resultId ||
+          c.resultId === result.resultId ||
+          c.userAssessmentResultId === result.resultId
+        );
+      }
+
+      if (studentPrograms.length === 0) {
+        studentPrograms = institutionProgramRecommendations.filter(p => 
+          p.userAssessmentResult?.resultId === result.resultId ||
+          p.resultId === result.resultId ||
+          p.userAssessmentResultId === result.resultId
+        );
+      }
+
+      // Final fallback: try matching by user ID
+      if (studentCareers.length === 0 && user.userId) {
+        studentCareers = institutionCareerRecommendations.filter(c => 
+          c.userAssessmentResult?.userAssessment?.user?.userId === user.userId ||
+          c.user?.userId === user.userId ||
+          c.userId === user.userId
+        );
+      }
+
+      if (studentPrograms.length === 0 && user.userId) {
+        studentPrograms = institutionProgramRecommendations.filter(p => 
+          p.userAssessmentResult?.userAssessment?.user?.userId === user.userId ||
+          p.user?.userId === user.userId ||
+          p.userId === user.userId
+        );
+      }
+
+      // Extract career and program names with multiple fallback attempts
+      const getCareerTitle = (career) => career?.careerPath?.careerTitle || 
+                                        career?.careerTitle || 
+                                        career?.career?.careerTitle ||
+                                        career?.career?.title ||
+                                        career?.name || 
+                                        career?.title || 'N/A';
+
+      const getProgramTitle = (program) => program?.program?.programName || 
+                                          program?.programName || 
+                                          program?.program?.name ||
+                                          program?.program?.title ||
+                                          program?.name || 
+                                          program?.title || 'N/A';
+
+      // Sort careers by confidence score (highest to lowest for top, lowest to highest for least)
+      const sortedCareers = [...studentCareers].sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0));
+      const sortedPrograms = [...studentPrograms].sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0));
+
+      // Get top 5 careers and programs
+      const top5Careers = Array.from({length: 5}, (_, i) => 
+        sortedCareers[i] ? getCareerTitle(sortedCareers[i]) : 'N/A'
+      );
+      
+      const top5Programs = Array.from({length: 5}, (_, i) => 
+        sortedPrograms[i] ? getProgramTitle(sortedPrograms[i]) : 'N/A'
+      );
+
+      // Get least 5 careers and programs (reverse order for lowest confidence scores)
+      const least5Careers = Array.from({length: 5}, (_, i) => {
+        const index = sortedCareers.length - 1 - i;
+        return index >= 0 && sortedCareers[index] ? getCareerTitle(sortedCareers[index]) : 'N/A';
+      });
+      
+      const least5Programs = Array.from({length: 5}, (_, i) => {
+        const index = sortedPrograms.length - 1 - i;
+        return index >= 0 && sortedPrograms[index] ? getProgramTitle(sortedPrograms[index]) : 'N/A';
+      });
+
+      // Debug logging for first few students
+      if (index < 3) {
+        console.log(`Student ${user.firstName} ${user.lastName}:`, {
+          resultId: result.resultId,
+          careerMatches: studentCareers.length,
+          programMatches: studentPrograms.length,
+          top5Careers,
+          least5Careers,
+          top5Programs,
+          least5Programs,
+          sampleCareer: studentCareers[0],
+          sampleProgram: studentPrograms[0]
+        });
+      }
+
+      return [
+        `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        user.email || 'N/A',
+        assessment.title || 'N/A',
+        result.userAssessment?.dateCompleted ? 
+          new Date(result.userAssessment.dateCompleted).toLocaleDateString() : 'N/A',
+        result.scientificAbilityScore || 0,
+        result.readingComprehensionScore || 0,
+        result.verbalAbilityScore || 0,
+        result.mathematicalAbilityScore || 0,
+        result.logicalReasoningScore || 0,
+        result.stemScore || 0,
+        result.abmScore || 0,
+        result.humssScore || 0,
+        result.tvlScore || 0,
+        result.sportsTrackScore || 0,
+        result.artsDesignTrackScore || 0,
+        topRiasec,
+        ...top5Careers,           // Top 5 career recommendations
+        ...least5Careers,         // Least 5 career recommendations  
+        ...top5Programs,          // Top 5 program recommendations
+        ...least5Programs         // Least 5 program recommendations
+      ];
+    });
+
+    console.log(`Generated CSV with ${rows.length} unique student records`);
+    return [headers, ...rows];
+  };
+
+  // Download CSV file
+  const downloadCSV = (data, filename) => {
+    const csvContent = data.map(row => 
+      row.map(cell => 
+        typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+      ).join(',')
+    ).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Generate PDF summary (simple version)
+  const generatePDFSummary = () => {
+    const summaryText = `
+INSTITUTIONAL DASHBOARD SUMMARY
+Institution: ${institutionInfo?.name || 'Unknown'}
+Generated: ${new Date().toLocaleString()}
+
+OVERVIEW:
+- Total Students: ${institutionStudents.length}
+- Completed Assessments: ${institutionAssessmentResults.length}
+- Completion Rate: ${completionRate}%
+- Average Time: ${averageTimeSpent.toFixed(1)} minutes
+
+PERFORMANCE ANALYSIS:
+${Object.values(institutionInsights.performanceAnalysis || {}).map(p => p ? `
+${p.field}:
+- Institution Average: ${p.institutionAverage}
+- Distribution: ${p.performanceLevel}
+- Status: ${p.status}
+- Well Above: ${p.distribution?.wellAbovePeer?.percent}%
+- Above: ${p.distribution?.abovePeer?.percent}%
+- At Average: ${p.distribution?.atPeerLevel?.percent}%
+- Below: ${p.distribution?.belowPeer?.percent}%
+- Well Below: ${p.distribution?.wellBelowPeer?.percent}%
+` : '').join('\n')}
+
+TOP CAREERS:
+${institutionInsights.topCareers?.slice(0, 10).map((c, i) => `${i+1}. ${c.title} (${c.count} students)`).join('\n')}
+
+TOP PROGRAMS:
+${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name} (${p.count} students)`).join('\n')}
+    `.trim();
+
+    // Create a simple text file for PDF summary
+    const blob = new Blob([summaryText], { type: 'text/plain;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'institution-summary.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    alert('PDF export not available yet. Downloaded summary as text file instead.');
   };
 
   // Student connection type helpers
