@@ -48,6 +48,7 @@ import InstitutionalDashboard from './components/Counselor/InstitutionalDashboar
 import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
 import ProfilePage from './components/Profile/ProfilePage.jsx';
+import StudentHomepage from './components/Student/StudentHomepage.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -83,6 +84,13 @@ function App() {
           </AdminRoute>
         } />
         <Route path="/unauthorized" element={<Unauthorized />} />
+        
+        {/* Student homepage */}
+        <Route path="/student-home" element={
+          <StudentRoute>
+            <StudentHomepage />
+          </StudentRoute>
+        } />
         
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={
