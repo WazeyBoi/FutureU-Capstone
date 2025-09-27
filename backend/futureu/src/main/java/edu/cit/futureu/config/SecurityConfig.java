@@ -1,12 +1,12 @@
 package edu.cit.futureu.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,11 +16,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import edu.cit.futureu.jwt.AuthEntryPointJwt;
 import edu.cit.futureu.jwt.AuthTokenFilter;
 import edu.cit.futureu.service.UserDetailsServiceImpl;
 
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -32,6 +37,9 @@ public class SecurityConfig {
 
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
+    
+    @Value("${futureu.app.allowedOrigins}")
+    private String allowedOrigins;
 
     @Bean
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -55,30 +63,59 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Parse allowed origins from configuration
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        
+        // Allow credentials for cookie-based authentication
+        configuration.setAllowCredentials(true);
+        
+        // Allow common HTTP methods
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Allow common headers
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // Expose headers that the client might need
+        configuration.setExposedHeaders(Arrays.asList("Set-Cookie"));
+        
+        // Cache preflight requests for 1 hour
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        return source;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) // Enable CORS with default settings
-            .csrf(csrf -> csrf.disable()) // Disable CSRF
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable()) // CSRF disabled for API, but cookies have SameSite protection
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // For sign-in and sign-up
+                .requestMatchers("/api/auth/**").permitAll() // For sign-in, sign-up, refresh, signout
                 .requestMatchers("/api/test/**").permitAll() // For general API testing
                 .requestMatchers("/api/hello").permitAll() // Allow public access to hello endpoint
                 
-                // NEW: Profile endpoints - require authentication
+                // Profile endpoints - require authentication
                 .requestMatchers("/api/profile/**").authenticated()
                 
-                // NEW: Static file serving for uploaded profile pictures
+                // Static file serving for uploaded profile pictures
                 .requestMatchers("/uploads/**").permitAll()
                 
                 // Allow public access to read-only school and program endpoints
                 .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/program/getAllPrograms").permitAll()
                 
-                // All other API endpoints require authentication (regardless of role)
+                // All other API endpoints require authentication
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
             );
