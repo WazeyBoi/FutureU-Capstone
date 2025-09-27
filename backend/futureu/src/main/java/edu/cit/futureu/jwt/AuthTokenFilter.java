@@ -15,22 +15,27 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter; // Updated import
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import edu.cit.futureu.service.UserDetailsServiceImpl; // Updated import
-import io.jsonwebtoken.Claims; // Updated import
-import jakarta.servlet.FilterChain; // Updated import
+import edu.cit.futureu.service.UserDetailsServiceImpl;
+import edu.cit.futureu.util.SecureCookieUtil;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@Component // Add @Component so it can be picked up as a bean
+@Component
 public class AuthTokenFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    
+    @Autowired
+    private SecureCookieUtil cookieUtil;
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
@@ -52,26 +57,34 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     authorities = Collections.singletonList(new SimpleGrantedAuthority(role));
                 } else {
                     logger.warn("Role not found in JWT for user: {}", username);
-                    // Handle cases where role might be missing or use default authorities from userDetails if available
-                    // For now, using empty list if role is not in token.
                 }
                 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, authorities); // Use authorities from token
+                        userDetails, null, authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
-            logger.error("Cannot set user authentication: {}", e.getMessage(), e); // Log the full exception
+            logger.error("Cannot set user authentication: {}", e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);
     }
 
     private String parseJwt(HttpServletRequest request) {
+        // First try to get token from cookie (preferred method)
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookieUtil.getAccessTokenCookieName().equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        
+        // Fallback to Authorization header for backward compatibility
         String headerAuth = request.getHeader("Authorization");
-
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
             return headerAuth.substring(7);
         }
