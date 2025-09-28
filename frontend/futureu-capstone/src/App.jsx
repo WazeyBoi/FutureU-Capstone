@@ -129,6 +129,7 @@ function App() {
                 <Testimonials />
               </StudentRoute>
             } />
+            <Route path="/about-us" element={<AboutUsPage />} />
               <Route path="/profile" element={
                 <PrivateRoute>
                   <ProfilePage />
