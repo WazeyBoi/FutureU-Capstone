@@ -21,9 +21,18 @@ public class ProfileController {
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUserProfile(@PathVariable int userId) {
         try {
+            System.out.println("=== GET PROFILE REQUEST ===");
+            System.out.println("UserId: " + userId);
+            
             UserEntity user = profileService.getUserProfile(userId);
+            
+            System.out.println("Profile fetched successfully for user: " + userId);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
+            System.err.println("=== ERROR in getUserProfile ===");
+            System.err.println("Error fetching user profile: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("=== END ERROR ===");
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
@@ -31,10 +40,41 @@ public class ProfileController {
     @PutMapping("/{userId}")
     public ResponseEntity<?> updateUserProfile(@PathVariable int userId, @RequestBody UserEntity profileData) {
         try {
+            System.out.println("=== UPDATE PROFILE REQUEST ===");
+            System.out.println("Received userId: " + userId);
+            System.out.println("Request body: " + profileData);
+            System.out.println("Profile data class: " + profileData.getClass().getSimpleName());
+            
+            // Validate userId
+            if (userId <= 0) {
+                System.err.println("Invalid userId: " + userId);
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid user ID"));
+            }
+            
+            // Validate profileData
+            if (profileData == null) {
+                System.err.println("ProfileData is null");
+                return ResponseEntity.badRequest().body(Map.of("error", "Profile data is required"));
+            }
+            
+            System.out.println("Calling ProfileService.updateUserProfile...");
             UserEntity updatedUser = profileService.updateUserProfile(userId, profileData);
+            
+            System.out.println("Profile updated successfully for user: " + updatedUser.getUserId());
             return ResponseEntity.ok(updatedUser);
-        } catch (Exception e) {
+            
+        } catch (RuntimeException e) {
+            System.err.println("=== RUNTIME ERROR in updateUserProfile ===");
+            System.err.println("Runtime error updating user profile: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("=== END RUNTIME ERROR ===");
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("=== UNEXPECTED ERROR in updateUserProfile ===");
+            System.err.println("Unexpected error updating user profile: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("=== END UNEXPECTED ERROR ===");
+            return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
     }
     
@@ -48,10 +88,14 @@ public class ProfileController {
             String profilePictureUrl = profileService.uploadProfilePicture(userId, file);
             return ResponseEntity.ok(Map.of("profilePictureUrl", profilePictureUrl, "message", "Profile picture uploaded successfully"));
         } catch (IllegalArgumentException e) {
+            System.err.println("Invalid file: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (IOException e) {
+            System.err.println("File upload error: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to upload file: " + e.getMessage()));
         } catch (Exception e) {
+            System.err.println("Unexpected error during file upload: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of("error", "An unexpected error occurred"));
         }
     }
@@ -62,11 +106,12 @@ public class ProfileController {
             profileService.deleteProfilePicture(userId);
             return ResponseEntity.ok(Map.of("message", "Profile picture deleted successfully"));
         } catch (Exception e) {
+            System.err.println("Error deleting profile picture: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
-    // NEW: Change Password endpoint
     @PutMapping("/{userId}/change-password")
     public ResponseEntity<?> changePassword(@PathVariable int userId, @RequestBody Map<String, String> passwordData) {
         try {
@@ -84,6 +129,8 @@ public class ProfileController {
             profileService.changePassword(userId, currentPassword, newPassword);
             return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
         } catch (Exception e) {
+            System.err.println("Error changing password: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

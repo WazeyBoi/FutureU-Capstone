@@ -134,4 +134,20 @@ public class UserEntity {
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
     }
+
+    @Override
+    public String toString() {
+        return "UserEntity{" +
+                "userId=" + userId +
+                ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastname='" + lastname + '\'' +
+                ", middleName='" + middleName + '\'' +
+                ", age=" + age +
+                ", contactNumber='" + contactNumber + '\'' +
+                ", address='" + address + '\'' +
+                ", role=" + (role != null ? role.name() : "null") +
+                ", profilePictureUrl='" + profilePictureUrl + '\'' +
+                '}';
+    }
 }
