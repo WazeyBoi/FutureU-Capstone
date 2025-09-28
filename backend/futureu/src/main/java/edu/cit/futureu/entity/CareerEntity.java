@@ -2,18 +2,18 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "career")
@@ -21,18 +21,29 @@ public class CareerEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "career_id")
     private int careerId;
 
+    @Column(name = "career_title", nullable = false)
     private String careerTitle;
+    
+    @Column(name = "salary")
     private String salary;
+    
+    @Column(name = "career_description", columnDefinition = "TEXT")
     private String careerDescription;
+    
+    @Column(name = "job_trend")
     private String jobTrend;
+    
+    @Column(name = "industry")
     private String industry;
     
-    // Use JsonManagedReference to prevent circular references
-    @JsonManagedReference
-    @OneToMany(mappedBy = "career", cascade = CascadeType.ALL)
-    private List<CareerProgramEntity> careerPrograms;
+    // Many Careers belong to One Career Path
+    @JsonBackReference("careerPath-careers")
+    @ManyToOne
+    @JoinColumn(name = "career_path_id")
+    private CareerPathEntity careerPath;
 
     @JsonIgnore
     @OneToMany(mappedBy = "careerPath")
@@ -41,6 +52,15 @@ public class CareerEntity {
     public CareerEntity() {
     }
 
+    public CareerEntity(String careerTitle, String industry, String salary, String jobTrend, String careerDescription) {
+        this.careerTitle = careerTitle;
+        this.industry = industry;
+        this.salary = salary;
+        this.jobTrend = jobTrend;
+        this.careerDescription = careerDescription;
+    }
+
+    // Getters and Setters
     public int getCareerId() {
         return careerId;
     }
@@ -89,27 +109,12 @@ public class CareerEntity {
         this.industry = industry;
     }
     
-    public List<CareerProgramEntity> getCareerPrograms() {
-        return careerPrograms;
-    }
-
-    public void setCareerPrograms(List<CareerProgramEntity> careerPrograms) {
-        this.careerPrograms = careerPrograms;
-    }
-
-    
-    // For backward compatibility - returns the first associated program
-    @Transient
-    public ProgramEntity getProgram() {
-        if (careerPrograms != null && !careerPrograms.isEmpty()) {
-            return careerPrograms.get(0).getProgram();
-        }
-        return null;
+    public CareerPathEntity getCareerPath() {
+        return careerPath;
     }
     
-    // This is now handled by the CareerProgramService
-    public void setProgram(ProgramEntity program) {
-        // Implementation handled by service layer
+    public void setCareerPath(CareerPathEntity careerPath) {
+        this.careerPath = careerPath;
     }
 
     public List<CareerRecommendationEntity> getRecommendation() {
@@ -118,5 +123,17 @@ public class CareerEntity {
 
     public void setRecommendation(List<CareerRecommendationEntity> recommendation) {
         this.recommendation = recommendation;
-    }     
+    }
+    
+    @Override
+    public String toString() {
+        return "CareerEntity{" +
+                "careerId=" + careerId +
+                ", careerTitle='" + careerTitle + '\'' +
+                ", industry='" + industry + '\'' +
+                ", salary='" + salary + '\'' +
+                ", jobTrend='" + jobTrend + '\'' +
+                ", careerPath=" + (careerPath != null ? careerPath.getCareerPathName() : "null") +
+                '}';
+    }
 }
