@@ -68,13 +68,9 @@ const ProfilePage = () => {
     try {
       const currentUser = authService.getCurrentUser();
       
-      // Test with minimal data
-      const testData = {
-        firstName: editData.firstName || "Test Name"
-      };
-      
-      console.log('Sending minimal test data:', testData);
-      const updatedUser = await profileService.updateUserProfile(currentUser.id, testData);
+      // Send all the edited data, not just firstName
+      console.log('Sending profile data:', editData);
+      const updatedUser = await profileService.updateUserProfile(currentUser.id, editData);
       
       setUser(updatedUser);
       setEditMode(false);
