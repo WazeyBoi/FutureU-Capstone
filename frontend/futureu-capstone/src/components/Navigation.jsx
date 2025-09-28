@@ -609,6 +609,17 @@ const Navigation = () => {
                 </Link>
                 
                 <Link
+                  to="/about-us"
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    isActive('/about-us')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">About Us</span>
+                </Link>
+
+                <Link
                   to="/academic-explorer"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                     isActive('/academic-explorer')
@@ -652,6 +663,8 @@ const Navigation = () => {
                   <span className="relative z-10">Testimonials</span>
                 </Link>
                 
+               
+                
                 <Link
                   to="/career-pathways"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -688,6 +701,17 @@ const Navigation = () => {
                   }`}
                 >
                   <span className="relative z-10">Home</span>
+                </Link>
+                
+                <Link
+                  to="/about-us"
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    isActive('/about-us')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">About Us</span>
                 </Link>
               </>
             )}

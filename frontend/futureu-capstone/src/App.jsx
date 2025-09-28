@@ -9,6 +9,7 @@ import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
 import CareerPathways from './components/CareerPathways/CareerPathways';
 import Testimonials from './components/Testimonials.jsx';
+import AboutUsPage from './pages/AboutUsPage.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
@@ -54,6 +55,7 @@ import StudentHomepage from './components/Student/StudentHomepage.jsx';
 
 function App() {
   return (
+
     <ProfileProvider>
       <Router>
         <div className="App">
@@ -176,6 +178,7 @@ function App() {
                 <CRUD_User />
               </AdminRoute>
             } />
+
 
             <Route path="/assessment-categories" element={
               <AdminRoute>
