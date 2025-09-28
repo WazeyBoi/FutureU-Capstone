@@ -8,6 +8,7 @@ import Navigation from './components/Navigation.jsx';
 import UserLandingPage from './components/UserLandingPage.jsx';
 import CareerPathways from './components/CareerPathways/CareerPathways';
 import Testimonials from './components/Testimonials.jsx';
+import AboutUsPage from './pages/AboutUsPage.jsx';
 import AssessmentSubCategories from './pages/AssessmentSubCategories.jsx';
 import AssessmentCategories from './pages/AssessmentCategories.jsx';
 import Assessments from './pages/Assessments.jsx';
@@ -84,6 +85,7 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
         
         {/* Public routes */}
+        <Route path="/about-us" element={<AboutUsPage />} />
         <Route path="/virtual-campus-tours" element={
           <StudentRoute>
             <VirtualCampusToursPage />
