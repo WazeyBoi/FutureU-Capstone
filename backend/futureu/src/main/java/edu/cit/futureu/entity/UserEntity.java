@@ -46,6 +46,10 @@ public class UserEntity {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestimonyEntity> testimonies;
 
+    @JsonManagedReference("user-interestProfiles")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CareerInterestProfileEntity> interestProfiles;
+
     public UserEntity() {
     }
 
@@ -133,6 +137,14 @@ public class UserEntity {
     
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
+    }
+
+    public List<CareerInterestProfileEntity> getInterestProfiles() {
+        return interestProfiles;
+    }
+
+    public void setInterestProfiles(List<CareerInterestProfileEntity> interestProfiles) {
+        this.interestProfiles = interestProfiles;
     }
 
     @Override
