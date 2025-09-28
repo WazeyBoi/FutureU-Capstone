@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import authService from '../../services/authService';
+import institutionService from '../../services/institutionService';
 import { User, Mail, Lock, Home, Phone, Calendar, UserPlus, LogIn, AlertCircle, CheckCircle, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
 const StudentRegister = () => {
@@ -15,6 +16,7 @@ const StudentRegister = () => {
     age: '',
     address: '',
     contactNumber: '',
+    schoolCode: '', // Added school code field (optional)
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -95,6 +97,22 @@ const StudentRegister = () => {
       return;
     }
 
+    // School code validation (optional field)
+    if (formData.schoolCode && formData.schoolCode.trim()) {
+      try {
+        const isValidCode = await institutionService.validateSchoolCode(formData.schoolCode.trim());
+        if (!isValidCode.valid) {
+          setError('Invalid school code. Please check with your school counselor or leave empty.');
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        // If validation fails, we'll still allow registration but log the error
+        console.warn('School code validation failed:', error);
+        // Don't block registration for optional field validation errors
+      }
+    }
+
     try {
       // Remove confirmPassword as it's not needed in the API request
       const { confirmPassword, ...registrationData } = formData;
@@ -120,6 +138,7 @@ const StudentRegister = () => {
     { name: 'age', type: 'number', placeholder: 'Age', icon: <Calendar className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" /> },
     { name: 'address', type: 'text', placeholder: 'Address', icon: <Home className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" /> },
     { name: 'contactNumber', type: 'tel', placeholder: 'Contact Number', icon: <Phone className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" /> },
+    { name: 'schoolCode', type: 'text', placeholder: 'School Code (Optional)', icon: <GraduationCap className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" /> },
   ];
 
   return (
@@ -390,6 +409,30 @@ const StudentRegister = () => {
                     pattern="09[0-9]{9}"
                   />
                 </div>
+              </div>
+
+              {/* School Code (Optional - full width) */}
+              <div className="col-span-1 md:col-span-2">
+                <label htmlFor="schoolCode" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 ml-1 text-left">
+                  School Code (Optional)
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <GraduationCap className="h-5 w-5 text-gray-400 group-focus-within:text-[#FFB71B] transition-colors" />
+                  </div>
+                  <input
+                    id="schoolCode"
+                    name="schoolCode"
+                    type="text"
+                    value={formData.schoolCode}
+                    onChange={handleChange}
+                    className="pl-12 w-full px-5 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-2xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all focus:bg-white dark:focus:bg-gray-700 dark:text-white text-base"
+                    placeholder="Enter your school code (if provided by counselor)"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
+                  Optional: Enter the code provided by your school counselor to help them track your progress.
+                </p>
               </div>
             </div>
 

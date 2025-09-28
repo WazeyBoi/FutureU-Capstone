@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle } from 'lucide-react';
 import profileService from '../../services/profileService';
+import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key, Hash } from 'lucide-react';
+import institutionService from '../../services/institutionService';
 import authService from '../../services/authService';
 import { useProfile } from '../../contexts/ProfileContext';
 import { useCareerInterestProfile } from '../../hooks/useCareerInterestProfile';
@@ -222,6 +224,23 @@ const ProfilePage = () => {
     setError(null);
 
     try {
+      // Validate school code for counselors if provided
+      const role = user?.role;
+      if ((role === 'GUIDANCE_COUNSELOR' || role === 'CAREER_COUNSELOR') && 
+          editData.schoolCode && editData.schoolCode.trim()) {
+        
+        try {
+          const isValidCode = await institutionService.validateSchoolCode(editData.schoolCode.trim());
+          if (!isValidCode) {
+            setError('Invalid school code. Please verify with your institution.');
+            return;
+          }
+        } catch (validationError) {
+          setError('Failed to validate school code. Please try again.');
+          return;
+        }
+      }
+
       const currentUser = authService.getCurrentUser();
       const updatedUser = await updateProfile(currentUser.id, editData);
       
@@ -401,6 +420,114 @@ const ProfilePage = () => {
               <div>
                 <h4 className="font-bold mb-1">Success</h4>
                 <p className="font-medium">{success}</p>
+               </div>
+
+              {/* Contact Information */}
+              <div className="space-y-6">
+                <div className="flex items-center mb-6">
+                  <div className="w-10 h-10 bg-[#FFB71B]/10 rounded-xl flex items-center justify-center mr-4">
+                    <Phone className="w-5 h-5 text-[#FFB71B]" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-[#232D35]">Contact Information</h3>
+                </div>
+
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                    {editMode ? (
+                      <input
+                        type="email"
+                        value={editData.email || ''}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
+                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
+                        placeholder="Enter your email address"
+                      />
+                    ) : (
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                        <div className="flex items-center">
+                          <Mail className="w-5 h-5 mr-3 text-gray-500" />
+                          <p className="text-gray-900 font-medium">{user?.email}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Number</label>
+                    {editMode ? (
+                      <input
+                        type="tel"
+                        value={editData.contactNumber || ''}
+                        onChange={(e) => handleInputChange('contactNumber', e.target.value)}
+                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
+                        placeholder="Enter your contact number"
+                      />
+                    ) : (
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                        <div className="flex items-center">
+                          <Phone className="w-5 h-5 mr-3 text-gray-500" />
+                          <p className="text-gray-900 font-medium">{user?.contactNumber || 'Not provided'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
+                    {editMode ? (
+                      <textarea
+                        value={editData.address || ''}
+                        onChange={(e) => handleInputChange('address', e.target.value)}
+                        rows="4"
+                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white resize-none"
+                        placeholder="Enter your full address"
+                      />
+                    ) : (
+                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 min-h-[120px]">
+                        <div className="flex items-start">
+                          <MapPin className="w-5 h-5 mr-3 text-gray-500 mt-1 flex-shrink-0" />
+                          <p className="text-gray-900 font-medium leading-relaxed">
+                            {user?.address || 'Not provided'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* School Code field - only for counselors */}
+                  {(user?.role === 'GUIDANCE_COUNSELOR' || user?.role === 'CAREER_COUNSELOR') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        School Code (For Institutional Access)
+                      </label>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          value={editData.schoolCode || ''}
+                          onChange={(e) => handleInputChange('schoolCode', e.target.value)}
+                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
+                          placeholder="Enter your school code (required for institutional dashboard)"
+                        />
+                      ) : (
+                        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                          <div className="flex items-center">
+                            <Hash className="w-5 h-5 mr-3 text-green-600" />
+                            <div>
+                              <p className="text-gray-900 font-medium">
+                                {user?.schoolCode || 'Not provided'}
+                              </p>
+                              {!user?.schoolCode && (
+                                <p className="text-xs text-amber-600 mt-1">
+                                  ⚠️ School code required to access institutional dashboard
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}

@@ -34,6 +34,7 @@ public class QuestionEntity {
     @JoinColumn(name = "passage_id")
     private PassageEntity passage;
 
+    @Column(columnDefinition = "TEXT")
     private String questionText;
     private String category;
     private String difficultyLevel;
