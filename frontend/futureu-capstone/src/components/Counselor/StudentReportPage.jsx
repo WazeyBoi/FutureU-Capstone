@@ -14,6 +14,273 @@ const highlightScore = (score, max = 100) => {
   return "text-gray-500";
 };
 
+// Helper function to get performance level description
+const getPerformanceLevel = (score, max = 100) => {
+  const percentage = (score / max) * 100;
+  if (percentage >= 85) return { level: "Excellent", color: "text-green-600", bgColor: "bg-green-100" };
+  if (percentage >= 70) return { level: "Above Average", color: "text-green-600", bgColor: "bg-green-50" };
+  if (percentage >= 50) return { level: "Average", color: "text-yellow-600", bgColor: "bg-yellow-50" };
+  if (percentage >= 30) return { level: "Below Average", color: "text-orange-600", bgColor: "bg-orange-50" };
+  return { level: "Needs Support", color: "text-red-600", bgColor: "bg-red-50" };
+};
+
+// Helper function to get relative track performance (compared to student's own scores)
+const getRelativeTrackPerformance = (tracks) => {
+  // Sort tracks by score to determine relative ranking
+  const sortedTracks = [...tracks].sort((a, b) => b.score - a.score);
+  const totalTracks = tracks.length;
+  
+  return tracks.map(track => {
+    const rank = sortedTracks.findIndex(t => t.name === track.name) + 1;
+    const percentile = ((totalTracks - rank + 1) / totalTracks) * 100;
+    
+    let relativeLevel, color, bgColor, description;
+    
+    if (rank === 1) {
+      relativeLevel = "Strongest Area";
+      color = "text-emerald-700";
+      bgColor = "bg-emerald-100";
+      description = "Your highest performing track";
+    } else if (rank === 2 && totalTracks > 3) {
+      relativeLevel = "Strong Area";
+      color = "text-green-700";
+      bgColor = "bg-green-100";
+      description = "One of your stronger areas";
+    } else if (rank === totalTracks) {
+      relativeLevel = "Growth Area";
+      color = "text-amber-700";
+      bgColor = "bg-amber-100";
+      description = "Area for potential development";
+    } else if (rank === totalTracks - 1 && totalTracks > 3) {
+      relativeLevel = "Developing Area";
+      color = "text-orange-700";
+      bgColor = "bg-orange-100";
+      description = "Area with room for growth";
+    } else {
+      relativeLevel = "Moderate Area";
+      color = "text-blue-700";
+      bgColor = "bg-blue-100";
+      description = "Balanced performance area";
+    }
+    
+    return {
+      ...track,
+      relativePerformance: {
+        level: relativeLevel,
+        color,
+        bgColor,
+        rank,
+        percentile: Math.round(percentile),
+        description
+      }
+    };
+  });
+};
+
+// Helper function to get performance insights for GSA scores (relative to classmates)
+const getGSAInsights = (result, allStudents = []) => {
+  // Calculate real school averages from all students data
+  const calculateSchoolAverages = (students) => {
+    if (!students || students.length === 0) {
+      // Fallback to mock data if no school data available
+      return {
+        scientificAbility: 65,
+        readingComprehension: 70,
+        verbalAbility: 62,
+        mathematicalAbility: 68,
+        logicalReasoning: 59
+      };
+    }
+
+    const fields = [
+      { key: 'scientificAbilityScore', name: 'scientificAbility' },
+      { key: 'readingComprehensionScore', name: 'readingComprehension' },
+      { key: 'verbalAbilityScore', name: 'verbalAbility' },
+      { key: 'mathematicalAbilityScore', name: 'mathematicalAbility' },
+      { key: 'logicalReasoningScore', name: 'logicalReasoning' }
+    ];
+
+    const averages = {};
+    fields.forEach(field => {
+      const validScores = students
+        .map(student => Number(student[field.key]))
+        .filter(score => !isNaN(score) && score >= 0);
+      
+      averages[field.name] = validScores.length > 0 
+        ? Number((validScores.reduce((sum, score) => sum + score, 0) / validScores.length).toFixed(1))
+        : 65; // fallback average
+    });
+
+    return averages;
+  };
+
+  const schoolAverages = calculateSchoolAverages(allStudents);
+
+  const getSchoolRelativePerformance = (studentScore, schoolAverage) => {
+    const difference = studentScore - schoolAverage;
+    const percentageDiff = (difference / schoolAverage) * 100;
+    
+    if (percentageDiff >= 20) {
+      return { 
+        level: "Well Above School Avg", 
+        color: "text-emerald-700", 
+        bgColor: "bg-emerald-100",
+        percentile: "Top 15%",
+        description: "Significantly higher than classmates' average"
+      };
+    } else if (percentageDiff >= 10) {
+      return { 
+        level: "Above School Avg", 
+        color: "text-green-700", 
+        bgColor: "bg-green-100",
+        percentile: "Top 30%",
+        description: "Above classmates' average"
+      };
+    } else if (percentageDiff >= -10) {
+      return { 
+        level: "Similar to School Avg", 
+        color: "text-blue-700", 
+        bgColor: "bg-blue-100",
+        percentile: "Average Range",
+        description: "Within normal range for school"
+      };
+    } else if (percentageDiff >= -20) {
+      return { 
+        level: "Below School Avg", 
+        color: "text-orange-700", 
+        bgColor: "bg-orange-100",
+        percentile: "Lower 30%",
+        description: "Below classmates' average"
+      };
+    } else {
+      return { 
+        level: "Well Below School Avg", 
+        color: "text-red-700", 
+        bgColor: "bg-red-100",
+        percentile: "Lower 15%",
+        description: "Significantly below classmates' average"
+      };
+    }
+  };
+
+  return [
+    { 
+      name: "Scientific Ability", 
+      score: result.scientificAbilityScore, 
+      schoolAverage: schoolAverages.scientificAbility,
+      performance: getSchoolRelativePerformance(result.scientificAbilityScore, schoolAverages.scientificAbility),
+      description: "Problem-solving and analytical thinking in scientific contexts"
+    },
+    { 
+      name: "Reading Comprehension", 
+      score: result.readingComprehensionScore, 
+      schoolAverage: schoolAverages.readingComprehension,
+      performance: getSchoolRelativePerformance(result.readingComprehensionScore, schoolAverages.readingComprehension),
+      description: "Understanding and interpreting written texts"
+    },
+    { 
+      name: "Verbal Ability", 
+      score: result.verbalAbilityScore, 
+      schoolAverage: schoolAverages.verbalAbility,
+      performance: getSchoolRelativePerformance(result.verbalAbilityScore, schoolAverages.verbalAbility),
+      description: "Language skills and vocabulary usage"
+    },
+    { 
+      name: "Mathematical Ability", 
+      score: result.mathematicalAbilityScore, 
+      schoolAverage: schoolAverages.mathematicalAbility,
+      performance: getSchoolRelativePerformance(result.mathematicalAbilityScore, schoolAverages.mathematicalAbility),
+      description: "Numerical reasoning and mathematical problem-solving"
+    },
+    { 
+      name: "Logical Reasoning", 
+      score: result.logicalReasoningScore, 
+      schoolAverage: schoolAverages.logicalReasoning,
+      performance: getSchoolRelativePerformance(result.logicalReasoningScore, schoolAverages.logicalReasoning),
+      description: "Reasoning and critical thinking abilities"
+    }
+  ];
+};
+
+// Helper function to get RIASEC insights with top 3 personality types
+const getRIASECInsights = (result) => {
+  const riasecTypes = [
+    { name: "Realistic", score: result.realisticScore, description: "Hands-on, practical, mechanical interests" },
+    { name: "Investigative", score: result.investigativeScore, description: "Scientific, analytical, research-oriented" },
+    { name: "Artistic", score: result.artisticScore, description: "Creative, expressive, innovative thinking" },
+    { name: "Social", score: result.socialScore, description: "People-oriented, helping, teaching interests" },
+    { name: "Enterprising", score: result.enterprisingScore, description: "Leadership, persuasive, business-minded" },
+    { name: "Conventional", score: result.conventionalScore, description: "Organized, detail-oriented, structured work" }
+  ];
+  
+  // Sort by score (no performance levels for personality types)
+  return riasecTypes
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3); // Show only top 3
+};
+
+// Helper function to get Track Performance insights and recommendations
+const getTrackInsights = (result) => {
+  const tracks = [
+    { 
+      name: "STEM", 
+      score: result.stemScore, 
+      description: "Science, Technology, Engineering, Mathematics",
+      careers: ["Engineer", "Data Scientist", "Medical Doctor", "Research Scientist"],
+      fullName: "Science, Technology, Engineering & Mathematics"
+    },
+    { 
+      name: "ABM", 
+      score: result.abmScore, 
+      description: "Accountancy, Business & Management",
+      careers: ["Business Manager", "Accountant", "Entrepreneur", "Marketing Manager"],
+      fullName: "Accountancy, Business & Management"
+    },
+    { 
+      name: "HUMSS", 
+      score: result.humssScore, 
+      description: "Humanities & Social Sciences",
+      careers: ["Teacher", "Lawyer", "Psychologist", "Social Worker"],
+      fullName: "Humanities & Social Sciences"
+    },
+    { 
+      name: "TVL", 
+      score: result.tvlScore, 
+      description: "Technical-Vocational-Livelihood",
+      careers: ["Chef", "IT Technician", "Electrician", "Graphic Designer"],
+      fullName: "Technical-Vocational-Livelihood"
+    },
+    { 
+      name: "Sports", 
+      score: result.sportsTrackScore, 
+      description: "Sports & Physical Education Track",
+      careers: ["Sports Coach", "Physical Therapist", "Fitness Trainer", "Sports Analyst"],
+      fullName: "Sports & Physical Education"
+    },
+    { 
+      name: "Arts & Design", 
+      score: result.artsDesignTrackScore, 
+      description: "Creative Arts & Design Track",
+      careers: ["Graphic Designer", "Architect", "Fine Artist", "Interior Designer"],
+      fullName: "Arts & Design"
+    }
+  ];
+
+  // Sort by score and add performance levels
+  const rankedTracks = tracks
+    .map(track => ({
+      ...track,
+      performance: getPerformanceLevel(track.score, 100)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  return {
+    topTrack: rankedTracks[0],
+    topThree: rankedTracks.slice(0, 3),
+    allTracks: rankedTracks
+  };
+};
+
 const StudentReportPage = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -27,6 +294,7 @@ const StudentReportPage = () => {
   const [programRecs, setProgramRecs] = useState([]);
   const [programRecsLoading, setProgramRecsLoading] = useState(false);
   const [programRecsError, setProgramRecsError] = useState(null);
+  const [allStudentsData, setAllStudentsData] = useState([]); // For calculating real school averages
 
   useEffect(() => {
     if (!result) {
@@ -47,6 +315,22 @@ const StudentReportPage = () => {
       }
     }
   }, [result, searchParams]);
+
+  // Fetch all students data for calculating real school averages
+  useEffect(() => {
+    const fetchAllStudentsData = async () => {
+      try {
+        // Using the same API that InstitutionalDashboard uses
+        const allStudents = await userAssessmentService.getAllAssessmentResults();
+        setAllStudentsData(allStudents || []);
+      } catch (err) {
+        console.warn('Could not fetch school averages, using fallback values:', err);
+        setAllStudentsData([]); // Will use fallback averages
+      }
+    };
+
+    fetchAllStudentsData();
+  }, []);
 
   useEffect(() => {
     if (activeTab === 1 && result?.resultId) {
@@ -320,7 +604,7 @@ const StudentReportPage = () => {
             <CounselorTabs
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              tabs={["Scores Breakdown", "Career Recommendations", "Program Recommendations"]}
+              tabs={["Scores Breakdown", "Career Options", "Program Options"]}
             />
             {/* Tab Content */}
             {activeTab === 0 && (
@@ -328,60 +612,141 @@ const StudentReportPage = () => {
                 <h3 className="font-semibold text-[#2B3E4E] mb-6 text-xl flex items-center gap-2">
                   Scores Breakdown
                 </h3>
-                <div className="flex flex-col md:flex-row gap-8 mt-8">
-                  {/* GSA Bar Chart */}
-                  <motion.div
-                    className="flex-1 bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 rounded-2xl shadow p-4 flex flex-col items-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <h4 className="font-bold text-[#2B3E4E] text-lg mb-2">
-                      General Scholastic Aptitude
-                    </h4>
-                    <div className="w-full max-w-sm h-48">
+                
+                {/* GSA Bar Chart */}
+                <motion.div
+                  className="w-full bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 rounded-2xl shadow-xl p-6 border-2 border-[#FFB71B]/10 mt-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <h4 className="font-bold text-[#2B3E4E] text-lg mb-4 text-center">
+                    General Scholastic Aptitude
+                  </h4>
+                  <div className="flex flex-col lg:flex-row gap-6 items-center">
+                    <div className="w-full lg:w-1/2 h-80">
                       <Bar
                         data={getGsaBarData(result)}
                         options={{
                           responsive: true,
+                          maintainAspectRatio: false,
                           plugins: { legend: { display: false } },
                           scales: { y: { min: 0, max: 100, ticks: { stepSize: 20 } } },
                         }}
                       />
                     </div>
-                  </motion.div>
-                  {/* RIASEC Radar Chart */}
-                  <motion.div
-                    className="flex-1 bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-2xl shadow p-4 flex flex-col items-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <h4 className="font-bold text-[#2B3E4E] text-lg mb-2">
-                      RIASEC Profile
-                    </h4>
-                    <div className="w-full max-w-xs h-48 flex items-center justify-center overflow-visible">
-                      <div className="w-full h-full">
+                    
+                    {/* Performance Indicators */}
+                    <div className="w-full lg:w-1/2 space-y-2">
+                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">School Comparison Analysis:</h5>
+                      <div className="space-y-2">
+                        {getGSAInsights(result, allStudentsData).map((insight, index) => (
+                          <div key={index} className="flex flex-col p-3 rounded-lg bg-white/60 hover:bg-white/80 transition-colors">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="text-xs text-left font-medium text-[#2B3E4E] mb-1">{insight.name}</div>
+                                <div className="text-xs text-left text-gray-600">{insight.description}</div>
+                              </div>
+                              <div className="text-right ml-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">
+                                  {insight.performance.percentile}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {insight.score}/100
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs text-gray-600">
+                                School Avg: {insight.schoolAverage}/100
+                              </div>
+                              <div className={`text-xs font-bold px-2 py-1 rounded-m ${insight.performance.bgColor} ${insight.performance.color}`}>
+                                {insight.performance.level}
+                              </div>
+                            </div>
+                            <div className="text-xs text-right text-gray-500 text-center mt-2 italic">
+                              {insight.performance.description}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 text-center">
+                        <p className="text-xs text-gray-500 italic">
+                          Performance compared to grade-level peers
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* RIASEC Radar Chart */}
+                <motion.div
+                  className="w-full bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-2xl shadow-xl p-6 border-2 border-[#1D63A1]/10 mt-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                  <h4 className="font-bold text-[#2B3E4E] text-lg mb-4 text-center">
+                    RIASEC Profile
+                  </h4>
+                  <div className="flex flex-col lg:flex-row gap-6 items-center">
+                    <div className="w-full lg:w-1/2 h-80 flex items-center justify-center">
+                      <div className="w-full h-full max-w-sm">
                         <Radar
                           data={getRiasecRadarData(result)}
                           options={{
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: { legend: { display: false } },
-                            layout: { padding: 0 },
+                            layout: { padding: 20 },
                             scales: {
                               r: {
                                 min: 0,
                                 max: getRiasecRadarData(result).maxValue,
-                                pointLabels: { font: { size: 12 } },
+                                pointLabels: { font: { size: 14, weight: "bold" } },
+                                grid: { color: "#E5E7EB" },
+                                angleLines: { color: "#D1D5DB" },
+                                ticks: { display: false }
                               },
                             },
                           }}
                         />
                       </div>
                     </div>
+                    
+                    {/* Top 3 Personality Types */}
+                    <div className="w-full lg:w-1/2 space-y-2">
+                      <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">Student's Top Personality Types:</h5>
+                      <div className="space-y-2">
+                        {getRIASECInsights(result).map((insight, index) => (
+                          <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-white/70 border border-blue-100 hover:bg-white/90 transition-colors">
+                            <div className="flex-1">
+                              <div className="flex items-center mb-1">
+                                <div className="text-sm font-bold text-[#1D63A1] mr-2">#{index + 1}</div>
+                                <div className="text-sm text-left font-semibold text-[#2B3E4E]">{insight.name}</div>
+                              </div>
+                              <div className="text-xs text-left text-gray-600 ml-6">{insight.description}</div>
+                            </div>
+                            <div className="text-right ml-3">
+                              <div className="text-lg font-bold text-[#1D63A1]">
+                                {insight.score}%
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Strength
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-700 text-center">
+                          These personality traits help identify suitable career environments and work styles.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   </motion.div>
-                </div>
+                
                 {/* Track Scores Bar Chart - styled like AcademicTab */}
                 <motion.div
                   className="w-full bg-white rounded-3xl shadow-xl p-6 border-2 border-[#1D63A1]/10 mt-8 animate-card-pop"
@@ -472,59 +837,179 @@ const StudentReportPage = () => {
                       }}
                     />
                   </div>
+                  
+                  {/* Track Performance Analysis */}
+                  <div className="mt-6 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 border border-slate-200">
+                    <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">Relative Track Performance Analysis:</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {(() => {
+                        const baseTrackData = getTrackInsights(result).allTracks;
+                        const relativeTrackData = getRelativeTrackPerformance(baseTrackData);
+                        return relativeTrackData.map((track, index) => (
+                          <div key={index} className="flex flex-col p-3 rounded-lg bg-white/80 hover:bg-white transition-colors">
+                            <div className="text-left flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-[#2B3E4E] mb-1">{track.name}</div>
+                                <div className="text-xs text-gray-600">{track.fullName}</div>
+                              </div>
+                              <div className="text-right ml-3">
+                                <div className="text-xs font-bold text-gray-600 mb-1">
+                                  #{track.relativePerformance.rank} of 6
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {track.score}/100
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <div className={`text-xs font-bold px-3 py-2 rounded-m text-center ${track.relativePerformance.bgColor} ${track.relativePerformance.color}`}>
+                                {track.relativePerformance.level}
+                              </div>
+                              <div className="text-xs text-gray-600 text-center mt-2">
+                                {track.relativePerformance.description}
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                    <div className="mt-4 text-center">
+                      <p className="text-xs text-gray-600 italic">
+                        Performance shown relative to your other track scores • Identifies your academic strengths and growth areas
+                      </p>
+                    </div>
+                  </div>
                 </motion.div>
               </>
             )}
             {activeTab === 1 && (
               <>
-                <h3 className="font-semibold text-[#FFB71B] mb-6 text-xl flex items-center gap-2">
-                  Career Recommendations
-                </h3>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-yellow-500 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#FFB71B] text-2xl">Career Options</h3>
+                    <p className="text-gray-600 text-sm">Career paths that match your strengths and interests</p>
+                  </div>
+                </div>
                 {careerRecsLoading ? (
-                  <div className="text-center text-gray-500 italic">Loading career recommendations...</div>
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFB71B] mx-auto mb-4"></div>
+                      <div className="text-gray-500">Loading your career options...</div>
+                    </div>
+                  </div>
                 ) : careerRecsError ? (
-                  <div className="text-center text-red-500 italic">{careerRecsError}</div>
+                  <div className="text-center py-12 text-red-500">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="font-medium">{careerRecsError}</div>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {careerRecs.length > 0 ? (
                       careerRecs.map((rec, idx) => (
                         <div
                           key={idx}
-                          className="bg-gradient-to-br from-[#FFF9E5] to-[#FFB71B]/10 border-2 border-[#FFB71B]/30 rounded-2xl p-6 shadow-lg flex flex-col gap-2 animate-card-pop hover:scale-[1.02] transition-transform"
+                          className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#FFB71B]/50 hover:-translate-y-1"
                         >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#FFB71B]/20">
-                              <svg
-                                className="w-7 h-7 text-[#FFB71B]"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 8v4l3 3m-3-3l-3 3m3-3V4"
-                                />
+                          {/* Header with Icon and Title */}
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-[#FFB71B] to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
                               </svg>
                             </div>
-                            <span className="font-bold text-[#2B3E4E] text-lg">{
-                              rec.careerPath?.careerTitle || rec.careerTitle || rec.name || "Career Match"
-                            }</span>
+                            <div className="text-left flex-1 min-w-0">
+                              <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-[#FFB71B] transition-colors">
+                                {rec.careerPath?.careerTitle || rec.careerTitle || rec.name || "Career Match"}
+                              </h4>
+                              {rec.careerPath?.industry && (
+                                <div className="text-sm text-gray-500 font-medium">
+                                  {rec.careerPath.industry}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-[#232D35] text-base font-medium">{
-                            rec.careerPath?.careerDescription || rec.description || rec.matchExplanation || rec
-                          }</p>
+
+                          {/* Career Description */}
+                          <div className="mb-4">
+                            <p className="text-left text-gray-700 text-sm leading-relaxed">
+                              {rec.careerPath?.careerDescription || rec.description || rec.matchExplanation || "A career path that matches your profile."}
+                            </p>
+                          </div>
+
+                          {/* Additional Info */}
+                          <div className="space-y-3">
+                            {rec.careerPath?.jobTrend && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Job Outlook: <span className="font-semibold text-blue-600">{rec.careerPath.jobTrend}</span></span>
+                              </div>
+                            )}
+
+                            {rec.careerPath?.requiredSkills && (
+                              <div className="flex items-start gap-2 text-sm">
+                                <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center mt-0.5">
+                                  <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Key Skills: </span>
+                                  <span className="font-semibold text-purple-600">{rec.careerPath.requiredSkills}</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {rec.careerPath?.educationLevel && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Education: <span className="font-semibold text-emerald-600">{rec.careerPath.educationLevel}</span></span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Match Score */}
                           {rec.confidenceScore && (
-                            <span className="inline-block mt-2 px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                              {rec.confidenceScore.toFixed(1)}% Match
-                            </span>
+                            <div className="mt-4 pt-4 border-t border-gray-100">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Match Score</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-[#FFB71B] to-orange-500 rounded-full transition-all duration-1000"
+                                      style={{ width: `${rec.confidenceScore}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="font-bold text-[#FFB71B] text-sm">{rec.confidenceScore.toFixed(0)}%</span>
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-gray-500 italic col-span-2">
-                        No specific career recommendations based on the current data.
+                      <div className="col-span-2 text-center py-16">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-600 mb-2">No Career Options Available</h4>
+                        <p className="text-gray-500 text-sm">Complete your assessment to discover career paths that match your profile.</p>
                       </div>
                     )}
                   </div>
@@ -533,54 +1018,143 @@ const StudentReportPage = () => {
             )}
             {activeTab === 2 && (
               <>
-                <h3 className="font-semibold text-[#1D63A1] mb-6 text-xl flex items-center gap-2">
-                  Program Recommendations
-                </h3>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-blue-600 text-2xl">Program Options</h3>
+                    <p className="text-gray-600 text-sm">Academic programs that align with your career goals</p>
+                  </div>
+                </div>
                 {programRecsLoading ? (
-                  <div className="text-center text-gray-500 italic">Loading program recommendations...</div>
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <div className="text-gray-500">Loading your program options...</div>
+                    </div>
+                  </div>
                 ) : programRecsError ? (
-                  <div className="text-center text-red-500 italic">{programRecsError}</div>
+                  <div className="text-center py-12 text-red-500">
+                    <svg className="w-16 h-16 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="font-medium">{programRecsError}</div>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                     {programRecs.length > 0 ? (
                       programRecs.map((rec, idx) => (
                         <div
                           key={idx}
-                          className="bg-gradient-to-br from-[#E8F1FA] to-[#1D63A1]/10 border-2 border-[#1D63A1]/30 rounded-2xl p-6 shadow-lg flex flex-col gap-2 animate-card-pop hover:scale-[1.02] transition-transform"
+                          className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-500/50 hover:-translate-y-1"
                         >
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-[#1D63A1]/20">
-                              <svg
-                                className="w-7 h-7 text-[#1D63A1]"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M12 8v4l3 3m-3-3l-3 3m3-3V4"
-                                />
+                          {/* Header with Icon and Title */}
+                          <div className="flex items-start gap-4 mb-4">
+                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                               </svg>
                             </div>
-                            <span className="font-bold text-[#2B3E4E] text-lg">{
-                              rec.program?.programName || rec.programName || "Recommended Program"
-                            }</span>
+                            <div className="text-left flex-1 min-w-0">
+                              <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-blue-600 transition-colors">
+                                {rec.program?.programName || rec.programName || "Program Match"}
+                              </h4>
+                              {rec.program?.level && (
+                                <div className="text-sm text-gray-500 font-medium">
+                                  {rec.program.level} Level Program
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-[#232D35] text-base font-medium">{
-                            rec.program?.description || rec.description || rec.matchExplanation || rec
-                          }</p>
+
+                          {/* Program Description */}
+                          <div className="text-left mb-4">
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                              {rec.program?.description || rec.description || rec.matchExplanation || "An academic program that matches your profile."}
+                            </p>
+                          </div>
+
+                          {/* Related Career */}
                           {rec.careerPath?.careerTitle && (
-                            <span className="inline-block mt-2 px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                              Related Career: {rec.careerPath.careerTitle}
-                            </span>
+                            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-orange-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Related Career: <span className="font-semibold text-orange-600">{rec.careerPath.careerTitle}</span></span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Additional Info */}
+                          <div className="space-y-3 mb-4">
+                            {rec.program?.duration && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Duration: <span className="font-semibold text-purple-600">{rec.program.duration}</span></span>
+                              </div>
+                            )}
+
+                            {rec.program?.field && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Field: <span className="font-semibold text-emerald-600">{rec.program.field}</span></span>
+                              </div>
+                            )}
+
+                            {rec.program?.degreeType && (
+                              <div className="flex items-center gap-2 text-sm">
+                                <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <span className="text-gray-600">Degree: <span className="font-semibold text-amber-600">{rec.program.degreeType}</span></span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Match Score */}
+                          {rec.confidenceScore && (
+                            <div className="pt-4 border-t border-gray-100">
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-gray-600">Match Score</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000"
+                                      style={{ width: `${rec.confidenceScore}%` }}
+                                    ></div>
+                                  </div>
+                                  <span className="font-bold text-blue-600 text-sm">{rec.confidenceScore.toFixed(0)}%</span>
+                                </div>
+                              </div>
+                            </div>
                           )}
                         </div>
                       ))
                     ) : (
-                      <div className="text-center text-gray-500 italic col-span-2">
-                        No specific program recommendations based on the current data.
+                      <div className="col-span-2 text-center py-16">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-600 mb-2">No Program Options Available</h4>
+                        <p className="text-gray-500 text-sm">Complete your assessment to discover academic programs that match your goals.</p>
                       </div>
                     )}
                   </div>

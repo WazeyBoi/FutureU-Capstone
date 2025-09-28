@@ -44,9 +44,11 @@ import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
+import InstitutionalDashboard from './components/Counselor/InstitutionalDashboard.jsx';
 import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
 import ProfilePage from './components/Profile/ProfilePage.jsx';
+import StudentHomepage from './components/Student/StudentHomepage.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -83,6 +85,13 @@ function App() {
         } />
         <Route path="/unauthorized" element={<Unauthorized />} />
         
+        {/* Student homepage */}
+        <Route path="/student-home" element={
+          <StudentRoute>
+            <StudentHomepage />
+          </StudentRoute>
+        } />
+        
         {/* Public routes */}
         <Route path="/virtual-campus-tours" element={
           <StudentRoute>
@@ -116,9 +125,9 @@ function App() {
           </StudentRoute>
         } />
           <Route path="/profile" element={
-            <StudentRoute>
+            <PrivateRoute>
               <ProfilePage />
-            </StudentRoute>
+            </PrivateRoute>
           } />
         <Route path="/career-pathways" element={
           <StudentRoute>
@@ -289,6 +298,11 @@ function App() {
         <Route path="/counselor-dashboard" element={
           <CounselorRoute>
             <CounselorDashboard />
+          </CounselorRoute>
+        } />
+        <Route path="/counselor/institutional-dashboard" element={
+          <CounselorRoute>
+            <InstitutionalDashboard />
           </CounselorRoute>
         } />
         <Route path="/counselor/student-report" element={

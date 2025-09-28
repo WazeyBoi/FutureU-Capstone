@@ -14,6 +14,9 @@ public interface UserAssessmentRepository extends JpaRepository<UserAssessmentEn
     List<UserAssessmentEntity> findByUser(UserEntity user);
     List<UserAssessmentEntity> findByAssessment(AssessmentEntity assessment);
     
+    // Find by user ID
+    List<UserAssessmentEntity> findByUser_UserId(int userId);
+    
     // New methods for progress management
     List<UserAssessmentEntity> findByUserAndStatus(UserEntity user, String status);
     List<UserAssessmentEntity> findByUserAndAssessmentAndStatus(UserEntity user, AssessmentEntity assessment, String status);

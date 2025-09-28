@@ -30,7 +30,7 @@ const StudentLogin = () => {
         return;
       }
       
-      // Student login successful - navigate to landing page
+      // Student login successful - navigate to student homepage
       navigate('/user-landing-page');
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');

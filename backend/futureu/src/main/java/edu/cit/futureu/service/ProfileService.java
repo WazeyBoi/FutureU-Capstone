@@ -1,18 +1,19 @@
 package edu.cit.futureu.service;
 
-import edu.cit.futureu.entity.UserEntity;
-import edu.cit.futureu.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import edu.cit.futureu.entity.UserEntity;
+import edu.cit.futureu.repository.UserRepository;
 
 @Service
 public class ProfileService {
@@ -22,6 +23,9 @@ public class ProfileService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private InstitutionService institutionService;
     
     private final String uploadDir = "uploads/profile-pictures/";
     
@@ -112,6 +116,20 @@ public class ProfileService {
                     user.setAge(profileData.getAge());
                     System.out.println("Age updated successfully");
                 }
+            }
+
+            // Validate and set school code for counselors only
+            if (profileData.getSchoolCode() != null) {
+                String role = user.getRole() != null ? user.getRole().name() : "";
+                if ("GUIDANCE_COUNSELOR".equals(role) || "CAREER_COUNSELOR".equals(role)) {
+                    String schoolCode = profileData.getSchoolCode().trim();
+                    if (!schoolCode.isEmpty()) {
+                        if (!institutionService.isValidSchoolCode(schoolCode)) {
+                            throw new RuntimeException("Invalid school code. Please verify with your institution.");
+                        }
+                    }
+                }
+                user.setSchoolCode(profileData.getSchoolCode());
             }
             
             System.out.println("About to save user to database...");
