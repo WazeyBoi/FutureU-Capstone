@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -22,12 +23,14 @@ public class ProgramEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "program_id")
     private int programId;
 
+    @Column(name = "program_name", nullable = false)
     private String programName;
     
     @Lob
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     // One-to-many to SchoolProgram remains unchanged
@@ -35,14 +38,20 @@ public class ProgramEntity {
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL)
     private List<SchoolProgramEntity> schoolPrograms;
 
-    // Replace direct one-to-many with many-to-many via CareerProgramEntity
-    @JsonIgnore
+    // Replace CareerProgramEntity with ProgramCareerPathEntity
+    @JsonManagedReference
     @OneToMany(mappedBy = "program", cascade = CascadeType.ALL)
-    private List<CareerProgramEntity> programCareers;
+    private List<ProgramCareerPathEntity> programCareerPaths;
 
     public ProgramEntity() {
     }
 
+    public ProgramEntity(String programName, String description) {
+        this.programName = programName;
+        this.description = description;
+    }
+
+    // Getters and Setters
     public int getProgramId() {
         return programId;
     }
@@ -75,11 +84,20 @@ public class ProgramEntity {
         this.schoolPrograms = schoolPrograms;
     }
     
-    public List<CareerProgramEntity> getProgramCareers() {
-        return programCareers;
+    public List<ProgramCareerPathEntity> getProgramCareerPaths() {
+        return programCareerPaths;
     }
     
-    public void setProgramCareers(List<CareerProgramEntity> programCareers) {
-        this.programCareers = programCareers;
+    public void setProgramCareerPaths(List<ProgramCareerPathEntity> programCareerPaths) {
+        this.programCareerPaths = programCareerPaths;
+    }
+    
+    @Override
+    public String toString() {
+        return "ProgramEntity{" +
+                "programId=" + programId +
+                ", programName='" + programName + '\'' +
+                ", description='" + description + '\'' +
+                '}';
     }
 }

@@ -35,6 +35,9 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    // NEW: Add school code field for institutional linking
+    private String schoolCode;
+
     // NEW: Add only this field for profile picture
     private String profilePictureUrl;
 
@@ -45,6 +48,10 @@ public class UserEntity {
     @JsonManagedReference(value = "student-testimony")
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestimonyEntity> testimonies;
+
+    @JsonManagedReference("user-interestProfiles")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CareerInterestProfileEntity> interestProfiles;
 
     public UserEntity() {
     }
@@ -110,6 +117,15 @@ public class UserEntity {
         this.role = role;
     }
 
+    // NEW: Add getter and setter for school code
+    public String getSchoolCode() {
+        return schoolCode;
+    }
+    
+    public void setSchoolCode(String schoolCode) {
+        this.schoolCode = schoolCode;
+    }
+
     public List<AnswerEntity> getAnswers() {
         return answers;
     }
@@ -133,6 +149,14 @@ public class UserEntity {
     
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
+    }
+
+    public List<CareerInterestProfileEntity> getInterestProfiles() {
+        return interestProfiles;
+    }
+
+    public void setInterestProfiles(List<CareerInterestProfileEntity> interestProfiles) {
+        this.interestProfiles = interestProfiles;
     }
 
     @Override

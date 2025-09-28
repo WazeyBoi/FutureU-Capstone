@@ -1,10 +1,128 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key } from 'lucide-react';
+import { X, CheckCircle } from 'lucide-react';
 import profileService from '../../services/profileService';
+import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key, Hash } from 'lucide-react';
+import institutionService from '../../services/institutionService';
 import authService from '../../services/authService';
+import { useProfile } from '../../contexts/ProfileContext';
+import { useCareerInterestProfile } from '../../hooks/useCareerInterestProfile';
+import CareerInterestProfileWizard from '../CareerInterestProfile/CareerInterestProfileWizard';
+import ChangePasswordModal from './ChangePasswordModal';
+import ProfileHeader from './ProfileHeader';
+import ProfileSidebar from './ProfileSidebar';
+import PersonalInformationSection from './PersonalInformationSection';
+import CareerInterestProfileSection from './CareerInterestProfileSection';
+
+// Import mascot characters
+import ohMy from '../../assets/characters/ohMy.svg';
+import ohMyLeft from '../../assets/characters/ohMyLeft.svg';
+import quirky from '../../assets/characters/quirky.svg';
+import excited from '../../assets/characters/excited.svg';
+
+// Integrated LoadingScreen Component
+const LoadingScreen = () => {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 relative overflow-hidden flex items-center justify-center">
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-32 left-8 w-24 h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute top-96 right-12 w-32 h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-pulse"></div>
+      </div>
+
+      {/* Loading Content */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative z-10 text-center"
+      >
+        {/* Loading Card */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-white/20 relative overflow-hidden max-w-md mx-auto">
+          {/* Card Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1D63A1]/5 via-transparent to-[#FFB71B]/5"></div>
+          
+          {/* Mascot */}
+          <div className="relative z-10 mb-8">
+            <motion.img
+              src={quirky}
+              alt="Loading mascot"
+              className="w-24 h-24 mx-auto"
+              style={{
+                filter: 'drop-shadow(0 8px 16px rgba(255, 183, 27, 0.3))'
+              }}
+              animate={{
+                y: [0, -12, 0],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </div>
+
+          {/* Loading Spinner */}
+          <div className="relative z-10 mb-6">
+            <div className="w-16 h-16 mx-auto">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#FFB71B]/30 border-t-[#1D63A1] shadow-lg"></div>
+            </div>
+          </div>
+
+          {/* Loading Text */}
+          <div className="relative z-10">
+            <h3 className="text-2xl font-bold text-[#232D35] mb-3">Loading Your Profile</h3>
+            <p className="text-gray-600 font-medium">
+              Getting everything ready for you...
+            </p>
+            
+            {/* Loading Dots Animation */}
+            <div className="flex justify-center mt-4 space-x-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-2 h-2 bg-[#FFB71B] rounded-full"
+                  animate={{
+                    scale: [1, 1.5, 1],
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    delay: i * 0.2
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Floating Elements */}
+          <div className="absolute top-4 right-4 w-8 h-8 bg-[#1D63A1]/20 rounded-full blur-sm animate-pulse"></div>
+          <div className="absolute bottom-6 left-6 w-6 h-6 bg-[#FFB71B]/20 rounded-full blur-sm animate-pulse"></div>
+        </div>
+
+        {/* Motivational Message */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/30 max-w-sm mx-auto"
+        >
+          <p className="text-[#232D35] text-sm font-medium">
+            ✨ Preparing your personalized dashboard experience
+          </p>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+};
 
 const ProfilePage = () => {
+  // Use profile context instead of local state for user profile
+  const { userProfile, profilePicture, updateProfilePicture, updateProfile, refreshProfile } = useProfile();
+  
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -17,19 +135,55 @@ const ProfilePage = () => {
 
   // Change Password Modal States
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState(null);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Career Interest Profile States
+  const { hasProfile, profile: interestProfile, refreshProfile: refreshInterestProfile } = useCareerInterestProfile();
+  const [showInterestWizard, setShowInterestWizard] = useState(false);
+
+  // Mascot animation states
+  const [mascotWiggle, setMascotWiggle] = useState(false);
+  const [activeMascot, setActiveMascot] = useState('quirky');
 
   useEffect(() => {
     fetchUserProfile();
+  }, []);
+
+  // Use profile context data when available
+  useEffect(() => {
+    if (userProfile) {
+      setUser(userProfile);
+      setEditData(userProfile);
+      setLoading(false);
+    }
+  }, [userProfile]);
+
+  // Mascot animation cycle
+  useEffect(() => {
+    const mascots = ['quirky', 'ohMy', 'ohMyLeft', 'excited'];
+    let currentIndex = 0;
+    
+    const interval = setInterval(() => {
+      setMascotWiggle(true);
+      
+      setTimeout(() => {
+        currentIndex = (currentIndex + 1) % mascots.length;
+        setActiveMascot(mascots[currentIndex]);
+      }, 300);
+      
+      setTimeout(() => setMascotWiggle(false), 700);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Manual mascot wiggle trigger
+  useEffect(() => {
+    const wiggleInterval = setInterval(() => {
+      setMascotWiggle(true);
+      setTimeout(() => setMascotWiggle(false), 700);
+    }, 5000);
+
+    return () => clearInterval(wiggleInterval);
   }, []);
 
   const fetchUserProfile = async () => {
@@ -40,11 +194,14 @@ const ProfilePage = () => {
         return;
       }
 
-      const profileData = await profileService.getUserProfile(currentUser.id);
-      setUser(profileData);
-      setEditData(profileData);
+      if (!userProfile) {
+        const profileData = await profileService.getUserProfile(currentUser.id);
+        setUser(profileData);
+        setEditData(profileData);
+      }
     } catch (error) {
-      setError(error);
+      console.error('Full error object:', error);
+      setError(typeof error === 'string' ? error : error.message || 'Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -54,6 +211,7 @@ const ProfilePage = () => {
     setEditMode(true);
     setError(null);
     setSuccess(null);
+    setEditData(user);
   };
 
   const handleCancel = () => {
@@ -66,11 +224,25 @@ const ProfilePage = () => {
     setError(null);
 
     try {
+      // Validate school code for counselors if provided
+      const role = user?.role;
+      if ((role === 'GUIDANCE_COUNSELOR' || role === 'CAREER_COUNSELOR') && 
+          editData.schoolCode && editData.schoolCode.trim()) {
+        
+        try {
+          const isValidCode = await institutionService.validateSchoolCode(editData.schoolCode.trim());
+          if (!isValidCode) {
+            setError('Invalid school code. Please verify with your institution.');
+            return;
+          }
+        } catch (validationError) {
+          setError('Failed to validate school code. Please try again.');
+          return;
+        }
+      }
+
       const currentUser = authService.getCurrentUser();
-      
-      // Send all the edited data, not just firstName
-      console.log('Sending profile data:', editData);
-      const updatedUser = await profileService.updateUserProfile(currentUser.id, editData);
+      const updatedUser = await updateProfile(currentUser.id, editData);
       
       setUser(updatedUser);
       setEditMode(false);
@@ -79,7 +251,6 @@ const ProfilePage = () => {
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       console.error('Full error object:', error);
-      console.error('Error response:', error.response?.data);
       setError(typeof error === 'string' ? error : error.message || 'Failed to update profile');
     } finally {
       setSaving(false);
@@ -118,7 +289,7 @@ const ProfilePage = () => {
 
     try {
       const currentUser = authService.getCurrentUser();
-      const result = await profileService.uploadProfilePicture(currentUser.id, file);
+      const result = await updateProfilePicture(currentUser.id, file);
       
       setUser(prev => ({
         ...prev,
@@ -132,397 +303,124 @@ const ProfilePage = () => {
       setSuccess('Profile picture updated successfully!');
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(error);
+      console.error('Full error object:', error);
+      setError(typeof error === 'string' ? error : error.message || 'Failed to upload profile picture');
     } finally {
       setUploading(false);
     }
   };
 
-  // Change Password Functions
-  const handleChangePasswordClick = () => {
-    setShowChangePasswordModal(true);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    setPasswordError(null);
-    setShowCurrentPassword(false);
-    setShowNewPassword(false);
-    setShowConfirmPassword(false);
+  // Get current mascot image
+  const getCurrentMascotImage = () => {
+    switch (activeMascot) {
+      case 'ohMy': return ohMy;
+      case 'ohMyLeft': return ohMyLeft;
+      case 'excited': return excited;
+      default: return quirky;
+    }
   };
 
-  const handleClosePasswordModal = () => {
-    setShowChangePasswordModal(false);
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
-    setPasswordError(null);
-  };
-
-  const handlePasswordInputChange = (field, value) => {
-    setPasswordData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    setPasswordError(null);
-  };
-
-  const validatePassword = (password) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password);
-    
-    if (password.length < minLength) {
-      return 'Password must be at least 8 characters long';
-    }
-    if (!hasUpperCase) {
-      return 'Password must contain at least one uppercase letter';
-    }
-    if (!hasLowerCase) {
-      return 'Password must contain at least one lowercase letter';
-    }
-    if (!hasNumbers) {
-      return 'Password must contain at least one number';
-    }
-    if (!hasSpecialChar) {
-      return 'Password must contain at least one special character';
-    }
-    return null;
-  };
-
-  const handleChangePassword = async () => {
-    setPasswordError(null);
-
-    // Validate inputs
-    if (!passwordData.currentPassword) {
-      setPasswordError('Current password is required');
-      return;
-    }
-
-    if (!passwordData.newPassword) {
-      setPasswordError('New password is required');
-      return;
-    }
-
-    if (!passwordData.confirmPassword) {
-      setPasswordError('Please confirm your new password');
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('New passwords do not match');
-      return;
-    }
-
-    // Validate new password strength
-    const passwordValidation = validatePassword(passwordData.newPassword);
-    if (passwordValidation) {
-      setPasswordError(passwordValidation);
-      return;
-    }
-
-    if (passwordData.currentPassword === passwordData.newPassword) {
-      setPasswordError('New password must be different from current password');
-      return;
-    }
-
-    setPasswordLoading(true);
-
-    try {
-      const currentUser = authService.getCurrentUser();
-      await profileService.changePassword(currentUser.id, {
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword
-      });
-
-      setShowChangePasswordModal(false);
-      setSuccess('Password changed successfully!');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      setPasswordError(error);
-    } finally {
-      setPasswordLoading(false);
+  const getMascotMessage = () => {
+    switch (activeMascot) {
+      case 'ohMy': return "Keep your profile updated for better recommendations!";
+      case 'ohMyLeft': return "Complete your career profile to unlock your potential!";
+      case 'excited': return "You're doing great! Keep building your profile!";
+      default: return "Welcome to your profile dashboard!";
     }
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1D63A1]/5 to-[#FFB71B]/5 pt-20">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center bg-white rounded-2xl p-8 shadow-xl"
-        >
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#1D63A1] border-t-transparent mx-auto mb-4"></div>
-          <p className="text-[#232D35] font-medium">Loading your profile...</p>
-        </motion.div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 to-[#FFB71B]/5 pt-20 pb-10">
-      <div className="container mx-auto px-4 max-w-5xl">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <h1 className="text-4xl font-bold text-[#232D35] mb-3">My Profile</h1>
-          <p className="text-gray-600 text-lg">Manage your personal information and preferences</p>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 relative overflow-hidden">
+      {/* Enhanced CSS for mascot animations */}
+      <style jsx>{`
+        @keyframes mascotWiggle {
+          0% { transform: rotate(0deg) scale(1) translateY(0px); }
+          10% { transform: rotate(-8deg) scale(1.05) translateY(-5px); }
+          20% { transform: rotate(6deg) scale(1.08) translateY(-8px); }
+          30% { transform: rotate(-4deg) scale(1.06) translateY(-4px); }
+          40% { transform: rotate(3deg) scale(1.04) translateY(-6px); }
+          50% { transform: rotate(-2deg) scale(1.02) translateY(-3px); }
+          60% { transform: rotate(1deg) scale(1.01) translateY(-2px); }
+          70% { transform: rotate(-0.5deg) scale(1.005) translateY(-1px); }
+          80% { transform: rotate(0.25deg) scale(1.002) translateY(-0.5px); }
+          90% { transform: rotate(-0.125deg) scale(1.001) translateY(-0.25px); }
+          100% { transform: rotate(0deg) scale(1) translateY(0px); }
+        }
+        
+        .mascot-wiggle {
+          animation: mascotWiggle 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-8px) rotate(1deg); }
+          50% { transform: translateY(-15px) rotate(0deg); }
+          75% { transform: translateY(-8px) rotate(-1deg); }
+        }
+        
+        .mascot-float {
+          animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+      `}</style>
 
-        {/* Alert Messages */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-sm flex items-start"
-          >
-            <div className="flex-shrink-0">
-              <X className="w-5 h-5 mt-0.5" />
-            </div>
-            <div className="ml-3">
-              <p className="font-medium">{error}</p>
-            </div>
-          </motion.div>
-        )}
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-32 left-8 w-24 h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute top-96 right-12 w-32 h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-bounce-slow"></div>
+      </div>
 
-        {success && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-green-50 border-l-4 border-green-500 text-green-700 px-6 py-4 rounded-xl mb-6 shadow-sm flex items-start"
-          >
-            <div className="flex-shrink-0">
-              <Save className="w-5 h-5 mt-0.5" />
-            </div>
-            <div className="ml-3">
-              <p className="font-medium">{success}</p>
-            </div>
-          </motion.div>
-        )}
+      <div className="container mx-auto px-6 max-w-7xl relative z-10">
+        {/* Profile Header */}
+        <ProfileHeader getMascotMessage={getMascotMessage} />
 
-        {/* Profile Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100"
-        >
-          {/* Profile Header */}
-          <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-8 text-white relative">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#FFB71B] rounded-full translate-y-1/2 -translate-x-1/2"></div>
-            </div>
-
-            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
-              {/* Profile Picture */}
-              <div className="relative group">
-                <div
-                  onClick={handleProfilePictureClick}
-                  className="w-32 h-32 rounded-full bg-white/20 border-4 border-white overflow-hidden cursor-pointer hover:bg-white/30 transition-all duration-300 group shadow-xl relative"
-                >
-                  {user?.profilePictureUrl ? (
-                    <img
-                      src={`http://localhost:8080${user.profilePictureUrl}`}
-                      alt="Profile"
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80">
-                      <User className="w-16 h-16 text-white" />
-                    </div>
-                  )}
-                  
-                  {/* Upload overlay */}
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {uploading ? (
-                      <div className="animate-spin rounded-full h-8 w-8 border-3 border-white border-t-transparent"></div>
-                    ) : (
-                      <div className="text-center">
-                        <Camera className="w-6 h-6 text-white mx-auto mb-1" />
-                        <span className="text-xs text-white font-medium">Change</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Camera icon indicator */}
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#FFB71B] rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-                  {uploading ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <Upload className="w-5 h-5 text-[#232D35]" />
-                  )}
-                </div>
-
-                {/* Hidden file input */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  ref={setFileInputRef}
-                  className="hidden"
-                />
+        {/* Enhanced Alert Messages */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="bg-red-50/80 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-6 py-5 rounded-2xl mb-8 shadow-lg flex items-start max-w-4xl mx-auto"
+            >
+              <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-4">
+                <X className="w-5 h-5 text-red-600" />
               </div>
-
-              {/* Basic Info */}
-              <div className="flex-1 text-center lg:text-left">
-                <h2 className="text-3xl font-bold mb-3 text-shadow">
-                  {user?.firstName} {user?.lastname}
-                </h2>
-                <div className="flex items-center justify-center lg:justify-start text-blue-100 mb-3">
-                  <Mail className="w-5 h-5 mr-2" />
-                  <span className="text-lg">{user?.email}</span>
-                </div>
-                <div className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                  <span className="text-sm font-medium">Role: {user?.role || 'Student'}</span>
-                </div>
+              <div>
+                <h4 className="font-bold mb-1">Error</h4>
+                <p className="font-medium">{error}</p>
               </div>
+            </motion.div>
+          )}
 
-              {/* Action Buttons */}
-              <div className="absolute top-6 right-6">
-                {!editMode ? (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleEdit}
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-black p-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
-                      title="Edit Profile"
-                    >
-                      <Edit className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={handleChangePasswordClick}
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-black p-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
-                      title="Change Password"
-                    >
-                      <Key className="w-5 h-5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="bg-green-500 hover:bg-green-600 text-black p-3 rounded-xl transition-all duration-300 disabled:opacity-50 shadow-lg hover:scale-105"
-                      title="Save Changes"
-                    >
-                      {saving ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                      ) : (
-                        <Save className="w-5 h-5" />
-                      )}
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-red-500 hover:bg-red-600 text-black p-3 rounded-xl transition-all duration-300 shadow-lg hover:scale-105"
-                      title="Cancel"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="bg-green-50/80 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-6 py-5 rounded-2xl mb-8 shadow-lg flex items-start max-w-4xl mx-auto"
+            >
+              <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-4">
+                <CheckCircle className="w-5 h-5 text-green-600" />
               </div>
-            </div>
-          </div>
-
-          {/* Profile Details */}
-          <div className="p-8 lg:p-12">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Personal Information */}
-              <div className="space-y-6">
-                <div className="flex items-center mb-6">
-                  <div className="w-10 h-10 bg-[#1D63A1]/10 rounded-xl flex items-center justify-center mr-4">
-                    <User className="w-5 h-5 text-[#1D63A1]" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-[#232D35]">Personal Information</h3>
-                </div>
-
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={editData.firstName || ''}
-                        onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your first name"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <p className="text-gray-900 font-medium">{user?.firstName || 'Not provided'}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={editData.lastname || ''}
-                        onChange={(e) => handleInputChange('lastname', e.target.value)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your last name"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <p className="text-gray-900 font-medium">{user?.lastname || 'Not provided'}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Middle Name</label>
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={editData.middleName || ''}
-                        onChange={(e) => handleInputChange('middleName', e.target.value)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your middle name"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <p className="text-gray-900 font-medium">{user?.middleName || 'Not provided'}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Age</label>
-                    {editMode ? (
-                      <input
-                        type="number"
-                        value={editData.age || ''}
-                        onChange={(e) => handleInputChange('age', parseInt(e.target.value) || 0)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        min="1"
-                        max="120"
-                        placeholder="Enter your age"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <div className="flex items-center">
-                          <Calendar className="w-5 h-5 mr-3 text-gray-500" />
-                          <p className="text-gray-900 font-medium">
-                            {user?.age ? `${user.age} years old` : 'Not provided'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <div>
+                <h4 className="font-bold mb-1">Success</h4>
+                <p className="font-medium">{success}</p>
+               </div>
 
               {/* Contact Information */}
               <div className="space-y-6">
@@ -595,169 +493,118 @@ const ProfilePage = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* School Code field - only for counselors */}
+                  {(user?.role === 'GUIDANCE_COUNSELOR' || user?.role === 'CAREER_COUNSELOR') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        School Code (For Institutional Access)
+                      </label>
+                      {editMode ? (
+                        <input
+                          type="text"
+                          value={editData.schoolCode || ''}
+                          onChange={(e) => handleInputChange('schoolCode', e.target.value)}
+                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
+                          placeholder="Enter your school code (required for institutional dashboard)"
+                        />
+                      ) : (
+                        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                          <div className="flex items-center">
+                            <Hash className="w-5 h-5 mr-3 text-green-600" />
+                            <div>
+                              <p className="text-gray-900 font-medium">
+                                {user?.schoolCode || 'Not provided'}
+                              </p>
+                              {!user?.schoolCode && (
+                                <p className="text-xs text-amber-600 mt-1">
+                                  ⚠️ School code required to access institutional dashboard
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Profile Grid - Sidebar and Information Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Left Column - Profile Overview & Actions */}
+          <div className="lg:col-span-1">
+            <ProfileSidebar 
+              user={user}
+              profilePicture={profilePicture}
+              editMode={editMode}
+              saving={saving}
+              uploading={uploading}
+              hasProfile={hasProfile}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onChangePassword={() => setShowChangePasswordModal(true)}
+              onProfilePictureClick={handleProfilePictureClick}
+              onFileChange={handleFileChange}
+              setFileInputRef={setFileInputRef}
+            />
           </div>
 
-          {/* Footer */}
-          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 py-6 border-t border-gray-200">
-            <div className="text-center">
-              <p className="text-gray-600 text-sm">
-                Last updated: {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'Never'}
-              </p>
-            </div>
+          {/* Right Column - Profile Details */}
+          <div className="lg:col-span-2">
+            {/* Personal Information Section */}
+            <PersonalInformationSection 
+              user={user}
+              editMode={editMode}
+              editData={editData}
+              onInputChange={handleInputChange}
+              activeMascot={activeMascot}
+              getCurrentMascotImage={getCurrentMascotImage}
+              getMascotMessage={getMascotMessage}
+              mascotWiggle={mascotWiggle}
+              setMascotWiggle={setMascotWiggle}
+            />
           </div>
-        </motion.div>
+        </div>
+
+        {/* Career Interest Profile Section - Full Width Below */}
+        <CareerInterestProfileSection 
+          hasProfile={hasProfile}
+          interestProfile={interestProfile}
+          onSetupProfile={() => setShowInterestWizard(true)}
+          onEditProfile={() => setShowInterestWizard(true)}
+        />
       </div>
 
       {/* Change Password Modal */}
       <AnimatePresence>
         {showChangePasswordModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-6 text-black">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
-                      <Key className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-xl font-bold">Change Password</h3>
-                  </div>
-                  <button
-                    onClick={handleClosePasswordModal}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+          <ChangePasswordModal 
+            onClose={() => setShowChangePasswordModal(false)}
+            onSuccess={(message) => {
+              setSuccess(message);
+              setTimeout(() => setSuccess(null), 3000);
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-              {/* Modal Content */}
-              <div className="p-6">
-                {passwordError && (
-                  <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6">
-                    <p className="text-sm font-medium">{passwordError}</p>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  {/* Current Password */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <input
-                        type={showCurrentPassword ? "text" : "password"}
-                        value={passwordData.currentPassword}
-                        onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
-                        className="w-full pl-12 pr-12 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your current password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* New Password */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <input
-                        type={showNewPassword ? "text" : "password"}
-                        value={passwordData.newPassword}
-                        onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
-                        className="w-full pl-12 pr-12 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Confirm New Password */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="w-5 h-5 text-gray-400" />
-                      </div>
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
-                        className="w-full pl-12 pr-12 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Confirm your new password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Password Requirements */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <p className="text-xs text-blue-800 font-medium mb-1">Password Requirements:</p>
-                    <ul className="text-xs text-blue-700 space-y-1">
-                      <li>• At least 8 characters long</li>
-                      <li>• Contains uppercase and lowercase letters</li>
-                      <li>• Contains at least one number</li>
-                      <li>• Contains at least one special character</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
-                <button
-                  onClick={handleClosePasswordModal}
-                  className="px-6 py-2.5 border border-gray-300 rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleChangePassword}
-                  disabled={passwordLoading}
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] text-white rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50"
-                >
-                  {passwordLoading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                      Changing...
-                    </div>
-                  ) : (
-                    'Change Password'
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
+      {/* Career Interest Profile Wizard */}
+      <AnimatePresence>
+        {showInterestWizard && (
+          <CareerInterestProfileWizard
+            onComplete={() => {
+              setShowInterestWizard(false);
+              refreshInterestProfile();
+              setSuccess('Career Interest Profile updated successfully!');
+              setTimeout(() => setSuccess(null), 3000);
+            }}
+            onSkip={() => setShowInterestWizard(false)}
+          />
         )}
       </AnimatePresence>
     </div>

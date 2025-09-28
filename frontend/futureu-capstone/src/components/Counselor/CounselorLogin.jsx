@@ -37,8 +37,8 @@ const CounselorLogin = () => {
         return;
       }
       
-      // Navigate to counselor dashboard
-      navigate('/counselor-dashboard', { replace: true });
+      // Navigate to institutional dashboard instead of general counselor dashboard
+      navigate('/counselor/institutional-dashboard', { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {

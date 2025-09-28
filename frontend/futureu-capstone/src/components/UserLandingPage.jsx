@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import studentsImage from '../assets/Students.png';
 import backgroundImage from '../assets/SchoolBackground.png';
+import statisticsService from '../services/statisticsService';
 import {
   FaUserGraduate,
   FaUsers,
@@ -20,7 +21,12 @@ import {
   FaChevronRight,
   FaUserCircle,
 } from "react-icons/fa";
-//import Footer from './Footer';
+
+// Add these imports for Career Interest Profile integration
+import { useCareerInterestProfile } from '../hooks/useCareerInterestProfile';
+import CareerInterestProfileWizard from './CareerInterestProfile/CareerInterestProfileWizard';
+import ProfilePrompt from './CareerInterestProfile/ProfilePrompt';
+import authService from '../services/authService';
 
 // Animation variants
 const fadeIn = {
@@ -45,6 +51,13 @@ const staggerContainer = {
 const LandingPage = () => {
   const [scrollY, setScrollY] = useState(0);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+  // Add these state variables for Career Interest Profile
+  const [showProfileWizard, setShowProfileWizard] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
 
   // Sample testimonials data
   const testimonials = [
@@ -77,6 +90,61 @@ const LandingPage = () => {
     },
   ];
 
+  // Check authentication status
+  useEffect(() => {
+    const authenticated = authService.isAuthenticated();
+    setIsAuthenticated(authenticated);
+  }, []);
+
+  // Session-based profile prompt logic
+  useEffect(() => {
+    if (isAuthenticated && !profileLoading && hasProfile === false) {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) return;
+
+      // Create session-specific key for this user
+      const sessionKey = `futureu_profile_prompt_shown_${currentUser.id}`;
+      const promptShown = sessionStorage.getItem(sessionKey);
+
+      // Only show prompt if it hasn't been shown this session
+      if (!promptShown) {
+        const timer = setTimeout(() => {
+          setShowProfilePrompt(true);
+          // Mark prompt as shown for this session
+          sessionStorage.setItem(sessionKey, 'true');
+        }, 3000); // Show after 3 seconds
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isAuthenticated, hasProfile, profileLoading]);
+
+  // Add these handler functions
+  const handleProfileComplete = () => {
+    setShowProfileWizard(false);
+    setShowProfilePrompt(false);
+    refreshProfile();
+  };
+
+  const handleProfileSkip = () => {
+    setShowProfileWizard(false);
+    setShowProfilePrompt(false);
+  };
+
+  const handleSetupNow = () => {
+    setShowProfilePrompt(false);
+    setShowProfileWizard(true);
+  };
+
+  const handleSetupLater = () => {
+    setShowProfilePrompt(false);
+  };
+
+  // Manual trigger for showing profile prompt (for the banner button)
+  const handleManualProfilePrompt = () => {
+    setShowProfilePrompt(true);
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -105,16 +173,41 @@ const LandingPage = () => {
     students: 0,
   });
 
-  const targetCounters = {
-    schools: 11,
-    programs: 200,
-    alumni: 1000,
-    students: 2000,
-  };
+  const [targetCounters, setTargetCounters] = useState({
+    schools: 0,
+    programs: 0,
+    alumni: 0,
+    students: 0,
+  });
+
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  // Fetch real statistics data
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const stats = await statisticsService.getAllStatistics();
+        setTargetCounters(stats);
+        setStatsLoaded(true);
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+        // Fallback to default values if API fails
+        setTargetCounters({
+          schools: 11,
+          programs: 200,
+          alumni: 50,
+          students: 500,
+        });
+        setStatsLoaded(true);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
 
   useEffect(() => {
     const statsSection = document.getElementById("stats-section");
-    if (!statsSection) return;
+    if (!statsSection || !statsLoaded) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -126,7 +219,8 @@ const LandingPage = () => {
 
               Object.keys(targetCounters).forEach((key) => {
                 if (newCounters[key] < targetCounters[key]) {
-                  newCounters[key] += Math.ceil(targetCounters[key] / 50);
+                  const increment = Math.ceil(targetCounters[key] / 50) || 1;
+                  newCounters[key] += increment;
                   if (newCounters[key] > targetCounters[key]) {
                     newCounters[key] = targetCounters[key];
                   } else {
@@ -148,10 +242,44 @@ const LandingPage = () => {
 
     observer.observe(statsSection);
     return () => observer.disconnect();
-  }, []);
+  }, [targetCounters, statsLoaded]);
 
   return (
     <div className="w-full overflow-hidden bg-white">
+      {/* Career Interest Profile Wizard */}
+      <AnimatePresence>
+        {showProfileWizard && (
+          <CareerInterestProfileWizard
+            onComplete={handleProfileComplete}
+            onSkip={handleProfileSkip}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Profile Setup Prompt */}
+      <AnimatePresence>
+        {showProfilePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl"
+            >
+              <ProfilePrompt
+                onSetupNow={handleSetupNow}
+                onSetupLater={handleSetupLater}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
         {/* Hero Section */}
         <div
         className="relative min-h-screen flex items-start pt-0 md:pt-10 justify-center bg-cover bg-center bg-no-repeat"
@@ -211,6 +339,45 @@ const LandingPage = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Profile Status Banner for users without profile */}
+        {isAuthenticated && !profileLoading && hasProfile === false && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
+            className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
+          >
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 max-w-md mx-auto">
+              <p className="text-white text-center text-sm">
+                💡 Complete your career interest profile to get personalized recommendations
+              </p>
+              <button
+                onClick={handleManualProfilePrompt}
+                className="mt-2 w-full bg-[#FFB71B] text-[#2B3E4E] px-4 py-2 rounded-lg font-medium hover:bg-[#FFB71B]/90 transition-colors"
+              >
+                Set Up Profile
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Profile Complete Badge for users with profile */}
+        {isAuthenticated && !profileLoading && hasProfile === true && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1 }}
+            className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
+          >
+            <div className="bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-2xl p-4 max-w-md mx-auto">
+              <p className="text-white text-center text-sm flex items-center justify-center">
+                <span className="mr-2">✅</span>
+                Career interest profile complete - getting personalized recommendations
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         <div className="absolute bottom-0 left-0 right-0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
@@ -290,12 +457,17 @@ const LandingPage = () => {
       {/* Stats Section */}
       <section id="stats-section" className="py-16 bg-gradient-to-r from-yellow-500 to-yellow-400 text-gray-900">
         <div className="container mx-auto px-6">
+          {!statsLoaded ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { label: "Schools", value: counters.schools, icon: <FaUniversity className="text-4xl mb-3" /> },
               { label: "Programs", value: counters.programs, icon: <FaGraduationCap className="text-4xl mb-3" /> },
-              { label: "Future Alumni", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
-              { label: "Future Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
+              { label: "Alumni Reviews", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
+              { label: "Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -306,11 +478,12 @@ const LandingPage = () => {
                 viewport={{ once: true }}
               >
                 <div className="flex justify-center">{stat.icon}</div>
-                <h3 className="text-4xl font-bold">{stat.value.toLocaleString()}+</h3>
+                <h3 className="text-4xl font-bold">{stat.value.toLocaleString()}{stat.value > 0 ? '+' : ''}</h3>
                 <p className="text-lg font-medium">{stat.label}</p>
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -579,11 +752,11 @@ const LandingPage = () => {
               <h3 className=" text-left font-bold text-lg mb-4">Quick Links</h3>
               <ul className="text-left space-y-2">
                 {[
-                  { name: "Home", path: "/" },
-                  { name: "About", path: "/about" },
-                  { name: "Programs", path: "/programs" },
-                  { name: "Schools", path: "/schools" },
-                  { name: "Career Paths", path: "/career-pathways" }
+                  { name: "Home", path: "/student-home" },
+                  { name: "Academic Explorer", path: "/academic-explorer" },
+                  { name: "Testimonials", path: "/testimonials" },
+                  { name: "Accreditation", path: "/accreditation" },
+                  { name: "Career Pathways", path: "/career-pathways" }
                 ].map((item, index) => (
                   <li key={index}>
                     <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
@@ -598,11 +771,11 @@ const LandingPage = () => {
               <h3 className="text-left font-bold text-lg mb-4">Resources</h3>
               <ul className="text-left space-y-2">
                 {[
-                  { name: "Assessments", path: "/assessment-dashboard" },
-                  { name: "Program Finder", path: "/academic-explorer" },
+                  { name: "Assessment Dashboard", path: "/assessment-dashboard" },
+                  { name: "Academic Explorer", path: "/academic-explorer" },
                   { name: "Career Pathways", path: "/career-pathways" },
-                  { name: "Alumni Network", path: "/testimonials" },
-                  { name: "Blog", path: "/blog" }
+                  { name: "Alumni Reviews", path: "/testimonials" },
+                  { name: "Virtual Tours", path: "/virtual-campus-tours" }
                 ].map((item, index) => (
                   <li key={index}>
                     <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
