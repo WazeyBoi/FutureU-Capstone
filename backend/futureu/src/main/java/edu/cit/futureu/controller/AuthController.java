@@ -152,7 +152,7 @@ public class AuthController {
         refreshTokenRepository.save(tokenEntity);
         
         // Get user and generate new access token
-        UserEntity user = userRepository.findById((int) tokenEntity.getUserId()).orElse(null);
+        UserEntity user = userRepository.findById(tokenEntity.getUserId().intValue()).orElse(null); //nausab kay cannot convert long to int daw so bale giupcast ang int to long
         if (user == null) {
             return ResponseEntity.badRequest().body("User not found");
         }
