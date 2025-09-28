@@ -6,7 +6,7 @@ import apiConfig from '../config/apiConfig';
  * This provides consistent configuration for all API requests
  */
 const apiClient = axios.create({
-  baseURL: apiConfig.baseURL,
+  baseURL: apiConfig.baseURL, // Should be 'http://localhost:8080/api'
   timeout: apiConfig.timeout,
   withCredentials: true, // Always send cookies for authentication
   headers: {
@@ -19,7 +19,8 @@ const apiClient = axios.create({
 // Cookies are automatically sent with requests when withCredentials: true
 apiClient.interceptors.request.use(
   (config) => {
-    // No need to manually add tokens - they're in HTTP-only cookies
+    // Debug: Log the full URL being called
+    console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url);
     return config;
   },
   (error) => {
