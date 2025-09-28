@@ -1,21 +1,22 @@
 import axios from 'axios';
-import authService from './authService';
 
 const API_BASE_URL = 'http://localhost:8080/api';
+
+// Create a custom axios instance for profile service
+const profileClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
+});
 
 const profileService = {
   async getUserProfile(userId) {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/profile/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await profileClient.get(`/profile/${userId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -25,17 +26,7 @@ const profileService = {
 
   async updateUserProfile(userId, profileData) {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await axios.put(`${API_BASE_URL}/profile/${userId}`, profileData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await profileClient.put(`/profile/${userId}`, profileData);
       return response.data;
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -45,18 +36,12 @@ const profileService = {
 
   async uploadProfilePicture(userId, file) {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await axios.post(`${API_BASE_URL}/profile/${userId}/upload-picture`, formData, {
+      const response = await profileClient.post(`/profile/${userId}/upload-picture`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'multipart/form-data'
         }
       });
       return response.data;
@@ -68,16 +53,7 @@ const profileService = {
 
   async deleteProfilePicture(userId) {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await axios.delete(`${API_BASE_URL}/profile/${userId}/profile-picture`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await profileClient.delete(`/profile/${userId}/profile-picture`);
       return response.data;
     } catch (error) {
       console.error('Error deleting profile picture:', error);
@@ -87,17 +63,7 @@ const profileService = {
 
   async changePassword(userId, passwordData) {
     try {
-      const token = authService.getToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await axios.put(`${API_BASE_URL}/profile/${userId}/change-password`, passwordData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await profileClient.put(`/profile/${userId}/change-password`, passwordData);
       return response.data;
     } catch (error) {
       console.error('Error changing password:', error);

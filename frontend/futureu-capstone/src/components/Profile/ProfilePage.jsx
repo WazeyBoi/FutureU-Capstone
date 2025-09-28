@@ -67,7 +67,14 @@ const ProfilePage = () => {
 
     try {
       const currentUser = authService.getCurrentUser();
-      const updatedUser = await profileService.updateUserProfile(currentUser.id, editData);
+      
+      // Test with minimal data
+      const testData = {
+        firstName: editData.firstName || "Test Name"
+      };
+      
+      console.log('Sending minimal test data:', testData);
+      const updatedUser = await profileService.updateUserProfile(currentUser.id, testData);
       
       setUser(updatedUser);
       setEditMode(false);
@@ -75,7 +82,9 @@ const ProfilePage = () => {
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(error);
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response?.data);
+      setError(typeof error === 'string' ? error : error.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
