@@ -142,6 +142,16 @@ const PersonalInformationSection = ({
           displayValue={`${user?.age || 'Not provided'} ${user?.age ? 'years old' : ''}`}
         />
 
+        {/* School Code */}
+        <FormField
+          label="School Code"
+          value={editData.schoolCode || ''}
+          placeholder="Enter your school code"
+          editMode={editMode}
+          onChange={(value) => onInputChange('schoolCode', value)}
+          displayValue={user?.schoolCode || 'Not provided'}
+        />
+
         {/* Address - Full Width */}
         <div className="md:col-span-2">
           <label className="block text-sm font-bold text-gray-700 mb-3">Address</label>

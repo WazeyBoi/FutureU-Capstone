@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle } from 'lucide-react';
+import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key, Hash, CheckCircle } from 'lucide-react';
 import profileService from '../../services/profileService';
-import { User, Edit, Save, X, Camera, Mail, Phone, MapPin, Calendar, Upload, Lock, Eye, EyeOff, Key, Hash } from 'lucide-react';
 import institutionService from '../../services/institutionService';
 import authService from '../../services/authService';
 import { useProfile } from '../../contexts/ProfileContext';
@@ -336,7 +335,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 relative overflow-hidden">
       {/* Enhanced CSS for mascot animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes mascotWiggle {
           0% { transform: rotate(0deg) scale(1) translateY(0px); }
           10% { transform: rotate(-8deg) scale(1.05) translateY(-5px); }
@@ -571,13 +570,15 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* Career Interest Profile Section - Full Width Below */}
-        <CareerInterestProfileSection 
-          hasProfile={hasProfile}
-          interestProfile={interestProfile}
-          onSetupProfile={() => setShowInterestWizard(true)}
-          onEditProfile={() => setShowInterestWizard(true)}
-        />
+        {/* Career Interest Profile Section - Full Width Below - Only for Students */}
+        {user && user.role !== 'GUIDANCE_COUNSELOR' && user.role !== 'CAREER_COUNSELOR' && (
+          <CareerInterestProfileSection 
+            hasProfile={hasProfile}
+            interestProfile={interestProfile}
+            onSetupProfile={() => setShowInterestWizard(true)}
+            onEditProfile={() => setShowInterestWizard(true)}
+          />
+        )}
       </div>
 
       {/* Change Password Modal */}

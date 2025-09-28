@@ -9,7 +9,7 @@ import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut, 
 import { useCareerInterestProfile } from '../hooks/useCareerInterestProfile';
 import { AnimatePresence, motion } from 'framer-motion';
 import CareerInterestProfileWizard from './CareerInterestProfile/CareerInterestProfileWizard';
-
+ 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,18 +24,18 @@ const Navigation = () => {
   const [tooltipPinned, setTooltipPinned] = useState(false);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
-  
+ 
   const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
-
+ 
   useEffect(() => {
     const authenticated = authService.isAuthenticated();
     setIsAuthenticated(authenticated);
-    
+   
     if (authenticated) {
       const user = authService.getCurrentUser();
       setCurrentUser(user);
       fetchUserProfile(user.id);
-      
+     
       let role = authService.getUserRole();
       if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
       setUserRole(role);
@@ -45,7 +45,7 @@ const Navigation = () => {
       setUserRole(null);
     }
   }, [location]);
-
+ 
   const fetchUserProfile = async (userId) => {
     try {
       const profile = await profileService.getUserProfile(userId);
@@ -54,7 +54,7 @@ const Navigation = () => {
       console.error('Failed to fetch user profile:', error);
     }
   };
-
+ 
   // Enhanced click outside handling for both dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -66,23 +66,23 @@ const Navigation = () => {
         setTooltipPinned(false);
       }
     };
-
+ 
     document.addEventListener('mousedown', handleClickOutside, true);
     document.addEventListener('touchstart', handleClickOutside, true);
-    
+   
     return () => {
       document.removeEventListener('mousedown', handleClickOutside, true);
       document.removeEventListener('touchstart', handleClickOutside, true);
     };
   }, []);
-
+ 
   // Close dropdowns when route changes
   useEffect(() => {
     setShowDropdown(false);
     setShowNotificationTooltip(false);
     setTooltipPinned(false);
   }, [location.pathname]);
-
+ 
   const handleLogout = () => {
     const userId = authService.getCurrentUserId();
     if (userId) {
@@ -96,16 +96,16 @@ const Navigation = () => {
     setIsAuthenticated(false);
     setUserProfile(null);
     setShowDropdown(false);
-    navigate('/student-home');
+    navigate('/user-landing-page');
   };
-
+ 
   const handleProfileClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setShowDropdown(false);
     navigate('/profile');
   };
-
+ 
   const handleDropdownToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -113,7 +113,7 @@ const Navigation = () => {
     setShowNotificationTooltip(false);
     setTooltipPinned(false);
   };
-
+ 
   // Handle notification hover
   const handleNotificationMouseEnter = () => {
     if (!tooltipPinned) {
@@ -121,13 +121,13 @@ const Navigation = () => {
       setShowDropdown(false);
     }
   };
-
+ 
   const handleNotificationMouseLeave = () => {
     if (!tooltipPinned) {
       setShowNotificationTooltip(false);
     }
   };
-
+ 
   // Handle notification click to pin tooltip
   const handleNotificationClick = (e) => {
     e.preventDefault();
@@ -136,18 +136,18 @@ const Navigation = () => {
     setShowNotificationTooltip(true);
     setShowDropdown(false);
   };
-
+ 
   // Handle tooltip hover to keep it visible
   const handleTooltipMouseEnter = () => {
     setShowNotificationTooltip(true);
   };
-
+ 
   const handleTooltipMouseLeave = () => {
     if (!tooltipPinned) {
       setShowNotificationTooltip(false);
     }
   };
-
+ 
   // Handle "Set up now" button click
   const handleSetupNowClick = (e) => {
     e.preventDefault();
@@ -156,44 +156,44 @@ const Navigation = () => {
     setTooltipPinned(false);
     setShowProfileWizard(true);
   };
-
+ 
   const handleProfileWizardComplete = () => {
     setShowProfileWizard(false);
     refreshProfile();
   };
-
+ 
   const handleProfileWizardSkip = () => {
     setShowProfileWizard(false);
   };
-
+ 
   const isActive = (path) => {
     return location.pathname === path;
   };
-
+ 
   const getProfilePictureUrl = () => {
     return userProfile?.profilePictureUrl || currentUser?.profilePictureUrl || null;
   };
-
+ 
   // Enhanced ProfilePicture component with better image quality and no flickering
   const ProfilePicture = ({ size = "w-10 h-10", showBorder = true, isClickable = false }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
     const profilePictureUrl = getProfilePictureUrl();
-    
+   
     const handleImageError = () => {
       setImageError(true);
       setImageLoading(false);
     };
-
+ 
     const handleImageLoad = () => {
       setImageLoading(false);
     };
-
+ 
     const borderClass = showBorder ? "border-2 border-white shadow-lg" : "";
     const hoverClass = isClickable ? "cursor-pointer hover:ring-2 hover:ring-[#FFB71B] hover:ring-offset-2 transition-all duration-200" : "";
-    
+   
     return (
-      <div 
+      <div
         className={`${size} rounded-full overflow-hidden ${borderClass} ${hoverClass} relative bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80`}
         onClick={isClickable ? handleDropdownToggle : undefined}
       >
@@ -227,18 +227,18 @@ const Navigation = () => {
       </div>
     );
   };
-
+ 
   // Enhanced ProfileDropdown with notification badge positioned at top-right
   const ProfileDropdown = () => (
     <div className="relative" ref={dropdownRef}>
       {/* Profile Picture Container with Notification Badge */}
       <div className="relative">
         <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
-
+ 
         {/* Career Interest Profile Notification Badge - Positioned at top-right of profile picture */}
         {isAuthenticated && !profileLoading && hasProfile === false && (
-          <div 
-            className="absolute -top-0.5 -right-0.5 z-10" 
+          <div
+            className="absolute -top-0.5 -right-0.5 z-10"
             ref={notificationRef}
           >
             {/* Notification Badge with both hover and click functionality */}
@@ -252,11 +252,11 @@ const Navigation = () => {
               <div className="w-4 h-4 bg-gradient-to-r from-[#FFB71B] to-[#FF9800] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none hover:scale-110 border border-white">
                 <Sparkles className="w-2 h-2 text-whitYe" />
               </div>
-              
+             
               {/* Pulsing ring animation - updated size to match badge */}
               <div className="absolute inset-0 w-4 h-4 rounded-full bg-[#FFB71B] opacity-30 animate-ping"></div>
             </div>
-
+ 
             {/* Notification Tooltip - Rectangular, no arrow, positioned lower */}
             <AnimatePresence>
               {showNotificationTooltip && (
@@ -276,7 +276,7 @@ const Navigation = () => {
                       <div className="bg-gradient-to-r from-[#FFB71B]/20 to-[#FF9800]/20 p-2.5 rounded-lg flex-shrink-0">
                         <Sparkles className="w-5 h-5 text-[#FFB71B]" />
                       </div>
-                      
+                     
                       {/* Content */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-[#232D35] mb-2 leading-tight">
@@ -285,7 +285,7 @@ const Navigation = () => {
                         <p className="text-xs text-gray-600 mb-3 leading-relaxed">
                           Set up your career interests to get personalized recommendations!
                         </p>
-                        
+                       
                         <div className="flex items-center justify-between">
                         <button
                     onClick={handleSetupNowClick}
@@ -304,15 +304,15 @@ const Navigation = () => {
           </div>
         )}
       </div>
-
+ 
       {/* Profile Dropdown */}
       {showDropdown && (
         <>
-          <div 
-            className="fixed inset-0 z-[9998]" 
+          <div
+            className="fixed inset-0 z-[9998]"
             onClick={() => setShowDropdown(false)}
           />
-          
+         
           <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999] animate-fadeIn">
             <div className="px-4 py-3 border-b border-gray-100">
               <div className="flex items-center space-x-3">
@@ -328,7 +328,7 @@ const Navigation = () => {
                 </div>
               </div>
             </div>
-
+ 
             <div className="py-1">
               <button
                 onClick={handleProfileClick}
@@ -339,7 +339,7 @@ const Navigation = () => {
                 <User className="w-5 h-5 mr-3 text-[#FFB71B]" />
                 <span className="font-medium">My Profile</span>
               </button>
-              
+             
               <button
                 onClick={handleLogout}
                 onMouseDown={(e) => e.preventDefault()}
@@ -355,7 +355,7 @@ const Navigation = () => {
       )}
     </div>
   );
-
+ 
   // Don't render the navigation bar for Counselor routes
   if (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') {
     return (
@@ -364,18 +364,18 @@ const Navigation = () => {
           <div className="container mx-auto">
             <div className="flex items-center justify-between h-16 w-full">
               {/* Brand with Logo */}
-              <Link 
-                to="/counselor-dashboard" 
+              <Link
+                to="/counselor-dashboard"
                 className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
                 onMouseEnter={() => setLogoHover(true)}
                 onMouseLeave={() => setLogoHover(false)}
               >
-                <img 
-                  src={logoHover ? FutureULogo2 : FutureULogo} 
-                  alt="FutureU Logo" 
-                  className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+                <img
+                  src={logoHover ? FutureULogo2 : FutureULogo}
+                  alt="FutureU Logo"
+                  className="h-12 w-auto transition-transform duration-300 group-hover:scale-110"
                 />
-                
+               
                 <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
                   FutureU
                 </div>
@@ -383,7 +383,7 @@ const Navigation = () => {
                   Counselor
                 </div>
               </Link>
-              
+             
               {/* Counselor Navigation Links */}
               <div className="flex items-center space-x-1">
                 <Link
@@ -399,7 +399,7 @@ const Navigation = () => {
                     Dashboard
                   </span>
                 </Link>
-                
+               
                 {/* Profile Dropdown for Counselors */}
                 <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
                   <ProfileDropdown />
@@ -408,7 +408,7 @@ const Navigation = () => {
             </div>
           </div>
         </nav>
-
+ 
         {/* Career Interest Profile Wizard for Counselors */}
         <AnimatePresence>
           {showProfileWizard && (
@@ -421,7 +421,7 @@ const Navigation = () => {
       </>
     );
   }
-
+ 
   // Default navigation for other roles (Students and Admin)
   return (
     <>
@@ -429,18 +429,18 @@ const Navigation = () => {
         <div className="container mx-auto">
           <div className="flex items-center justify-between h-16 w-full">
             {/* Brand with Logo */}
-            <Link 
-              to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} 
+            <Link
+              to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'}
               className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
               onMouseEnter={() => setLogoHover(true)}
               onMouseLeave={() => setLogoHover(false)}
             >
-              <img 
-                src={logoHover ? FutureULogo2 : FutureULogo} 
-                alt="FutureU Logo" 
-                className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+              <img
+                src={logoHover ? FutureULogo2 : FutureULogo}
+                alt="FutureU Logo"
+                className="h-12 w-auto transition-transform duration-300 group-hover:scale-110"
               />
-              
+             
               <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
                 FutureU
               </div>
@@ -450,7 +450,7 @@ const Navigation = () => {
                 </div>
               )}
             </Link>
-
+ 
             {/* Navigation Links */}
             <div className="flex items-center space-x-1">
               {/* Admin-specific navigation */}
@@ -466,7 +466,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Dashboard</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/counselor-dashboard"
                     className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -477,7 +477,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Counselor Dashboard</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/assessment-categories"
                     className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -488,7 +488,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Assessment Management</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/questions"
                     className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -501,7 +501,7 @@ const Navigation = () => {
                   </Link>
                 </>
               )}
-              
+             
               {/* Student/Regular user navigation */}
               {isAuthenticated && userRole !== 'ADMIN' && (
               {/* Profile Dropdown for Counselors */}
@@ -732,7 +732,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Home</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/academic-explorer"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -743,7 +743,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Academic Explorer</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/accreditation"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -754,7 +754,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Accreditation</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/virtual-campus-tours"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -765,7 +765,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Virtual Campus Tours</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/testimonials"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -776,7 +776,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Testimonials</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/career-pathways"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -787,7 +787,7 @@ const Navigation = () => {
                   >
                     <span className="relative z-10">Career Pathways</span>
                   </Link>
-                  
+                 
                   <Link
                     to="/assessment-dashboard"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -800,7 +800,7 @@ const Navigation = () => {
                   </Link>
                 </>
               )}
-              
+             
               {/* Public links (not logged in) */}
               {!isAuthenticated && (
                 <>
@@ -847,7 +847,7 @@ const Navigation = () => {
           </div>
         </div>
       </nav>
-
+ 
       {/* Career Interest Profile Wizard */}
       <AnimatePresence>
         {showProfileWizard && (
@@ -860,7 +860,7 @@ const Navigation = () => {
     </>
   );
 };
-
+ 
 // Enhanced animation styles for dropdown
 const style = document.createElement('style');
 style.textContent = `
@@ -868,11 +868,11 @@ style.textContent = `
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  
+ 
   .animate-fadeIn {
     animation: fadeIn 0.2s ease-out forwards;
   }
 `;
 document.head.appendChild(style);
-
+ 
 export default Navigation;
