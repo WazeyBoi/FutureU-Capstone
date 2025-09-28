@@ -1,18 +1,19 @@
 package edu.cit.futureu.service;
 
-import edu.cit.futureu.entity.UserEntity;
-import edu.cit.futureu.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import edu.cit.futureu.entity.UserEntity;
+import edu.cit.futureu.repository.UserRepository;
 
 @Service
 public class ProfileService {
@@ -29,43 +30,94 @@ public class ProfileService {
     private final String uploadDir = "uploads/profile-pictures/";
     
     public UserEntity getUserProfile(int userId) {
+        System.out.println("ProfileService: getUserProfile called with userId: " + userId);
+        
         Optional<UserEntity> user = userRepository.findById(userId);
         if (user.isPresent()) {
             UserEntity userEntity = user.get();
             // Don't return password for security
             userEntity.setPassword(null);
+            System.out.println("User found: " + userEntity.getEmail());
             return userEntity;
         }
+        System.err.println("User not found with ID: " + userId);
         throw new RuntimeException("User not found");
     }
     
     public UserEntity updateUserProfile(int userId, UserEntity profileData) {
-        Optional<UserEntity> existingUser = userRepository.findById(userId);
-        if (existingUser.isPresent()) {
+        try {
+            System.out.println("=== ProfileService: updateUserProfile START ===");
+            System.out.println("UserId: " + userId);
+            System.out.println("ProfileData received: " + profileData);
+            
+            // Check if userRepository is available
+            if (userRepository == null) {
+                System.err.println("UserRepository is null!");
+                throw new RuntimeException("UserRepository is not available");
+            }
+            
+            System.out.println("Looking for user with ID: " + userId);
+            Optional<UserEntity> existingUser = userRepository.findById(userId);
+            
+            if (!existingUser.isPresent()) {
+                System.err.println("User not found with ID: " + userId);
+                throw new RuntimeException("User not found with ID: " + userId);
+            }
+            
             UserEntity user = existingUser.get();
+            System.out.println("Found existing user: " + user.getEmail());
             
-            // Update only allowed profile fields
+            // Update ALL profile fields (not just firstName)
             if (profileData.getFirstName() != null) {
-                user.setFirstName(profileData.getFirstName());
+                System.out.println("Updating firstName from '" + user.getFirstName() + "' to '" + profileData.getFirstName() + "'");
+                if (!profileData.getFirstName().trim().isEmpty()) {
+                    user.setFirstName(profileData.getFirstName().trim());
+                    System.out.println("FirstName updated successfully");
+                }
             }
-            if (profileData.getLastname() != null) {
-                user.setLastname(profileData.getLastname());
-            }
-            if (profileData.getMiddleName() != null) {
-                user.setMiddleName(profileData.getMiddleName());
-            }
-            if (profileData.getEmail() != null) {
-                user.setEmail(profileData.getEmail());
-            }
-            if (profileData.getAddress() != null) {
-                user.setAddress(profileData.getAddress());
-            }
-            if (profileData.getContactNumber() != null) {
-                user.setContactNumber(profileData.getContactNumber());
-            }
-            // Note: Age is primitive int, so we always update it
-            user.setAge(profileData.getAge());
             
+            if (profileData.getLastname() != null) {
+                System.out.println("Updating lastname from '" + user.getLastname() + "' to '" + profileData.getLastname() + "'");
+                if (!profileData.getLastname().trim().isEmpty()) {
+                    user.setLastname(profileData.getLastname().trim());
+                    System.out.println("Lastname updated successfully");
+                }
+            }
+            
+            if (profileData.getMiddleName() != null) {
+                System.out.println("Updating middleName from '" + user.getMiddleName() + "' to '" + profileData.getMiddleName() + "'");
+                user.setMiddleName(profileData.getMiddleName().trim().isEmpty() ? null : profileData.getMiddleName().trim());
+                System.out.println("MiddleName updated successfully");
+            }
+            
+            if (profileData.getEmail() != null) {
+                System.out.println("Updating email from '" + user.getEmail() + "' to '" + profileData.getEmail() + "'");
+                if (!profileData.getEmail().trim().isEmpty()) {
+                    user.setEmail(profileData.getEmail().trim());
+                    System.out.println("Email updated successfully");
+                }
+            }
+            
+            if (profileData.getAddress() != null) {
+                System.out.println("Updating address from '" + user.getAddress() + "' to '" + profileData.getAddress() + "'");
+                user.setAddress(profileData.getAddress().trim().isEmpty() ? null : profileData.getAddress().trim());
+                System.out.println("Address updated successfully");
+            }
+            
+            if (profileData.getContactNumber() != null) {
+                System.out.println("Updating contactNumber from '" + user.getContactNumber() + "' to '" + profileData.getContactNumber() + "'");
+                user.setContactNumber(profileData.getContactNumber().trim().isEmpty() ? null : profileData.getContactNumber().trim());
+                System.out.println("ContactNumber updated successfully");
+            }
+            
+            if (profileData.getAge() != 0) { // Note: int primitive, so check for 0 instead of null
+                System.out.println("Updating age from " + user.getAge() + " to " + profileData.getAge());
+                if (profileData.getAge() > 0) {
+                    user.setAge(profileData.getAge());
+                    System.out.println("Age updated successfully");
+                }
+            }
+
             // Validate and set school code for counselors only
             if (profileData.getSchoolCode() != null) {
                 String role = user.getRole() != null ? user.getRole().name() : "";
@@ -79,13 +131,29 @@ public class ProfileService {
                 }
                 user.setSchoolCode(profileData.getSchoolCode());
             }
-            // Don't allow password updates through this method
+            
+            System.out.println("About to save user to database...");
+            System.out.println("User before save - firstName: " + user.getFirstName() + ", lastname: " + user.getLastname());
             
             UserEntity savedUser = userRepository.save(user);
+            System.out.println("User saved successfully!");
+            System.out.println("Saved user - firstName: " + savedUser.getFirstName() + ", lastname: " + savedUser.getLastname());
+            
             savedUser.setPassword(null); // Don't return password
+            
+            System.out.println("ProfileService: updateUserProfile completed successfully");
+            System.out.println("=== ProfileService: updateUserProfile END ===");
             return savedUser;
+            
+        } catch (Exception e) {
+            System.err.println("=== CRITICAL ERROR in ProfileService.updateUserProfile ===");
+            System.err.println("Error type: " + e.getClass().getSimpleName());
+            System.err.println("Error message: " + e.getMessage());
+            System.err.println("Stack trace:");
+            e.printStackTrace();
+            System.err.println("=== END CRITICAL ERROR ===");
+            throw e;
         }
-        throw new RuntimeException("User not found");
     }
     
     public String uploadProfilePicture(int userId, MultipartFile file) throws IOException {
@@ -154,7 +222,6 @@ public class ProfileService {
         }
     }
 
-    // NEW: Change Password method
     public void changePassword(int userId, String currentPassword, String newPassword) {
         Optional<UserEntity> userOptional = userRepository.findById(userId);
         if (!userOptional.isPresent()) {

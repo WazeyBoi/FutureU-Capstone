@@ -85,6 +85,9 @@ const ProfilePage = () => {
       }
 
       const currentUser = authService.getCurrentUser();
+      
+      // Send all the edited data, not just firstName
+      console.log('Sending profile data:', editData);
       const updatedUser = await profileService.updateUserProfile(currentUser.id, editData);
       
       setUser(updatedUser);
@@ -93,7 +96,9 @@ const ProfilePage = () => {
       
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      setError(error);
+      console.error('Full error object:', error);
+      console.error('Error response:', error.response?.data);
+      setError(typeof error === 'string' ? error : error.message || 'Failed to update profile');
     } finally {
       setSaving(false);
     }
