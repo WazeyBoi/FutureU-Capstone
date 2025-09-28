@@ -45,8 +45,6 @@ public class ProfileService {
             System.out.println("=== ProfileService: updateUserProfile START ===");
             System.out.println("UserId: " + userId);
             System.out.println("ProfileData received: " + profileData);
-            System.out.println("ProfileData firstName: " + profileData.getFirstName());
-            System.out.println("ProfileData class: " + profileData.getClass().getName());
             
             // Check if userRepository is available
             if (userRepository == null) {
@@ -65,25 +63,63 @@ public class ProfileService {
             UserEntity user = existingUser.get();
             System.out.println("Found existing user: " + user.getEmail());
             
-            // Only update firstName for testing
+            // Update ALL profile fields (not just firstName)
             if (profileData.getFirstName() != null) {
                 System.out.println("Updating firstName from '" + user.getFirstName() + "' to '" + profileData.getFirstName() + "'");
                 if (!profileData.getFirstName().trim().isEmpty()) {
                     user.setFirstName(profileData.getFirstName().trim());
                     System.out.println("FirstName updated successfully");
-                } else {
-                    System.out.println("FirstName is empty, skipping update");
                 }
-            } else {
-                System.out.println("ProfileData.firstName is null, no update needed");
+            }
+            
+            if (profileData.getLastname() != null) {
+                System.out.println("Updating lastname from '" + user.getLastname() + "' to '" + profileData.getLastname() + "'");
+                if (!profileData.getLastname().trim().isEmpty()) {
+                    user.setLastname(profileData.getLastname().trim());
+                    System.out.println("Lastname updated successfully");
+                }
+            }
+            
+            if (profileData.getMiddleName() != null) {
+                System.out.println("Updating middleName from '" + user.getMiddleName() + "' to '" + profileData.getMiddleName() + "'");
+                user.setMiddleName(profileData.getMiddleName().trim().isEmpty() ? null : profileData.getMiddleName().trim());
+                System.out.println("MiddleName updated successfully");
+            }
+            
+            if (profileData.getEmail() != null) {
+                System.out.println("Updating email from '" + user.getEmail() + "' to '" + profileData.getEmail() + "'");
+                if (!profileData.getEmail().trim().isEmpty()) {
+                    user.setEmail(profileData.getEmail().trim());
+                    System.out.println("Email updated successfully");
+                }
+            }
+            
+            if (profileData.getAddress() != null) {
+                System.out.println("Updating address from '" + user.getAddress() + "' to '" + profileData.getAddress() + "'");
+                user.setAddress(profileData.getAddress().trim().isEmpty() ? null : profileData.getAddress().trim());
+                System.out.println("Address updated successfully");
+            }
+            
+            if (profileData.getContactNumber() != null) {
+                System.out.println("Updating contactNumber from '" + user.getContactNumber() + "' to '" + profileData.getContactNumber() + "'");
+                user.setContactNumber(profileData.getContactNumber().trim().isEmpty() ? null : profileData.getContactNumber().trim());
+                System.out.println("ContactNumber updated successfully");
+            }
+            
+            if (profileData.getAge() != 0) { // Note: int primitive, so check for 0 instead of null
+                System.out.println("Updating age from " + user.getAge() + " to " + profileData.getAge());
+                if (profileData.getAge() > 0) {
+                    user.setAge(profileData.getAge());
+                    System.out.println("Age updated successfully");
+                }
             }
             
             System.out.println("About to save user to database...");
-            System.out.println("User before save: " + user.getFirstName());
+            System.out.println("User before save - firstName: " + user.getFirstName() + ", lastname: " + user.getLastname());
             
             UserEntity savedUser = userRepository.save(user);
             System.out.println("User saved successfully!");
-            System.out.println("Saved user firstName: " + savedUser.getFirstName());
+            System.out.println("Saved user - firstName: " + savedUser.getFirstName() + ", lastname: " + savedUser.getLastname());
             
             savedUser.setPassword(null); // Don't return password
             
