@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from "framer-motion";
 import studentsImage from '../assets/Students.png';
 import backgroundImage from '../assets/SchoolBackground.png';
+import statisticsService from '../services/statisticsService';
 import {
   FaUserGraduate,
   FaUsers,
@@ -105,16 +106,41 @@ const LandingPage = () => {
     students: 0,
   });
 
-  const targetCounters = {
-    schools: 11,
-    programs: 200,
-    alumni: 1000,
-    students: 2000,
-  };
+  const [targetCounters, setTargetCounters] = useState({
+    schools: 0,
+    programs: 0,
+    alumni: 0,
+    students: 0,
+  });
+
+  const [statsLoaded, setStatsLoaded] = useState(false);
+
+  // Fetch real statistics data
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const stats = await statisticsService.getAllStatistics();
+        setTargetCounters(stats);
+        setStatsLoaded(true);
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+        // Fallback to default values if API fails
+        setTargetCounters({
+          schools: 11,
+          programs: 200,
+          alumni: 50,
+          students: 500,
+        });
+        setStatsLoaded(true);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
 
   useEffect(() => {
     const statsSection = document.getElementById("stats-section");
-    if (!statsSection) return;
+    if (!statsSection || !statsLoaded) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -126,7 +152,8 @@ const LandingPage = () => {
 
               Object.keys(targetCounters).forEach((key) => {
                 if (newCounters[key] < targetCounters[key]) {
-                  newCounters[key] += Math.ceil(targetCounters[key] / 50);
+                  const increment = Math.ceil(targetCounters[key] / 50) || 1;
+                  newCounters[key] += increment;
                   if (newCounters[key] > targetCounters[key]) {
                     newCounters[key] = targetCounters[key];
                   } else {
@@ -148,7 +175,7 @@ const LandingPage = () => {
 
     observer.observe(statsSection);
     return () => observer.disconnect();
-  }, []);
+  }, [targetCounters, statsLoaded]);
 
   return (
     <div className="w-full overflow-hidden bg-white">
@@ -290,12 +317,17 @@ const LandingPage = () => {
       {/* Stats Section */}
       <section id="stats-section" className="py-16 bg-gradient-to-r from-yellow-500 to-yellow-400 text-gray-900">
         <div className="container mx-auto px-6">
+          {!statsLoaded ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { label: "Schools", value: counters.schools, icon: <FaUniversity className="text-4xl mb-3" /> },
               { label: "Programs", value: counters.programs, icon: <FaGraduationCap className="text-4xl mb-3" /> },
-              { label: "Future Alumni", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
-              { label: "Future Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
+              { label: "Alumni Reviews", value: counters.alumni, icon: <FaUsers className="text-4xl mb-3" /> },
+              { label: "Students", value: counters.students, icon: <FaLaptop className="text-4xl mb-3" /> },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -306,11 +338,12 @@ const LandingPage = () => {
                 viewport={{ once: true }}
               >
                 <div className="flex justify-center">{stat.icon}</div>
-                <h3 className="text-4xl font-bold">{stat.value.toLocaleString()}+</h3>
+                <h3 className="text-4xl font-bold">{stat.value.toLocaleString()}{stat.value > 0 ? '+' : ''}</h3>
                 <p className="text-lg font-medium">{stat.label}</p>
               </motion.div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -579,11 +612,11 @@ const LandingPage = () => {
               <h3 className=" text-left font-bold text-lg mb-4">Quick Links</h3>
               <ul className="text-left space-y-2">
                 {[
-                  { name: "Home", path: "/" },
-                  { name: "About", path: "/about" },
-                  { name: "Programs", path: "/programs" },
-                  { name: "Schools", path: "/schools" },
-                  { name: "Career Paths", path: "/career-pathways" }
+                  { name: "Home", path: "/student-home" },
+                  { name: "Academic Explorer", path: "/academic-explorer" },
+                  { name: "Testimonials", path: "/testimonials" },
+                  { name: "Accreditation", path: "/accreditation" },
+                  { name: "Career Pathways", path: "/career-pathways" }
                 ].map((item, index) => (
                   <li key={index}>
                     <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
@@ -598,11 +631,11 @@ const LandingPage = () => {
               <h3 className="text-left font-bold text-lg mb-4">Resources</h3>
               <ul className="text-left space-y-2">
                 {[
-                  { name: "Assessments", path: "/assessment-dashboard" },
-                  { name: "Program Finder", path: "/academic-explorer" },
+                  { name: "Assessment Dashboard", path: "/assessment-dashboard" },
+                  { name: "Academic Explorer", path: "/academic-explorer" },
                   { name: "Career Pathways", path: "/career-pathways" },
-                  { name: "Alumni Network", path: "/testimonials" },
-                  { name: "Blog", path: "/blog" }
+                  { name: "Alumni Reviews", path: "/testimonials" },
+                  { name: "Virtual Tours", path: "/virtual-campus-tours" }
                 ].map((item, index) => (
                   <li key={index}>
                     <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
