@@ -88,19 +88,13 @@ export const getTestimonialsByUser = (userId) => {
  * @returns {Promise} Promise object with the created testimonial data
  */
 export const createTestimonial = (testimonialData) => {
-  // Get the current token
-  const token = authService.getToken();
-  if (!token) {
-    console.error('Authentication token is missing');
+  // Check if user is authenticated
+  if (!authService.isAuthenticated()) {
+    console.error('User is not authenticated');
     return Promise.reject(new Error('You must be logged in to submit a testimonial'));
   }
   
-  return apiClient.post('/testimony/postTestimonyRecord', testimonialData, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  })
+  return apiClient.post('/testimony/postTestimonyRecord', testimonialData)
   .catch(error => {
     console.error('Error creating testimonial:', error);
     throw error;
@@ -114,19 +108,13 @@ export const createTestimonial = (testimonialData) => {
  * @returns {Promise} Promise object with the updated testimonial data
  */
 export const updateTestimonial = (testimonyId, testimonialData) => {
-  // Get the current token
-  const token = authService.getToken();
-  if (!token) {
-    console.error('Authentication token is missing');
+  // Check if user is authenticated
+  if (!authService.isAuthenticated()) {
+    console.error('User is not authenticated');
     return Promise.reject(new Error('You must be logged in to update a testimonial'));
   }
 
-  return apiClient.put(`/testimony/putTestimonyDetails?testimonyId=${testimonyId}`, testimonialData, {
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  })
+  return apiClient.put(`/testimony/putTestimonyDetails?testimonyId=${testimonyId}`, testimonialData)
   .catch(error => {
     console.error(`Error updating testimonial with ID ${testimonyId}:`, error);
     
@@ -145,18 +133,13 @@ export const updateTestimonial = (testimonyId, testimonialData) => {
  * @returns {Promise} Promise object with the deletion status
  */
 export const deleteTestimonial = (testimonyId) => {
-  // Get the current token
-  const token = authService.getToken();
-  if (!token) {
-    console.error('Authentication token is missing');
+  // Check if user is authenticated
+  if (!authService.isAuthenticated()) {
+    console.error('User is not authenticated');
     return Promise.reject(new Error('You must be logged in to delete a testimonial'));
   }
 
-  return apiClient.delete(`/testimony/deleteTestimonyDetails/${testimonyId}`, {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  })
+  return apiClient.delete(`/testimony/deleteTestimonyDetails/${testimonyId}`)
   .catch(error => {
     console.error(`Error deleting testimonial with ID ${testimonyId}:`, error);
     
