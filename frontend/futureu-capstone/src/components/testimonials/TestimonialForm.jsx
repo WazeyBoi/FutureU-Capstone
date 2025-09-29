@@ -197,6 +197,8 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
       
       // Call the success callback with the response data
         onSubmitSuccess(response.data || testimonialData);
+        // Broadcast to refresh landing page testimonials immediately
+        try { localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); } catch {}
         
         // Since data is actually saved to the database even when we get errors later,
         // we can close the form and reset it
@@ -345,6 +347,7 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
                 rows="6"
                 className="w-full p-4 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-all shadow-sm"
                 placeholder="Tell us about your experience with this school..."
+                maxLength={200000}
                 required
               ></textarea>
             </div>
