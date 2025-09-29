@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import edu.cit.futureu.entity.CareerRecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
-import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 import edu.cit.futureu.service.CareerRecommendationService;
 import edu.cit.futureu.service.AssessmentResultService;
 import edu.cit.futureu.service.UserAssessmentService;
-import edu.cit.futureu.service.GeminiAIService;
+import edu.cit.futureu.recommendation.AdvancedRecommendationResponse;
+import edu.cit.futureu.recommendation.StructuredRecommendationService;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ public class CareerRecommendationController {
     private UserAssessmentService userAssessmentService;
 
     @Autowired
-    private GeminiAIService geminiAIService;
+    private StructuredRecommendationService structuredRecommendationService;
 
     @GetMapping("/test")
     public String test() {
@@ -167,22 +167,16 @@ public class CareerRecommendationController {
                 );
             }
             
-            // Get section results
-            List<UserAssessmentSectionResultEntity> sectionResults = 
-                userAssessmentService.getSectionResultsForAssessment(userAssessment);
-            
-            // Generate AI recommendations
-            Map<String, Object> aiRecommendations = 
-                geminiAIService.generateCareerRecommendations(resultOpt.get(), sectionResults);
-            
-            // Create a comprehensive response
+            AdvancedRecommendationResponse structured =
+                structuredRecommendationService.generate(userAssessment);
+
             Map<String, Object> response = new HashMap<>();
             response.put("assessmentId", userAssessment.getUserQuizAssessment());
             response.put("userId", userAssessment.getUser().getUserId());
             response.put("dateCompleted", userAssessment.getDateCompleted());
             response.put("overallScore", resultOpt.get().getOverallScore());
-            response.put("recommendations", aiRecommendations);
-            
+            response.put("recommendations", structured);
+
             return new ResponseEntity<>(response, HttpStatus.OK);
             
         } catch (Exception e) {

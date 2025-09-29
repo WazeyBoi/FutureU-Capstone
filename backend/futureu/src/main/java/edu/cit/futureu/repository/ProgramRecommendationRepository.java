@@ -12,4 +12,5 @@ import java.util.List;
 public interface ProgramRecommendationRepository extends JpaRepository<ProgramRecommendationEntity, Integer> {
     List<ProgramRecommendationEntity> findByAssessmentResult(AssessmentResultEntity assessmentResult);
     List<ProgramRecommendationEntity> findByProgram(ProgramEntity program);
+    ProgramRecommendationEntity findFirstByAssessmentResultAndProgram(AssessmentResultEntity assessmentResult, ProgramEntity program);
 }

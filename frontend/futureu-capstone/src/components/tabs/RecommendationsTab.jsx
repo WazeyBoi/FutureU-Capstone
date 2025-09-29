@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef, Fragment } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
-import userAssessmentService from '../../services/userAssessmentService';
-import programRecommendationService from '../../services/programRecommendationService';
-import schoolProgramService from '../../services/schoolProgramService';
-import * as programSchoolRecommendationService from '../../services/programSchoolRecommendationService';
 import { MapPin, Globe, ChevronDown, ChevronUp, School } from 'lucide-react';
 import '../../styles/animations.css'; // Import the animations CSS
 
@@ -96,19 +92,166 @@ const AccordionContent = ({ expanded, children }) => {
 };
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
+  const [recommendationPacket, setRecommendationPacket] = useState(null);
+  const [structuredRecommendations, setStructuredRecommendations] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
+  const [programRecommendations, setProgramRecommendations] = useState([]);
+  const [careerPathDetails, setCareerPathDetails] = useState([]);
+  const [dreamInsight, setDreamInsight] = useState(null);
+  const [programSchoolRecs, setProgramSchoolRecs] = useState({}); // { [programId]: { schools: [] } }
+  const [expandedPrograms, setExpandedPrograms] = useState([]); // Track expanded accordions
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkedExisting, setCheckedExisting] = useState(false);
-  const [programRecommendations, setProgramRecommendations] = useState(null);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
-  const [programError, setProgramError] = useState(null);
-  const [expandedPrograms, setExpandedPrograms] = useState([]); // Track expanded accordions
-  const [programSchoolRecs, setProgramSchoolRecs] = useState({}); // { [programId]: { schools: [] } }
-  const [loadingSchoolRecs, setLoadingSchoolRecs] = useState(false);
   const [showTip, setShowTip] = useState(true); // State to show/hide tip
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
   const tooltipRef = useRef(null);
+
+  const formatDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const processStructuredResponse = useCallback((payload) => {
+    if (!payload || !payload.recommendations) {
+      setStructuredRecommendations(null);
+      setAiRecommendations(null);
+      setProgramRecommendations([]);
+      setProgramSchoolRecs({});
+      setCareerPathDetails([]);
+      setDreamInsight(null);
+      return;
+    }
+
+    const advanced = payload.recommendations;
+    setStructuredRecommendations(advanced);
+    setDreamInsight(advanced.dreamCareerInsight || null);
+
+    const paths = Array.isArray(advanced.careerPaths) ? advanced.careerPaths : [];
+    setCareerPathDetails(paths);
+
+    const allCareers = [];
+    const allPrograms = [];
+
+    paths.forEach((path) => {
+      const pathName = path?.careerPathName || 'Career Path';
+      if (Array.isArray(path?.careers)) {
+        path.careers.forEach((career) => {
+          allCareers.push({
+            ...career,
+            pathName,
+          });
+        });
+      }
+      if (Array.isArray(path?.programs)) {
+        path.programs.forEach((program) => {
+          allPrograms.push({
+            ...program,
+            pathName,
+          });
+        });
+      }
+    });
+
+    allCareers.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+    const topCareerDetails = allCareers.slice(0, 5).map((careerDetail) => {
+      const summary = careerDetail.summary || 'This career aligns with your strengths.';
+      const pathSuffix = careerDetail.pathName ? ` | Pathway: ${careerDetail.pathName}` : '';
+      return {
+        name: careerDetail.careerTitle || 'Career Recommendation',
+        confidenceScore: careerDetail.matchPercentage,
+        description: `${summary}${pathSuffix}`,
+      };
+    });
+
+    setAiRecommendations({
+      assessmentId: payload.assessmentId,
+      overallScore: payload.overallScore,
+      recommendations: {
+        careers: topCareerDetails,
+      },
+    });
+
+    allPrograms.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+    const topPrograms = allPrograms.slice(0, 5).map((programDetail) => {
+      const summary = programDetail.summary || 'This program supports your career goals.';
+      const pathSuffix = programDetail.pathName ? ` Supports the ${programDetail.pathName} pathway.` : '';
+      return {
+        programName: programDetail.programName || 'Recommended Program',
+        programId: programDetail.programId,
+        description: summary,
+        explanation: `${summary}${pathSuffix}`,
+        confidenceScore: programDetail.matchPercentage,
+        recommendedSchools: Array.isArray(programDetail.recommendedSchools)
+          ? programDetail.recommendedSchools
+          : [],
+      };
+    });
+
+    setProgramRecommendations(topPrograms);
+    const recMap = {};
+    topPrograms.forEach((program) => {
+      if (program.programId != null) {
+        recMap[program.programId] = { schools: program.recommendedSchools || [] };
+      }
+    });
+    setProgramSchoolRecs(recMap);
+  }, []);
+
+  const fetchComprehensiveRecommendations = useCallback(async (options = {}) => {
+    const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
+    const forceRefresh = options.forceRefresh || false;
+
+    if (!forceRefresh) {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setRecommendationPacket(parsed);
+          processStructuredResponse(parsed);
+          setError(null);
+          setCheckedExisting(true);
+          return;
+        } catch (parseError) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+    }
+
+    setLoading(true);
+    try {
+      const response = await recommendationService.fetchRecommendations(userAssessmentId);
+      const payload = response.data;
+      setRecommendationPacket(payload);
+      processStructuredResponse(payload);
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      setError(null);
+    } catch (err) {
+      const status = err?.response?.status;
+      const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
+      let message = 'Failed to load recommendations.';
+      if (status === 404) {
+        message = 'No recommendations found yet. Generate new recommendations to get started.';
+      } else if (status === 400) {
+        message = backendMessage || 'Complete your assessment to unlock recommendations.';
+      } else if (backendMessage) {
+        message = backendMessage;
+      }
+      setError(message);
+      setRecommendationPacket(null);
+      processStructuredResponse(null);
+      localStorage.removeItem(storageKey);
+    } finally {
+      setCheckedExisting(true);
+      setLoading(false);
+    }
+  }, [processStructuredResponse, userAssessmentId]);
 
   // Helper to show tooltip
   const showTooltip = (e, content) => {
@@ -137,161 +280,29 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   };
   const hideTooltip = () => setTooltip(t => ({ ...t, visible: false }));
 
-  // Load from localStorage on mount
   useEffect(() => {
-    const localKey = `futureu_recommendations_${userAssessmentId}`;
-    const saved = localStorage.getItem(localKey);
-    if (saved) {
-      setAiRecommendations(JSON.parse(saved));
-      setCheckedExisting(true);
-      return;
-    }
-    // On mount, check if recommendations exist in the database
-    const fetchExistingRecommendations = async () => {
-      setLoading(true);
-      try {
-        const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-        const resultId = assessmentData.assessmentResult?.resultId;
-        const overallScore = assessmentData.assessmentResult?.overallScore || 0;
-        if (!resultId) throw new Error('No assessment result found');
-        const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
-        let recommendationsArr = [];
-        if (existingRecommendations.data && (Array.isArray(existingRecommendations.data) ? existingRecommendations.data.length > 0 : true)) {
-          recommendationsArr = Array.isArray(existingRecommendations.data) ? existingRecommendations.data : [existingRecommendations.data];
-          // Sort and format
-          const sortedRecommendations = [...recommendationsArr]
-            .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-            .slice(0, 5);
-          const formattedData = {
-            assessmentId: userAssessmentId,
-            overallScore: overallScore,
-            recommendations: {
-              careers: sortedRecommendations.map(rec => ({
-                name: rec.careerPath?.careerTitle || 'Unknown Career',
-                confidenceScore: rec.confidenceScore,
-                description: rec.description
-              }))
-            }
-          };
-          setAiRecommendations(formattedData);
-          localStorage.setItem(localKey, JSON.stringify(formattedData));
-        }
-      } catch (err) {
-        // Do not set error here, just allow button to show
-      } finally {
-        setCheckedExisting(true);
-        setLoading(false);
-      }
-    };
-    fetchExistingRecommendations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userAssessmentId]);
-
-  // Fetch program recommendations when career recommendations are loaded
-  useEffect(() => {
-    if (!aiRecommendations || !aiRecommendations.assessmentId) return;
-    const localKey = `futureu_program_recommendations_${userAssessmentId}`;
-    const saved = localStorage.getItem(localKey);
-    if (saved) {
-      setProgramRecommendations(JSON.parse(saved));
-    } else {
-      const fetchPrograms = async () => {
-        setLoadingPrograms(true);
-        try {
-          const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-          const resultId = assessmentData.assessmentResult?.resultId;
-          if (!resultId) throw new Error('No assessment result found');
-          const res = await programRecommendationService.fetchProgramRecommendationsByResult(resultId);
-          let arr = Array.isArray(res.data) ? res.data : [res.data];
-          arr = arr
-            .filter(p => p && p.program && p.program.programName)
-            .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-            .slice(0, 5)
-            .map(p => ({
-              programName: p.program.programName,
-              programId: p.program.programId,
-              description: p.program.description,
-              confidenceScore: p.confidenceScore,
-              explanation: p.explanation
-            }));
-          setProgramRecommendations(arr);
-          localStorage.setItem(localKey, JSON.stringify(arr));
-          setProgramError(null);
-        } catch (err) {
-          setProgramError('Failed to load program recommendations.');
-        } finally {
-          setLoadingPrograms(false);
-        }
-      };
-      fetchPrograms();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiRecommendations, userAssessmentId]);
-
-  // Fetch schools for all recommended programs
-  useEffect(() => {
-    if (!programRecommendations || programRecommendations.length === 0) return;
-    const programIds = programRecommendations.map(p => p.programId);
-    setLoadingSchoolRecs(true);
-    programSchoolRecommendationService.getProgramSchoolRecommendations(programIds)
-      .then((data) => {
-        // data: [{ programId, schools: [...]}]
-        const recMap = {};
-        (data || []).forEach(rec => {
-          recMap[rec.programId] = rec;
-        });
-        setProgramSchoolRecs(recMap);
-      })
-      .catch(() => {
-        setProgramSchoolRecs({});
-      })
-      .finally(() => {
-        setLoadingSchoolRecs(false);
-      });
-  }, [programRecommendations]);
+    fetchComprehensiveRecommendations();
+  }, [fetchComprehensiveRecommendations]);
 
   const handleGenerateRecommendations = async () => {
+    const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
     setLoading(true);
     try {
-      // Fetch assessment resultId
-      const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-      const resultId = assessmentData.assessmentResult?.resultId;
-      const overallScore = assessmentData.assessmentResult?.overallScore || 0;
-      if (!resultId) throw new Error('No assessment result found');
-      // Try to fetch existing recommendations
-      const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
-      let recommendationsArr = [];
-      if (existingRecommendations.data && (Array.isArray(existingRecommendations.data) ? existingRecommendations.data.length > 0 : true)) {
-        recommendationsArr = Array.isArray(existingRecommendations.data) ? existingRecommendations.data : [existingRecommendations.data];
-      } else {
-        // Generate and save recommendations if not found
-        const generated = await recommendationService.generateRecommendations(userAssessmentId);
-        recommendationsArr = Array.isArray(generated.data) ? generated.data : [generated.data];
-      }
-      // Sort and format
-      const sortedRecommendations = [...recommendationsArr]
-        .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-        .slice(0, 5);
-      const formattedData = {
-        assessmentId: userAssessmentId,
-        overallScore: overallScore,
-        recommendations: {
-          careers: sortedRecommendations.map(rec => ({
-            name: rec.careerPath?.careerTitle || 'Unknown Career',
-            confidenceScore: rec.confidenceScore,
-            description: rec.description
-          }))
-        }
-      };
-      setAiRecommendations(formattedData);
-      localStorage.setItem(`futureu_recommendations_${userAssessmentId}`, JSON.stringify(formattedData));
+      await recommendationService.generateRecommendations(userAssessmentId);
+      localStorage.removeItem(storageKey);
+      await fetchComprehensiveRecommendations({ forceRefresh: true });
       setError(null);
     } catch (err) {
-      setError('Failed to generate recommendations. Please try again later.');
+      const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
+      setError(backendMessage || 'Failed to generate recommendations. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleRefreshRecommendations = useCallback(() => {
+    fetchComprehensiveRecommendations({ forceRefresh: true });
+  }, [fetchComprehensiveRecommendations]);
 
   // Accordion toggle handler (only one open at a time)
   const handleToggleProgram = (program, idx) => {
@@ -319,6 +330,27 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             Based on your assessment results, we've identified careers and academic paths that align with your skills, 
             interests, and strengths. Explore these recommendations to find the best fit for your future.
           </p>
+          {recommendationPacket?.dateCompleted && (
+            <p className="text-xs text-gray-500 mt-3">
+              Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
+            </p>
+          )}
+          {checkedExisting && !loading && !error && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handleRefreshRecommendations}
+                className="px-4 py-2 text-sm font-semibold text-[#1D63A1] border border-[#1D63A1]/40 rounded-xl hover:bg-[#1D63A1]/10 transition-colors"
+              >
+                Refresh Recommendations
+              </button>
+              <button
+                onClick={handleGenerateRecommendations}
+                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] rounded-xl hover:from-[#232D35] hover:to-[#232D35] transition-all"
+              >
+                Regenerate Matches
+              </button>
+            </div>
+          )}
         </motion.div>
         {/* Loading state */}
         {loading && (
@@ -386,8 +418,56 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             )}
           </motion.div>
         )}
-        {/* Program recommendations - only show if loaded and not loading */}
-        {aiRecommendations && programRecommendations && !loadingPrograms && (
+        {careerPathDetails.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
+            <h3 className="text-xl font-bold text-[#232D35] mb-4">Top Career Pathways</h3>
+            <div className="space-y-6">
+              {careerPathDetails.map((path, idx) => {
+                const breakdown = path.componentBreakdown || {};
+                const careers = Array.isArray(path.careers) ? path.careers.slice(0, 3) : [];
+                return (
+                  <div key={path.careerPathId || idx} className="border border-[#1D63A1]/15 rounded-2xl p-5 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                      <div>
+                        <h4 className="text-lg font-semibold text-[#232D35]">{path.careerPathName}</h4>
+                        <p className="text-xs text-gray-500">Rank #{idx + 1}</p>
+                      </div>
+                      <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full text-sm font-bold self-start sm:self-auto">
+                        {(path.matchPercentage || 0).toFixed(1)}% Match
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                      {Object.entries(breakdown).map(([key, value]) => (
+                        <div key={key} className="bg-[#F8F9FA] rounded-xl p-3">
+                          <p className="text-xs uppercase tracking-wide text-gray-500">{key}</p>
+                          <p className="text-sm font-semibold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                        </div>
+                      ))}
+                    </div>
+                    {careers.length > 0 && (
+                      <div>
+                        <h5 className="text-sm font-semibold text-[#232D35] mb-2">Spotlight Careers</h5>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {careers.map((career) => (
+                            <div key={career.careerId} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-inner">
+                              <p className="text-sm font-semibold text-[#232D35] mb-1">{career.careerTitle}</p>
+                              <p className="text-xs text-gray-600 mb-2">{career.summary}</p>
+                              <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-full">
+                                {(career.matchPercentage || 0).toFixed(1)}% Match
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+        {/* Program recommendations - only show if computed from structured response */}
+        {structuredRecommendations && programRecommendations.length > 0 && (
           <div className="relative">
             {/* Overlapping tip container */}
             {showTip && (
@@ -395,7 +475,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-2" />
                 <div className="flex-1 flex flex-col">
                 <span className="text-left text-xs font-semibold text-white text-center flex-1 pr-2">
-                  <p className='text-lg text-[#2B3E4E]'><b>Tip</b></p> You can lick the Program to expand and see the list of schools offering it.
+                  <p className='text-lg text-[#2B3E4E]'><b>Tip</b></p> You can click a program to expand and see the list of schools offering it.
                 </span>
                 <div className='text-right pr-6'>
                   <span
@@ -411,7 +491,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
               <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
               <p className="text-sm text-gray-600 mb-2">
-                These programs are matched to your top career recommendations and assessment profile.
+                These programs are matched to your top career pathways and assessment profile.
               </p>
               <div className="space-y-6">
                 {programRecommendations.map((program, idx) => {
@@ -451,16 +531,11 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2 ">
                           Schools offering this program
                         </h5>
-                        {loadingSchoolRecs ? (
-                          <div className="flex items-center justify-center h-12">
-                            <div className="loader"></div>
-                            <div className="text-gray-500 text-sm">Loading schools...</div>
-                          </div>
-                        ) : (schools.length > 0 ? (
+                        {schools.length > 0 ? (
                           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-1">
                             {schools.map((schoolObj, schoolIdx) => {
                               const { schoolProgram, reason } = schoolObj;
-                              const school = schoolProgram.school;
+                              const school = schoolProgram?.school || schoolObj?.school;
                               const schoolLogo = schoolLogos[school?.schoolId];
                               const schoolBackground = getSchoolBackground(school?.name);
                               // Extract rank from reason if present
@@ -477,7 +552,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                               }
                               // Tooltip for full reason
                               return (
-                                <div key={schoolProgram.schoolProgramId} className={`relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group`}>
+                                <div key={schoolProgram?.schoolProgramId || `${program.programId}-${schoolIdx}`} className={`relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group`}>
                                   {/* Rank badge */}
                                   <div className="absolute top-2 right-2 z-10">
                                     <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold shadow ${rank === 1 ? 'bg-[#FFB71B] text-white' : 'bg-[#232D35] text-white'}`}>{rankLabel}</span>
@@ -523,11 +598,11 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                       <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
                                         <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
                                           <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span className="text-left text-xs">{school?.location}</span>
+                                          <span className="text-left text-xs">{school?.location || 'Location not available'}</span>
                                         </div>
                                         <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
                                           <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span>{school?.type}</span>
+                                          <span>{school?.type || 'School type unavailable'}</span>
                                         </div>
                                       </div>
                                     </div>
@@ -538,7 +613,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           </div>
                         ) : (
                           <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
-                        ))}
+                        )}
                       </AccordionContent>
                     </motion.div>
                   );
@@ -547,14 +622,75 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </motion.div>
           </div>
         )}
-        {loadingPrograms && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop mt-8">
-            <p className="text-sm text-gray-600 mb-3 mt-4">Loading your recommended programs...</p>
-          </motion.div>
-        )}
-        {programError && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 border-2 border-red-300 text-center animate-card-pop mt-8">
-            <p className="text-sm text-red-600 mb-3">{programError}</p>
+        {dreamInsight && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-[#232D35] mb-2">Dream Career Alignment</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {dreamInsight.dreamCareer
+                    ? <>Your dream career is <span className="font-semibold text-[#1D63A1]">{dreamInsight.dreamCareer}</span>.</>
+                    : 'Set a dream career in your profile to see a personalized alignment check.'}
+                </p>
+                {dreamInsight.guidance && (
+                  <div className="p-4 bg-[#F8F9FA] rounded-2xl mb-3">
+                    <h4 className="text-sm font-semibold text-[#232D35] mb-1">Focus Areas</h4>
+                    <p className="text-xs text-gray-700">{dreamInsight.guidance}</p>
+                  </div>
+                )}
+                {dreamInsight.encouragement && (
+                  <div className="p-4 bg-[#1D63A1]/10 rounded-2xl">
+                    <h4 className="text-sm font-semibold text-[#232D35] mb-1">Encouragement</h4>
+                    <p className="text-xs text-gray-700">{dreamInsight.encouragement}</p>
+                  </div>
+                )}
+              </div>
+              <div className="md:w-64 flex-shrink-0">
+                {typeof dreamInsight.closenessScore === 'number' && (
+                  <div className="p-4 bg-[#FFB71B]/10 rounded-2xl mb-4 text-center">
+                    <p className="text-xs uppercase tracking-wide text-gray-600 mb-1">Closeness Score</p>
+                    <p className="text-3xl font-bold text-[#FFB71B]">{dreamInsight.closenessScore.toFixed(1)}%</p>
+                  </div>
+                )}
+                {(dreamInsight.riasecGap || dreamInsight.aptitudeGap) && (
+                  <div className="p-4 bg-[#F8F9FA] rounded-2xl">
+                    <h4 className="text-sm font-semibold text-[#232D35] mb-2">Gap Snapshot</h4>
+                    <div className="space-y-2">
+                      {dreamInsight.riasecGap && (
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">RIASEC</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(dreamInsight.riasecGap)
+                              .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+                              .slice(0, 3)
+                              .map(([key, value]) => (
+                                <span key={key} className="px-2 py-1 text-xs bg-white rounded-full text-[#1D63A1] border border-[#1D63A1]/20">
+                                  {key}: {value.toFixed(1)}%
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                      {dreamInsight.aptitudeGap && (
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Aptitude</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(dreamInsight.aptitudeGap)
+                              .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+                              .slice(0, 3)
+                              .map(([key, value]) => (
+                                <span key={key} className="px-2 py-1 text-xs bg-white rounded-full text-[#232D35] border border-[#232D35]/15">
+                                  {key}: {value.toFixed(1)}%
+                                </span>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </motion.div>
         )}
         {/* Academic Track Recommendations - only show if recommendations exist */}
@@ -694,6 +830,7 @@ export function clearRecommendationsFromLocalStorage(userAssessmentId) {
   if (!userAssessmentId) return;
   localStorage.removeItem(`futureu_recommendations_${userAssessmentId}`);
   localStorage.removeItem(`futureu_program_recommendations_${userAssessmentId}`);
+  localStorage.removeItem(`futureu_comprehensive_recommendations_${userAssessmentId}`);
 }
 
 export default RecommendationsTab;
