@@ -36,6 +36,7 @@ import CRUD_Accreditation from './components/Admin/adminCRUD/CRUD_Accreditation.
 import CRUD_SchoolProgram from './components/Admin/adminCRUD/CRUD_SchoolProgram.jsx';
 import CRUD_User from './components/Admin/adminCRUD/CRUD_User.jsx';
 import CRUD_Career from './components/Admin/adminCRUD/CRUD_Career.jsx';
+import CRUD_CareerPath from './components/Admin/adminCRUD/CRUD_CareerPath.jsx';
 import CRUD_Testimony from './components/Admin/adminCRUD/CRUD_Testimony.jsx';
 import CRUD_Assessment from './components/Admin/adminCRUD/CRUD_Assessment.jsx';
 import CRUD_AssessmentCategory from './components/Admin/adminCRUD/CRUD_AssessmentCategory.jsx';
@@ -293,6 +294,12 @@ function App() {
             <Route path="/admin/career" element={
               <AdminRoute>
                 <CRUD_Career />
+              </AdminRoute>
+            } />
+
+            <Route path="/admin/career-path" element={
+              <AdminRoute>
+                <CRUD_CareerPath />
               </AdminRoute>
             } />
             

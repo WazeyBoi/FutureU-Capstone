@@ -6,6 +6,7 @@ import adminSchoolService from '../../services/adminServices/adminSchoolService'
 import adminProgramService from '../../services/adminServices/adminProgramService';
 import adminAccreditationService from '../../services/adminServices/adminAccreditationService';
 import adminCareerService from '../../services/adminServices/adminCareerService';
+import adminCareerPathService from '../../services/adminServices/adminCareerPathService';
 import adminQuestionService from '../../services/adminServices/adminQuestionService';
 import adminChoiceService from '../../services/adminServices/adminChoiceService';
 import adminAssessmentService from '../../services/adminServices/adminAssessmentService';
@@ -32,6 +33,7 @@ const AdminDashboardTest = () => {
   const [assessmentCount, setAssessmentCount] = useState(0);
   const [accreditationCount, setAccreditationCount] = useState(0);
   const [careerCount, setCareerCount] = useState(0);
+  const [careerPathCount, setCareerPathCount] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [choiceCount, setChoiceCount] = useState(0);
   const [assessmentCategoryCount, setAssessmentCategoryCount] = useState(0);
@@ -71,6 +73,7 @@ const AdminDashboardTest = () => {
           setAssessmentCount(data.assessmentCount);
           setAccreditationCount(data.accreditationCount);
           setCareerCount(data.careerCount);
+          setCareerPathCount(data.careerPathCount ?? 0);
           setQuestionCount(data.questionCount);
           setChoiceCount(data.choiceCount);
           setAssessmentCategoryCount(data.assessmentCategoryCount);
@@ -89,6 +92,7 @@ const AdminDashboardTest = () => {
         users,
         assessments,
         accreditations,
+        careerPaths,
         careers,
         questions,
         choices,
@@ -102,6 +106,7 @@ const AdminDashboardTest = () => {
         adminUserService.getAllUsers(),
         adminAssessmentService.getAllAssessments(),
         adminAccreditationService.getAllAccreditations(),
+        adminCareerPathService.getAllCareerPaths(),
         adminCareerService.getAllCareers(),
         adminQuestionService.getAllQuestions(),
         adminChoiceService.getAllChoices(),
@@ -117,6 +122,7 @@ const AdminDashboardTest = () => {
         userCount: users.length,
         assessmentCount: assessments.length,
         accreditationCount: accreditations.length,
+        careerPathCount: careerPaths.length,
         careerCount: careers.length,
         questionCount: questions.length,
         choiceCount: choices.length,
@@ -131,6 +137,7 @@ const AdminDashboardTest = () => {
       setUserCount(dashboardData.userCount);
       setAssessmentCount(dashboardData.assessmentCount);
       setAccreditationCount(dashboardData.accreditationCount);
+  setCareerPathCount(dashboardData.careerPathCount);
       setCareerCount(dashboardData.careerCount);
       setQuestionCount(dashboardData.questionCount);
       setChoiceCount(dashboardData.choiceCount);
@@ -196,6 +203,9 @@ const AdminDashboardTest = () => {
         break;
       case 'Program':
         navigate('/admin/program');
+        break;
+      case 'Career-Path':
+        navigate('/admin/career-path');
         break;
       case 'Accreditation':
         navigate('/admin/accreditation');
@@ -268,6 +278,7 @@ const AdminDashboardTest = () => {
     { name: 'School', icon: <School className="h-8 w-8 mb-3" />, count: schoolCount },
     { name: 'School-Program', icon: <GraduationCap className="h-8 w-8 mb-3" />, count: programCount }, // Assumption: School-Program count is same as program count
     { name: 'Program', icon: <BookOpen className="h-8 w-8 mb-3" />, count: programCount },
+    { name: 'Career-Path', icon: <TrendingUp className="h-8 w-8 mb-3" />, count: careerPathCount },
     { name: 'Accreditation', icon: <Award className="h-8 w-8 mb-3" />, count: accreditationCount },
     { name: 'Career', icon: <Briefcase className="h-8 w-8 mb-3" />, count: careerCount },
     { name: 'Question', icon: <HelpCircle className="h-8 w-8 mb-3" />, count: questionCount },
