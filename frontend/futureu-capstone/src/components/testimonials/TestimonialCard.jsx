@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaQuoteLeft, FaQuoteRight, FaUser, FaEdit, FaTrash, FaEllipsisV, FaStar } from 'react-icons/fa';
+import { FaQuoteLeft, FaQuoteRight, FaUser, FaEdit, FaTrash, FaEllipsisV, FaStar, FaGraduationCap } from 'react-icons/fa';
+import apiConfig from '../../config/apiConfig';
 
 // Star Rating Display Component
 const StarRatingDisplay = ({ rating }) => {
@@ -25,6 +26,7 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
   const [studentName, setStudentName] = useState('Student');
   const [schoolName, setSchoolName] = useState('School');
   const [showOptions, setShowOptions] = useState(false);
+  const apiOrigin = (apiConfig.baseURL || '').replace(/\/?api\/?$/i, '');
 
   useEffect(() => {
     // Log the entire structure for debugging
@@ -99,6 +101,8 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
   const description = testimonial.description || testimonial.quote || '';
   const role = 'Student'; // Default role
   const rating = testimonial.rating || 0; // Get rating or default to 0
+  const rawAvatar = testimonial.profilePictureUrl || (testimonial.student && testimonial.student.profilePictureUrl) || null;
+  const avatarUrl = rawAvatar ? (rawAvatar.startsWith('http') ? rawAvatar : `${apiOrigin}${rawAvatar}`) : null;
 
   const handleEdit = () => {
     setShowOptions(false);
@@ -137,32 +141,46 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
       className="bg-white rounded-xl shadow-md overflow-hidden"
     >
       <div className="p-6">
-        {/* User info */}
-        <div className="flex items-center mb-4">
-            <div className="bg-gray-100 rounded-full p-2 mr-4">
-            <FaUser className="text-[#2B3E4E] text-xl" />
+        <div className="flex items-start gap-4">
+          {/* Avatar column */}
+          <div className="relative mr-1 flex-shrink-0">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-yellow-400 bg-gray-100 flex items-center justify-center">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={studentName} className="w-full h-full object-cover" />
+              ) : (
+                <FaUser className="text-[#2B3E4E] text-xl" />
+              )}
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-yellow-500 rounded-full p-0.5 shadow">
+              <FaGraduationCap className="text-white text-[10px]" />
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg">{studentName}</h3>
-            <p className="text-sm text-gray-600">{role}</p>
-          </div>
-        </div>
 
-        {/* School name */}
-        <div className="mb-3">
-          <h4 className="font-semibold text-[#2B3E4E]">{schoolName}</h4>
-        </div>
-        
-        {/* Rating stars */}
-        {renderStarRating()}
-        
-        {/* Review content */}
-        <div className="relative text-gray-700 italic">
-          <FaQuoteLeft className="absolute top-0 left-0 text-[#FFB71B] opacity-30 text-xl" />
-          <p className="pl-6 pr-6 mb-4">
-            {description}
-          </p>
-          <FaQuoteRight className="absolute bottom-0 right-0 text-[#FFB71B] opacity-30 text-xl" />
+          {/* Right column: rating, quote, identity */}
+          <div className="flex-1">
+            {/* Rating */}
+            <div className="flex items-center mb-2">
+              {[1,2,3,4,5].map((star) => (
+                <FaStar key={star} className={`${star <= rating ? 'text-[#FFB71B]' : 'text-gray-300'} text-lg mr-1`} />
+              ))}
+            </div>
+
+            {/* Quote */}
+            <div className="relative text-left w-full overflow-hidden">
+              <FaQuoteLeft className="absolute -top-3 left-0 text-[#FFB71B] opacity-30 text-lg" />
+              <p className="pl-4 pr-4 mb-4 text-gray-700 whitespace-pre-wrap break-all leading-relaxed w-full">
+                {description}
+              </p>
+              <FaQuoteRight className="absolute -bottom-3 right-0 text-[#FFB71B] opacity-30 text-lg" />
+            </div>
+
+            {/* Identity */}
+            <div className="mt-2 text-left">
+              <h3 className="font-bold text-base">{studentName}</h3>
+              <p className="text-sm text-gray-600">{role}</p>
+              <p className="text-sm font-medium text-[#FFB71B]">{schoolName}</p>
+            </div>
+          </div>
         </div>
       </div>
       
