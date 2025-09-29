@@ -125,6 +125,8 @@ public class TestimonyController {
             map.put("studentId", testimony.getStudent().getUserId());
             map.put("studentFirstName", testimony.getStudent().getFirstName());
             map.put("studentLastName", testimony.getStudent().getLastname());
+            // Include user's profile picture URL if available
+            map.put("profilePictureUrl", testimony.getStudent().getProfilePictureUrl());
             map.put("userId", testimony.getStudent().getUserId()); // Add userId for ownership check on client side
         }
         
@@ -138,8 +140,19 @@ public class TestimonyController {
 
     // CREATE
     @PostMapping(value = "/postTestimonyRecord", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public TestimonyEntity postTestimonyRecord(@RequestBody TestimonyEntity testimony) {
-        return testimonyService.createTestimony(testimony);
+    public ResponseEntity<?> postTestimonyRecord(@RequestBody TestimonyEntity testimony) {
+        try {
+            TestimonyEntity saved = testimonyService.createTestimony(testimony);
+            return ResponseEntity.ok(saved);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "message", "Failed to save testimony",
+                            "error", String.valueOf(ex.getClass().getSimpleName()),
+                            "details", ex.getMessage()
+                    ));
+        }
     }
     
     // READ - Updated to return mapped data
