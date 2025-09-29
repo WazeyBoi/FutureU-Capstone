@@ -9,6 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Lob;
 
 @Entity
 @Table(name = "testimony")
@@ -30,6 +32,8 @@ public class TestimonyEntity {
     @JsonBackReference(value = "student-testimony")
     private UserEntity student;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
     
     // Rating field (1-5 stars)
