@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.futureu.entity.CareerEntity;
-import edu.cit.futureu.entity.ProgramEntity;
-import edu.cit.futureu.service.CareerProgramService;
+import edu.cit.futureu.entity.CareerPathEntity;
+import edu.cit.futureu.service.CareerCareerPathService;
+import edu.cit.futureu.service.CareerPathService;
 import edu.cit.futureu.service.CareerService;
-import edu.cit.futureu.service.ProgramService;
 
 @RestController
 @RequestMapping(method=RequestMethod.GET, path="/api/career")
@@ -28,20 +28,20 @@ public class CareerController {
     private CareerService careerService;
     
     @Autowired
-    private ProgramService programService;
+    private CareerPathService careerPathService;
     
     @Autowired
-    private CareerProgramService careerProgramService;
+    private CareerCareerPathService careerCareerPathService;
     
     @GetMapping("/test")
     public String test() {
         return "Career API is working!";
     }
     
-    // Class to handle career data with program association
+    // Class to handle career data with career path association
     public static class CareerDTO {
         private CareerEntity career;
-        private Integer programId;
+        private Integer careerPathId;
         
         public CareerEntity getCareer() {
             return career;
@@ -51,12 +51,12 @@ public class CareerController {
             this.career = career;
         }
         
-        public Integer getProgramId() {
-            return programId;
+        public Integer getCareerPathId() {
+            return careerPathId;
         }
         
-        public void setProgramId(Integer programId) {
-            this.programId = programId;
+        public void setCareerPathId(Integer careerPathId) {
+            this.careerPathId = careerPathId;
         }
     }
 
@@ -66,13 +66,13 @@ public class CareerController {
         // Save the career first
         CareerEntity savedCareer = careerService.createCareer(careerDTO.getCareer());
         
-        // Create association with program if program ID is provided
-        if (careerDTO.getProgramId() != null) {
-            careerProgramService.associateCareerWithProgram(
-                savedCareer.getCareerId(), careerDTO.getProgramId());
+        // Create association with career path if career path ID is provided
+        if (careerDTO.getCareerPathId() != null) {
+            careerCareerPathService.associateCareerWithCareerPath(
+                savedCareer.getCareerId(), careerDTO.getCareerPathId());
         }
         
-        // Fetch the updated career with its program association
+        // Fetch the updated career with its career path association
         return careerService.getCareerById(savedCareer.getCareerId()).orElse(savedCareer);
     }
     
@@ -89,14 +89,10 @@ public class CareerController {
                 .orElse(null);
     }
     
-    // Get careers by program ID
-    @GetMapping("/getCareersByProgram/{programId}")
-    public List<CareerEntity> getCareersByProgram(@PathVariable int programId) {
-        ProgramEntity program = programService.getProgramById(programId).orElse(null);
-        if (program != null) {
-            return careerService.getCareersByProgram(program);
-        }
-        return List.of(); // Return empty list if program not found
+    // Get careers by career path ID
+    @GetMapping("/getCareersByCareerPath/{careerPathId}")
+    public List<CareerEntity> getCareersByCareerPath(@PathVariable int careerPathId) {
+        return careerCareerPathService.getCareersByCareerPath(careerPathId);
     }
     
     // Search careers by title
@@ -105,19 +101,19 @@ public class CareerController {
         return careerService.searchCareersByTitle(title);
     }
     
-    // Filter careers by industry
+    // Filter by industry
     @GetMapping("/filterByIndustry")
     public List<CareerEntity> filterByIndustry(@RequestParam String industry) {
         return careerService.filterCareersByIndustry(industry);
     }
     
-    // Filter careers by job trend
+    // Filter by job trend
     @GetMapping("/filterByJobTrend")
     public List<CareerEntity> filterByJobTrend(@RequestParam String jobTrend) {
         return careerService.filterCareersByJobTrend(jobTrend);
     }
     
-    // Updated to filter by salary String
+    // Filter by salary
     @GetMapping("/filterBySalary")
     public List<CareerEntity> filterBySalary(@RequestParam String salary) {
         return careerService.filterCareersBySalary(salary);
@@ -139,16 +135,9 @@ public class CareerController {
         CareerEntity updatedCareer = careerService.updateCareer(careerDTO.getCareer());
         
         if (updatedCareer != null) {
-            // Handle program association update
-            if (careerDTO.getProgramId() != null) {
-                // Remove existing associations first (to avoid duplicates)
-                List<ProgramEntity> existingPrograms = careerProgramService.getProgramsByCareer(careerId);
-                for (ProgramEntity existingProgram : existingPrograms) {
-                    careerProgramService.deleteAssociation(careerId, existingProgram.getProgramId());
-                }
-                
-                // Create new association
-                careerProgramService.associateCareerWithProgram(careerId, careerDTO.getProgramId());
+            // Handle career path association update
+            if (careerDTO.getCareerPathId() != null) {
+                careerCareerPathService.associateCareerWithCareerPath(careerId, careerDTO.getCareerPathId());
             }
             
             // Return updated career with refreshed data
@@ -162,8 +151,6 @@ public class CareerController {
     @DeleteMapping("/deleteCareerDetails/{careerId}")
     public String deleteCareer(@PathVariable int careerId) {
         boolean deleted = careerService.deleteCareer(careerId);
-        return deleted ? 
-                "Career with ID " + careerId + " successfully deleted" : 
-                "Career with ID " + careerId + " not found";
+        return deleted ? "Career deleted successfully" : "Career not found";
     }
 }
