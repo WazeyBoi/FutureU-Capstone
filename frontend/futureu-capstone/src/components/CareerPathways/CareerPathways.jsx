@@ -1,14 +1,14 @@
 // src/components/CareerPathways/CareerPathways.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import apiClient from "../../services/api";
-import careerService from "../../services/careerService";// Assuming apiClient is in services/api.js
+import careerService from "../../services/careerService";
+import dataCacheService from "../../services/dataCache";
 import CareerHeader from "./CareerHeader";
 import CareerSidebarFilters from "./CareerSidebarFilters";
 import CareerSearchBar from "./CareerSearchBar";
 import CareerResultsTable from "./CareerResultsTable";
 import CareerDetailsModal from "./CareerDetailsModal";
-import CareerProgramsModal from "./CareerProgramsModal";
-import CareerSchoolsModal from "./CareerSchoolsModal";
 import CareerLegend from "./CareerLegend";
 
 const PAGE_SIZE = 10;
@@ -17,14 +17,17 @@ const CareerPathways = () => {
     const [careers, setCareers] = useState([]);
     const [schoolPrograms, setSchoolPrograms] = useState([]);
     const [programs, setPrograms] = useState([]);
-    const [careerPrograms, setCareerPrograms] = useState({}); // Store programs by career ID
+    const [careerPaths, setCareerPaths] = useState([]);
 
     // Filter states
     const [selectedIndustry, setSelectedIndustry] = useState("");
-    const [selectedProgram, setSelectedProgram] = useState("");
-    const [selectedSchool, setSelectedSchool] = useState(""); // Though not directly used in filter panel, it's a filter criteria
+    const [selectedCareerPath, setSelectedCareerPath] = useState("");
+    const [selectedSchool, setSelectedSchool] = useState("");
     const [selectedJobTrend, setSelectedJobTrend] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // Add missing state for program filter
+    const [selectedProgram, setSelectedProgram] = useState("");
     const [programSearch, setProgramSearch] = useState("");
 
     // UI states
@@ -35,50 +38,69 @@ const CareerPathways = () => {
     // Modal states
     const [selectedCareer, setSelectedCareer] = useState(null);
     const [showCareerModal, setShowCareerModal] = useState(false);
+    
+    // Add missing modal states for programs and schools
     const [showProgramsModal, setShowProgramsModal] = useState(false);
     const [selectedProgramsCareer, setSelectedProgramsCareer] = useState(null);
     const [showSchoolsModal, setShowSchoolsModal] = useState(false);
 
+    // Helper function to get cached data or fetch from API
+    const getCachedData = useCallback(async (cacheKey, apiUrl) => {
+        // Check cache first
+        const cached = dataCacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
 
-    // Fetch data
+        // Check if already loading
+        if (dataCacheService.isLoading(cacheKey)) {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (!dataCacheService.isLoading(cacheKey)) {
+                        clearInterval(checkInterval);
+                        resolve(dataCacheService.get(cacheKey));
+                    }
+                }, 100);
+            });
+        }
+
+        try {
+            dataCacheService.setLoading(cacheKey, true);
+            
+            const response = await apiClient.get(apiUrl);
+            const data = response.data || [];
+            
+            // Cache the result
+            dataCacheService.set(cacheKey, data);
+            
+            return data;
+        } catch (error) {
+            console.error(`Error fetching ${cacheKey}:`, error);
+            throw error;
+        } finally {
+            dataCacheService.setLoading(cacheKey, false);
+        }
+    }, []);
+
+    // Enhanced data fetching with caching
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // Fetch all programs first to ensure we have the complete program list
-                const programsRes = await apiClient.get("/program/getAllPrograms");
-                setPrograms(programsRes.data || []);
-
-                // Then fetch careers and school programs
-                const [careersRes, schoolProgramsRes] = await Promise.all([
-                    apiClient.get("/career/getAllCareers"),
-                    apiClient.get("/schoolprogram/getAllSchoolPrograms"),
+                // Use cached service for careers and cached data helper for others
+                const [careersData, programsData, schoolProgramsData, careerPathsData] = await Promise.all([
+                    careerService.getAllCareers(), // This already uses caching
+                    getCachedData('programs', '/program/getAllPrograms'),
+                    getCachedData('schoolPrograms', '/schoolprogram/getAllSchoolPrograms'),
+                    getCachedData('careerPaths', '/careerpath/getAll'),
                 ]);
 
-                if (careersRes.data) {
-                    const careersData = careersRes.data;
-                    setCareers(careersData);
-
-                    // Fetch programs for each career using the dedicated endpoint
-                    const programsByCareer = {};
-                    await Promise.all(
-                        careersData.map(async (career) => {
-                            try {
-                                const programsResponse = await apiClient.get(`/careerprogram/getProgramsByCareer/${career.careerId}`);
-                                programsByCareer[career.careerId] = programsResponse.data || [];
-                            } catch (err) {
-                                console.error(`Failed to fetch programs for career ID ${career.careerId}:`, err);
-                                programsByCareer[career.careerId] = [];
-                            }
-                        })
-                    );
-                    setCareerPrograms(programsByCareer);
-                }
-
-                if (schoolProgramsRes.data) {
-                    setSchoolPrograms(schoolProgramsRes.data);
-                }
+                setCareers(careersData);
+                setPrograms(programsData);
+                setSchoolPrograms(schoolProgramsData);
+                setCareerPaths(careerPathsData);
+                
             } catch (err) {
                 console.error("Error fetching data:", err);
                 setError("Failed to load data. Please try again later.");
@@ -86,93 +108,85 @@ const CareerPathways = () => {
                 setLoading(false);
             }
         };
+        
         fetchData();
+    }, [getCachedData]);
+
+    // Add a force refresh function for testing
+    const handleForceRefresh = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Clear all caches
+            dataCacheService.clear('careers');
+            dataCacheService.clear('programs');
+            dataCacheService.clear('schoolPrograms');
+            dataCacheService.clear('careerPaths');
+            
+            // Force refresh all data
+            const [careersData, programsData, schoolProgramsData, careerPathsData] = await Promise.all([
+                careerService.getAllCareers(true), // Force refresh
+                getCachedData('programs', '/program/getAllPrograms'),
+                getCachedData('schoolPrograms', '/schoolprogram/getAllSchoolPrograms'),
+                getCachedData('careerPaths', '/careerpath/getAll'),
+            ]);
+
+            setCareers(careersData);
+            setPrograms(programsData);
+            setSchoolPrograms(schoolProgramsData);
+            setCareerPaths(careerPathsData);
+            
+        } catch (err) {
+            console.error("Error refreshing data:", err);
+            setError("Failed to refresh data. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, [getCachedData]);
+
+    // Helper function to check if career has a specific career path (memoized)
+    const careerHasCareerPath = useCallback((career, careerPathId) => {
+        if (!career || !career.careerPaths) return false;
+        return career.careerPaths.some(cp => cp.careerPathId === parseInt(careerPathId));
     }, []);
 
     // Helper function to get programs for a career (memoized)
     const getProgramsForCareer = useCallback((career) => {
-        if (!career || !career.careerId) return [];
-        return careerPrograms[career.careerId] || [];
-    }, [careerPrograms]);
-
-    // Helper function to check if career has a specific program (memoized)
-    const careerHasProgram = useCallback((career, programId) => {
-        if (!career || !career.careerId) return false;
-        const programsForCurrCareer = careerPrograms[career.careerId] || [];
-        return programsForCurrCareer.some(p => p.programId === parseInt(programId));
-    }, [careerPrograms]);
-
-    // Derive unique programs from all careers and the programs endpoint (memoized)
-    const allPrograms = useMemo(() => {
-        const programMap = new Map();
-        programs.forEach(program => {
-            if (program && program.programId) {
-                programMap.set(program.programId, program);
-            }
-        });
-        Object.values(careerPrograms).forEach(programList => {
-            programList.forEach(program => {
-                if (program && program.programId) {
-                    programMap.set(program.programId, program);
-                }
-            });
-        });
-        return Array.from(programMap.values());
-    }, [programs, careerPrograms]);
-
-    // Derive unique schools from schoolPrograms (memoized)
-    const allSchools = useMemo(() => {
-        return Array.from(
-            new Map(
-                schoolPrograms
-                    .filter(sp => sp && sp.school)
-                    .map((sp) => [sp.school.schoolId, sp.school])
-            ).values()
-        );
-    }, [schoolPrograms]);
-
-    // Filter programs based on selected school and search term (memoized)
-    const filteredProgramsOptions = useMemo(() => {
-        let currentPrograms = allPrograms;
-        if (selectedSchool) {
-            currentPrograms = currentPrograms.filter((program) =>
-                schoolPrograms.some(
-                    (sp) =>
-                        sp && sp.program && sp.school &&
-                        sp.program.programId === program.programId &&
-                        sp.school.schoolId === Number(selectedSchool)
-                )
+        if (!career || !schoolPrograms || !programs) return [];
+        
+        // Get programs associated with this career through school programs
+        const careerPrograms = schoolPrograms
+            .filter(sp => sp.program && sp.school)
+            .map(sp => sp.program)
+            .filter((program, index, self) => 
+                self.findIndex(p => p.programId === program.programId) === index
             );
-        }
-        if (programSearch) {
-            currentPrograms = currentPrograms.filter((p) =>
-                p.programName.toLowerCase().includes(programSearch.toLowerCase())
-            );
-        }
-        return currentPrograms;
-    }, [selectedSchool, programSearch, allPrograms, schoolPrograms]);
+        
+        return careerPrograms;
+    }, [schoolPrograms, programs]);
 
-    // Helper functions for industry filtering (memoized)
-    const matchesIndustryFilter = useCallback((careerIndustry, filterIndustry) => {
-        if (!filterIndustry) return true;
-        if (careerIndustry === filterIndustry) return true;
-        if (careerIndustry.includes('/')) {
-            const parts = careerIndustry.split('/').map(part => part.trim());
-            return parts.includes(filterIndustry);
-        }
-        if (careerIndustry.includes('(')) {
-            const mainCategory = careerIndustry.split('(')[0].trim();
-            return mainCategory === filterIndustry;
-        }
-        return false;
-    }, []);
+    // Helper function to format programs preview (memoized)
+    const formatProgramsPreview = useCallback((career) => {
+        const programs = getProgramsForCareer(career);
+        if (programs.length === 0) return "No associated programs";
+        if (programs.length === 1) return programs[0].programName;
+        if (programs.length === 2) return `${programs[0].programName}, ${programs[1].programName}`;
+        return `${programs[0].programName}, ${programs[1].programName}...`;
+    }, [getProgramsForCareer]);
 
-    // Update the industries array generation to correctly extract and display industries (memoized)
+    // Helper function to format more programs text (memoized)
+    const formatMoreProgramsText = useCallback((career) => {
+        const programs = getProgramsForCareer(career);
+        const count = programs.length;
+        if (count <= 1) return "";
+        if (count === 2) return "1 more program";
+        return `${count - 1} more programs`;
+    }, [getProgramsForCareer]);
+
+    // Get unique industries (memoized)
     const industries = useMemo(() => {
-        if (!careers || careers.length === 0) return [];
-        const allIndustries = careers.map((c) => c.industry).filter(Boolean);
         const uniqueIndustries = new Set();
-        allIndustries.forEach(industry => {
+        careers.forEach(career => {
+            const industry = career.industry;
             if (!industry) return;
             if (industry.includes('(')) {
                 const mainCategory = industry.split('(')[0].trim();
@@ -191,88 +205,86 @@ const CareerPathways = () => {
     // Get unique job trends (memoized)
     const jobTrends = useMemo(() => Array.from(new Set(careers.map((c) => c.jobTrend).filter(Boolean))), [careers]);
 
+    // Filter programs based on search
+    const filteredProgramsOptions = useMemo(() => {
+        if (!programs) return [];
+        return programs.filter(program => 
+            program.programName?.toLowerCase().includes(programSearch.toLowerCase())
+        );
+    }, [programs, programSearch]);
+
+    // Create selectedFilters object
+    const selectedFilters = useMemo(() => ({
+        selectedIndustry,
+        selectedProgram,
+        selectedJobTrend,
+        searchTerm
+    }), [selectedIndustry, selectedProgram, selectedJobTrend, searchTerm]);
+
+    // Clear all filters function
+    const clearAllFilters = useCallback(() => {
+        setSelectedIndustry("");
+        setSelectedProgram("");
+        setSelectedCareerPath("");
+        setSelectedJobTrend("");
+        setSearchTerm("");
+        setProgramSearch("");
+    }, []);
+
     // Filtering logic for careers (memoized)
     const filteredCareers = useMemo(() => {
         return careers.filter((career) => {
-            const matchesIndustry = matchesIndustryFilter(career.industry, selectedIndustry);
-            const matchesProgram = !selectedProgram || careerHasProgram(career, selectedProgram);
+            const matchesIndustry = !selectedIndustry || career.industry?.toLowerCase().includes(selectedIndustry.toLowerCase());
+            const matchesCareerPath = !selectedCareerPath || careerHasCareerPath(career, selectedCareerPath);
             const matchesJobTrend = !selectedJobTrend || career.jobTrend === selectedJobTrend;
-            const matchesSearch = !searchTerm ||
-                (career.careerTitle && career.careerTitle.toLowerCase().includes(searchTerm.toLowerCase()));
+            const matchesSearch = !searchTerm || 
+                career.careerTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                career.industry?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                career.careerDescription?.toLowerCase().includes(searchTerm.toLowerCase());
 
-            return matchesIndustry && matchesProgram && matchesJobTrend && matchesSearch;
+            return matchesIndustry && matchesCareerPath && matchesJobTrend && matchesSearch;
         });
-    }, [careers, selectedIndustry, selectedProgram, selectedJobTrend, searchTerm, careerHasProgram, matchesIndustryFilter]);
+    }, [careers, selectedIndustry, selectedCareerPath, selectedJobTrend, searchTerm, careerHasCareerPath]);
 
     // Pagination logic (memoized)
     const totalPages = useMemo(() => Math.ceil(filteredCareers.length / PAGE_SIZE), [filteredCareers.length]);
-    const paginatedCareers = useMemo(() =>
-        filteredCareers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
-        [filteredCareers, currentPage]
-    );
 
+    const paginatedCareers = useMemo(() => {
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        return filteredCareers.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [filteredCareers, currentPage]);
+
+    // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedIndustry, selectedProgram, selectedJobTrend, searchTerm]);
+    }, [selectedIndustry, selectedCareerPath, selectedJobTrend, searchTerm]);
 
-    // Memoized pagination range helper
-    const getPaginationRange = useCallback((current, total) => {
-        const visiblePages = 5;
-        let start = Math.max(1, current - Math.floor(visiblePages / 2));
-        let end = start + visiblePages - 1;
-        if (end > total) {
-            end = total;
-            start = Math.max(1, end - visiblePages + 1);
-        }
+    // Helper function to get pagination range (memoized)
+    const getPaginationRange = useCallback(() => {
+        const delta = 2;
         const range = [];
-        for (let i = start; i <= end; i++) range.push(i);
-        return range;
-    }, []);
+        const rangeWithDots = [];
 
-    // Get schools offering the selected career's programs (memoized)
-    const getSchoolsForCareer = useCallback((career) => {
-        if (!career) return [];
-        const careerProgs = getProgramsForCareer(career);
-        const programIds = careerProgs.map(p => p.programId);
-
-        return schoolPrograms
-            .filter((sp) => sp && sp.program && sp.school && programIds.includes(sp.program.programId))
-            .map((sp) => sp.school)
-            .filter((school, index, self) =>
-                index === self.findIndex((s) => s.schoolId === school.schoolId)
-            );
-    }, [getProgramsForCareer, schoolPrograms]);
-
-    // Helper to get a school background (memoized)
-    const schoolBackgroundMap = useMemo(() => ({
-        "Cebu Institute of Technology": "path/to/citBackground.jpg",
-        // ...add your mappings here...
-    }), []);
-
-    const getSchoolBackground = useCallback((schoolName) => {
-        if (!schoolName) return null;
-        const normalizedName = schoolName.toLowerCase();
-        for (const [key, background] of Object.entries(schoolBackgroundMap)) {
-            if (normalizedName.includes(key.toLowerCase())) {
-                return background;
-            }
+        for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+            range.push(i);
         }
-        return null;
-    }, [schoolBackgroundMap]);
 
-    // Format program names preview (memoized)
-    const formatProgramsPreview = useCallback((career) => {
-        const programsForCurrCareer = getProgramsForCareer(career);
-        if (!programsForCurrCareer || programsForCurrCareer.length === 0) return "N/A";
-        return programsForCurrCareer[0].programName;
-    }, [getProgramsForCareer]);
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, "...");
+        } else {
+            rangeWithDots.push(1);
+        }
 
-    // Helper function to display the +X more correctly (memoized)
-    const formatMoreProgramsText = useCallback((career) => {
-        const programCount = getProgramsForCareer(career).length;
-        if (programCount <= 1) return null;
-        return `+${programCount - 1} more`;
-    }, [getProgramsForCareer]);
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push("...", totalPages);
+        } else {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots.filter((item, index, array) => array.indexOf(item) === index);
+    }, [currentPage, totalPages]);
 
     // Helper function to determine trend style (memoized)
     const getTrendStyle = useCallback((trend) => {
@@ -290,66 +302,62 @@ const CareerPathways = () => {
         return null;
     }, []);
 
-    // Handler for clicking on the programs cell (memoized)
-    const handleProgramsClick = useCallback((career) => {
-        setSelectedProgramsCareer(career);
-        setShowProgramsModal(true);
-    }, []);
-
     // Handle error display
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="bg-white rounded-lg shadow-xl p-8 max-w-md">
-                    <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
-                    <p className="text-gray-700 mb-6">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="bg-yellow-500 text-black py-2 px-4 rounded-lg hover:bg-yellow-400 transition"
-                    >
-                        Retry
-                    </button>
+            <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 px-6 flex items-center justify-center">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+                    <h3 className="text-red-800 font-semibold mb-2">Error Loading Career Data</h3>
+                    <p className="text-red-600">{error}</p>
+                    <div className="flex gap-2 mt-4">
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                            Retry
+                        </button>
+                        <button 
+                            onClick={handleForceRefresh} 
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                            Force Refresh
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <CareerHeader />
-
-            <main className="max-w-[1600px] mx-auto px-4 py-8">
-                <div className="flex flex-col lg:flex-row gap-8">
+        <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10">
+            <div className="container mx-auto px-6">
+                <CareerHeader />
+                
+                <main className="flex gap-8">
                     {/* Sidebar Filters */}
-                    <aside className="lg:w-1/4 w-full">
-                        <div className="sticky top-4">
-                            <CareerSidebarFilters
-                                industries={industries}
-                                selectedIndustry={selectedIndustry}
-                                setSelectedIndustry={setSelectedIndustry}
-                                filteredProgramsOptions={filteredProgramsOptions}
-                                programSearch={programSearch}
-                                setProgramSearch={setProgramSearch}
-                                selectedProgram={selectedProgram}
-                                setSelectedProgram={setSelectedProgram}
-                                jobTrends={jobTrends}
-                                selectedJobTrend={selectedJobTrend}
-                                setSelectedJobTrend={setSelectedJobTrend}
-                                selectedFilters={{ selectedIndustry, selectedProgram, selectedJobTrend, searchTerm }}
-                                clearAllFilters={() => {
-                                    setSelectedIndustry("");
-                                    setSelectedProgram("");
-                                    setSelectedSchool("");
-                                    setSelectedJobTrend("");
-                                    setSearchTerm("");
-                                    setProgramSearch("");
-                                }}
-                            />
-                        </div>
+                    <aside className="w-80 flex-shrink-0">
+                        <CareerSidebarFilters
+                            industries={industries}
+                            careerPaths={careerPaths}
+                            jobTrends={jobTrends}
+                            selectedIndustry={selectedIndustry}
+                            setSelectedIndustry={setSelectedIndustry}
+                            selectedCareerPath={selectedCareerPath}
+                            setSelectedCareerPath={setSelectedCareerPath}
+                            selectedJobTrend={selectedJobTrend}
+                            setSelectedJobTrend={setSelectedJobTrend}
+                            filteredProgramsOptions={filteredProgramsOptions}
+                            programSearch={programSearch}
+                            setProgramSearch={setProgramSearch}
+                            selectedProgram={selectedProgram}
+                            setSelectedProgram={setSelectedProgram}
+                            selectedFilters={selectedFilters}
+                            clearAllFilters={clearAllFilters}
+                        />
                     </aside>
 
                     {/* Main Content */}
-                    <section className="lg:w-3/4 w-full flex flex-col gap-6">
+                    <div className="flex-1">
                         <CareerSearchBar
                             searchTerm={searchTerm}
                             setSearchTerm={setSearchTerm}
@@ -366,21 +374,18 @@ const CareerPathways = () => {
                                 setCurrentPage={setCurrentPage}
                                 getPaginationRange={getPaginationRange}
                                 handleItemClick={(career) => { setSelectedCareer(career); setShowCareerModal(true); }}
+                                getTrendStyle={getTrendStyle}
+                                getTrendIcon={getTrendIcon}
                                 formatProgramsPreview={formatProgramsPreview}
                                 getProgramsForCareer={getProgramsForCareer}
                                 formatMoreProgramsText={formatMoreProgramsText}
-                                getTrendStyle={getTrendStyle}
-                                getTrendIcon={getTrendIcon}
                             />
                         </div>
 
-                        <CareerLegend
-                            getTrendStyle={getTrendStyle}
-                            getTrendIcon={getTrendIcon}
-                        />
-                    </section>
-                </div>
-            </main>
+                        <CareerLegend />
+                    </div>
+                </main>
+            </div>
 
             {/* Modals */}
             {showCareerModal && selectedCareer && (
@@ -393,27 +398,6 @@ const CareerPathways = () => {
                     getProgramsForCareer={getProgramsForCareer}
                     getTrendStyle={getTrendStyle}
                     getTrendIcon={getTrendIcon}
-                />
-            )}
-
-            {showProgramsModal && selectedProgramsCareer && (
-                <CareerProgramsModal
-                    selectedProgramsCareer={selectedProgramsCareer}
-                    setShowProgramsModal={setShowProgramsModal}
-                    getProgramsForCareer={getProgramsForCareer}
-                    getSchoolsForCareer={getSchoolsForCareer} // Passed for schools within programs
-                    schoolPrograms={schoolPrograms} // For counting schools per program
-                    getTrendStyle={getTrendStyle}
-                    getTrendIcon={getTrendIcon}
-                />
-            )}
-
-            {showSchoolsModal && selectedCareer && (
-                <CareerSchoolsModal
-                    selectedCareer={selectedCareer}
-                    setShowSchoolsModal={setShowSchoolsModal}
-                    getSchoolsForCareer={getSchoolsForCareer}
-                    getSchoolBackground={getSchoolBackground}
                 />
             )}
         </div>

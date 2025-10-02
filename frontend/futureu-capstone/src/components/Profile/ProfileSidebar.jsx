@@ -93,17 +93,26 @@ const ProfileSidebar = ({
             className="w-28 h-28 rounded-full bg-gradient-to-br from-[#1D63A1] via-[#2B3E4E] to-[#FFB71B] p-1.5 cursor-pointer group hover:shadow-2xl transition-all duration-500 hover:scale-105"
           >
             <div className="w-full h-full rounded-full overflow-hidden bg-white relative">
-              {profilePicture || user?.profilePictureUrl ? (
-                <img
-                  src={`http://localhost:8080${profilePicture || user?.profilePictureUrl}`}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FF9800]">
-                  <User className="w-16 h-16 text-white" />
-                </div>
-              )}
+              {(() => {
+                const resolveSrc = (url) => {
+                  if (!url) return null;
+                  if (/^https?:\/\//i.test(url) || /^blob:|^data:/i.test(url)) return url;
+                  return `http://localhost:8080${url}`;
+                };
+                const raw = profilePicture || user?.profilePictureUrl;
+                const src = resolveSrc(raw);
+                return src ? (
+                  <img
+                    src={src}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FF9800]">
+                    <User className="w-16 h-16 text-white" />
+                  </div>
+                );
+              })()}
               
               {/* Enhanced Upload overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-full flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-all duration-300">

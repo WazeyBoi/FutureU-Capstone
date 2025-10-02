@@ -162,7 +162,7 @@ const CareerInterestProfileSection = ({
                           <span>💡 Pro Tip</span>
                         </h5>
                         <p className="text-gray-600 text-sm leading-relaxed">
-                          Update your profile every 3-6 months as your interests evolve. This keeps your recommendations fresh and aligned with your growing aspirations!
+                          Update your profile every 6-12 months as your interests evolve. This keeps your recommendations fresh and aligned with your growing aspirations!
                         </p>
                       </div>
                     </div>
