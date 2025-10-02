@@ -110,7 +110,7 @@ const LandingPage = () => {
     };
 
     fetchTestimonials();
-
+    
     const onStorage = (e) => {
       if (e.key === 'futureu_refresh_testimonials') fetchTestimonials();
     };

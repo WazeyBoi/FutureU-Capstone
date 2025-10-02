@@ -21,8 +21,10 @@ public class CareerPathEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int careerPathId;
     
+    @Column(name = "career_path_name")
     private String careerPathName;
     
+    @Column(name = "career_path_description", columnDefinition = "TEXT")
     private String careerPathDescription;
     
     // One-to-Many relationship with CareerCareerPathEntity

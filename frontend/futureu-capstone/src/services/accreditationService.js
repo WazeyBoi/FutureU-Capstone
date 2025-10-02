@@ -1,111 +1,9 @@
 import apiClient from './api';
 import authService from './authService';
+import dataCacheService from './dataCache';
 
 /**
- * Accreditation Service
- * Handles all API requests related to accreditations
- */
-
-/**
- * Test if the accreditation API is working
- * @returns {Promise} Promise with test response
- */
-export const testAccreditationApi = () => {
-  return apiClient.get('/accreditation/test');
-};
-
-/**
- * Get all accreditations
- * @returns {Promise} Promise with all accreditations data
- */
-export const getAllAccreditations = () => {
-  return apiClient.get('/accreditation/getAllAccreditations');
-};
-
-/**
- * Get accreditation by ID
- * @param {number} accredId - The ID of the accreditation
- * @returns {Promise} Promise with accreditation data
- */
-export const getAccreditationById = (accredId) => {
-  return apiClient.get(`/accreditation/getAccreditation/${accredId}`);
-};
-
-/**
- * Get accreditations for a specific school program
- * @param {number} schoolProgramId - The ID of the school program
- * @returns {Promise} Promise with filtered accreditations data
- */
-export const getAccreditationsBySchoolProgram = (schoolProgramId) => {
-  return apiClient.get(`/accreditation/getAccreditationsBySchoolProgram/${schoolProgramId}`);
-};
-
-/**
- * Search accreditations by title
- * @param {string} title - The title to search for
- * @returns {Promise} Promise with matching accreditations
- */
-export const searchAccreditations = (title) => {
-  return apiClient.get(`/accreditation/searchAccreditations?title=${title}`);
-};
-
-/**
- * Create a new accreditation
- * @param {Object} accreditationData - The accreditation data to submit
- * @returns {Promise} Promise with the created accreditation data
- */
-export const createAccreditation = (accreditationData) => {
-  return apiClient.post('/accreditation/postAccreditationRecord', accreditationData);
-};
-
-/**
- * Update an existing accreditation
- * @param {number} accredId - The ID of the accreditation to update
- * @param {Object} accreditationData - The updated accreditation data
- * @returns {Promise} Promise with the updated accreditation data
- */
-export const updateAccreditation = (accredId, accreditationData) => {
-  return apiClient.put(`/accreditation/putAccreditationDetails?accredId=${accredId}`, accreditationData);
-};
-
-/**
- * Delete an accreditation
- * @param {number} accredId - The ID of the accreditation to delete
- * @returns {Promise} Promise with the deletion status
- */
-export const deleteAccreditation = (accredId) => {
-  return apiClient.delete(`/accreditation/deleteAccreditationDetails/${accredId}`);
-};
-
-/**
- * Get accreditations by recognition status
- * @param {string} status - The recognition status to filter by
- * @returns {Promise} Promise with filtered accreditations
- */
-export const getAccreditationsByRecognitionStatus = (status) => {
-  return apiClient.get(`/accreditation/getByRecognitionStatus?status=${status}`);
-};
-
-/**
- * Get accreditations by accrediting body
- * @param {string} body - The accrediting body to filter by
- * @returns {Promise} Promise with filtered accreditations
- */
-export const getAccreditationsByAccreditingBody = (body) => {
-  return apiClient.get(`/accreditation/getByAccreditingBody?body=${body}`);
-};
-
-/**
- * Get accreditations by accreditation level
- * @param {string} level - The accreditation level to filter by
- * @returns {Promise} Promise with filtered accreditations
- */
-export const getAccreditationsByAccreditationLevel = (level) => {
-  return apiClient.get(`/accreditation/getByAccreditationLevel?level=${level}`);
-};
-
-/**
- * Service for handling accreditation-related API requests
+ * Service for handling accreditation-related API requests with caching
  */
 class AccreditationService {
   constructor() {
@@ -148,11 +46,33 @@ class AccreditationService {
   }
 
   /**
-   * Get all accreditation data for schools and programs
+   * Get all accreditation data for schools and programs with caching
    * @param {boolean} forceRefresh - Force a refresh of the data, bypassing any caching
    * @returns {Promise<Array>} - List of schools with accreditation data
    */
   async getAllAccreditationData(forceRefresh = false) {
+    const cacheKey = 'accreditationData';
+    
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = dataCacheService.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+    
+    // Check if already loading
+    if (dataCacheService.isLoading(cacheKey)) {
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!dataCacheService.isLoading(cacheKey)) {
+            clearInterval(checkInterval);
+            resolve(dataCacheService.get(cacheKey));
+          }
+        }, 100);
+      });
+    }
+
     try {
       // Check if user is authenticated
       if (!this.ensureAuthentication()) {
@@ -166,65 +86,44 @@ class AccreditationService {
         throw new Error('Authentication required to view accreditation data');
       }
 
+      dataCacheService.setLoading(cacheKey, true);
+
       // Get list of schools
       const schoolsResponse = await apiClient.get('/school/getAllSchools', {
-        headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
+        timeout: 30000,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
-      const schools = schoolsResponse.data;
-      // console.log('Retrieved schools:', schools);
       
-      // For each school, get programs and accreditation details
+      const schools = schoolsResponse.data || [];
+      
+      // Get school programs for each school
       const schoolsWithAccreditation = await Promise.all(
         schools.map(async (school) => {
           try {
-            // Get school programs with accreditations already attached
-            const schoolProgramsResponse = await apiClient.get(`/schoolprogram/getSchoolProgramsBySchool/${school.schoolId}`, {
-              headers: forceRefresh ? { 'Cache-Control': 'no-cache' } : {}
-            });
-            const schoolPrograms = schoolProgramsResponse.data;
-            // console.log(`Programs for school ${school.name}:`, schoolPrograms);
+            const schoolProgramsResponse = await apiClient.get(
+              `/schoolprogram/getSchoolProgramsBySchool/${school.schoolId}`,
+              { timeout: 15000 }
+            );
             
-            // Get all programs for this school
-            const allPrograms = [];
-            
-            // Process school programs and their accreditations
-            for (const schoolProgram of schoolPrograms) {
-              if (schoolProgram.program) {
-                // Add the program with its accreditation (singular, not a list)
-                allPrograms.push({
-                  program: schoolProgram.program,
-                  schoolProgram: schoolProgram,
-                  accreditation: schoolProgram.accreditation
-                });
-              }
-            }
-            
-            // Deduplicate programs by program_id to avoid showing duplicates
-            const programIds = new Set();
-            const uniquePrograms = [];
-            
-            // Use filter to create a new array with unique elements
-            allPrograms.forEach(item => {
-              if (!programIds.has(item.program.programId)) {
-                programIds.add(item.program.programId);
-                uniquePrograms.push(item);
-              }
-            });
-            
-            // Clear the original array and add back the unique items
-            allPrograms.length = 0;
-            uniquePrograms.forEach(item => allPrograms.push(item));
-            
-            // console.log(`Total programs found for ${school.name}:`, allPrograms.length);
+            const schoolPrograms = schoolProgramsResponse.data || [];
             
             // Group programs by category
             const programCategories = {};
             
-            for (const item of allPrograms) {
+            for (const item of schoolPrograms) {
+              // Get the program information
               const program = item.program;
-              const category = program.programName.includes('Bachelor') ? 'Undergraduate Programs' 
-                             : program.programName.includes('Master') ? 'Graduate Programs'
-                             : 'Other Programs';
+              if (!program) continue;
+              
+              // Determine category based on program name or type
+              const category = program.programName?.toLowerCase().includes('master') || 
+                             program.programName?.toLowerCase().includes('phd') ||
+                             program.programName?.toLowerCase().includes('doctor')
+                             ? 'Graduate Programs' 
+                             : 'Undergraduate Programs';
               
               if (!programCategories[category]) {
                 programCategories[category] = [];
@@ -256,16 +155,6 @@ class AccreditationService {
                   recognitionStatus = accreditation.recognitionStatus;
                 }
               }
-              
-              // // Debug log
-              // if (item.accreditation) {
-              //   console.log(`Accreditation found for ${program.programName}:`, {
-              //     accredId: item.accreditation.accredId,
-              //     level: level,
-              //     accreditingBody: accreditingBody,
-              //     recognitionStatus: recognitionStatus
-              //   });
-              // }
               
               // Create program object
               programCategories[category].push({
@@ -329,18 +218,22 @@ class AccreditationService {
         })
       );
       
+      // Cache the result
+      dataCacheService.set(cacheKey, schoolsWithAccreditation);
+      
       return schoolsWithAccreditation;
     } catch (error) {
-      this.handleError(error, 'Fetching all accreditation data');
+      this.handleError(error, 'Fetching accreditation data');
       
-      // If no mock data is available or other error, rethrow
-      if (!this.mockData) {
-        throw error;
+      // Return mock data on error if available
+      if (this.mockData) {
+        console.warn('API failed, falling back to mock data');
+        return this.mockData;
       }
       
-      // Return mock data as fallback
-      console.warn('Using mock data as fallback due to API error');
-      return this.mockData;
+      throw error;
+    } finally {
+      dataCacheService.setLoading(cacheKey, false);
     }
   }
   
@@ -360,18 +253,17 @@ class AccreditationService {
       if (levelString.includes('I') && !levelString.includes('II') && !levelString.includes('III') && !levelString.includes('IV')) return 1;
     }
     
-    // Handle PTC-ACBET Full Accreditation
-    if (levelString.includes('Full')) return 4; // Treat Full Accreditation as Level IV
+    // Handle Roman numerals only
+    if (levelString.match(/^IV$/i)) return 4;
+    if (levelString.match(/^III$/i)) return 3;
+    if (levelString.match(/^II$/i)) return 2;
+    if (levelString.match(/^I$/i)) return 1;
     
-    // Handle other formats (like "COE Level")
-    if (levelString.includes('COE')) return 4;
-    
-    // Handle PACUCOA specific formats
-    if (levelString.includes('RA')) {
-      if (levelString.includes('III')) return 3;
-      if (levelString.includes('II')) return 2;
-      return 1;
-    }
+    // Handle numeric formats
+    if (levelString.includes('4')) return 4;
+    if (levelString.includes('3')) return 3;
+    if (levelString.includes('2')) return 2;
+    if (levelString.includes('1')) return 1;
     
     return 0;
   }
@@ -470,15 +362,15 @@ class AccreditationService {
       if (!this.isUserAuthenticated() && this.mockData) {
         const lowerQuery = query.toLowerCase();
         return this.mockData.flatMap(school => 
-            school.programs.flatMap(category => 
-              category.items.filter(program => 
+          school.programs.flatMap(category => 
+            category.items.filter(program => 
               program.name.toLowerCase().includes(lowerQuery)
             ).map(program => ({
               ...program,
               schoolName: school.name
             }))
-            )
-          );
+          )
+        );
       }
       
       // Fetch all programs and filter client-side
@@ -488,7 +380,8 @@ class AccreditationService {
       return allSchools.flatMap(school => 
         school.programs.flatMap(category => 
           category.items.filter(program => 
-            program.name.toLowerCase().includes(lowerQuery)
+            program.name.toLowerCase().includes(lowerQuery) ||
+            program.schoolName?.toLowerCase().includes(lowerQuery)
           ).map(program => ({
             ...program,
             schoolName: school.name
@@ -510,17 +403,17 @@ class AccreditationService {
     try {
       // If using mock data, filter locally
       if (!this.isUserAuthenticated() && this.mockData) {
-          let allPrograms = this.mockData.flatMap(school => 
-            school.programs.flatMap(category => 
+        let allPrograms = this.mockData.flatMap(school => 
+          school.programs.flatMap(category => 
             category.items.map(program => ({
               ...program,
               schoolName: school.name,
               category: category.category
             }))
-            )
-          );
-          
-          // Apply filters
+          )
+        );
+        
+        // Apply filters
         if (filters.schoolId) {
           const school = this.mockData.find(s => s.id === parseInt(filters.schoolId));
           if (school) {
@@ -528,20 +421,20 @@ class AccreditationService {
           }
         }
         
-          if (filters.programType) {
-            allPrograms = allPrograms.filter(p => p.category === filters.programType);
-          }
+        if (filters.programType) {
+          allPrograms = allPrograms.filter(p => p.category === filters.programType);
+        }
         
-          if (filters.accreditationLevel) {
-            allPrograms = allPrograms.filter(p => p.level === parseInt(filters.accreditationLevel));
-          }
+        if (filters.accreditationLevel) {
+          allPrograms = allPrograms.filter(p => p.level === parseInt(filters.accreditationLevel));
+        }
         
-          if (filters.recognition) {
-            allPrograms = allPrograms.filter(p => p.recognition === filters.recognition);
-          }
+        if (filters.recognition) {
+          allPrograms = allPrograms.filter(p => p.recognition === filters.recognition);
+        }
         
-        if (filters.search) {
-          const searchTerm = filters.search.toLowerCase();
+        if (filters.searchTerm) {
+          const searchTerm = filters.searchTerm.toLowerCase();
           allPrograms = allPrograms.filter(p => 
             p.name.toLowerCase().includes(searchTerm) ||
             p.schoolName.toLowerCase().includes(searchTerm)
@@ -551,11 +444,11 @@ class AccreditationService {
         if (filters.accreditedOnly) {
           allPrograms = allPrograms.filter(p => p.level > 0);
         }
-          
-          return allPrograms;
-        }
+        
+        return allPrograms;
+      }
       
-      // Fetch all programs and filter client-side
+      // If authenticated, fetch all data and filter
       const allSchools = await this.getAllAccreditationData();
       let allPrograms = allSchools.flatMap(school => 
         school.programs.flatMap(category => 
@@ -569,8 +462,7 @@ class AccreditationService {
       
       // Apply filters
       if (filters.schoolId) {
-        const schoolId = parseInt(filters.schoolId);
-        const school = allSchools.find(s => s.id === schoolId);
+        const school = allSchools.find(s => s.id === parseInt(filters.schoolId));
         if (school) {
           allPrograms = allPrograms.filter(p => p.schoolName === school.name);
         }
@@ -588,8 +480,8 @@ class AccreditationService {
         allPrograms = allPrograms.filter(p => p.recognition === filters.recognition);
       }
       
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
+      if (filters.searchTerm) {
+        const searchTerm = filters.searchTerm.toLowerCase();
         allPrograms = allPrograms.filter(p => 
           p.name.toLowerCase().includes(searchTerm) ||
           p.schoolName.toLowerCase().includes(searchTerm)
@@ -643,5 +535,50 @@ class AccreditationService {
 
 // Create an instance of the AccreditationService
 const accreditationService = new AccreditationService();
-export default accreditationService; 
+export default accreditationService;
+
+// Keep existing named exports for backward compatibility
+export const testAccreditationApi = () => {
+  return apiClient.get('/accreditation/test');
+};
+
+export const getAllAccreditations = () => {
+  return apiClient.get('/accreditation/getAllAccreditations');
+};
+
+export const getAccreditationById = (accredId) => {
+  return apiClient.get(`/accreditation/getAccreditation/${accredId}`);
+};
+
+export const getAccreditationsBySchoolProgram = (schoolProgramId) => {
+  return apiClient.get(`/accreditation/getAccreditationsBySchoolProgram/${schoolProgramId}`);
+};
+
+export const searchAccreditations = (title) => {
+  return apiClient.get(`/accreditation/searchAccreditations?title=${title}`);
+};
+
+export const createAccreditation = (accreditationData) => {
+  return apiClient.post('/accreditation/postAccreditationRecord', accreditationData);
+};
+
+export const updateAccreditation = (accredId, accreditationData) => {
+  return apiClient.put(`/accreditation/putAccreditationDetails?accredId=${accredId}`, accreditationData);
+};
+
+export const deleteAccreditation = (accredId) => {
+  return apiClient.delete(`/accreditation/deleteAccreditationDetails/${accredId}`);
+};
+
+export const getAccreditationsByRecognitionStatus = (status) => {
+  return apiClient.get(`/accreditation/getByRecognitionStatus?status=${status}`);
+};
+
+export const getAccreditationsByAccreditingBody = (body) => {
+  return apiClient.get(`/accreditation/getByAccreditingBody?body=${body}`);
+};
+
+export const getAccreditationsByAccreditationLevel = (level) => {
+  return apiClient.get(`/accreditation/getByAccreditationLevel?level=${level}`);
+};
 

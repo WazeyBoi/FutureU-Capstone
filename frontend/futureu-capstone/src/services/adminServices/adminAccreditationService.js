@@ -1,5 +1,5 @@
-
 import apiClient from '../api';
+import dataCacheService from '../dataCache';
 
 /**
  * Service for handling accreditation-related API requests for admin use
@@ -27,6 +27,11 @@ class AdminAccreditationService {
   async createAccreditation(accreditationData) {
     try {
       const response = await apiClient.post('/accreditation/postAccreditationRecord', accreditationData);
+      
+      // Clear related caches
+      dataCacheService.clear('accreditationData');
+      dataCacheService.clear('schoolPrograms');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, 'Creating accreditation');
@@ -93,6 +98,11 @@ class AdminAccreditationService {
       }
       
       const response = await apiClient.post('/accreditation/assignToSchoolPrograms', null, { params });
+      
+      // Clear related caches
+      dataCacheService.clear('accreditationData');
+      dataCacheService.clear('schoolPrograms');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, 'Assigning accreditation to programs');
@@ -118,16 +128,19 @@ class AdminAccreditationService {
   }
 
   /**
-   * Update an existing accreditation
+   * Update an accreditation
    * @param {number} accredId - The ID of the accreditation to update
-   * @param {Object} accreditationData - The updated accreditation data
+   * @param {Object} accreditationData - The new accreditation details
    * @returns {Promise<Object>} - Updated accreditation data
    */
   async updateAccreditation(accredId, accreditationData) {
     try {
-      const response = await apiClient.put('/accreditation/putAccreditationDetails', accreditationData, {
-        params: { accredId }
-      });
+      const response = await apiClient.put(`/accreditation/putAccreditationDetails?accredId=${accredId}`, accreditationData);
+      
+      // Clear related caches
+      dataCacheService.clear('accreditationData');
+      dataCacheService.clear('schoolPrograms');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, 'Updating accreditation');
@@ -143,6 +156,11 @@ class AdminAccreditationService {
   async deleteAccreditation(accredId) {
     try {
       const response = await apiClient.delete(`/accreditation/deleteAccreditationDetails/${accredId}`);
+      
+      // Clear related caches
+      dataCacheService.clear('accreditationData');
+      dataCacheService.clear('schoolPrograms');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, `Deleting accreditation with ID ${accredId}`);
@@ -156,12 +174,7 @@ class AdminAccreditationService {
    * @param {string} context - Context where the error occurred
    */
   handleError(error, context = '') {
-    console.error(`Accreditation service error${context ? ' - ' + context : ''}:`, error);
-    if (error.response) {
-      throw new Error(`Server error: ${error.response.status} - ${error.response.data.message || error.response.statusText}`);
-    } else {
-      throw new Error(`Unexpected error: ${error.message}`);
-    }
+    console.error(`Admin accreditation service error${context ? ' - ' + context : ''}:`, error);
   }
 }
 

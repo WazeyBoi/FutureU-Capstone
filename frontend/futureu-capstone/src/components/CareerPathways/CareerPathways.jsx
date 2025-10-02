@@ -1,7 +1,9 @@
 // src/components/CareerPathways/CareerPathways.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import apiClient from "../../services/api";
 import careerService from "../../services/careerService";
+import dataCacheService from "../../services/dataCache";
 import CareerHeader from "./CareerHeader";
 import CareerSidebarFilters from "./CareerSidebarFilters";
 import CareerSearchBar from "./CareerSearchBar";
@@ -23,6 +25,10 @@ const CareerPathways = () => {
     const [selectedSchool, setSelectedSchool] = useState("");
     const [selectedJobTrend, setSelectedJobTrend] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
+    
+    // Add missing state for program filter
+    const [selectedProgram, setSelectedProgram] = useState("");
+    const [programSearch, setProgramSearch] = useState("");
 
     // UI states
     const [loading, setLoading] = useState(false);
@@ -32,25 +38,69 @@ const CareerPathways = () => {
     // Modal states
     const [selectedCareer, setSelectedCareer] = useState(null);
     const [showCareerModal, setShowCareerModal] = useState(false);
+    
+    // Add missing modal states for programs and schools
+    const [showProgramsModal, setShowProgramsModal] = useState(false);
+    const [selectedProgramsCareer, setSelectedProgramsCareer] = useState(null);
+    const [showSchoolsModal, setShowSchoolsModal] = useState(false);
 
-    // Fetch data
+    // Helper function to get cached data or fetch from API
+    const getCachedData = useCallback(async (cacheKey, apiUrl) => {
+        // Check cache first
+        const cached = dataCacheService.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Check if already loading
+        if (dataCacheService.isLoading(cacheKey)) {
+            return new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (!dataCacheService.isLoading(cacheKey)) {
+                        clearInterval(checkInterval);
+                        resolve(dataCacheService.get(cacheKey));
+                    }
+                }, 100);
+            });
+        }
+
+        try {
+            dataCacheService.setLoading(cacheKey, true);
+            
+            const response = await apiClient.get(apiUrl);
+            const data = response.data || [];
+            
+            // Cache the result
+            dataCacheService.set(cacheKey, data);
+            
+            return data;
+        } catch (error) {
+            console.error(`Error fetching ${cacheKey}:`, error);
+            throw error;
+        } finally {
+            dataCacheService.setLoading(cacheKey, false);
+        }
+    }, []);
+
+    // Enhanced data fetching with caching
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // Fetch careers, programs, school programs, and career paths
-                const [careersRes, programsRes, schoolProgramsRes, careerPathsRes] = await Promise.all([
-                    apiClient.get("/career/getAllCareers"),
-                    apiClient.get("/program/getAllPrograms"),
-                    apiClient.get("/schoolprogram/getAllSchoolPrograms"),
-                    apiClient.get("/careerpath/getAll"),
+                // Use cached service for careers and cached data helper for others
+                const [careersData, programsData, schoolProgramsData, careerPathsData] = await Promise.all([
+                    careerService.getAllCareers(), // This already uses caching
+                    getCachedData('programs', '/program/getAllPrograms'),
+                    getCachedData('schoolPrograms', '/schoolprogram/getAllSchoolPrograms'),
+                    getCachedData('careerPaths', '/careerpath/getAll'),
                 ]);
 
-                setCareers(careersRes.data || []);
-                setPrograms(programsRes.data || []);
-                setSchoolPrograms(schoolProgramsRes.data || []);
-                setCareerPaths(careerPathsRes.data || []);
+                setCareers(careersData);
+                setPrograms(programsData);
+                setSchoolPrograms(schoolProgramsData);
+                setCareerPaths(careerPathsData);
+                
             } catch (err) {
                 console.error("Error fetching data:", err);
                 setError("Failed to load data. Please try again later.");
@@ -58,14 +108,79 @@ const CareerPathways = () => {
                 setLoading(false);
             }
         };
+        
         fetchData();
-    }, []);
+    }, [getCachedData]);
+
+    // Add a force refresh function for testing
+    const handleForceRefresh = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Clear all caches
+            dataCacheService.clear('careers');
+            dataCacheService.clear('programs');
+            dataCacheService.clear('schoolPrograms');
+            dataCacheService.clear('careerPaths');
+            
+            // Force refresh all data
+            const [careersData, programsData, schoolProgramsData, careerPathsData] = await Promise.all([
+                careerService.getAllCareers(true), // Force refresh
+                getCachedData('programs', '/program/getAllPrograms'),
+                getCachedData('schoolPrograms', '/schoolprogram/getAllSchoolPrograms'),
+                getCachedData('careerPaths', '/careerpath/getAll'),
+            ]);
+
+            setCareers(careersData);
+            setPrograms(programsData);
+            setSchoolPrograms(schoolProgramsData);
+            setCareerPaths(careerPathsData);
+            
+        } catch (err) {
+            console.error("Error refreshing data:", err);
+            setError("Failed to refresh data. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, [getCachedData]);
 
     // Helper function to check if career has a specific career path (memoized)
     const careerHasCareerPath = useCallback((career, careerPathId) => {
         if (!career || !career.careerPaths) return false;
         return career.careerPaths.some(cp => cp.careerPathId === parseInt(careerPathId));
     }, []);
+
+    // Helper function to get programs for a career (memoized)
+    const getProgramsForCareer = useCallback((career) => {
+        if (!career || !schoolPrograms || !programs) return [];
+        
+        // Get programs associated with this career through school programs
+        const careerPrograms = schoolPrograms
+            .filter(sp => sp.program && sp.school)
+            .map(sp => sp.program)
+            .filter((program, index, self) => 
+                self.findIndex(p => p.programId === program.programId) === index
+            );
+        
+        return careerPrograms;
+    }, [schoolPrograms, programs]);
+
+    // Helper function to format programs preview (memoized)
+    const formatProgramsPreview = useCallback((career) => {
+        const programs = getProgramsForCareer(career);
+        if (programs.length === 0) return "No associated programs";
+        if (programs.length === 1) return programs[0].programName;
+        if (programs.length === 2) return `${programs[0].programName}, ${programs[1].programName}`;
+        return `${programs[0].programName}, ${programs[1].programName}...`;
+    }, [getProgramsForCareer]);
+
+    // Helper function to format more programs text (memoized)
+    const formatMoreProgramsText = useCallback((career) => {
+        const programs = getProgramsForCareer(career);
+        const count = programs.length;
+        if (count <= 1) return "";
+        if (count === 2) return "1 more program";
+        return `${count - 1} more programs`;
+    }, [getProgramsForCareer]);
 
     // Get unique industries (memoized)
     const industries = useMemo(() => {
@@ -89,6 +204,32 @@ const CareerPathways = () => {
 
     // Get unique job trends (memoized)
     const jobTrends = useMemo(() => Array.from(new Set(careers.map((c) => c.jobTrend).filter(Boolean))), [careers]);
+
+    // Filter programs based on search
+    const filteredProgramsOptions = useMemo(() => {
+        if (!programs) return [];
+        return programs.filter(program => 
+            program.programName?.toLowerCase().includes(programSearch.toLowerCase())
+        );
+    }, [programs, programSearch]);
+
+    // Create selectedFilters object
+    const selectedFilters = useMemo(() => ({
+        selectedIndustry,
+        selectedProgram,
+        selectedJobTrend,
+        searchTerm
+    }), [selectedIndustry, selectedProgram, selectedJobTrend, searchTerm]);
+
+    // Clear all filters function
+    const clearAllFilters = useCallback(() => {
+        setSelectedIndustry("");
+        setSelectedProgram("");
+        setSelectedCareerPath("");
+        setSelectedJobTrend("");
+        setSearchTerm("");
+        setProgramSearch("");
+    }, []);
 
     // Filtering logic for careers (memoized)
     const filteredCareers = useMemo(() => {
@@ -168,12 +309,20 @@ const CareerPathways = () => {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
                     <h3 className="text-red-800 font-semibold mb-2">Error Loading Career Data</h3>
                     <p className="text-red-600">{error}</p>
-                    <button 
-                        onClick={() => window.location.reload()} 
-                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                    >
-                        Retry
-                    </button>
+                    <div className="flex gap-2 mt-4">
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                            Retry
+                        </button>
+                        <button 
+                            onClick={handleForceRefresh} 
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                        >
+                            Force Refresh
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -197,6 +346,13 @@ const CareerPathways = () => {
                             setSelectedCareerPath={setSelectedCareerPath}
                             selectedJobTrend={selectedJobTrend}
                             setSelectedJobTrend={setSelectedJobTrend}
+                            filteredProgramsOptions={filteredProgramsOptions}
+                            programSearch={programSearch}
+                            setProgramSearch={setProgramSearch}
+                            selectedProgram={selectedProgram}
+                            setSelectedProgram={setSelectedProgram}
+                            selectedFilters={selectedFilters}
+                            clearAllFilters={clearAllFilters}
                         />
                     </aside>
 
@@ -220,6 +376,9 @@ const CareerPathways = () => {
                                 handleItemClick={(career) => { setSelectedCareer(career); setShowCareerModal(true); }}
                                 getTrendStyle={getTrendStyle}
                                 getTrendIcon={getTrendIcon}
+                                formatProgramsPreview={formatProgramsPreview}
+                                getProgramsForCareer={getProgramsForCareer}
+                                formatMoreProgramsText={formatMoreProgramsText}
                             />
                         </div>
 
@@ -233,6 +392,10 @@ const CareerPathways = () => {
                 <CareerDetailsModal
                     selectedCareer={selectedCareer}
                     setShowCareerModal={setShowCareerModal}
+                    setShowProgramsModal={setShowProgramsModal}
+                    setSelectedProgramsCareer={setSelectedProgramsCareer}
+                    setShowSchoolsModal={setShowSchoolsModal}
+                    getProgramsForCareer={getProgramsForCareer}
                     getTrendStyle={getTrendStyle}
                     getTrendIcon={getTrendIcon}
                 />

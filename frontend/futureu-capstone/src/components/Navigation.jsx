@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import profileService from '../services/profileService';
+import { useProfile } from '../contexts/ProfileContext';
 import FutureULogo from '../assets/header_logo_normal.svg';
 import FutureULogo2 from '../assets/header_logo_yellow.svg';
 import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
@@ -18,7 +19,6 @@ const Navigation = () => {
   const [logoHover, setLogoHover] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
   const [showNotificationTooltip, setShowNotificationTooltip] = useState(false);
   const [showProfileWizard, setShowProfileWizard] = useState(false);
   const [tooltipPinned, setTooltipPinned] = useState(false);
@@ -26,6 +26,9 @@ const Navigation = () => {
   const notificationRef = useRef(null);
  
   const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
+  
+  // Use ProfileContext instead of local state
+  const { userProfile, getProfilePictureUrl, refreshProfile: refreshUserProfile } = useProfile();
 
   useEffect(() => {
     const authenticated = authService.isAuthenticated();
@@ -34,26 +37,21 @@ const Navigation = () => {
     if (authenticated) {
       const user = authService.getCurrentUser();
       setCurrentUser(user);
-      fetchUserProfile(user.id);
       
       let role = authService.getUserRole();
       if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
       setUserRole(role);
+      
+      // Only trigger refresh on location change, not every render
+      if (user && user.id) {
+        refreshUserProfile(true);
+        refreshProfile(true);
+      }
     } else {
       setCurrentUser(null);
-      setUserProfile(null);
       setUserRole(null);
     }
-  }, [location]);
-
-  const fetchUserProfile = async (userId) => {
-    try {
-      const profile = await profileService.getUserProfile(userId);
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-    }
-  };
+  }, [location.pathname]); // Only depend on location pathname, not the functions
 
   // Enhanced click outside handling for both dropdowns
   useEffect(() => {
@@ -94,7 +92,7 @@ const Navigation = () => {
     }
     authService.signout();
     setIsAuthenticated(false);
-    setUserProfile(null);
+    setCurrentUser(null);
     setShowDropdown(false);
     navigate('/user-landing-page');
   };
@@ -116,50 +114,38 @@ const Navigation = () => {
  
   // Handle notification hover
   const handleNotificationMouseEnter = () => {
-    if (!tooltipPinned) {
+    if (!tooltipPinned && hasProfile === false) { // Only show if no profile
       setShowNotificationTooltip(true);
-      setShowDropdown(false);
     }
   };
  
   const handleNotificationMouseLeave = () => {
     if (!tooltipPinned) {
-      setShowNotificationTooltip(false);
+      setTimeout(() => setShowNotificationTooltip(false), 300);
     }
   };
  
-  // Handle notification click to pin tooltip
-  const handleNotificationClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setTooltipPinned(true);
-    setShowNotificationTooltip(true);
-    setShowDropdown(false);
-  };
- 
-  // Handle tooltip hover to keep it visible
-  const handleTooltipMouseEnter = () => {
-    setShowNotificationTooltip(true);
-  };
- 
-  const handleTooltipMouseLeave = () => {
-    if (!tooltipPinned) {
-      setShowNotificationTooltip(false);
+  const handleNotificationClick = () => {
+    if (hasProfile === false) { // Only allow click if no profile
+      setTooltipPinned(!tooltipPinned);
+      setShowNotificationTooltip(true);
     }
   };
  
   // Handle "Set up now" button click
-  const handleSetupNowClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSetupNowClick = () => {
+    setShowProfileWizard(true);
     setShowNotificationTooltip(false);
     setTooltipPinned(false);
-    setShowProfileWizard(true);
   };
  
-  const handleProfileWizardComplete = () => {
+  const handleProfileWizardComplete = async () => {
     setShowProfileWizard(false);
-    refreshProfile();
+    // Force refresh the profile status
+    await refreshProfile(true);
+    // Also close any open tooltips
+    setShowNotificationTooltip(false);
+    setTooltipPinned(false);
   };
  
   const handleProfileWizardSkip = () => {
@@ -170,15 +156,13 @@ const Navigation = () => {
     return location.pathname === path;
   };
 
-  const getProfilePictureUrl = () => {
-    return userProfile?.profilePictureUrl || currentUser?.profilePictureUrl || null;
-  };
-
-  // Enhanced ProfilePicture component with better image quality and no flickering
+  // Enhanced ProfilePicture component with cached image support
   const ProfilePicture = ({ size = "w-10 h-10", showBorder = true, isClickable = false }) => {
     const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(true);
-    const profilePictureUrl = getProfilePictureUrl();
+    const [imageLoading, setImageLoading] = useState(false);
+    
+    // Get cached profile picture URL from ProfileContext
+    const cachedProfilePictureUrl = getProfilePictureUrl();
     
     const handleImageError = () => {
       setImageError(true);
@@ -188,7 +172,18 @@ const Navigation = () => {
     const handleImageLoad = () => {
       setImageLoading(false);
     };
-
+    
+    // Reset error state when URL changes
+    useEffect(() => {
+      if (cachedProfilePictureUrl) {
+        setImageError(false);
+        // Only set loading if it's not a blob URL (which loads instantly)
+        if (!cachedProfilePictureUrl.startsWith('blob:')) {
+          setImageLoading(true);
+        }
+      }
+    }, [cachedProfilePictureUrl]);
+    
     const borderClass = showBorder ? "border-2 border-white shadow-lg" : "";
     const hoverClass = isClickable ? "cursor-pointer hover:ring-2 hover:ring-[#FFB71B] hover:ring-offset-2 transition-all duration-200" : "";
     
@@ -197,24 +192,23 @@ const Navigation = () => {
         className={`${size} rounded-full overflow-hidden ${borderClass} ${hoverClass} relative bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80`}
         onClick={isClickable ? handleDropdownToggle : undefined}
       >
-        {profilePictureUrl && !imageError ? (
+        {cachedProfilePictureUrl && !imageError ? (
           <>
-            {/* High quality image with proper rendering - FIXED: No duplicate keys */}
-          <img
-            src={`http://localhost:8080${profilePictureUrl}`}
-            alt="Profile"
+            <img
+              src={cachedProfilePictureUrl}
+              alt="Profile"
               className="w-full h-full object-cover object-center"
               style={{
                 imageRendering: 'auto',
                 msInterpolationMode: 'nearest-neighbor'
               }}
-            onError={handleImageError}
+              onError={handleImageError}
               onLoad={handleImageLoad}
               loading="lazy"
             />
-            {/* Loading overlay */}
-            {imageLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80">
+            {/* Only show loading overlay for non-blob URLs and when actually loading */}
+            {imageLoading && !cachedProfilePictureUrl.startsWith('blob:') && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80 transition-opacity duration-200">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
@@ -233,9 +227,9 @@ const Navigation = () => {
     <div className="relative" ref={dropdownRef}>
       {/* Profile Picture Container with Notification Badge */}
       <div className="relative">
-      <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
+        <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
 
-        {/* Career Interest Profile Notification Badge - Positioned at top-right of profile picture */}
+        {/* Career Interest Profile Notification Badge - Only show if authenticated, not loading, and no profile */}
         {isAuthenticated && !profileLoading && hasProfile === false && (
           <div
             className="absolute -top-0.5 -right-0.5 z-10"
@@ -250,26 +244,20 @@ const Navigation = () => {
             >
               {/* Bigger notification badge - changed from w-3 h-3 to w-4 h-4 */}
               <div className="w-4 h-4 bg-gradient-to-r from-[#FFB71B] to-[#FF9800] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse hover:animate-none hover:scale-110 border border-white">
-                <Sparkles className="w-2 h-2 text-whitYe" />
+                <Sparkles className="w-2 h-2 text-white" />
               </div>
-             
-              {/* Pulsing ring animation - updated size to match badge */}
-              <div className="absolute inset-0 w-4 h-4 rounded-full bg-[#FFB71B] opacity-30 animate-ping"></div>
             </div>
- 
-            {/* Notification Tooltip - Rectangular, no arrow, positioned lower */}
+
+            {/* Enhanced Tooltip with better positioning and styling */}
             <AnimatePresence>
-              {showNotificationTooltip && (
+              {showNotificationTooltip && hasProfile === false && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full right-0 mt-8 z-[9999]"
-                  onMouseEnter={handleTooltipMouseEnter}
-                  onMouseLeave={handleTooltipMouseLeave}
+                  className="absolute top-6 right-0 z-[9999]"
                 >
-                  {/* Rectangular tooltip without arrow */}
                   <div className="bg-white border-2 border-[#FFB71B]/30 rounded-lg shadow-2xl w-72 p-4">
                     <div className="flex items-start space-x-3">
                       {/* FutureU Icon */}
@@ -287,13 +275,13 @@ const Navigation = () => {
                         </p>
                        
                         <div className="flex items-center justify-between">
-                        <button
-                    onClick={handleSetupNowClick}
-                      className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E]"
-                    >
-                      Set up now
-                      <ChevronDown className="w-3 h-3 ml-2 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
-                    </button>
+                          <button
+                            onClick={handleSetupNowClick}
+                            className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E]"
+                          >
+                            Set up now
+                            <ChevronDown className="w-3 h-3 ml-2 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -312,7 +300,6 @@ const Navigation = () => {
             className="fixed inset-0 z-[9998]" 
             onClick={() => setShowDropdown(false)}
           />
-          
           <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999] animate-fadeIn">
             <div className="px-4 py-3 border-b border-gray-100">
               <div className="flex items-center space-x-3">
@@ -360,54 +347,54 @@ const Navigation = () => {
   if (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') {
     return (
       <>
-      <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
-        <div className="container mx-auto">
-          <div className="flex items-center justify-between h-16 w-full">
-            {/* Brand with Logo */}
-            <Link 
-              to="/counselor-dashboard" 
-              className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
-              onMouseEnter={() => setLogoHover(true)}
-              onMouseLeave={() => setLogoHover(false)}
-            >
-              <img 
-                src={logoHover ? FutureULogo2 : FutureULogo} 
-                alt="FutureU Logo" 
-                className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
-              />
-              
-              <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
-                FutureU
-              </div>
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
-                Counselor
-              </div>
-            </Link>
-            
-            {/* Counselor Navigation Links */}
-            <div className="flex items-center space-x-1">
-              <Link
-                to="/counselor-dashboard"
-                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                  location.pathname.startsWith('/counselor-dashboard')
-                    ? 'bg-[#FFB71B] text-black shadow-lg'
-                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                }`}
+        <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
+          <div className="container mx-auto">
+            <div className="flex items-center justify-between h-16 w-full">
+              {/* Brand with Logo */}
+              <Link 
+                to="/counselor-dashboard" 
+                className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+                onMouseEnter={() => setLogoHover(true)}
+                onMouseLeave={() => setLogoHover(false)}
               >
-                <span className="relative z-10">
-                  <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
-                  Dashboard
-                </span>
+                <img 
+                  src={logoHover ? FutureULogo2 : FutureULogo} 
+                  alt="FutureU Logo" 
+                  className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+                />
+                
+                <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
+                  FutureU
+                </div>
+                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
+                  Counselor
+                </div>
               </Link>
               
-              {/* Profile Dropdown for Counselors */}
-              <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
-                <ProfileDropdown />
+              {/* Counselor Navigation Links */}
+              <div className="flex items-center space-x-1">
+                <Link
+                  to="/counselor-dashboard"
+                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    location.pathname.startsWith('/counselor-dashboard')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">
+                    <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
+                    Dashboard
+                  </span>
+                </Link>
+                
+                {/* Profile Dropdown for Counselors */}
+                <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
+                  <ProfileDropdown />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
  
         {/* Career Interest Profile Wizard for Counselors */}
         <AnimatePresence>
@@ -598,17 +585,6 @@ const Navigation = () => {
             {/* Public links (not logged in) */}
             {!isAuthenticated && (
               <>
-                <Link
-                  to="/user-landing-page"
-                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/user-landing-page')
-                      ? 'bg-[#FFB71B] text-black shadow-lg'
-                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                  }`}
-                >
-                  <span className="relative z-10">Home</span>
-                </Link>
-                 
                   <Link
                     to="/about-us"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
