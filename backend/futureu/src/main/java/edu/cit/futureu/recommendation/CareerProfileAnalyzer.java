@@ -54,10 +54,11 @@ public class CareerProfileAnalyzer {
             return vector;
         }
         analyzeText(vector, path.getCareerPathDescription());
-        if (path.getCareers() != null) {
-            for (CareerEntity career : path.getCareers()) {
-                vector.merge(buildProfile(career));
-            }
+        if (path.getCareerCareerPaths() != null) {
+            path.getCareerCareerPaths().stream()
+                .map(link -> link != null ? link.getCareer() : null)
+                .filter(career -> career != null)
+                .forEach(career -> vector.merge(buildProfile(career)));
         }
         vector.normalize();
         return vector;

@@ -1,6 +1,7 @@
 package edu.cit.futureu.recommendation;
 
 import edu.cit.futureu.entity.AssessmentResultEntity;
+import edu.cit.futureu.entity.CareerCareerPathEntity;
 import edu.cit.futureu.entity.CareerEntity;
 import edu.cit.futureu.entity.CareerInterestProfileEntity;
 import edu.cit.futureu.entity.CareerPathEntity;
@@ -109,12 +110,16 @@ public class StructuredRecommendationService {
 
     private void populateCareersForPath(CareerPathEntity path, StudentProfile studentProfile,
                                          CareerPathRecommendation recommendation) {
-        List<CareerEntity> careers = path.getCareers();
-        if (careers == null || careers.isEmpty()) {
+        List<CareerCareerPathEntity> careerLinks = path.getCareerCareerPaths();
+        if (careerLinks == null || careerLinks.isEmpty()) {
             return;
         }
         List<CareerRecommendationDetail> scoredCareers = new ArrayList<>();
-        for (CareerEntity career : careers) {
+        for (CareerCareerPathEntity link : careerLinks) {
+            CareerEntity career = link != null ? link.getCareer() : null;
+            if (career == null) {
+                continue;
+            }
             ProfileVector vector = profileAnalyzer.buildProfile(career);
             vector.normalize();
             RecommendationScore score = scoringService.score(vector, studentProfile);
