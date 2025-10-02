@@ -2,15 +2,12 @@ package edu.cit.futureu.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import edu.cit.futureu.entity.CareerEntity;
-import edu.cit.futureu.entity.CareerProgramEntity;
-import edu.cit.futureu.entity.ProgramEntity;
-import edu.cit.futureu.repository.CareerProgramRepository;
+import edu.cit.futureu.entity.CareerPathEntity;
 import edu.cit.futureu.repository.CareerRepository;
 
 @Service
@@ -18,9 +15,6 @@ public class CareerService {
 
     @Autowired
     private CareerRepository careerRepository;
-    
-    @Autowired
-    private CareerProgramRepository careerProgramRepository;
     
     // Create operations
     public CareerEntity createCareer(CareerEntity career) {
@@ -36,12 +30,9 @@ public class CareerService {
         return careerRepository.findById(id);
     }
     
-    // Updated to use the many-to-many relationship
-    public List<CareerEntity> getCareersByProgram(ProgramEntity program) {
-        List<CareerProgramEntity> associations = careerProgramRepository.findByProgram(program);
-        return associations.stream()
-            .map(CareerProgramEntity::getCareer)
-            .collect(Collectors.toList());
+    // Get careers by career path using the updated method name
+    public List<CareerEntity> getCareersByCareerPath(CareerPathEntity careerPath) {
+        return careerRepository.findByCareerPath(careerPath);
     }
     
     public List<CareerEntity> searchCareersByTitle(String title) {
@@ -69,7 +60,7 @@ public class CareerService {
         if (careerRepository.existsById(career.getCareerId())) {
             return careerRepository.save(career);
         }
-        return null; // Career not found
+        return null;
     }
     
     // Delete operations

@@ -36,7 +36,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'mainInterestsHobbies',
       title: 'What are your main interests and hobbies?',
       subtitle: 'Tell us what you enjoy doing in your free time',
-      icon: <Heart className="w-8 h-8" />,
+      icon: <Heart className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "I enjoy building and fixing computers, reading science fiction books, and playing basketball with friends on the weekends.",
       color: 'from-[#2B3E4E] via-[#1D63A1] to-[#FFB71B]',
       iconBg: 'bg-pink-100',
@@ -46,7 +46,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'dreamCareer',
       title: 'What is your dream career or ideal occupation?',
       subtitle: 'Describe your perfect job or career path',
-      icon: <Target className="w-8 h-8" />,
+      icon: <Target className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "My dream career is to become a mechanical engineer so I can design innovative machines and help solve real-world problems.",
       color: 'from-[#1D63A1] via-[#2B3E4E] to-[#FFB71B]',
       iconBg: 'bg-blue-100',
@@ -56,7 +56,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'personalStrengthsSkills',
       title: 'What personal strengths or skills do you have?',
       subtitle: 'What are you naturally good at?',
-      icon: <Star className="w-8 h-8" />,
+      icon: <Star className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "I am very good at logical thinking and problem-solving. I also communicate clearly and get along well with others in group projects.",
       color: 'from-[#FFB71B] via-[#1D63A1] to-[#2B3E4E]',
       iconBg: 'bg-amber-100',
@@ -66,7 +66,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'careerValues',
       title: 'What do you value most in a career?',
       subtitle: 'What matters most to you in your future job?',
-      icon: <Users className="w-8 h-8" />,
+      icon: <Users className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "I value creativity and making a positive difference in society. I hope to work in a career where I can help others and keep learning new things.",
       color: 'from-[#2B3E4E] via-[#FFB71B] to-[#1D63A1]',
       iconBg: 'bg-green-100',
@@ -76,7 +76,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'preferredWorkEnvironment',
       title: 'What type of working environment do you prefer?',
       subtitle: 'Describe your ideal workplace',
-      icon: <Building className="w-8 h-8" />,
+      icon: <Building className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "I prefer working in a team-based environment where everyone collaborates and supports each other. I also appreciate flexible work hours when possible.",
       color: 'from-[#1D63A1] via-[#FFB71B] to-[#2B3E4E]',
       iconBg: 'bg-purple-100',
@@ -86,7 +86,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
       id: 'educationTrainingAspirations',
       title: 'What are your education or training aspirations?',
       subtitle: 'What do you want to study or learn?',
-      icon: <GraduationCap className="w-8 h-8" />,
+      icon: <GraduationCap className="w-6 h-6 md:w-8 md:h-8" />,
       placeholder: "I would like to study engineering in college and earn professional certifications in robotics or computer-aided design after graduation.",
       color: 'from-[#FFB71B] via-[#2B3E4E] to-[#1D63A1]',
       iconBg: 'bg-indigo-100',
@@ -142,74 +142,78 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-hidden border border-gray-100"
+        className="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-4xl xl:max-w-5xl h-[98vh] sm:h-[95vh] overflow-hidden border border-gray-100 flex flex-col"
       >
-        {/* Header with App's Signature Design */}
-        <div className={`bg-gradient-to-r ${questions[currentStep].color} p-8 text-white relative overflow-hidden`}>
+        {/* Header with App's Signature Design - Responsive */}
+        <div className={`bg-gradient-to-r ${questions[currentStep].color} p-4 sm:p-6 md:p-8 text-white relative overflow-hidden flex-shrink-0`}>
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-4 right-4">
-              <Sparkles className="w-12 h-12" />
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
+              <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12" />
             </div>
-            <div className="absolute bottom-4 left-8">
-              <div className="w-20 h-20 bg-white/20 rounded-full blur-xl"></div>
+            <div className="absolute bottom-2 left-4 sm:bottom-4 sm:left-8">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-white/20 rounded-full blur-xl"></div>
             </div>
           </div>
           
-          
-          {/* Header Content */}
-          <div className="flex items-center mb-8 relative z-10">
-            <div className={`${questions[currentStep].iconBg} p-5 rounded-2xl mr-6 shadow-lg`}>
+          {/* Header Content - Responsive */}
+          <div className="flex flex-col sm:flex-row sm:items-center mb-4 sm:mb-6 md:mb-8 relative z-10">
+            <div className={`${questions[currentStep].iconBg} p-3 sm:p-4 md:p-5 rounded-xl sm:rounded-2xl mr-0 sm:mr-4 md:mr-6 shadow-lg mb-3 sm:mb-0 self-center sm:self-auto`}>
               <div className={questions[currentStep].iconColor}>
                 {questions[currentStep].icon}
               </div>
             </div>
-            <div>
-              <div className="flex items-center mb-2">
-                <h1 className="text-3xl font-bold">Let's Get to Know You!</h1>
-                <Sparkles className="w-6 h-6 ml-2 text-[#FFB71B]" />
+            <div className="text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-1 sm:mb-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Let's Get to Know You!</h1>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ml-0 sm:ml-2 text-[#FFB71B] self-center sm:self-auto mt-1 sm:mt-0" />
               </div>
-              <p className="text-white/90 text-lg font-medium">
+              <p className="text-white/90 text-sm sm:text-base md:text-lg font-medium">
                 Help us personalize your career journey with FutureU
               </p>
             </div>
           </div>
 
-          {/* Enhanced Progress Bar */}
-          <div className="mb-6 relative z-10">
-            <div className="flex justify-between items-center text-sm mb-3">
+          {/* Enhanced Progress Bar - Responsive */}
+          <div className="mb-4 sm:mb-6 relative z-10">
+            <div className="flex justify-between items-center text-xs sm:text-sm mb-2 sm:mb-3">
               <span className="font-semibold">Question {currentStep + 1} of {questions.length}</span>
-              <div className="flex items-center space-x-2">
-                <span>{getCompletedStepsCount()}/{questions.length} completed</span>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <span className="hidden sm:inline">{getCompletedStepsCount()}/{questions.length} completed</span>
                 <div className="bg-white/20 px-2 py-1 rounded-full text-xs font-medium">
                   {Math.round(((currentStep + 1) / questions.length) * 100)}%
                 </div>
               </div>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden shadow-inner">
+            
+            {/* Updated Progress Bar Design */}
+            <div className="w-full bg-white/20 rounded-full h-2.5 sm:h-3 overflow-hidden shadow-inner backdrop-blur-sm border border-white/30">
               <motion.div 
-                className="bg-white h-3 rounded-full shadow-lg"
+                className="bg-gradient-to-r from-[#FFB71B] via-white to-[#FFB71B] h-full rounded-full shadow-lg relative overflow-hidden"
                 initial={{ width: 0 }}
                 animate={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
-              />
+              >
+                {/* Animated shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse"></div>
+              </motion.div>
             </div>
             
-            {/* Step Indicators */}
-            <div className="flex justify-between mt-3">
+            {/* Step Indicators - Responsive */}
+            <div className="flex justify-between mt-2 sm:mt-3">
               {questions.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 shadow-sm ${
                     index <= currentStep
-                      ? 'bg-white shadow-lg scale-110'
-                      : 'bg-white/30'
+                      ? 'bg-gradient-to-r from-[#FFB71B] to-white shadow-lg scale-110 border border-white/30'
+                      : 'bg-white/30 border border-white/20'
                   }`}
                 />
               ))}
@@ -217,8 +221,8 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="p-10">
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -226,43 +230,44 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
+              className="h-full flex flex-col"
             >
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-[#232D35] mb-4">
+              <div className="text-center mb-6 sm:mb-8">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#232D35] mb-3 sm:mb-4 leading-tight">
                   {questions[currentStep].title}
                 </h2>
-                <p className="text-gray-600 text-xl leading-relaxed max-w-3xl mx-auto">
+                <p className="text-gray-600 text-base sm:text-lg md:text-xl leading-relaxed max-w-3xl mx-auto">
                   {questions[currentStep].subtitle}
                 </p>
               </div>
 
-              <div className="mb-8">
-                <div className="relative">
+              <div className="flex-1 flex flex-col">
+                <div className="relative flex-1">
                   <textarea
                     value={answers[questions[currentStep].id]}
                     onChange={(e) => handleInputChange(e.target.value)}
                     placeholder={questions[currentStep].placeholder}
-                    rows={7}
-                    className="w-full p-8 border-3 border-gray-200 rounded-3xl focus:ring-4 focus:ring-[#FFB71B]/20 focus:border-[#FFB71B] transition-all duration-300 resize-none text-lg leading-relaxed placeholder-gray-400 shadow-lg"
+                    rows={window.innerHeight < 700 ? 4 : 6}
+                    className="w-full h-full min-h-[120px] sm:min-h-[150px] md:min-h-[180px] p-4 sm:p-6 md:p-8 border-2 sm:border-3 border-gray-200 rounded-2xl sm:rounded-3xl focus:ring-2 sm:focus:ring-4 focus:ring-[#FFB71B]/20 focus:border-[#FFB71B] transition-all duration-300 resize-none text-sm sm:text-base md:text-lg leading-relaxed placeholder-gray-400 shadow-lg"
                     style={{
                       fontFamily: 'inherit',
                       background: 'linear-gradient(to bottom right, #f8f9fa, #ffffff)'
                     }}
                   />
                   {/* Character Counter */}
-                  <div className="absolute bottom-4 right-6 text-sm text-gray-400">
+                  <div className="absolute bottom-2 sm:bottom-4 right-3 sm:right-6 text-xs sm:text-sm text-gray-400">
                     {answers[questions[currentStep].id]?.length || 0} characters
                   </div>
                 </div>
                 
-                {/* Enhanced Tip */}
-                <div className="mt-4 flex items-start space-x-3 bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 p-4 rounded-2xl border border-[#FFB71B]/20">
-                  <div className="bg-[#FFB71B]/20 p-2 rounded-lg flex-shrink-0">
-                    <Sparkles className="w-5 h-5 text-[#FFB71B]" />
+                {/* Enhanced Tip - Responsive */}
+                <div className="mt-3 sm:mt-4 flex items-start space-x-2 sm:space-x-3 bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#FFB71B]/20">
+                  <div className="bg-[#FFB71B]/20 p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#FFB71B]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-[#232D35] mb-1">💡 Pro Tip</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs sm:text-sm font-semibold text-[#232D35] mb-1">💡 Pro Tip</p>
+                    <p className="text-xs sm:text-sm text-gray-600">
                       Be as detailed as possible to get better career recommendations! The more you share, the more personalized your results will be.
                     </p>
                   </div>
@@ -274,57 +279,57 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 mb-6 flex items-center space-x-3"
+                  className="bg-red-50 border-2 border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 mt-4 flex items-center space-x-2 sm:space-x-3"
                 >
-                  <div className="bg-red-100 p-2 rounded-lg">
-                    <X className="w-5 h-5 text-red-600" />
+                  <div className="bg-red-100 p-1.5 sm:p-2 rounded-lg">
+                    <X className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
                   </div>
-                  <p className="text-red-700 font-medium">{error}</p>
+                  <p className="text-red-700 font-medium text-sm sm:text-base">{error}</p>
                 </motion.div>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Footer */}
-        <div className="border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 p-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
+        {/* Footer - Responsive */}
+        <div className="border-t-2 border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+            <div className="flex items-center space-x-2 sm:space-x-4 order-2 sm:order-1">
               {currentStep > 0 && (
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handlePrevious}
-                  className="flex items-center px-6 py-3 border-2 border-gray-300 rounded-2xl text-gray-700 hover:bg-white hover:border-gray-400 transition-all duration-200 font-medium shadow-sm"
+                  className="flex items-center px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-xl sm:rounded-2xl text-gray-700 hover:bg-white hover:border-gray-400 transition-all duration-200 font-medium shadow-sm text-sm sm:text-base"
                 >
-                  <ChevronLeft className="w-5 h-5 mr-2" />
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                   Previous
                 </motion.button>
               )}
               
               <button
                 onClick={onSkip}
-                className="px-6 py-3 text-gray-500 hover:text-gray-700 transition-colors font-medium"
+                className="px-4 sm:px-6 py-2 sm:py-3 text-gray-500 hover:text-gray-700 transition-colors font-medium text-sm sm:text-base"
               >
                 Skip for now
               </button>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 order-1 sm:order-2">
               {currentStep < questions.length - 1 ? (
                 <motion.button
                   whileHover={{ scale: isCurrentStepAnswered() ? 1.05 : 1 }}
                   whileTap={{ scale: isCurrentStepAnswered() ? 0.95 : 1 }}
                   onClick={handleNext}
                   disabled={!isCurrentStepAnswered()}
-                  className={`flex items-center px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-lg ${
+                  className={`flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 shadow-lg text-sm sm:text-base ${
                     isCurrentStepAnswered()
                       ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] hover:shadow-xl transform hover:-translate-y-0.5'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   Continue
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2" />
                 </motion.button>
               ) : (
                 <motion.button
@@ -332,7 +337,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
                   whileTap={{ scale: (!isSubmitting && isCurrentStepAnswered()) ? 0.95 : 1 }}
                   onClick={handleSubmit}
                   disabled={isSubmitting || !isCurrentStepAnswered()}
-                  className={`flex items-center px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-lg ${
+                  className={`flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 shadow-lg text-sm sm:text-base ${
                     !isSubmitting && isCurrentStepAnswered()
                       ? 'bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white hover:shadow-xl transform hover:-translate-y-0.5'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -340,12 +345,12 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      Saving Profile...
+                      <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1 sm:mr-2" />
+                      Saving...
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-5 h-5 mr-2" />
+                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                       Complete Profile
                     </>
                   )}
@@ -355,9 +360,9 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
           </div>
           
           {/* Footer Info */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 sm:mt-6 text-center">
             <p className="text-xs text-gray-500 flex items-center justify-center space-x-2">
-              <Clock className="w-4 h-4" />
+              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Takes about 5 minutes • Your data is secure and private</span>
             </p>
           </div>

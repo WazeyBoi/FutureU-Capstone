@@ -19,41 +19,41 @@ import ohMyLeft from '../../assets/characters/ohMyLeft.svg';
 import quirky from '../../assets/characters/quirky.svg';
 import excited from '../../assets/characters/excited.svg';
 
-// Integrated LoadingScreen Component
+// Integrated LoadingScreen Component - Enhanced Responsive Design
 const LoadingScreen = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 relative overflow-hidden flex items-center justify-center">
-      {/* Background Decorative Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-16 sm:pt-20 pb-6 sm:pb-10 relative overflow-hidden flex items-center justify-center px-4">
+      {/* Background Decorative Elements - Responsive positioning */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-32 left-8 w-24 h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute top-96 right-12 w-32 h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-16 sm:top-32 left-4 sm:left-8 w-16 sm:w-24 h-16 sm:h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute top-48 sm:top-96 right-6 sm:right-12 w-20 sm:w-32 h-20 sm:h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-16 sm:bottom-32 left-1/4 w-12 sm:w-20 h-12 sm:h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-1/2 right-1/4 w-24 sm:w-40 h-24 sm:h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-pulse"></div>
       </div>
 
-      {/* Loading Content */}
+      {/* Loading Content - Responsive sizing */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative z-10 text-center"
+        className="relative z-10 text-center w-full max-w-md mx-auto"
       >
-        {/* Loading Card */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-12 border border-white/20 relative overflow-hidden max-w-md mx-auto">
+        {/* Loading Card - Responsive padding and sizing */}
+        <div className="bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl p-6 sm:p-12 border border-white/20 relative overflow-hidden">
           {/* Card Background Pattern */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#1D63A1]/5 via-transparent to-[#FFB71B]/5"></div>
           
-          {/* Mascot */}
-          <div className="relative z-10 mb-8">
+          {/* Mascot - Responsive sizing */}
+          <div className="relative z-10 mb-6 sm:mb-8">
             <motion.img
               src={quirky}
               alt="Loading mascot"
-              className="w-24 h-24 mx-auto"
+              className="w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 mx-auto"
               style={{
-                filter: 'drop-shadow(0 8px 16px rgba(255, 183, 27, 0.3))'
+                filter: 'drop-shadow(0 4px 8px rgba(255, 183, 27, 0.3)) drop-shadow(0 8px 16px rgba(255, 183, 27, 0.2))'
               }}
               animate={{
-                y: [0, -12, 0],
-                rotate: [0, 5, -5, 0]
+                y: [0, -8, 0],
+                rotate: [0, 3, -3, 0]
               }}
               transition={{
                 duration: 2,
@@ -63,26 +63,26 @@ const LoadingScreen = () => {
             />
           </div>
 
-          {/* Loading Spinner */}
-          <div className="relative z-10 mb-6">
-            <div className="w-16 h-16 mx-auto">
-              <div className="animate-spin rounded-full h-16 w-16 border-4 border-[#FFB71B]/30 border-t-[#1D63A1] shadow-lg"></div>
+          {/* Loading Spinner - Responsive sizing */}
+          <div className="relative z-10 mb-4 sm:mb-6">
+            <div className="w-12 sm:w-14 md:w-16 h-12 sm:h-14 md:h-16 mx-auto">
+              <div className="animate-spin rounded-full h-full w-full border-3 sm:border-4 border-[#FFB71B]/30 border-t-[#1D63A1] shadow-lg"></div>
             </div>
           </div>
 
-          {/* Loading Text */}
+          {/* Loading Text - Responsive typography */}
           <div className="relative z-10">
-            <h3 className="text-2xl font-bold text-[#232D35] mb-3">Loading Your Profile</h3>
-            <p className="text-gray-600 font-medium">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#232D35] mb-2 sm:mb-3">Loading Your Profile</h3>
+            <p className="text-sm sm:text-base text-gray-600 font-medium">
               Getting everything ready for you...
             </p>
             
-            {/* Loading Dots Animation */}
-            <div className="flex justify-center mt-4 space-x-1">
+            {/* Loading Dots Animation - Responsive sizing */}
+            <div className="flex justify-center mt-3 sm:mt-4 space-x-1">
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  className="w-2 h-2 bg-[#FFB71B] rounded-full"
+                  className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-[#FFB71B] rounded-full"
                   animate={{
                     scale: [1, 1.5, 1],
                     opacity: [0.5, 1, 0.5]
@@ -97,19 +97,19 @@ const LoadingScreen = () => {
             </div>
           </div>
 
-          {/* Floating Elements */}
-          <div className="absolute top-4 right-4 w-8 h-8 bg-[#1D63A1]/20 rounded-full blur-sm animate-pulse"></div>
-          <div className="absolute bottom-6 left-6 w-6 h-6 bg-[#FFB71B]/20 rounded-full blur-sm animate-pulse"></div>
+          {/* Floating Elements - Responsive positioning */}
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 w-4 sm:w-6 md:w-8 h-4 sm:h-6 md:h-8 bg-[#1D63A1]/20 rounded-full blur-sm animate-pulse"></div>
+          <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 w-3 sm:w-4 md:w-6 h-3 sm:h-4 md:h-6 bg-[#FFB71B]/20 rounded-full blur-sm animate-pulse"></div>
         </div>
 
-        {/* Motivational Message */}
+        {/* Motivational Message - Responsive spacing and sizing */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-white/30 max-w-sm mx-auto"
+          className="mt-4 sm:mt-8 bg-white/60 backdrop-blur-sm rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-white/30"
         >
-          <p className="text-[#232D35] text-sm font-medium">
+          <p className="text-[#232D35] text-xs sm:text-sm font-medium">
             ✨ Preparing your personalized dashboard experience
           </p>
         </motion.div>
@@ -333,7 +333,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-20 pb-10 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-16 sm:pt-20 pb-6 sm:pb-10 relative overflow-hidden">
       {/* Enhanced CSS for mascot animations */}
       <style>{`
         @keyframes mascotWiggle {
@@ -375,33 +375,33 @@ const ProfilePage = () => {
         }
       `}</style>
 
-      {/* Background Decorative Elements */}
+      {/* Background Decorative Elements - Responsive positioning */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-32 left-8 w-24 h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute top-96 right-12 w-32 h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-32 left-1/4 w-20 h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-bounce-slow"></div>
+        <div className="absolute top-16 sm:top-32 left-4 sm:left-8 w-16 sm:w-20 md:w-24 h-16 sm:h-20 md:h-24 bg-[#FFB71B]/10 rounded-full blur-2xl animate-pulse"></div>
+        <div className="absolute top-48 sm:top-96 right-6 sm:right-12 w-20 sm:w-24 md:w-32 h-20 sm:h-24 md:h-32 bg-[#1D63A1]/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-16 sm:bottom-32 left-1/4 w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-[#232D35]/10 rounded-full blur-xl animate-pulse"></div>
+        <div className="absolute top-1/2 right-1/4 w-24 sm:w-32 md:w-40 h-24 sm:h-32 md:h-40 bg-gradient-to-br from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl animate-bounce-slow"></div>
       </div>
 
-      <div className="container mx-auto px-6 max-w-7xl relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
         {/* Profile Header */}
         <ProfileHeader getMascotMessage={getMascotMessage} />
 
-        {/* Enhanced Alert Messages */}
+        {/* Enhanced Alert Messages - Responsive design */}
         <AnimatePresence>
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-red-50/80 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-6 py-5 rounded-2xl mb-8 shadow-lg flex items-start max-w-4xl mx-auto"
+              className="bg-red-50/80 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
             >
-              <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-4">
-                <X className="w-5 h-5 text-red-600" />
+              <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+                <X className="w-4 sm:w-5 h-4 sm:h-5 text-red-600" />
               </div>
               <div>
-                <h4 className="font-bold mb-1">Error</h4>
-                <p className="font-medium">{error}</p>
+                <h4 className="font-bold mb-1 text-sm sm:text-base">Error</h4>
+                <p className="font-medium text-sm sm:text-base">{error}</p>
               </div>
             </motion.div>
           )}
@@ -411,131 +411,23 @@ const ProfilePage = () => {
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-green-50/80 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-6 py-5 rounded-2xl mb-8 shadow-lg flex items-start max-w-4xl mx-auto"
+              className="bg-green-50/80 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
             >
-              <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-4">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+                <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
               </div>
               <div>
-                <h4 className="font-bold mb-1">Success</h4>
-                <p className="font-medium">{success}</p>
-               </div>
-
-              {/* Contact Information */}
-              <div className="space-y-6">
-                <div className="flex items-center mb-6">
-                  <div className="w-10 h-10 bg-[#FFB71B]/10 rounded-xl flex items-center justify-center mr-4">
-                    <Phone className="w-5 h-5 text-[#FFB71B]" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-[#232D35]">Contact Information</h3>
-                </div>
-
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    {editMode ? (
-                      <input
-                        type="email"
-                        value={editData.email || ''}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your email address"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <div className="flex items-center">
-                          <Mail className="w-5 h-5 mr-3 text-gray-500" />
-                          <p className="text-gray-900 font-medium">{user?.email}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Number</label>
-                    {editMode ? (
-                      <input
-                        type="tel"
-                        value={editData.contactNumber || ''}
-                        onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                        placeholder="Enter your contact number"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                        <div className="flex items-center">
-                          <Phone className="w-5 h-5 mr-3 text-gray-500" />
-                          <p className="text-gray-900 font-medium">{user?.contactNumber || 'Not provided'}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Address</label>
-                    {editMode ? (
-                      <textarea
-                        value={editData.address || ''}
-                        onChange={(e) => handleInputChange('address', e.target.value)}
-                        rows="4"
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white resize-none"
-                        placeholder="Enter your full address"
-                      />
-                    ) : (
-                      <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 min-h-[120px]">
-                        <div className="flex items-start">
-                          <MapPin className="w-5 h-5 mr-3 text-gray-500 mt-1 flex-shrink-0" />
-                          <p className="text-gray-900 font-medium leading-relaxed">
-                            {user?.address || 'Not provided'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* School Code field - only for counselors */}
-                  {(user?.role === 'GUIDANCE_COUNSELOR' || user?.role === 'CAREER_COUNSELOR') && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        School Code (For Institutional Access)
-                      </label>
-                      {editMode ? (
-                        <input
-                          type="text"
-                          value={editData.schoolCode || ''}
-                          onChange={(e) => handleInputChange('schoolCode', e.target.value)}
-                          className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors bg-gray-50 focus:bg-white"
-                          placeholder="Enter your school code (required for institutional dashboard)"
-                        />
-                      ) : (
-                        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-                          <div className="flex items-center">
-                            <Hash className="w-5 h-5 mr-3 text-green-600" />
-                            <div>
-                              <p className="text-gray-900 font-medium">
-                                {user?.schoolCode || 'Not provided'}
-                              </p>
-                              {!user?.schoolCode && (
-                                <p className="text-xs text-amber-600 mt-1">
-                                  ⚠️ School code required to access institutional dashboard
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <h4 className="font-bold mb-1 text-sm sm:text-base">Success</h4>
+                <p className="font-medium text-sm sm:text-base">{success}</p>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Main Profile Grid - Sidebar and Information Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* Main Profile Grid - Enhanced responsive grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
           {/* Left Column - Profile Overview & Actions */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-2 lg:order-1">
             <ProfileSidebar 
               user={user}
               profilePicture={profilePicture}
@@ -554,7 +446,7 @@ const ProfilePage = () => {
           </div>
 
           {/* Right Column - Profile Details */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-1 lg:order-2">
             {/* Personal Information Section */}
             <PersonalInformationSection 
               user={user}
@@ -572,12 +464,14 @@ const ProfilePage = () => {
 
         {/* Career Interest Profile Section - Full Width Below - Only for Students */}
         {user && user.role !== 'GUIDANCE_COUNSELOR' && user.role !== 'CAREER_COUNSELOR' && (
-          <CareerInterestProfileSection 
-            hasProfile={hasProfile}
-            interestProfile={interestProfile}
-            onSetupProfile={() => setShowInterestWizard(true)}
-            onEditProfile={() => setShowInterestWizard(true)}
-          />
+          <div className="order-3">
+            <CareerInterestProfileSection 
+              hasProfile={hasProfile}
+              interestProfile={interestProfile}
+              onSetupProfile={() => setShowInterestWizard(true)}
+              onEditProfile={() => setShowInterestWizard(true)}
+            />
+          </div>
         )}
       </div>
 
