@@ -61,8 +61,8 @@ function App() {
         <div className="App">
           <Navigation />
           <Routes>
-            {/* Redirect root path to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Public homepage - UserLandingPage accessible to everyone */}
+            <Route path="/" element={<UserLandingPage />} />
            
             {/* Public routes - with protection against authenticated access */}
             <Route path="/login" element={
@@ -97,15 +97,10 @@ function App() {
               </StudentRoute>
             } />
             
-            {/* Public routes */}
+            {/* Protected routes */}
             <Route path="/virtual-campus-tours" element={
               <StudentRoute>
                 <VirtualCampusToursPage />
-              </StudentRoute>
-            } />
-            <Route path="/user-landing-page" element={
-              <StudentRoute>
-                <UserLandingPage />
               </StudentRoute>
             } />
             {/* Protected routes */}

@@ -177,83 +177,73 @@ const StudentHomepage = () => {
         </div>
       ) : (
         <>
-          {/* Main Content */}
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full transform translate-x-32 -translate-y-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full transform -translate-x-24 translate-y-24"></div>
-            </div>
-            
-            <div className="relative z-10">
-              <div className="flex flex-col justify-between items-start">
-                <div className="flex-1">
-                  {/* Discover FutureU Header */}
-                  <div className="flex items-center mb-3">
-                    <Navigation className="w-6 h-6 mr-2 text-[#FFB71B]" />
+          {/* Full-width hero */}
+          <section className="w-full">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="relative overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 lg:py-24 text-white text-left">
+                  {/* Eyebrow label */}
+                  <div className="flex items-center mb-4">
+                    <Navigation className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     <span className="text-[#FFB71B] font-semibold text-sm">Your Path to Purpose</span>
                   </div>
-                  
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3">
-                    {getGreeting()}, {currentUser?.firstName || 'Future Leader'}! 👋
+                  {/* Greeting */}
+                  <h1 className="text-5xl md:text-6xl font-bold mb-8 leading-tight tracking-tight">
+                    {getGreeting()}, {currentUser?.firstName || 'Future Leader'}!
                   </h1>
-                  
-                  {/* Assessment Status */}
-                  {!hasCompletedAssessment ? (
-                    <div className="bg-white/15 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                      <div className="flex items-center mb-2">
-                        <BookOpen className="w-5 h-5 mr-2 text-[#FFB71B]" />
-                        <span className="font-semibold text-sm">Ready to Discover Your Future?</span>
+                  {/* Status card (glassy) */}
+                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl">
+                    {!hasCompletedAssessment ? (
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
+                          <BookOpen className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold mb-1">Ready to Discover Your Future?</div>
+                          <div className="text-sm text-blue-100/90 mb-4">Take our comprehensive "Discover the FutureU" assessment to unlock your potential.</div>
+                          <button
+                            onClick={() => navigate('/take-assessment/1')}
+                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Take Assessment Now
+                          </button>
+                        </div>
                       </div>
-                      <div className="text-sm text-blue-100 mb-3">
-                        Take our comprehensive "Discover the FutureU" assessment to unlock your potential
+                    ) : (
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold mb-1">Assessment Completed!</div>
+                          <div className="text-sm text-blue-100/90 mb-4">Great job! You've completed the FutureU assessment. View your results below.</div>
+                          <button
+                            onClick={handleViewResults}
+                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
+                          >
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            View My Results
+                          </button>
+                        </div>
                       </div>
-                      <button 
-                        onClick={() => navigate('/take-assessment/1')}
-                        className="bg-[#FFB71B] text-[#2B3E4E] text-sm font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
-                      >
-                        🚀 Take Assessment Now
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="bg-white/15 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                      <div className="flex items-center mb-2">
-                        <CheckCircle className="w-5 h-5 mr-2 text-[#FFB71B]" />
-                        <span className="font-semibold text-sm">Assessment Completed!</span>
-                      </div>
-                      <div className="text-sm text-blue-100 mb-3">
-                        Great job! You've completed the FutureU assessment. View your results below.
-                      </div>
-                      <button 
-                        onClick={handleViewResults}
-                        className="bg-[#FFB71B] text-[#2B3E4E] text-sm font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
-                      >
-                        📊 View My Results
-                      </button>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center text-blue-200 text-sm">
+                    )}
+                  </div>
+                  {/* Date row */}
+                  <div className="flex items-center text-blue-100/80 text-sm mt-4">
                     <Calendar className="w-4 h-4 mr-2" />
-                    {currentTime.toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
+                    {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+          </section>
+
+          {/* Main Content */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Quick Actions */}
         <motion.div
@@ -263,21 +253,21 @@ const StudentHomepage = () => {
           className="mb-8"
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[#2B3E4E] flex items-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#2B3E4E] flex items-center">
               <Zap className="w-6 h-6 mr-2 text-[#FFB71B]" />
               Your Next Actions
             </h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+            <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               Personalized for you
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickActions.map((action, index) => (
               <motion.div
                 key={index}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer border border-gray-100 relative ${
+                whileHover={{ y: -3, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
+                whileTap={{ scale: 0.99 }}
+                className={`bg-white rounded-2xl p-7 shadow-sm transition-all cursor-pointer border border-gray-100 relative text-left ${
                   action.priority ? 'ring-2 ring-[#FFB71B] ring-opacity-50' : ''
                 } ${!action.enabled && action.enabled !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={action.enabled !== false ? action.action : undefined}
@@ -287,24 +277,24 @@ const StudentHomepage = () => {
                     Priority
                   </div>
                 )}
-                <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-lg flex items-center justify-center mb-4 text-white`}>
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#2B3E4E] text-[#FFB71B]">
                   {action.icon}
                 </div>
-                <h3 className="font-semibold text-[#2B3E4E] mb-2">{action.title}</h3>
-                <p className="text-sm text-gray-600 mb-3">{action.desc}</p>
-                <div className="flex items-center text-[#1D63A1] text-sm font-medium">
-                  {action.enabled !== false ? 'Get Started' : 'Complete Assessments'} 
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                <h3 className="text-lg font-semibold text-[#2B3E4E] mb-2">{action.title}</h3>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">{action.desc}</p>
+                <div className="flex items-center text-[#1D63A1] text-sm font-semibold">
+                  {action.enabled !== false ? 'Get Started' : 'Complete Assessments'}
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </div>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* Dashboard Sections - full width */}
+        <div className="grid grid-cols-1 gap-8">
+          {/* Main Content */}
+          <div className="space-y-8">
             {/* Assessment Results Overview or Prompt */}
             {!hasCompletedAssessment ? (
               <motion.div
@@ -347,65 +337,67 @@ const StudentHomepage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+                className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden w-full text-left"
               >
-                <div className="flex items-center justify-between mb-6">
+                {/* Header bar */}
+                <div className="flex items-center justify-between bg-amber-50 px-6 py-3 border-b border-amber-100">
                   <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
-                    <Brain className="w-5 h-5 mr-2 text-[#1D63A1]" />
+                    <Brain className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     Your Assessment Overview
                   </h3>
-                  <button 
+                  <button
                     onClick={handleViewResults}
-                    className="text-[#1D63A1] text-sm font-medium hover:underline"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-blue-200 text-[#1D63A1] bg-white hover:bg-blue-50"
                   >
                     View Full Report
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                
+
                 {/* Assessment Sections */}
                 {latestAssessmentResult && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 p-6">
                     {/* GSA Overview */}
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <Trophy className="w-4 h-4 mr-2 text-blue-600" />
-                        General Scholastic Ability (GSA)
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Overall Score: <span className="font-bold text-blue-600">{latestAssessmentResult.overallScore || 'N/A'}</span>
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-blue-50">
+                      <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <Trophy className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold text-[#2B3E4E]">General Scholastic Ability (GSA)</div>
+                        <div className="text-sm text-gray-600">Overall Score: <span className="font-bold text-blue-600">{latestAssessmentResult.overallScore || 'N/A'}</span></div>
                       </div>
                     </div>
 
                     {/* RIASEC Personality */}
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <User className="w-4 h-4 mr-2 text-purple-600" />
-                        RIASEC Personality Profile
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Personality Type: <span className="font-bold text-purple-600">{latestAssessmentResult.riasecCode || 'View Results'}</span>
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-purple-50">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold text-[#2B3E4E]">RIASEC Personality Profile</div>
+                        <div className="text-sm text-gray-600">View Results</div>
                       </div>
                     </div>
 
                     {/* Career Options */}
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <Target className="w-4 h-4 mr-2 text-green-600" />
-                        Career Options
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Top matches available in your detailed results
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-green-50">
+                      <div className="w-10 h-10 rounded-xl bg-green-100 text-green-600 flex items-center justify-center">
+                        <Target className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold text-[#2B3E4E]">Career Options</div>
+                        <div className="text-sm text-gray-600">Top matches available in your detailed results</div>
                       </div>
                     </div>
 
                     {/* Program Options */}
-                    <div className="p-4 bg-orange-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <GraduationCap className="w-4 h-4 mr-2 text-orange-600" />
-                        Program Options
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Recommended academic programs based on your assessment
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-50">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                        <GraduationCap className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="font-semibold text-[#2B3E4E]">Program Options</div>
+                        <div className="text-sm text-gray-600">Recommended academic programs based on your assessment</div>
                       </div>
                     </div>
                   </div>
@@ -418,36 +410,42 @@ const StudentHomepage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+              className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 w-full"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
-                  <Globe className="w-5 h-5 mr-2 text-[#1D63A1]" />
+                <h3 className="text-2xl font-bold text-[#2B3E4E] flex items-center">
+                  <Globe className="w-6 h-6 mr-2 text-[#2B3E4E]" />
                   Exploration Tools
                 </h3>
-                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                <button
+                  onClick={() => navigate('/academic-explorer')}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-blue-200 text-[#1D63A1] bg-white hover:bg-blue-50"
+                >
                   Discover More
-                </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {studentData.explorationTools.map((tool, index) => (
                   <motion.div
                     key={index}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
+                    whileHover={{ y: -3, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
+                    whileTap={{ scale: 0.99 }}
+                    className="bg-white border border-gray-200 rounded-2xl px-6 py-5 cursor-pointer transition-all"
                     onClick={tool.action}
                   >
-                    <div className="flex items-center">
-                      <div className={`p-2 bg-gradient-to-r ${tool.color} rounded-lg mr-3 text-white`}>
-                        {tool.icon}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-left">
+                        <div className={`w-12 h-12 mr-4 rounded-xl bg-gradient-to-r ${tool.color} text-white flex items-center justify-center`}>
+                          {tool.icon}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-base font-semibold text-[#2B3E4E]">{tool.title}</div>
+                          <div className="text-sm text-gray-600">{tool.desc}</div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-[#2B3E4E]">{tool.title}</div>
-                        <div className="text-xs text-gray-600">{tool.desc}</div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400" />
+                      <ArrowRight className="w-5 h-5 text-gray-400" />
                     </div>
                   </motion.div>
                 ))}
@@ -471,10 +469,7 @@ const StudentHomepage = () => {
             </motion.div>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Keep only Exploration Tools in sidebar for now */}
-          </div>
+          {/* (Optional sidebar area removed to allow full-width cards) */}
         </div>
       </main>
       </>

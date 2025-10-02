@@ -94,7 +94,7 @@ const Navigation = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setShowDropdown(false);
-    navigate('/user-landing-page');
+    navigate('/');
   };
 
   const handleProfileClick = (e) => {
@@ -417,7 +417,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16 w-full">
           {/* Brand with Logo */}
           <Link 
-            to={userRole === 'ADMIN' ? '/admin-dashboard' : '/user-landing-page'} 
+            to={userRole === 'ADMIN' ? '/admin-dashboard' : '/student-home'} 
             className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
             onMouseEnter={() => setLogoHover(true)}
             onMouseLeave={() => setLogoHover(false)}
@@ -493,9 +493,9 @@ const Navigation = () => {
             {isAuthenticated && userRole !== 'ADMIN' && (
               <>
                 <Link
-                  to="/user-landing-page"
+                  to="/student-home"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/user-landing-page')
+                    isActive('/student-home')
                       ? 'bg-[#FFB71B] text-black shadow-lg'
                       : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
@@ -585,6 +585,18 @@ const Navigation = () => {
             {/* Public links (not logged in) */}
             {!isAuthenticated && (
               <>
+
+                <Link
+                  to="/"
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    isActive('/')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">Home</span>
+                </Link>
+                 
                   <Link
                     to="/about-us"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${

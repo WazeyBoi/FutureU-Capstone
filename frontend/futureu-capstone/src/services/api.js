@@ -49,9 +49,22 @@ apiClient.interceptors.response.use(
         // Retry the original request
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Refresh failed, redirect to login
+        // Refresh failed
         console.error('Token refresh failed:', refreshError);
-        window.location.href = '/login';
+
+        // Determine if current page is public. If it is, do NOT hard-redirect.
+        // This prevents public pages (like landing) from bouncing to /login
+        try {
+          const currentPath = window.location?.pathname || '/';
+          const publicPaths = ['/', '/about-us'];
+          const isPublic = publicPaths.some(p => currentPath === p || currentPath.startsWith(p));
+          if (!isPublic) {
+            window.location.href = '/login';
+          }
+        } catch (_) {
+          // In non-browser contexts, just ignore
+        }
+
         return Promise.reject(refreshError);
       }
     }
