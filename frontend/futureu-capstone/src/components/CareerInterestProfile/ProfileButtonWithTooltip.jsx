@@ -17,9 +17,18 @@ const ProfileButtonWithTooltip = ({
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleImageError = () => {
-    setImageError(true);
+  const resolveSrc = (url) => {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url) || /^blob:|^data:/i.test(url)) return url;
+    return `http://localhost:8080${url}`;
   };
+
+  const handleImageError = () => setImageError(true);
+
+  // Reset image error if URL changes (e.g., new upload finishes)
+  React.useEffect(() => {
+    setImageError(false);
+  }, [profilePictureUrl]);
 
   // Handle notification hover
   const handleNotificationMouseEnter = () => {
@@ -74,7 +83,7 @@ const ProfileButtonWithTooltip = ({
         <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-lg hover:ring-2 hover:ring-[#FFB71B] hover:ring-offset-2 transition-all duration-200">
           {profilePictureUrl && !imageError ? (
             <img
-              src={`http://localhost:8080${profilePictureUrl}`}
+              src={resolveSrc(profilePictureUrl)}
               alt="Profile"
               className="w-full h-full object-cover"
               onError={handleImageError}
