@@ -90,12 +90,10 @@ export const getAlumniCount = async () => {
  */
 export const getStudentCount = async () => {
   try {
-    const users = await adminUserService.getAllUsers();
-    const students = users.filter(user => 
-      user.role === 'STUDENT' || 
-      (user.userType && user.userType.toUpperCase() === 'STUDENT')
-    );
-    return students.length;
+    // Use lightweight public count endpoint instead of fetching all users
+    const response = await apiClient.get('/user/public/countStudents');
+    const count = typeof response.data === 'number' ? response.data : 0;
+    return count;
   } catch (error) {
     console.error('Error fetching student count:', error);
     return 0;
