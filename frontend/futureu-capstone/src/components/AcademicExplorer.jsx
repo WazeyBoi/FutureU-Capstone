@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-// import axios from 'axios'; // Remove this import
-import apiClient from '../services/api'; // Import the configured apiClient instead
+import apiClient from '../services/api';
+import schoolService from '../services/schoolService';
+import programService from '../services/programService';
+import schoolProgramService from '../services/schoolProgramService';
 import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, StarOff, Filter, AlertCircle, Compass, Building } from 'lucide-react';
-import { useLocation, useNavigate } from "react-router-dom"; // Add useNavigate
-import authService from '../services/authService'; // Import authService for auth checks
-import schoolProgramService from '../services/schoolProgramService'; // Import schoolProgramService
+import { useLocation, useNavigate } from "react-router-dom";
+import authService from '../services/authService';
 
 import ohMy from '../assets/characters/ohMy.svg';
 import ohMyLeft from '../assets/characters/ohMyLeft.svg';
@@ -298,16 +299,20 @@ const AcademicExplorer = () => {
     }
   }, [location.search]);
 
+  // Updated data fetching with cached services
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // Use cached services instead of direct API calls
         const [programsResponse, schoolsResponse] = await Promise.all([
-          apiClient.get('/program/getAllPrograms'),
-          apiClient.get('/school/getAllSchools')
+          programService.getAllPrograms(),
+          schoolService.getAllSchools()
         ]);
-        if (Array.isArray(programsResponse.data)) {
-          const transformedPrograms = programsResponse.data.map((program) => ({
+
+        // Transform programs data if needed
+        if (Array.isArray(programsResponse)) {
+          const transformedPrograms = programsResponse.map((program) => ({
             programId: program.programId,
             programName: program.programName,
           }));
@@ -315,24 +320,24 @@ const AcademicExplorer = () => {
         } else {
           setError('Failed to load programs. Please try again later.');
         }
-        if (Array.isArray(schoolsResponse.data)) {
-          setSchools(schoolsResponse.data);
+
+        if (Array.isArray(schoolsResponse)) {
+          setSchools(schoolsResponse);
           try {
-            const schoolProgramResponse = await apiClient.get('/schoolprogram/getAllSchoolPrograms');
-            if (Array.isArray(schoolProgramResponse.data)) {
+            // Use cached school program service
+            const schoolProgramResponse = await schoolProgramService.getAllSchoolPrograms();
+            if (Array.isArray(schoolProgramResponse)) {
               const counts = {};
-              schoolProgramResponse.data.forEach(schoolProgram => {
-                const schoolId = schoolProgram.school.schoolId;
-                if (!counts[schoolId]) {
-                  counts[schoolId] = 1;
-                } else {
-                  counts[schoolId]++;
+              schoolProgramResponse.forEach(schoolProgram => {
+                const schoolId = schoolProgram.school?.schoolId;
+                if (schoolId) {
+                  counts[schoolId] = (counts[schoolId] || 0) + 1;
                 }
               });
               setSchoolProgramCounts(counts);
             }
           } catch (error) {
-            // ignore
+            console.error('Error fetching school program counts:', error);
           }
         } else {
           setError('Failed to load schools. Please try again later.');
@@ -350,6 +355,7 @@ const AcademicExplorer = () => {
     fetchData();
   }, [navigate]);
 
+  // Update school program fetching to use cached service
   useEffect(() => {
     if (selectedProgram) {
       const fetchSchoolPrograms = async () => {
@@ -357,50 +363,37 @@ const AcademicExplorer = () => {
         try {
           setShowSchoolSearchResults(false);
           setSearchedSchool(null);
-          const response = await apiClient.get(
-            `/schoolprogram/getSchoolProgramsByProgram/${selectedProgram}`
-          );
-          if (Array.isArray(response.data)) {
-            const filtered = response.data.map((schoolProgram) => schoolProgram.school);
+          
+          // Use cached service method
+          const response = await schoolProgramService.getSchoolProgramsByProgram(selectedProgram);
+          if (Array.isArray(response)) {
+            const filtered = response.map((schoolProgram) => schoolProgram.school);
             setFilteredSchools(filtered);
             setShowSchoolsFoundToast(true);
             setTimeout(() => {
               setShowSchoolsFoundToast(false);
-            }, 2000);
+            }, 3000);
           } else {
-            setFilteredSchools(schools);
+            setFilteredSchools([]);
           }
         } catch (error) {
-          if (error.response?.status === 401) {
-            authService.signout();
-            navigate('/login', { state: { from: location.pathname } });
-          }
-          setFilteredSchools(schools);
-          setError('Failed to load specific schools for the selected program. Showing all schools instead.');
+          console.error('Error fetching school programs:', error);
+          setFilteredSchools([]);
         } finally {
           setLoading(false);
         }
       };
       fetchSchoolPrograms();
-    } else {
-      if (filterOptions.locationSearch) {
-        setFilteredSchools(schools);
-        setShowSchoolsFoundToast(true);
-        setTimeout(() => {
-          setShowSchoolsFoundToast(false);
-        }, 3000);
-      } else {
-        setFilteredSchools([]);
-      }
     }
-  }, [selectedProgram, schools, filterOptions.locationSearch, navigate]);
+  }, [selectedProgram]);
 
+  // Update program details fetching
   useEffect(() => {
     if (pendingProgramSelection) {
       setLoadingProgramDetails(true);
-      apiClient.get(`/program/getProgram/${pendingProgramSelection}`)
+      programService.getProgramById(pendingProgramSelection)
         .then(response => {
-          setSelectedProgramDetails(response.data);
+          setSelectedProgramDetails(response);
         })
         .catch(error => {
           if (error.response?.status === 401) {
@@ -419,9 +412,9 @@ const AcademicExplorer = () => {
   useEffect(() => {
     if (showProgramSidePanel && selectedProgram && !selectedProgramDetails) {
       setLoadingProgramDetails(true);
-      apiClient.get(`/program/getProgram/${selectedProgram}`)
+      programService.getProgramById(selectedProgram)
         .then(response => {
-          setSelectedProgramDetails(response.data);
+          setSelectedProgramDetails(response);
         })
         .catch(error => {
           const programName = programs.find(p => p.programId === selectedProgram)?.programName;
@@ -1518,6 +1511,8 @@ const AcademicExplorer = () => {
         <div className="fixed inset-0 backdrop-blur-md bg-black/40 dark:bg-gray-900/60 flex items-center justify-center z-[100] p-2">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full relative border border-gray-200 dark:border-gray-700 animate-fade-in-up overflow-hidden h-[80vh]">
             {/* Close button */}
+           
+           
             <button
               onClick={() => setShowSchoolDetailsModal(false)}
               className="absolute top-3 right-3 bg-white/80 dark:bg-gray-800/80 text-gray-700 dark:text-gray-300 p-1.5 rounded-full hover:bg-white dark:hover:bg-gray-700 z-10 shadow"
