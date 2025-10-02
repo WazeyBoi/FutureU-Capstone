@@ -61,8 +61,12 @@ function App() {
         <div className="App">
           <Navigation />
           <Routes>
-            {/* Public homepage - UserLandingPage accessible to everyone */}
-            <Route path="/" element={<UserLandingPage />} />
+            {/* Public homepage - show landing for guests; redirect authenticated users */}
+            <Route path="/" element={
+              <PublicRoute>
+                <UserLandingPage />
+              </PublicRoute>
+            } />
            
             {/* Public routes - with protection against authenticated access */}
             <Route path="/login" element={
