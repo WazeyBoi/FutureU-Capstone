@@ -179,9 +179,9 @@ const StudentHomepage = () => {
         <>
           {/* Full-width hero */}
           <section className="w-full">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
             >
               <div className="relative overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 lg:py-24 text-white text-left">
@@ -196,50 +196,50 @@ const StudentHomepage = () => {
                   </h1>
                   {/* Status card (glassy) */}
                   <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl">
-                    {!hasCompletedAssessment ? (
+                  {!hasCompletedAssessment ? (
                       <div className="flex items-center">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
                           <BookOpen className="w-5 h-5" />
-                        </div>
+                      </div>
                         <div className="flex-1">
                           <div className="font-semibold mb-1">Ready to Discover Your Future?</div>
                           <div className="text-sm text-blue-100/90 mb-4">Take our comprehensive "Discover the FutureU" assessment to unlock your potential.</div>
-                          <button
-                            onClick={() => navigate('/take-assessment/1')}
+                      <button 
+                        onClick={() => navigate('/take-assessment/1')}
                             className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
-                          >
+                      >
                             <Play className="w-4 h-4 mr-2" />
                             Take Assessment Now
-                          </button>
+                      </button>
                         </div>
-                      </div>
-                    ) : (
+                    </div>
+                  ) : (
                       <div className="flex items-center">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
                           <CheckCircle className="w-5 h-5" />
-                        </div>
+                      </div>
                         <div className="flex-1">
                           <div className="font-semibold mb-1">Assessment Completed!</div>
                           <div className="text-sm text-blue-100/90 mb-4">Great job! You've completed the FutureU assessment. View your results below.</div>
-                          <button
-                            onClick={handleViewResults}
+                      <button 
+                        onClick={handleViewResults}
                             className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
-                          >
+                      >
                             <BarChart3 className="w-4 h-4 mr-2" />
                             View My Results
-                          </button>
+                      </button>
                         </div>
-                      </div>
-                    )}
+                    </div>
+                  )}
                   </div>
                   {/* Date row */}
                   <div className="flex items-center text-blue-100/80 text-sm mt-4">
                     <Calendar className="w-4 h-4 mr-2" />
                     {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  </div>
-                </div>
               </div>
-            </motion.div>
+            </div>
+          </div>
+        </motion.div>
           </section>
 
           {/* Main Content */}
@@ -283,7 +283,7 @@ const StudentHomepage = () => {
                 <h3 className="text-lg font-semibold text-[#2B3E4E] mb-2">{action.title}</h3>
                 <p className="text-sm text-gray-600 mb-6 leading-relaxed">{action.desc}</p>
                 <div className="flex items-center text-[#1D63A1] text-sm font-semibold">
-                  {action.enabled !== false ? 'Get Started' : 'Complete Assessments'}
+                  {action.enabled !== false ? 'Get Started' : 'Complete Assessments'} 
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </div>
               </motion.div>
@@ -345,7 +345,7 @@ const StudentHomepage = () => {
                     <Brain className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     Your Assessment Overview
                   </h3>
-                  <button
+                  <button 
                     onClick={handleViewResults}
                     className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-blue-200 text-[#1D63A1] bg-white hover:bg-blue-50"
                   >
@@ -353,7 +353,7 @@ const StudentHomepage = () => {
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-
+                
                 {/* Assessment Sections */}
                 {latestAssessmentResult && (
                   <div className="space-y-4 p-6">
@@ -438,8 +438,8 @@ const StudentHomepage = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-left">
                         <div className={`w-12 h-12 mr-4 rounded-xl bg-gradient-to-r ${tool.color} text-white flex items-center justify-center`}>
-                          {tool.icon}
-                        </div>
+                        {tool.icon}
+                      </div>
                         <div className="text-left">
                           <div className="text-base font-semibold text-[#2B3E4E]">{tool.title}</div>
                           <div className="text-sm text-gray-600">{tool.desc}</div>
