@@ -3,7 +3,6 @@ package edu.cit.futureu.entity;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -20,17 +19,16 @@ public class CareerPathEntity {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    
     private int careerPathId;
     
     private String careerPathName;
     
     private String careerPathDescription;
     
-    // One Career Path can have many Careers
-    @JsonManagedReference("careerPath-careers")
+    // One-to-Many relationship with CareerCareerPathEntity
+    @JsonIgnore
     @OneToMany(mappedBy = "careerPath", cascade = CascadeType.ALL)
-    private List<CareerEntity> careers;
+    private List<CareerCareerPathEntity> careerCareerPaths;
     
     // One Career Path can be associated with many Programs through ProgramCareerPathEntity
     @JsonIgnore
@@ -70,12 +68,12 @@ public class CareerPathEntity {
         this.careerPathDescription = careerPathDescription;
     }
     
-    public List<CareerEntity> getCareers() {
-        return careers;
+    public List<CareerCareerPathEntity> getCareerCareerPaths() {
+        return careerCareerPaths;
     }
     
-    public void setCareers(List<CareerEntity> careers) {
-        this.careers = careers;
+    public void setCareerCareerPaths(List<CareerCareerPathEntity> careerCareerPaths) {
+        this.careerCareerPaths = careerCareerPaths;
     }
     
     public List<ProgramCareerPathEntity> getProgramCareerPaths() {

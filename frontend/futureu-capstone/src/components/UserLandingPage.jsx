@@ -27,6 +27,8 @@ import { useCareerInterestProfile } from '../hooks/useCareerInterestProfile';
 import CareerInterestProfileWizard from './CareerInterestProfile/CareerInterestProfileWizard';
 import ProfilePrompt from './CareerInterestProfile/ProfilePrompt';
 import authService from '../services/authService';
+import { getAllTestimonials } from '../services/testimonialService';
+import apiConfig from '../config/apiConfig';
 
 // Animation variants
 const fadeIn = {
@@ -59,36 +61,62 @@ const LandingPage = () => {
   
   const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
 
-  // Sample testimonials data
-  const testimonials = [
-    {
-      id: 1,
-      name: "Maria Santos",
-      role: "Computer Science Graduate, 2022",
-      school: "University of San Carlos",
-      quote:
-        "The career assessment in FutureU was spot-on! The school comparison feature made it easy to find top-rated Schools!",
-      rating: 5,
-    },
-    {
-      id: 2,
-      name: "John Reyes",
-      role: "Business Administration Student",
-      school: "University of the Visayas",
-      quote:
-        "The career assessment tools were incredibly accurate.",
-      rating: 5,
-    },
-    {
-      id: 3,
-      name: "Sophia Cruz",
-      role: "Nursing Graduate, 2021",
-      school: "Cebu Doctors' University",
-      quote:
-        "The alumni insights was helpful as it prepares for what to expect in the program and school.",
-      rating: 4,
-    },
-  ];
+  // Real testimonials state
+  const [testimonials, setTestimonials] = useState([]);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
+
+  // Fetch real testimonials on mount and when a submission broadcast occurs
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setTestimonialsLoading(true);
+        const res = await getAllTestimonials();
+        const data = Array.isArray(res?.data) ? res.data : [];
+
+        // Sort newest first using createdAt then id
+        const sorted = data.sort((a, b) => (
+          new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        ) || ((Number(b.testimonyId ?? b.id ?? 0)) - (Number(a.testimonyId ?? a.id ?? 0))));
+
+        const apiOrigin = (apiConfig.baseURL || '').replace(/\/?api\/?$/i, '');
+        const mapped = sorted.slice(0, 6).map((t, i) => {
+          const first = (t.studentFirstName || '').trim();
+          const last = (t.studentLastName || '').trim();
+          const fullFromParts = `${first}${first && last ? ' ' : ''}${last}`.trim();
+          const displayName = fullFromParts || t.studentName || t.fullName || t.name || 'Anonymous';
+          const rawAvatar = t.profilePictureUrl || null;
+          const avatarUrl = rawAvatar
+            ? (rawAvatar.startsWith('http') ? rawAvatar : `${apiOrigin}${rawAvatar}`)
+            : null;
+
+        return ({
+          id: t.testimonyId ?? t.id ?? i,
+          name: displayName,
+          role: t.studentRole ?? t.role ?? 'Student',
+          school: t.schoolName ?? t.school ?? t.institutionName ?? '—',
+          quote: t.testimonyContent ?? t.description ?? t.quote ?? '',
+          rating: Number(t.rating ?? t.starRating ?? 5),
+          avatarUrl,
+        });
+        });
+
+        setTestimonials(mapped);
+      } catch (err) {
+        console.error('Testimonials fetch failed', err);
+        setTestimonials([]);
+      } finally {
+        setTestimonialsLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+
+    const onStorage = (e) => {
+      if (e.key === 'futureu_refresh_testimonials') fetchTestimonials();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // Check authentication status
   useEffect(() => {
@@ -193,8 +221,8 @@ const LandingPage = () => {
         console.error('Error fetching statistics:', error);
         // Fallback to default values if API fails
         setTargetCounters({
-          schools: 11,
-          programs: 200,
+    schools: 11,
+    programs: 200,
           alumni: 50,
           students: 500,
         });
@@ -639,39 +667,48 @@ const LandingPage = () => {
                 {testimonials.map((testimonial) => (
                   <div key={testimonial.id} className="w-full flex-shrink-0">
                     <div className="max-w-4xl mx-auto">
-                      <div className="bg-gray-50 rounded-xl p-8 md:p-12 shadow-lg">
-                        <div className="flex flex-col md:flex-row items-center">
-                          <div className="md:w-1/3 mb-6 md:mb-0 flex justify-center">
-                            <div className="relative">
-                              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-500 bg-gray-100 flex items-center justify-center">
-                                <FaUserCircle className="w-20 h-20 text-gray-400" />
-                              </div>
-                              <div className="absolute -bottom-2 -right-2 bg-yellow-500 rounded-full p-1">
-                                <FaGraduationCap className="text-white text-lg" />
-                              </div>
+                      <div className="bg-white rounded-2xl p-8 md:p-10 shadow-lg ring-1 ring-gray-100">
+                        <div className="flex items-start gap-5">
+                          {/* Avatar on the upper-left */}
+                          <div className="relative flex-shrink-0">
+                            <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-yellow-400 bg-gray-100 flex items-center justify-center">
+                              {testimonial.avatarUrl ? (
+                                <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <FaUserCircle className="w-14 h-14 text-gray-400" />
+                              )}
+                            </div>
+                            <div className="absolute -bottom-2 -right-2 bg-yellow-500 rounded-full p-1 shadow">
+                              <FaGraduationCap className="text-white text-sm" />
                             </div>
                           </div>
 
-                          <div className="md:w-2/3 md:pl-8">
-                            <div className="flex mb-4">
+                          {/* Right column: rating + quote + identity info below */}
+                          <div className="flex-1">
+                            {/* Rating */}
+                            <div className="flex items-center mb-3">
                               {[...Array(5)].map((_, i) => (
                                 <FaStar
                                   key={i}
-                                  className={`${i < testimonial.rating ? "text-yellow-500" : "text-gray-300"} text-xl mr-1`}
+                                  className={`${i < testimonial.rating ? "text-yellow-500" : "text-gray-300"} text-2xl mr-1`}
                                 />
                               ))}
                             </div>
 
-                            <div className="relative">
-                              <FaQuoteLeft className="absolute -top-4 -left-4 text-yellow-200 text-4xl opacity-50" />
-                              <p className="text-gray-700 text-lg italic mb-6 relative z-10">{testimonial.quote}</p>
-                              <FaQuoteRight className="absolute -bottom-4 -right-4 text-yellow-200 text-4xl opacity-50" />
+                            {/* Quote */}
+                            <div className="relative text-left w-full overflow-hidden">
+                              <FaQuoteLeft className="absolute -top-6 -left-1 text-yellow-200 text-4xl opacity-60" />
+                              <p className="text-gray-700 text-lg md:text-xl leading-relaxed whitespace-pre-wrap break-all px-2 md:px-6">
+                                {testimonial.quote}
+                              </p>
+                              <FaQuoteRight className="absolute -bottom-6 -right-1 text-yellow-200 text-4xl opacity-60" />
                             </div>
 
-                            <div>
-                              <h4 className="font-bold text-xl text-gray-900">{testimonial.name}</h4>
-                              <p className="text-gray-600">{testimonial.role}</p>
-                              <p className="text-yellow-600 font-medium">{testimonial.school}</p>
+                            {/* Identity below, left-aligned */}
+                            <div className="mt-5 text-left">
+                              <h4 className="font-semibold text-lg text-gray-900">{testimonial.name}</h4>
+                              <p className="text-gray-600 text-sm">{testimonial.role}</p>
+                              <p className="text-yellow-600 font-medium text-sm">{testimonial.school}</p>
                             </div>
                           </div>
                         </div>

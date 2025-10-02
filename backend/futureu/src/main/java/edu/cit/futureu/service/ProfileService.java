@@ -57,7 +57,7 @@ public class ProfileService {
             }
             
             System.out.println("Looking for user with ID: " + userId);
-            Optional<UserEntity> existingUser = userRepository.findById(userId);
+        Optional<UserEntity> existingUser = userRepository.findById(userId);
             
             if (!existingUser.isPresent()) {
                 System.err.println("User not found with ID: " + userId);
@@ -113,7 +113,7 @@ public class ProfileService {
             if (profileData.getAge() != 0) { // Note: int primitive, so check for 0 instead of null
                 System.out.println("Updating age from " + user.getAge() + " to " + profileData.getAge());
                 if (profileData.getAge() > 0) {
-                    user.setAge(profileData.getAge());
+                user.setAge(profileData.getAge());
                     System.out.println("Age updated successfully");
                 }
             }

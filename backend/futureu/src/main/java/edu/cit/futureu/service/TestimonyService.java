@@ -28,6 +28,17 @@ public class TestimonyService {
     
     // Create operations
     public TestimonyEntity createTestimony(TestimonyEntity testimony) {
+        // Ensure relationships are managed entities (prevents TransientPropertyValueException)
+        if (testimony.getSchool() != null && testimony.getSchool().getSchoolId() > 0) {
+            SchoolEntity school = schoolRepository.findById(testimony.getSchool().getSchoolId()).orElse(null);
+            testimony.setSchool(school);
+        }
+
+        if (testimony.getStudent() != null && testimony.getStudent().getUserId() > 0) {
+            UserEntity student = userRepository.findById(testimony.getStudent().getUserId()).orElse(null);
+            testimony.setStudent(student);
+        }
+
         return testimonyRepository.save(testimony);
     }
     

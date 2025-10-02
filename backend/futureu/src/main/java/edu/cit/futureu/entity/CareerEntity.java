@@ -2,16 +2,14 @@ package edu.cit.futureu.entity;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -39,11 +37,10 @@ public class CareerEntity {
     @Column(name = "industry")
     private String industry;
     
-    // Many Careers belong to One Career Path
-    @JsonBackReference("careerPath-careers")
-    @ManyToOne
-    @JoinColumn(name = "career_path_id")
-    private CareerPathEntity careerPath;
+    // One-to-Many relationship with CareerCareerPathEntity
+    @JsonIgnore
+    @OneToMany(mappedBy = "career", cascade = CascadeType.ALL)
+    private List<CareerCareerPathEntity> careerCareerPaths;
 
     @JsonIgnore
     @OneToMany(mappedBy = "careerPath")
@@ -109,12 +106,12 @@ public class CareerEntity {
         this.industry = industry;
     }
     
-    public CareerPathEntity getCareerPath() {
-        return careerPath;
+    public List<CareerCareerPathEntity> getCareerCareerPaths() {
+        return careerCareerPaths;
     }
     
-    public void setCareerPath(CareerPathEntity careerPath) {
-        this.careerPath = careerPath;
+    public void setCareerCareerPaths(List<CareerCareerPathEntity> careerCareerPaths) {
+        this.careerCareerPaths = careerCareerPaths;
     }
 
     public List<CareerRecommendationEntity> getRecommendation() {
@@ -133,7 +130,6 @@ public class CareerEntity {
                 ", industry='" + industry + '\'' +
                 ", salary='" + salary + '\'' +
                 ", jobTrend='" + jobTrend + '\'' +
-                ", careerPath=" + (careerPath != null ? careerPath.getCareerPathName() : "null") +
                 '}';
     }
 }
