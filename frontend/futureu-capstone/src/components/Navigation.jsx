@@ -128,7 +128,7 @@ const Navigation = () => {
   const handleNotificationClick = () => {
     if (hasProfile === false) { // Only allow click if no profile
       setTooltipPinned(!tooltipPinned);
-      setShowNotificationTooltip(true);
+    setShowNotificationTooltip(true);
     }
   };
  
@@ -183,7 +183,7 @@ const Navigation = () => {
         }
       }
     }, [cachedProfilePictureUrl]);
-    
+
     const borderClass = showBorder ? "border-2 border-white shadow-lg" : "";
     const hoverClass = isClickable ? "cursor-pointer hover:ring-2 hover:ring-[#FFB71B] hover:ring-offset-2 transition-all duration-200" : "";
     
@@ -194,15 +194,15 @@ const Navigation = () => {
       >
         {cachedProfilePictureUrl && !imageError ? (
           <>
-            <img
+          <img
               src={cachedProfilePictureUrl}
-              alt="Profile"
+            alt="Profile"
               className="w-full h-full object-cover object-center"
               style={{
                 imageRendering: 'auto',
                 msInterpolationMode: 'nearest-neighbor'
               }}
-              onError={handleImageError}
+            onError={handleImageError}
               onLoad={handleImageLoad}
               loading="lazy"
             />
@@ -227,7 +227,7 @@ const Navigation = () => {
     <div className="relative" ref={dropdownRef}>
       {/* Profile Picture Container with Notification Badge */}
       <div className="relative">
-        <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
+      <ProfilePicture size="w-10 h-10" showBorder={true} isClickable={true} />
 
         {/* Career Interest Profile Notification Badge - Only show if authenticated, not loading, and no profile */}
         {isAuthenticated && !profileLoading && hasProfile === false && (
@@ -247,7 +247,7 @@ const Navigation = () => {
                 <Sparkles className="w-2 h-2 text-white" />
               </div>
             </div>
-
+ 
             {/* Enhanced Tooltip with better positioning and styling */}
             <AnimatePresence>
               {showNotificationTooltip && hasProfile === false && (
@@ -275,13 +275,13 @@ const Navigation = () => {
                         </p>
                        
                         <div className="flex items-center justify-between">
-                          <button
-                            onClick={handleSetupNowClick}
-                            className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E]"
-                          >
-                            Set up now
-                            <ChevronDown className="w-3 h-3 ml-2 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
-                          </button>
+                        <button
+                    onClick={handleSetupNowClick}
+                      className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E]"
+                    >
+                      Set up now
+                      <ChevronDown className="w-3 h-3 ml-2 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
+                    </button>
                         </div>
                       </div>
                     </div>
@@ -347,54 +347,54 @@ const Navigation = () => {
   if (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR') {
     return (
       <>
-        <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
-          <div className="container mx-auto">
-            <div className="flex items-center justify-between h-16 w-full">
-              {/* Brand with Logo */}
-              <Link 
-                to="/counselor-dashboard" 
-                className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
-                onMouseEnter={() => setLogoHover(true)}
-                onMouseLeave={() => setLogoHover(false)}
+      <nav className="bg-transparent shadow-lg backdrop-blur-md nav-override relative z-40">
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between h-16 w-full">
+            {/* Brand with Logo */}
+            <Link 
+              to="/counselor-dashboard" 
+              className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
+              onMouseEnter={() => setLogoHover(true)}
+              onMouseLeave={() => setLogoHover(false)}
+            >
+              <img 
+                src={logoHover ? FutureULogo2 : FutureULogo} 
+                alt="FutureU Logo" 
+                className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
+              />
+              
+              <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
+                FutureU
+              </div>
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
+                Counselor
+              </div>
+            </Link>
+            
+            {/* Counselor Navigation Links */}
+            <div className="flex items-center space-x-1">
+              <Link
+                to="/counselor-dashboard"
+                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  location.pathname.startsWith('/counselor-dashboard')
+                    ? 'bg-[#FFB71B] text-black shadow-lg'
+                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                }`}
               >
-                <img 
-                  src={logoHover ? FutureULogo2 : FutureULogo} 
-                  alt="FutureU Logo" 
-                  className="h-12 w-auto transition-transform duration-300 group-hover:scale-110" 
-                />
-                
-                <div className="text-[#232D35] text-xl font-bold tracking-wide group-hover:text-[#FFB71B] transition-colors duration-300">
-                  FutureU
-                </div>
-                <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-black shadow-md transition-colors duration-300 group-hover:text-[#EAE7DE]">
-                  Counselor
-                </div>
+                <span className="relative z-10">
+                  <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
+                  Dashboard
+                </span>
               </Link>
               
-              {/* Counselor Navigation Links */}
-              <div className="flex items-center space-x-1">
-                <Link
-                  to="/counselor-dashboard"
-                  className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    location.pathname.startsWith('/counselor-dashboard')
-                      ? 'bg-[#FFB71B] text-black shadow-lg'
-                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                  }`}
-                >
-                  <span className="relative z-10">
-                    <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
-                    Dashboard
-                  </span>
-                </Link>
-                
-                {/* Profile Dropdown for Counselors */}
-                <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
-                  <ProfileDropdown />
-                </div>
+              {/* Profile Dropdown for Counselors */}
+              <div className="ml-6 pl-6 border-l border-[#FFB71B]/80">
+                <ProfileDropdown />
               </div>
             </div>
           </div>
-        </nav>
+        </div>
+      </nav>
  
         {/* Career Interest Profile Wizard for Counselors */}
         <AnimatePresence>
@@ -417,7 +417,15 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16 w-full">
           {/* Brand with Logo */}
           <Link 
-            to={userRole === 'ADMIN' ? '/admin-dashboard' : '/student-home'} 
+            to={
+              !isAuthenticated
+                ? '/'
+                : userRole === 'ADMIN'
+                  ? '/admin-dashboard'
+                  : (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR')
+                    ? '/counselor-dashboard'
+                    : '/student-home'
+            } 
             className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
             onMouseEnter={() => setLogoHover(true)}
             onMouseLeave={() => setLogoHover(false)}
@@ -585,18 +593,6 @@ const Navigation = () => {
             {/* Public links (not logged in) */}
             {!isAuthenticated && (
               <>
-
-                <Link
-                  to="/"
-                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/')
-                      ? 'bg-[#FFB71B] text-black shadow-lg'
-                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                  }`}
-                >
-                  <span className="relative z-10">Home</span>
-                </Link>
-                 
                   <Link
                     to="/about-us"
                     className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
