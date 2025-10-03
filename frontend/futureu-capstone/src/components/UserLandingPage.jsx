@@ -110,7 +110,7 @@ const LandingPage = () => {
     };
 
     fetchTestimonials();
-
+    
     const onStorage = (e) => {
       if (e.key === 'futureu_refresh_testimonials') fetchTestimonials();
     };
@@ -789,7 +789,7 @@ const LandingPage = () => {
               <h3 className=" text-left font-bold text-lg mb-4">Quick Links</h3>
               <ul className="text-left space-y-2">
                 {[
-                  { name: "Home", path: "/student-home" },
+                  { name: "Home", path: isAuthenticated ? "/student-home" : "/" },
                   { name: "Academic Explorer", path: "/academic-explorer" },
                   { name: "Testimonials", path: "/testimonials" },
                   { name: "Accreditation", path: "/accreditation" },

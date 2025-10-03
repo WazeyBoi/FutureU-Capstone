@@ -1,6 +1,7 @@
 package edu.cit.futureu.controller;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,6 +40,22 @@ public class UserController {
     @GetMapping("/getAllUsers")
     public List<UserEntity> getAllUsers() {
         return userService.getAllUsers();
+    }
+
+    // PUBLIC: Count students only (no sensitive data exposure)
+    @GetMapping("/public/countStudents")
+    public long countStudentsPublic() {
+        return userService.getAllUsers()
+                .stream()
+                .filter(u -> {
+                    try {
+                        return "STUDENT".equalsIgnoreCase(u.getRole().name());
+                    } catch (Exception e) {
+                        // Fallback for any unexpected nulls
+                        return false;
+                    }
+                })
+                .count();
     }
     
     // Get user by ID

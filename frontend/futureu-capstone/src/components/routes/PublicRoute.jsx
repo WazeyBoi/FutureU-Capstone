@@ -13,8 +13,8 @@ const PublicRoute = ({ children }) => {
     } else if (role === 'CAREER_GUIDANCE') {
       return <Navigate to="/counselor-dashboard" replace />;
     } else {
-      // Default for STUDENT or other roles
-      return <Navigate to="/user-landing-page" replace />;
+      // Default for STUDENT or other roles - redirect to student homepage
+      return <Navigate to="/student-home" replace />;
     }
   }
 
