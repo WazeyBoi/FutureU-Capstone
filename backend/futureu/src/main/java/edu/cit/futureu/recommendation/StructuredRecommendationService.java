@@ -166,9 +166,7 @@ public class StructuredRecommendationService {
             }
         });
         scoredPrograms.sort(Comparator.comparingDouble(ProgramRecommendationDetail::getMatchPercentage).reversed());
-        for (int i = 0; i < Math.min(5, scoredPrograms.size()); i++) {
-            recommendation.addProgram(scoredPrograms.get(i));
-        }
+        scoredPrograms.forEach(recommendation::addProgram);
     }
 
     private Map<Integer, List<Map<String, Object>>> fetchSchoolsForPrograms(List<Integer> programIds) {

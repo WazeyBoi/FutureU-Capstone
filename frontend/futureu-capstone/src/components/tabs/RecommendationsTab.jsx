@@ -95,15 +95,13 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [recommendationPacket, setRecommendationPacket] = useState(null);
   const [structuredRecommendations, setStructuredRecommendations] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
-  const [programRecommendations, setProgramRecommendations] = useState([]);
   const [careerPathDetails, setCareerPathDetails] = useState([]);
   const [dreamInsight, setDreamInsight] = useState(null);
-  const [programSchoolRecs, setProgramSchoolRecs] = useState({}); // { [programId]: { schools: [] } }
-  const [expandedPrograms, setExpandedPrograms] = useState([]); // Track expanded accordions
+  const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' }
+  const [expandedPathPrograms, setExpandedPathPrograms] = useState({}); // { [pathId]: programId }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [checkedExisting, setCheckedExisting] = useState(false);
-  const [showTip, setShowTip] = useState(true); // State to show/hide tip
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
   const tooltipRef = useRef(null);
 
@@ -122,10 +120,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     if (!payload || !payload.recommendations) {
       setStructuredRecommendations(null);
       setAiRecommendations(null);
-      setProgramRecommendations([]);
-      setProgramSchoolRecs({});
       setCareerPathDetails([]);
       setDreamInsight(null);
+      setPathTabs({});
+      setExpandedPathPrograms({});
       return;
     }
 
@@ -135,9 +133,20 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
     const paths = Array.isArray(advanced.careerPaths) ? advanced.careerPaths : [];
     setCareerPathDetails(paths);
+    setPathTabs((prev) => {
+      if (paths.length === 0) return {};
+      const updated = { ...prev };
+      paths.forEach((path, idx) => {
+        const key = path?.careerPathId ?? idx;
+        if (!updated[key]) {
+          updated[key] = 'careers';
+        }
+      });
+      return updated;
+    });
+    setExpandedPathPrograms({});
 
     const allCareers = [];
-    const allPrograms = [];
 
     paths.forEach((path) => {
       const pathName = path?.careerPathName || 'Career Path';
@@ -145,14 +154,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         path.careers.forEach((career) => {
           allCareers.push({
             ...career,
-            pathName,
-          });
-        });
-      }
-      if (Array.isArray(path?.programs)) {
-        path.programs.forEach((program) => {
-          allPrograms.push({
-            ...program,
             pathName,
           });
         });
@@ -178,30 +179,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       },
     });
 
-    allPrograms.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
-    const topPrograms = allPrograms.slice(0, 5).map((programDetail) => {
-      const summary = programDetail.summary || 'This program supports your career goals.';
-      const pathSuffix = programDetail.pathName ? ` Supports the ${programDetail.pathName} pathway.` : '';
-      return {
-        programName: programDetail.programName || 'Recommended Program',
-        programId: programDetail.programId,
-        description: summary,
-        explanation: `${summary}${pathSuffix}`,
-        confidenceScore: programDetail.matchPercentage,
-        recommendedSchools: Array.isArray(programDetail.recommendedSchools)
-          ? programDetail.recommendedSchools
-          : [],
-      };
-    });
-
-    setProgramRecommendations(topPrograms);
-    const recMap = {};
-    topPrograms.forEach((program) => {
-      if (program.programId != null) {
-        recMap[program.programId] = { schools: program.recommendedSchools || [] };
-      }
-    });
-    setProgramSchoolRecs(recMap);
   }, []);
 
   const fetchComprehensiveRecommendations = useCallback(async (options = {}) => {
@@ -304,10 +281,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     fetchComprehensiveRecommendations({ forceRefresh: true });
   }, [fetchComprehensiveRecommendations]);
 
-  // Accordion toggle handler (only one open at a time)
-  const handleToggleProgram = (program, idx) => {
-    setExpandedPrograms((prev) => (prev[0] === idx ? [] : [idx]));
-  };
+  const handlePathTabChange = useCallback((pathKey, tab) => {
+    setPathTabs((prev) => ({ ...prev, [pathKey]: tab }));
+  }, []);
+
+  const handleTogglePathProgram = useCallback((pathKey, programId) => {
+    setExpandedPathPrograms((prev) => ({
+      ...prev,
+      [pathKey]: prev[pathKey] === programId ? null : programId,
+    }));
+  }, []);
 
   return (
     <div className="relative">
@@ -424,9 +407,13 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             <div className="space-y-6">
               {careerPathDetails.map((path, idx) => {
                 const breakdown = path.componentBreakdown || {};
-                const careers = Array.isArray(path.careers) ? path.careers.slice(0, 3) : [];
+                const pathKey = path.careerPathId ?? idx;
+                const activeTab = pathTabs[pathKey] || 'careers';
+                const careers = Array.isArray(path.careers) ? path.careers.slice(0, 5) : [];
+                const programs = Array.isArray(path.programs) ? path.programs : [];
+                const expandedProgramId = expandedPathPrograms[pathKey] ?? null;
                 return (
-                  <div key={path.careerPathId || idx} className="border border-[#1D63A1]/15 rounded-2xl p-5 shadow-sm">
+                  <div key={pathKey} className="border border-[#1D63A1]/15 rounded-2xl p-5 shadow-sm">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                       <div>
                         <h4 className="text-lg font-semibold text-[#232D35]">{path.careerPathName}</h4>
@@ -444,20 +431,140 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         </div>
                       ))}
                     </div>
-                    {careers.length > 0 && (
+                    <div className="flex gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => handlePathTabChange(pathKey, 'careers')}
+                        className={`px-4 py-2 text-xs font-semibold rounded-full border transition-colors ${activeTab === 'careers' ? 'bg-[#1D63A1] text-white border-[#1D63A1]' : 'bg-white text-[#1D63A1] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'}`}
+                      >
+                        Careers
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePathTabChange(pathKey, 'programs')}
+                        className={`px-4 py-2 text-xs font-semibold rounded-full border transition-colors ${activeTab === 'programs' ? 'bg-[#FFB71B] text-white border-[#FFB71B]' : 'bg-white text-[#FFB71B] border-[#FFB71B]/30 hover:bg-[#FFB71B]/10'}`}
+                      >
+                        Programs
+                      </button>
+                    </div>
+                    {activeTab === 'careers' && (
                       <div>
-                        <h5 className="text-sm font-semibold text-[#232D35] mb-2">Spotlight Careers</h5>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          {careers.map((career) => (
-                            <div key={career.careerId} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-inner">
-                              <p className="text-sm font-semibold text-[#232D35] mb-1">{career.careerTitle}</p>
-                              <p className="text-xs text-gray-600 mb-2">{career.summary}</p>
-                              <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-full">
-                                {(career.matchPercentage || 0).toFixed(1)}% Match
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        {careers.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {careers.map((career) => (
+                              <div key={career.careerId || career.careerTitle} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-inner">
+                                <p className="text-sm font-semibold text-[#232D35] mb-1">{career.careerTitle}</p>
+                                <p className="text-xs text-gray-600 mb-2">{career.summary || 'This career aligns with your strengths.'}</p>
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-full">
+                                  {(career.matchPercentage || 0).toFixed(1)}% Match
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500">No linked careers found for this pathway.</p>
+                        )}
+                      </div>
+                    )}
+                    {activeTab === 'programs' && (
+                      <div className="space-y-4">
+                        {programs.length > 0 ? (
+                          programs.map((program, programIdx) => {
+                            const programId = program.programId ?? `${pathKey}-${programIdx}`;
+                            const schools = Array.isArray(program.recommendedSchools) ? program.recommendedSchools : [];
+                            const expanded = expandedProgramId === programId;
+                            return (
+                              <div key={programId} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                                <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
+                                  <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-3 py-1 bg-white text-[#1D63A1] rounded-full text-sm font-bold border border-[#1D63A1]/20">
+                                      {(program.matchPercentage || 0).toFixed(1)}% Match
+                                    </span>
+                                    {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                  </div>
+                                </div>
+                                <p className="text-left text-sm text-gray-600 mb-4">{program.summary || 'This program supports your career goals.'}</p>
+                                <AccordionContent expanded={expanded}>
+                                  <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2">
+                                    Schools offering this program
+                                  </h5>
+                                  {schools.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-1">
+                                      {schools.map((schoolObj, schoolIdx) => {
+                                        const { schoolProgram, reason } = schoolObj;
+                                        const school = schoolProgram?.school || schoolObj?.school;
+                                        const schoolLogo = schoolLogos[school?.schoolId];
+                                        const schoolBackground = getSchoolBackground(school?.name);
+                                        const programSchoolKey = schoolProgram?.schoolProgramId || `${programId}-${schoolIdx}`;
+                                        let rankLabel = `#${schoolIdx + 1}`;
+                                        if (reason && reason.toLowerCase().includes('best')) {
+                                          rankLabel = 'Best School';
+                                        }
+                                        return (
+                                          <div key={programSchoolKey} className="relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group">
+                                            <div className="absolute top-2 right-2 z-10">
+                                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold shadow ${rankLabel === 'Best School' ? 'bg-[#FFB71B] text-white' : 'bg-[#232D35] text-white'}`}>{rankLabel}</span>
+                                            </div>
+                                            <div className="absolute top-2 left-2 z-10">
+                                              <span
+                                                className="cursor-pointer text-[#FFB71B]"
+                                                onMouseEnter={(e) => showTooltip(e, reason)}
+                                                onMouseLeave={hideTooltip}
+                                                onFocus={(e) => showTooltip(e, reason)}
+                                                onBlur={hideTooltip}
+                                                tabIndex={0}
+                                                aria-label="Show reason for ranking"
+                                              >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
+                                              </span>
+                                            </div>
+                                            <div className="flex flex-col h-full">
+                                              <div className="relative w-full h-28 bg-blue-100 overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10" />
+                                                {schoolBackground ? (
+                                                  <img src={schoolBackground} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
+                                                ) : (
+                                                  <img src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school?.schoolId}`} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
+                                                )}
+                                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                                                  {schoolLogo ? (
+                                                    <img src={schoolLogo} alt={`${school?.name} logo`} className="w-14 h-14 object-cover rounded-full shadow-md" />
+                                                  ) : (
+                                                    <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow">
+                                                      <School className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <div className="p-3 flex flex-col flex-1">
+                                                <h3 className="text-xs font-bold text-base text-gray-900 dark:text-white text-left mb-2">{school?.name}</h3>
+                                                <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
+                                                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
+                                                    <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
+                                                    <span className="text-left text-xs">{school?.location || 'Location not available'}</span>
+                                                  </div>
+                                                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
+                                                    <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
+                                                    <span>{school?.type || 'School type unavailable'}</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
+                                  )}
+                                </AccordionContent>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <p className="text-xs text-gray-500">No linked programs found for this pathway.</p>
+                        )}
                       </div>
                     )}
                   </div>
@@ -465,162 +572,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               })}
             </div>
           </motion.div>
-        )}
-        {/* Program recommendations - only show if computed from structured response */}
-        {structuredRecommendations && programRecommendations.length > 0 && (
-          <div className="relative">
-            {/* Overlapping tip container */}
-            {showTip && (
-              <div className="absolute -top-4 -left-15 z-20 w-90 h-28 flex flex-row items-center px-2 py-4 rounded-2xl shadow-lg bg-[#FFB71B] animate-fade-in-up">
-                <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-2" />
-                <div className="flex-1 flex flex-col">
-                <span className="text-left text-xs font-semibold text-white text-center flex-1 pr-2">
-                  <p className='text-lg text-[#2B3E4E]'><b>Tip</b></p> You can click a program to expand and see the list of schools offering it.
-                </span>
-                <div className='text-right pr-6'>
-                  <span
-                    className="text-xs font-bold text-[#2B3E4E] cursor-pointer hover:underline"
-                    onClick={() => setShowTip(false)}
-                  >
-                    Okay
-                  </span>
-                </div>
-                </div>
-              </div>
-            )}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
-              <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                These programs are matched to your top career pathways and assessment profile.
-              </p>
-              <div className="space-y-6">
-                {programRecommendations.map((program, idx) => {
-                  const rec = programSchoolRecs[program.programId] || {};
-                  // schools is now an array of { reason, schoolProgram }
-                  const schools = rec.schools || [];
-                  return (
-                    <motion.div key={idx} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                      <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleToggleProgram(program, idx)}>
-                        <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                            {program.confidenceScore?.toFixed(1)}% Match
-                          </span>
-                          {expandedPrograms.includes(idx) ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                        </div>
-                      </div>
-                      <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
-                      <div className="flex gap-2">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                          #{idx+1} Recommended Program
-                        </span>
-                        {idx === 0 && (
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                            Best Match
-                          </span>
-                        )}
-                      </div>
-                      {program.explanation && (
-                        <div className="mt-3 mb-3 p-3 bg-[#F8F9FA] rounded-xl shadow-inner">
-                          <span className="block text-xs text-[#1D63A1] font-semibold mb-1">Why this program?</span>
-                          <span className="block text-xs text-gray-700 text-left">{program.explanation}</span>
-                        </div>
-                      )}
-                      {/* Accordion content: Schools offering this program */}
-                      <AccordionContent expanded={expandedPrograms.includes(idx)}>
-                        <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2 ">
-                          Schools offering this program
-                        </h5>
-                        {schools.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-1">
-                            {schools.map((schoolObj, schoolIdx) => {
-                              const { schoolProgram, reason } = schoolObj;
-                              const school = schoolProgram?.school || schoolObj?.school;
-                              const schoolLogo = schoolLogos[school?.schoolId];
-                              const schoolBackground = getSchoolBackground(school?.name);
-                              // Extract rank from reason if present
-                              let rank = schoolIdx + 1;
-                              let rankLabel = `#${rank}`;
-                              if (reason && reason.toLowerCase().includes('best')) rankLabel = 'Best School';
-                              // Short summary for badge
-                              let shortReason = reason;
-                              if (reason.startsWith('Best')) shortReason = 'Best accreditation';
-                              else if (reason.startsWith('Ranked #')) {
-                                const match = reason.match(/^Ranked #(\d+)/);
-                                if (match) shortReason = `Ranked #${match[1]}`;
-                                else shortReason = 'Ranked';
-                              }
-                              // Tooltip for full reason
-                              return (
-                                <div key={schoolProgram?.schoolProgramId || `${program.programId}-${schoolIdx}`} className={`relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group`}>
-                                  {/* Rank badge */}
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold shadow ${rank === 1 ? 'bg-[#FFB71B] text-white' : 'bg-[#232D35] text-white'}`}>{rankLabel}</span>
-                                  </div>
-                                  {/* Info icon with tooltip */}
-                                  <div className="absolute top-2 left-2 z-10">
-                                    <div className="group">
-                                      <span
-                                        className="cursor-pointer text-[#FFB71B]"
-                                        onMouseEnter={e => showTooltip(e, reason)}
-                                        onMouseLeave={hideTooltip}
-                                        onFocus={e => showTooltip(e, reason)}
-                                        onBlur={hideTooltip}
-                                        tabIndex={0}
-                                        aria-label="Show reason for ranking"
-                                      >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col h-full">
-                                    {/* Top half with image and logo */}
-                                    <div className="relative w-full h-28 bg-blue-100 overflow-hidden">
-                                      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
-                                      {schoolBackground ? (
-                                        <img src={schoolBackground} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
-                                      ) : (
-                                        <img src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school?.schoolId}`} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
-                                      )}
-                                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                        {schoolLogo ? (
-                                          <img src={schoolLogo} alt={`${school?.name} logo`} className="w-14 h-14 object-cover rounded-full shadow-md" />
-                                        ) : (
-                                          <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow">
-                                            <School className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {/* Bottom half with school information */}
-                                    <div className="p-3 flex flex-col flex-1">
-                                      <h3 className="text-xs font-bold text-base text-gray-900 dark:text-white text-left mb-2">{school?.name}</h3>
-                                      <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
-                                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                          <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span className="text-left text-xs">{school?.location || 'Location not available'}</span>
-                                        </div>
-                                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                          <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span>{school?.type || 'School type unavailable'}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
-                        )}
-                      </AccordionContent>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </div>
         )}
         {dreamInsight && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
