@@ -1,4 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
+import apiClient from '../services/api';
+import authService from '../services/authService';
+import schoolProgramService from '../services/schoolProgramService';
+
+// Import new components
+import HeroHeader from './AcademicExplorer/HeroHeader';
+import SearchHeader from './AcademicExplorer/SearchHeader';
+import WelcomeModal from './AcademicExplorer/WelcomeModal';
+import SchoolDetailsModal from './AcademicExplorer/SchoolDetailsModal';
+import ProgramSidePanel from './AcademicExplorer/ProgramSidePanel';
+import SchoolGrid from './AcademicExplorer/SchoolGrid';
+import SchoolSearchResults from './AcademicExplorer/SchoolSearchResults';
+import { EmptyStateWithMascots, NoSchoolsFound } from './AcademicExplorer/EmptyState';
+import { LoadingGrid } from './AcademicExplorer/LoadingState';
+import { SchoolsFoundToast, ErrorToast } from './AcademicExplorer/ToastNotifications';
+
+// Import utilities
+import { fadeAnimationStyle } from './AcademicExplorer/constants';
+import { filterSchools } from './AcademicExplorer/utils';
+import { useAcademicExplorerData, useProgramSelection, useSchoolSearch } from './AcademicExplorer/hooks';
 import apiClient from '../services/api';
 import schoolService from '../services/schoolService';
 import programService from '../services/programService';
@@ -7,238 +29,44 @@ import { Info, School, BookOpen, MapPin, Globe, X, Search, ChevronRight, Star, S
 import { useLocation, useNavigate } from "react-router-dom";
 import authService from '../services/authService';
 
-import ohMy from '../assets/characters/ohMy.svg';
-import ohMyLeft from '../assets/characters/ohMyLeft.svg';
-
-// Import all logos
-import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
-import citu_school_logo from '../assets/school_logos/citu_school_logo.png';
-import cnu_school_logo from '../assets/school_logos/cnu_school_logo.png';
-import ctu_school_logo from '../assets/school_logos/ctu_school_logo.png';
-import iau_school_logo from '../assets/school_logos/iau_school_logo.png';
-import swu_school_logo from '../assets/school_logos/swu_school_logo.png';
-import uc_school_logo from '../assets/school_logos/uc_school_logo.png';
-import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
-import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
-import up_school_logo from '../assets/school_logos/up_school_logo.png';
-import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
-
-// Import school_images
-import citu_school_image from '../assets/school_images/citu_school_image.jpg';
-import cdu_school_image from '../assets/school_images/cdu_school_image.jpg';
-import cnu_school_image from '../assets/school_images/cnu_school_image.jpg';
-import ctu_school_image from '../assets/school_images/ctu_school_image.jpg';
-import swu_school_image from '../assets/school_images/swu_school_image.jpg';
-import usc_school_image from '../assets/school_images/usc_school_image.jpg';
-import usjr_school_image from '../assets/school_images/usjr_school_image.jpg';
-import up_school_image from '../assets/school_images/up_school_image.jpg';
-import uc_school_image from '../assets/school_images/uc_school_image.jpg';
-import uv_school_image from '../assets/school_images/uv_school_image.jpg';
-import iau_school_image from '../assets/school_images/iau_school_image.jpg';
-
-// Create a mapping of school IDs to logos
-const schoolLogos = {
-  1: cdu_school_logo,
-  2: citu_school_logo,
-  3: cnu_school_logo,
-  4: ctu_school_logo,
-  5: iau_school_logo,
-  6: swu_school_logo,
-  7: uc_school_logo,
-  8: usc_school_logo,
-  9: usjr_school_logo,
-  10: up_school_logo,
-  11: uv_school_logo,
-};
-
-// Create a mapping for school name detection to their background images
-const schoolBackgroundMap = {
-  "Cebu Institute of Technology": citu_school_image,
-  "Cebu Doctors'": cdu_school_image,
-  "Cebu Normal University": cnu_school_image,
-  "Cebu Technological University": ctu_school_image,
-  "Southwestern University": swu_school_image,
-  "University of San Carlos": usc_school_image,
-  "University of San Jose": usjr_school_image,
-  "University of the Philippines": up_school_image,
-  "University of Cebu": uc_school_image,
-  "University of the Visayas": uv_school_image,
-  "Indiana Aerospace University": iau_school_image,
-};
-
-// Function to get the school background based on name
-const getSchoolBackground = (schoolName) => {
-  if (!schoolName) return null;
-  
-  const normalizedName = schoolName.toLowerCase();
-  
-  // Check each key in our map to see if it's in the school name
-  for (const [key, background] of Object.entries(schoolBackgroundMap)) {
-    if (normalizedName.includes(key.toLowerCase())) {
-      return background;
-    }
-  }
-  
-  return null;
-};
-
-// Add this CSS to the top of the component
-const fadeAnimationStyle = `
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animate-fade-in-up {
-    animation: fadeInUp 0.4s ease-out forwards;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(-20px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  .animate-slide-in {
-    animation: slideIn 0.3s ease-out forwards;
-  }
-  
-  @keyframes slideDown {
-    from {
-      max-height: 0;
-      opacity: 0;
-    }
-    to {
-      max-height: 500px;
-      opacity: 1;
-    }
-  }
-  
-  .animate-slide-down {
-    animation: slideDown 0.4s ease-out forwards;
-    overflow: hidden;
-  }
-  
-  @keyframes slideUp {
-    from {
-      max-height: 500px;
-      opacity: 1;
-    }
-    to {
-      max-height: 0;
-      opacity: 0;
-    }
-  }
-  
-  .animate-slide-up {
-    animation: slideUp 0.4s ease-out forwards;
-    overflow: hidden;
-  }
-
-  @keyframes contentSlide {
-    from {
-      margin-left: 0;
-      width: 100%;
-    }
-    to {
-      margin-left: 384px;
-      width: calc(100% - 384px);
-    }
-  }
-  
-  .animate-content-slide {
-    animation: contentSlide 0.4s ease-out forwards;
-  }
-  
-  @keyframes contentSlideBack {
-    from {
-      margin-left: 384px;
-      width: calc(100% - 384px);
-    }
-    to {
-      margin-left: 0;
-      width: 100%;
-    }
-  }
-
-  .animate-content-slide-back {
-    animation: contentSlideBack 0.4s ease-out forwards;
-  }
-
-  /* Responsive grid adjustments */
-  @media (min-width: 640px) {
-    .grid-with-panel {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    }
-  }
-
-  @media (min-width: 768px) {
-    .grid-with-panel {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .grid-with-panel {
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .grid-with-panel {
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-  }
-  
-  @media (min-width: 1536px) {
-    .grid-with-panel {
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-  }
-
-  /* Mascot hover wiggle */
-  @keyframes mascotWiggle {
-    0% { transform: rotate(0deg) scale(1); }
-    15% { transform: rotate(-10deg) scale(1.08); }
-    30% { transform: rotate(8deg) scale(1.08); }
-    45% { transform: rotate(-6deg) scale(1.08); }
-    60% { transform: rotate(4deg) scale(1.08); }
-    75% { transform: rotate(-2deg) scale(1.08); }
-    100% { transform: rotate(0deg) scale(1); }
-  }
-  .mascot-wiggle {
-    animation: mascotWiggle 0.7s both;
-  }
-
-  /* Emphasis glow on mascot */
-  .mascot-glow {
-    box-shadow: 0 0 0 0 #FFB71B, 0 0 24px 8px #FFB71B55;
-    transition: box-shadow 0.3s;
-  }
-  .mascot-glow-hover {
-    box-shadow: 0 0 0 0 #FFB71B, 0 0 36px 12px #FFB71B99;
-  }
-`;
-
 const AcademicExplorer = () => {
-  const [selectedProgram, setSelectedProgram] = useState(null);
-  const [programs, setPrograms] = useState([]);
-  const [schools, setSchools] = useState([]);
-  const [filteredSchools, setFilteredSchools] = useState([]);
-  const [hoveredSchool, setHoveredSchool] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Core data and state from hooks
+  const {
+    programs,
+    schools,
+    filteredSchools,
+    setFilteredSchools,
+    schoolProgramCounts,
+    error,
+    setError,
+    loading,
+    setLoading
+  } = useAcademicExplorerData();
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const {
+    selectedProgram,
+    setSelectedProgram,
+    selectedProgramDetails,
+    setSelectedProgramDetails,
+    loadingProgramDetails,
+    setLoadingProgramDetails
+  } = useProgramSelection(programs, schools, navigate, location);
+
+  const {
+    searchedSchool,
+    setSearchedSchool,
+    schoolPrograms,
+    setSchoolPrograms,
+    isSearchingSchool,
+    showSchoolSearchResults,
+    setShowSchoolSearchResults,
+    searchSchool
+  } = useSchoolSearch(schools, navigate, location);
+
+  // UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [filterOptions, setFilterOptions] = useState({
     locationSearch: '',
@@ -247,58 +75,23 @@ const AcademicExplorer = () => {
   });
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [programSearchTerm, setProgramSearchTerm] = useState('');
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [tooltipVisible, setTooltipVisible] = useState(false);
   const [showSchoolsFoundToast, setShowSchoolsFoundToast] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(() => {
     return !localStorage.getItem('academicExplorerWelcomeSeen');
   });
-  const [showProgramsPanel, setShowProgramsPanel] = useState(false);
-  const [showProgramConfirmation, setShowProgramConfirmation] = useState(false);
-  const [pendingProgramSelection, setPendingProgramSelection] = useState(null);
-  const [selectedProgramDetails, setSelectedProgramDetails] = useState(null);
-  const [loadingProgramDetails, setLoadingProgramDetails] = useState(false);
-  const [schoolProgramCounts, setSchoolProgramCounts] = useState({});
+  const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
   const [selectedSchoolDetails, setSelectedSchoolDetails] = useState(null);
   const [showSchoolDetailsModal, setShowSchoolDetailsModal] = useState(false);
-  const [showProgramSidePanel, setShowProgramSidePanel] = useState(false);
   const [programSidebarHidden, setProgramSidebarHidden] = useState(false);
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
+  const [showProgramDropdown, setShowProgramDropdown] = useState(false);
+  const [mascotWiggle, setMascotWiggle] = useState(false);
+  const [programsOfferedSearchTerm, setProgramsOfferedSearchTerm] = useState('');
+
   const totalPrograms = programs.length;
   const totalSchools = schools.length;
-  const [mascotHovered, setMascotHovered] = useState(false);
-  const [mascotWiggle, setMascotWiggle] = useState(false);
 
-  // School search
-  const [searchedSchool, setSearchedSchool] = useState(null);
-  const [schoolPrograms, setSchoolPrograms] = useState([]);
-  const [isSearchingSchool, setIsSearchingSchool] = useState(false);
-  const [showSchoolSearchResults, setShowSchoolSearchResults] = useState(false);
-  const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-
-  const [programsOfferedSearchTerm, setProgramsOfferedSearchTerm] = useState('');
-  const filteredSchoolPrograms = schoolPrograms.filter(program =>
-    program.programName.toLowerCase().includes(programsOfferedSearchTerm.toLowerCase())
-  );
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/login', { state: { from: location.pathname } });
-    }
-  }, [navigate]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const programId = params.get("programId");
-    if (programId) {
-      setSelectedProgram(Number(programId));
-      setShowProgramSidePanel(true);
-    }
-  }, [location.search]);
-
+  // Effect for updating filtered schools based on selected program
   // Updated data fetching with cached services
   useEffect(() => {
     const fetchData = async () => {
@@ -385,6 +178,7 @@ const AcademicExplorer = () => {
       };
       fetchSchoolPrograms();
     }
+  }, [selectedProgram, schools, filterOptions.locationSearch, navigate, setFilteredSchools, setError, setLoading]);
   }, [selectedProgram]);
 
   // Update program details fetching
@@ -440,64 +234,34 @@ const AcademicExplorer = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Mascot animation effects
   useEffect(() => {
-    // Synchronize both mascots: trigger wiggle every 1.5s
     const interval = setInterval(() => {
       setMascotWiggle(true);
-      setTimeout(() => setMascotWiggle(false), 600); // 600ms = animation duration
-    }, 2000); // Faster interval
+      setTimeout(() => setMascotWiggle(false), 600);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  // --- School search logic ---
-  const filteredSchoolDropdown = schools
-    .filter(school =>
-      school.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  const filteredAndSearchedSchools = filteredSchools
-  .filter(school => {
-    // If a program is selected, use the schoolNameFilter for filtering by school name
-    const matchesSchoolName = selectedProgram
-      ? (filterOptions.schoolNameFilter === '' || school.name.toLowerCase().includes(filterOptions.schoolNameFilter.toLowerCase()))
-      : (searchTerm === '' || school.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesLocation = filterOptions.locationSearch === '' || (school.location && school.location.toLowerCase().includes(filterOptions.locationSearch.toLowerCase()));
-    const matchesSchoolType = filterOptions.schoolType === 'all' ||
-      (filterOptions.schoolType === 'public' && school.type?.toLowerCase() === 'public') ||
-      (filterOptions.schoolType === 'private' && school.type?.toLowerCase() === 'private');
-    return matchesSchoolName && matchesLocation && matchesSchoolType;
-  })
-  .sort((a, b) => a.name.localeCompare(b.name));
-
-  const getAnimationClass = (index) => {
-    const baseDelay = 50;
-    const delay = index * baseDelay;
-    return `animate-fade-in-up animation-delay-${delay}`;
-  };
-
-  const handleMouseEnter = (school, e) => {
-    setHoveredSchool(school);
-    setTooltipVisible(true);
-    const rect = e.currentTarget.getBoundingClientRect();
-    const spaceOnRight = window.innerWidth - rect.right;
-    const spaceBelow = window.innerHeight - rect.top;
-    let x = rect.right + 10;
-    let y = rect.top;
-    if (spaceOnRight < 400) {
-      x = rect.left - 410;
+  // Auto-hide error messages
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-    if (spaceBelow < 500) {
-      y = Math.max(10, rect.bottom - 500);
-    }
-    setTooltipPosition({ x, y });
-  };
+  }, [error, setError]);
 
-  const handleMouseLeave = () => {
-    setTooltipVisible(false);
-    setHoveredSchool(null);
-  };
+  // Filter schools based on current filters and search
+  const filteredAndSearchedSchools = filterSchools(
+    filteredSchools, 
+    filterOptions, 
+    searchTerm, 
+    selectedProgram
+  );
 
+  // Event handlers
   const handleProgramChange = (programId) => {
     const selected = programs.find(p => p.programId === programId);
     setProgramSearchTerm(selected ? selected.programName : '');
@@ -505,59 +269,41 @@ const AcademicExplorer = () => {
     setSearchedSchool(null);
     setShowSchoolSearchResults(false);
     setSelectedProgram(programId);
-    setPendingProgramSelection(programId);
     setShowProgramSidePanel(true);
-    setShowProgramsPanel(false);
-    setShowProgramConfirmation(false);
-    setFilterOptions(prev => ({ ...prev, schoolNameFilter: '' })); // <-- Add this line
+    setFilterOptions(prev => ({ ...prev, schoolNameFilter: '' }));
   };
 
   const handleSchoolSearch = async () => {
     if (!searchTerm.trim()) return;
-    try {
-      setSelectedProgram(null);
-      setPendingProgramSelection(null);
-      setProgramSearchTerm('');
-      setShowProgramSidePanel(false);
-      setIsSearchingSchool(true);
-      setShowSchoolSearchResults(false);
-      const matchingSchool = schools.find(school =>
-        school.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      if (matchingSchool) {
-        const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
-        if (Array.isArray(schoolProgramsResponse)) {
-          const programsData = schoolProgramsResponse.map(sp => ({
-            ...sp.program,
-            schoolProgramURL: sp.schoolProgramURL,
-            schoolProgramURLType: sp.schoolProgramURLType,
-          }));
-          setSchoolPrograms(programsData);
-          setSearchedSchool(matchingSchool);
-          setShowSchoolSearchResults(true);
-          setShowSchoolsFoundToast(true);
-          setTimeout(() => {
-            setShowSchoolsFoundToast(false);
-          }, 3000);
-        } else {
-          setError(`No programs found for "${searchTerm}". Please try another school name.`);
-          setTimeout(() => {
-            setError(null);
-          }, 3000);
-        }
-      } else {
-        setError(`School "${searchTerm}" not found. Please check the spelling and try again.`);
-        setTimeout(() => {
-          setError(null);
-        }, 3000);
-      }
-    } catch (error) {
-      setError("Failed to search for school programs. Please try again later.");
+    
+    setSelectedProgram(null);
+    setProgramSearchTerm('');
+    setShowProgramSidePanel(false);
+    
+    const result = await searchSchool(searchTerm);
+    if (result.success) {
+      setShowSchoolsFoundToast(true);
       setTimeout(() => {
-        setError(null);
+        setShowSchoolsFoundToast(false);
       }, 3000);
-    } finally {
-      setIsSearchingSchool(false);
+    } else {
+      setError(result.error);
+    }
+  };
+
+  const handleSchoolSelect = async (school) => {
+    setSearchTerm(school.name);
+    setShowSchoolDropdown(false);
+    setSelectedProgram(null);
+    setProgramSearchTerm(''); 
+    setShowProgramSidePanel(false);
+    
+    const result = await searchSchool(school.name);
+    if (result.success) {
+      setShowSchoolsFoundToast(true);
+      setTimeout(() => setShowSchoolsFoundToast(false), 3000);
+    } else {
+      setError(result.error);
     }
   };
 
@@ -572,510 +318,70 @@ const AcademicExplorer = () => {
     localStorage.setItem('academicExplorerWelcomeSeen', 'true');
   };
 
+  const handleViewSchoolDetails = (school) => {
+    setSelectedSchoolDetails(school);
+    setShowSchoolDetailsModal(true);
+  };
+
   return (
-  <div className="min-h-screen w-full flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-auto"> {/* CHANGED h-screen to min-h-screen and overflow-auto */}
+    <div className="min-h-screen w-full flex flex-col bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 overflow-auto">
       <style dangerouslySetInnerHTML={{ __html: fadeAnimationStyle }} />
 
-      <div className="relative bg-[#2B3E4E] text-white overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/src/assets/pattern-bg.png')] opacity-10 pointer-events-none"></div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8 flex flex-col items-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-center">
-            <span className="text-[#FFB71B]">Academic Explorer</span>
-          </h1>
-          <p className="text-xl md:text-2xl max-w-2xl mx-auto mb-10 text-center text-white/90">
-            Discover, compare, and explore top schools and programs in Cebu. Find your perfect academic path with powerful search and insights.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto w-full">
-            <div className="bg-[#1B2836]/80 bg-opacity-95 backdrop-blur-sm rounded-lg p-6 shadow-lg flex flex-col items-center transition-colors duration-200">
-              <BookOpen className="text-[#FFB71B] w-10 h-10 mb-2" />
-              <div className="text-3xl font-bold text-white">{totalPrograms}</div>
-              <div className="text-lg text-gray-100">Programs</div>
-            </div>
-            <div className="bg-[#1B2836]/80 bg-opacity-95 backdrop-blur-sm rounded-lg p-6 shadow-lg flex flex-col items-center transition-colors duration-200">
-              <School className="text-[#FFB71B] w-10 h-10 mb-2" />
-              <div className="text-3xl font-bold text-white">{totalSchools}</div>
-              <div className="text-lg text-gray-100">Schools</div>
-            </div>
-          </div>
-        </div>
-        {/* Decorative wave divider */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full">
-            <path
-              fill="#f9fafb"
-              fillOpacity="1"
-              d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-            ></path>
-          </svg>
-        </div>
-      </div>
+      <HeroHeader totalPrograms={totalPrograms} totalSchools={totalSchools} />
       
-      {/* Welcome Modal */}
-      {showWelcomeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full relative border border-gray-200 dark:border-gray-700 p-0 overflow-hidden">
-            <button
-              onClick={handleCloseWelcomeModal}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 p-2 rounded-full z-10"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-8 sm:p-10">
-              <div className="flex items-center mb-4 pr-10">
-                <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
-                  <School className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-[#2B3E4E] dark:text-white">Welcome to Academic Explorer</h2>
-              </div>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-8 pl-16 text-left">
-                Discover the perfect educational path for your future. Explore programs, compare schools, and find your ideal academic fit.
-              </p>
-              <div className="space-y-6 mb-8">
-                <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
-                    <Compass className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold text-[#2B3E4E] dark:text-white mb-1">Explore Programs</h3>
-                    <p className="text-base text-gray-700 dark:text-gray-300">
-                      Browse through various academic programs offered by top schools.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
-                    <Building className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold text-[#2B3E4E] dark:text-white mb-1">Compare Schools</h3>
-                    <p className="text-base text-gray-700 dark:text-gray-300">
-                      Select up to 3 schools to compare facilities, programs, and more.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-4">
-                    <Globe className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-bold text-[#2B3E4E] dark:text-white mb-1">Virtual Tours</h3>
-                    <p className="text-base text-gray-700 dark:text-gray-300">
-                      Experience campuses virtually before making your decision.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseWelcomeModal}
-                className="w-full py-4 bg-[#FFB71B] hover:bg-[#FFB71B]/90 text-[#2B3E4E] font-bold rounded-md transition-colors flex items-center justify-center shadow-md"
-              >
-                <span className="text-lg mr-2">Start Exploring</span>
-                <div className="w-7 h-7 rounded-full bg-[#2B3E4E] flex items-center justify-center">
-                  <ChevronRight className="w-5 h-5 text-white" />
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <WelcomeModal show={showWelcomeModal} onClose={handleCloseWelcomeModal} />
 
-      {/* Toast for schools found */}
-      {showSchoolsFoundToast && filteredAndSearchedSchools.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-4 rounded-lg shadow-xl z-50 animate-fade-in-up backdrop-blur-sm">
-          <div className="flex items-center">
-            <School className="w-5 h-5 mr-3 text-indigo-500 dark:text-indigo-400" />
-            <p className="font-medium">{filteredAndSearchedSchools.length} {filteredAndSearchedSchools.length === 1 ? 'school' : 'schools'} found</p>
-          </div>
-        </div>
-      )}
+      <SchoolsFoundToast 
+        count={filteredAndSearchedSchools.length} 
+        visible={showSchoolsFoundToast} 
+      />
       
-      {/* Error Toast */}
-      {error && (
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-red-100 dark:bg-red-900/80 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded-lg shadow-xl z-50 animate-fade-in-up backdrop-blur-sm">
-          <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 mr-3" />
-            <p className="font-medium">{error}</p>
-          </div>
-        </div>
-      )}
+      <ErrorToast error={error} visible={!!error} />
 
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 w-full backdrop-blur-sm bg-white/90 dark:bg-gray-800/90">
-        <div className="w-full px-6 py-5">
-          <div className="flex items-center gap-16">
-            {/* Program Search Bar */}
-            <div className="relative z-50 w-[180rem]"> {/* Increased from w-96 to w-[480px] */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-indigo-500 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="Search programs..."
-                  value={programSearchTerm}
-                  onChange={(e) => setProgramSearchTerm(e.target.value)}
-                  onFocus={() => setShowProgramDropdown(true)}
-                  onBlur={() => setTimeout(() => setShowProgramDropdown(false), 100)}
-                  className="pl-10 pr-12 py-3 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm text-left"
-                />
-                {/* Clear button with transparent background */}
-                {programSearchTerm && (
-                  <button
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-[#FFB71B] rounded-full p-1.5 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                    onClick={() => setProgramSearchTerm('')}
-                    tabIndex={-1}
-                    aria-label="Clear program search"
-                    style={{ lineHeight: 0, background: 'transparent' }}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              {/* Show the filtered program list only when focused */}
-              {showProgramDropdown && (
-                <div
-                  className="absolute mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-100 dark:border-gray-700 w-full animate-slide-down"
-                  style={{
-                    maxHeight: '20rem', // Force a fixed max height (e.g., 320px)
-                    overflowY: 'auto',  // Always show vertical scroll if needed
-                    minHeight: '6rem',  // Optional: minimum height for better UX
-                  }}
-                >
-                  {programs
-                    .filter(program =>
-                      program.programName.toLowerCase().includes(programSearchTerm.toLowerCase())
-                    )
-                    .sort((a, b) => a.programName.localeCompare(b.programName))
-                    .map((program) => (
-                      <button
-                        key={program.programId}
-                        onMouseDown={() => {
-                          handleProgramChange(program.programId);
-                          setShowProgramDropdown(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-lg flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 mb-1 transition-colors ${
-                          selectedProgram === program.programId
-                            ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-500'
-                            : ''
-                        }`}
-                      >
-                        <BookOpen
-                          className={`w-5 h-5 mr-3 flex-shrink-0 ${
-                            selectedProgram === program.programId
-                              ? 'text-indigo-600 dark:text-indigo-400'
-                              : 'text-gray-400 dark:text-gray-500'
-                          }`}
-                        />
-                        <span
-                          className={`${
-                            selectedProgram === program.programId
-                              ? 'font-medium text-indigo-700 dark:text-indigo-300'
-                              : 'text-gray-800 dark:text-gray-200'
-                          }`}
-                        >
-                          {program.programName}
-                        </span>
-                      </button>
-                    ))}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center max-w-5xl mx-auto flex-1">
-              <div className="flex w-full">
-                <div className="relative flex-1 w-[600px]">
-                  <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search className="h-5 w-5 text-indigo-500" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Search schools..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => setShowSchoolDropdown(true)}
-                    onBlur={() => setTimeout(() => setShowSchoolDropdown(false), 100)}
-                    onKeyDown={handleSearchKeyDown}
-                    className="pl-10 pr-4 py-3 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm hover:shadow h-[56px]"
-                  />
-                  {/* Clear button */}
-                  {searchTerm && (
-                    <button
-                      type="button"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-[#FFB71B] rounded-full p-1.5 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                      onClick={() => setSearchTerm('')}
-                      tabIndex={-1}
-                      aria-label="Clear school search"
-                      style={{ lineHeight: 0, background: 'transparent' }}
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                  {/* School dropdown */}
-                  {showSchoolDropdown && (
-                    <div
-                      className="absolute mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-50 border border-gray-100 dark:border-gray-700 w-full animate-slide-down"
-                      style={{
-                        maxHeight: '20rem',
-                        overflowY: 'auto',
-                        minHeight: '6rem',
-                      }}
-                    >
-                      {filteredSchoolDropdown.length > 0 ? (
-                        filteredSchoolDropdown.map((school) => (
-                          <button
-                            key={school.schoolId}
-                            onMouseDown={async () => {
-                              setSearchTerm(school.name);
-                              setShowSchoolDropdown(false);
-                              // Mimic the flow of handleSchoolSearch but for dropdown
-                              setSelectedProgram(null);
-                              setPendingProgramSelection(null);
-                              setProgramSearchTerm(''); 
-                              setShowProgramSidePanel(false);
-                              setIsSearchingSchool(true);
-                              setShowSchoolSearchResults(false);
-                              try {
-                                const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(school.schoolId);
-                                if (Array.isArray(schoolProgramsResponse)) {
-                                  const programsData = schoolProgramsResponse.map(sp => ({
-                                    ...sp.program,
-                                    schoolProgramURL: sp.schoolProgramURL,
-                                    schoolProgramURLType: sp.schoolProgramURLType,
-                                  }));
-                                  setSchoolPrograms(programsData);
-                                  setSearchedSchool(school);
-                                  setShowSchoolSearchResults(true);
-                                  setShowSchoolsFoundToast(true);
-                                  setTimeout(() => setShowSchoolsFoundToast(false), 3000);
-                                } else {
-                                  setError(`No programs found for "${school.name}". Please try another school name.`);
-                                  setTimeout(() => setError(null), 3000);
-                                }
-                              } catch (error) {
-                                setError("Failed to search for school programs. Please try again later.");
-                                setTimeout(() => setError(null), 3000);
-                              } finally {
-                                setIsSearchingSchool(false);
-                              }
-                            }}
-                            className="w-full text-left px-4 py-3 rounded-lg flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 mb-1 transition-colors"
-                          >
-                            <School className="w-5 h-5 mr-3 text-indigo-500" />
-                            <span className="text-gray-800 dark:text-gray-200">{school.name}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                          No schools found.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="flex">
-                  <button
-                    onClick={() => setShowFilterMenu(!showFilterMenu)}
-                      className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow flex items-center h-[56px] ml-3"
-                  >
-                    <Filter className="w-5 h-5 text-indigo-500" />
-                    <span className="">Filters</span>
-                  </button>
-                </div>
-                  
-                {showFilterMenu && (
-                  <div className="absolute right-0 top-[calc(100%+8px)] bg-white dark:bg-gray-700 rounded-lg shadow-xl p-5 z-40 border border-gray-100 dark:border-gray-600 w-72">
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-4 text-lg">FILTER BY</h3>
-                    
-                    {/* School Type Filter */}
-                    <div className="mb-5">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">School Type</h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded-md transition-colors">
-                          <input
-                            type="radio"
-                            name="schoolType"
-                            checked={filterOptions.schoolType === 'all'}
-                            onChange={() => {
-                              setFilterOptions({
-                                ...filterOptions,
-                                schoolType: 'all'
-                              });
-                              setShowFilterMenu(false);
-                            }}
-                            className="text-[#FFB71B] focus:ring-[#FFB71B] w-5 h-5"
-                          />
-                          <span className="font-medium">All</span>
-                        </label>
-                        <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded-md transition-colors">
-                          <input
-                            type="radio"
-                            name="schoolType"
-                            checked={filterOptions.schoolType === 'public'}
-                            onChange={() => {
-                              setFilterOptions({
-                                ...filterOptions,
-                                schoolType: 'public'
-                              });
-                              setShowFilterMenu(false);
-                            }}
-                            className="text-[#FFB71B] focus:ring-[#FFB71B] w-5 h-5"
-                          />
-                          <span className="font-medium">Public</span>
-                        </label>
-                        <label className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 p-2 rounded-md transition-colors">
-                          <input
-                            type="radio"
-                            name="schoolType"
-                            checked={filterOptions.schoolType === 'private'}
-                            onChange={() => {
-                              setFilterOptions({
-                                ...filterOptions,
-                                schoolType: 'private'
-                              });
-                              setShowFilterMenu(false);
-                            }}
-                            className="text-[#FFB71B] focus:ring-[#FFB71B] w-5 h-5"
-                          />
-                          <span className="font-medium">Private</span>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Location</h4>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-indigo-500" />
-                        <input
-                          type="text"
-                          placeholder="Search location (e.g. N. Bacalso)"
-                          value={filterOptions.locationSearch}
-                          onChange={(e) => setFilterOptions({
-                            ...filterOptions,
-                            locationSearch: e.target.value
-                          })}
-                          className="pl-9 pr-3 py-2.5 w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm text-left"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">School Name</h4>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-indigo-500" />
-                        <input
-                          type="text"
-                          placeholder="Filter by school name"
-                          value={filterOptions.schoolNameFilter}
-                          onChange={(e) =>
-                            setFilterOptions({
-                              ...filterOptions,
-                              schoolNameFilter: e.target.value,
-                            })
-                          }
-                          className="pl-9 pr-3 py-2.5 w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm text-left"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SearchHeader
+        programSearchTerm={programSearchTerm}
+        setProgramSearchTerm={setProgramSearchTerm}
+        showProgramDropdown={showProgramDropdown}
+        setShowProgramDropdown={setShowProgramDropdown}
+        programs={programs}
+        selectedProgram={selectedProgram}
+        onProgramChange={handleProgramChange}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        showSchoolDropdown={showSchoolDropdown}
+        setShowSchoolDropdown={setShowSchoolDropdown}
+        schools={schools}
+        onSchoolSearch={handleSchoolSearch}
+        onSearchKeyDown={handleSearchKeyDown}
+        onSchoolSelect={handleSchoolSelect}
+        showFilterMenu={showFilterMenu}
+        setShowFilterMenu={setShowFilterMenu}
+        filterOptions={filterOptions}
+        setFilterOptions={setFilterOptions}
+        isSearchingSchool={isSearchingSchool}
+      />
       
       <main className="flex-1 w-full flex overflow-auto">
         {/* Program Side Panel */}
         {showProgramSidePanel && !programSidebarHidden && (
-          <div className="h-full w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-md animate-slide-in">
-            <div className="p-4 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-[#2B3E4E] dark:text-white">Program Details</h3>
-                <button
-                  onClick={() => setProgramSidebarHidden(true)}
-                  className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"
-                  aria-label="Hide program panel"
-                >
-                  {/* Use a left arrow to indicate hide */}
-                  <ChevronRight className="w-4 h-4 transform rotate-180" />
-                </button>
-              </div>
-              
-              {loadingProgramDetails ? (
-                <div className="animate-pulse space-y-3 flex-grow">
-                  {/* ...existing loading skeleton... */}
-                </div>
-              ) : selectedProgramDetails ? (
-                <div className="flex flex-col h-full">
-                  {/* Program Header */}
-                  <div className="mb-6 text-center border-b border-gray-200 dark:border-gray-700 pb-5">
-                    <div className="w-20 h-20 rounded-full bg-[#2B3E4E] flex items-center justify-center mx-auto mb-3">
-                      <BookOpen className="w-10 h-10 text-[#FFB71B]" />
-                    </div>
-                    <div className="text-sm uppercase tracking-wider text-[#2B3E4E] dark:text-[#FFB71B] font-semibold">
-                      Academic Program
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-2 mb-2">
-                      {selectedProgramDetails?.programName ||
-                        programs.find(p => p.programId === selectedProgram)?.programName ||
-                        "Loading..."}
-                    </h2>
-                  </div>
-
-                  {/* Program Content */}
-                  <div className="flex-grow flex flex-col gap-5"> {/* Added gap-5 for spacing between sections */}
-                    {/* Program Description Section */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-                      <h4 className="text-sm font-semibold text-gray-800 dark:text-white flex items-center mb-2">
-                        <Info className="w-4 h-4 mr-1.5 text-[#FFB71B]" />
-                        Program Description
-                      </h4>
-                      <div className="pl-3 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed pr-2 text-justify whitespace-pre-line">
-                          {selectedProgramDetails?.description ||
-                            selectedProgramDetails?.programDescription ||
-                            "This program prepares students for careers in this field."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Available Schools Section */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700 shadow-md mt-auto">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="w-16 h-16 rounded-full bg-[#FFB71B]/10 dark:bg-[#FFB71B]/20 flex items-center justify-center mr-3">
-                            <School className="w-8 h-8 text-[#FFB71B]" />
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-800 dark:text-white">Available Schools</h4>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">offering this program</p>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <span className="text-3xl font-bold text-[#FFB71B] block">{filteredAndSearchedSchools.length}</span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">schools</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 flex-grow flex flex-col items-center justify-center">
-                  <div className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-full mx-auto flex items-center justify-center mb-3">
-                    <BookOpen className="w-7 h-7 text-gray-400" />
-                  </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">No program selected</p>
-                </div>
-              )}
-            </div>
-          </div>
+          <ProgramSidePanel
+            show={true}
+            hidden={false}
+            onHide={() => setProgramSidebarHidden(true)}
+            selectedProgramDetails={selectedProgramDetails}
+            programs={programs}
+            selectedProgram={selectedProgram}
+            loadingProgramDetails={loadingProgramDetails}
+            filteredSchoolsCount={filteredAndSearchedSchools.length}
+          />
         )}
         
         <div className={`flex-1 transition-all duration-300 ease-in-out px-6 py-6 ${
-          showProgramsPanel ? 'animate-content-slide' : 'animate-content-slide-back'
-        } ${showProgramSidePanel && !programSidebarHidden ? 'ml-96 w-[calc(100%-24rem)]' : 'w-full'}`}>
+          showProgramSidePanel && !programSidebarHidden ? '' : 'w-full'
+        }`}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700 min-h-[calc(100vh-140px)] overflow-auto relative">
 
-            {/* Place the show sidebar button here, above the schools grid */}
+            {/* Show sidebar button when hidden */}
             {showProgramSidePanel && programSidebarHidden && (
               <div className="flex justify-start mb-4">
                 <button
@@ -1089,419 +395,29 @@ const AcademicExplorer = () => {
               </div>
             )}
             
-            {/* School Search Results View - Takes precedence if active */}
+            {/* Main content area */}
             {showSchoolSearchResults && searchedSchool && !selectedProgram ? (
-              <div className="flex flex-col h-auto animate-fade-in-up"> {/* Changed h-full to h-auto to let content define height, ensure parent allows for it */}
-                {/* School Header with Background - Enhanced to match testimonials */}
-                <div className="relative w-full h-96 rounded-xl mb-8 overflow-hidden"> {/* REMOVED: border-4 border-red-500 */}
-                  {/* Background Image with Gradient Overlay */}
-                  <div className="absolute inset-0"> {/* REMOVED: z-0 */}
-                    {(() => {
-                      const bgImage = getSchoolBackground(searchedSchool.name);
-                      // console.log('[Render] Searched School Name for BG:', searchedSchool.name); // Keep logs for now, can be removed later
-                      // console.log('[Render] Calculated Background Image URL:', bgImage);
-                      if (bgImage) {
-                        return (
-                          <img 
-                            src={bgImage} 
-                            alt={`${searchedSchool.name} campus`}
-                            className="w-full h-full object-cover" /* REMOVED: absolute inset-0 z-10 border-4 border-lime-500 */
-                            onError={(e) => console.error('[Render] BG Image Error: Failed to load', e.target.src, e)}
-                          />
-                        );
-                      } else {
-                        // console.log('[Render] Rendering fallback BG div because bgImage is null/undefined.');
-                        return (
-                          <div className="w-full h-full bg-gradient-to-r from-[#2B3E4E] to-[#1b2d3d]"></div>
-                        );
-                      }
-                    })()}
-                    <div className="absolute inset-0 bg-gradient-to-b from-[rgba(0,0,0,0.3)] to-[rgba(0,0,0,0.7)]"></div> {/* REMOVED: z-20 */}
-                  </div>
-
-                  {/* School Logo and Info - Centered Layout */}
-                  <div className="absolute inset-0 flex flex-row items-center justify-start px-8 sm:px-12 md:px-16 z-30"> {/* MODIFIED: for left alignment, row layout, and vertical centering */}
-                    {/* School Logo */}
-                    <div className="mr-6 flex-shrink-0"> {/* ADDED: margin-right and prevent shrinking */}
-                      <div className="w-40 h-40 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-white dark:border-gray-800 overflow-hidden"> {/* MODIFIED: removed p-2 */}
-                        {(() => {
-                          const logo = schoolLogos[searchedSchool.schoolId];
-                          // console.log('[Render] Searched School ID for Logo:', searchedSchool.schoolId);
-                          // console.log('[Render] Calculated Logo URL:', logo);
-                          if (logo) {
-                            return (
-                              <img 
-                                src={logo} 
-                                alt={`${searchedSchool.name} logo`}
-                                className="w-full h-full object-cover" /* MODIFIED: object-contain to object-cover */
-                                onError={(e) => console.error('[Render] Logo Image Error: Failed to load', e.target.src, e)}
-                              />
-                            );
-                          } else {
-                            // console.log('[Render] Rendering fallback Logo icon because logo is null/undefined.');
-                            return (
-                              <School className="w-24 h-24 text-[#2B3E4E]" />
-                            );
-                          }
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Text Container (Name and Location) */}
-                    <div className="flex flex-col">
-                      {/* School Name */}
-                      <h2 className="text-2xl md:text-3xl font-bold text-white text-left text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}> {/* MODIFIED: text size, text-left, removed mb-4 */}
-                        {searchedSchool.name}
-                      </h2>
-                      
-                      {/* School Location */}
-                      <div className="flex items-center text-white/90 mt-2 text-sm md:text-base"> {/* MODIFIED: margin-top and text size */}
-                        <MapPin className="w-5 h-5 mr-2" />
-                        <span>{searchedSchool.location}</span>
-                      </div>
-
-                      {/* School Type */}
-                      {searchedSchool.type && (
-                        <div className="flex items-center text-white/90 mt-2 text-sm md:text-base">
-                          <School className="w-5 h-5 mr-2" />
-                          <span>{searchedSchool.type}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rest of the content */}
-                {/* School Description */}
-                <div className="bg-gray-50 dark:bg-gray-700/40 p-6 rounded-xl mb-6 shadow-sm">
-                  <h3 className="text-lg font-semibold text-[#2B3E4E] dark:text-[#FFB71B] mb-4 flex items-center">
-                    <Info className="w-5 h-5 mr-2" />
-                    About {searchedSchool.name}
-                  </h3>
-                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {searchedSchool.description || 'No description available for this school.'}
-                  </p>
-                </div>
-                
-                {/* Programs Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-xl font-bold text-[#2B3E4E] dark:text-white flex items-center">
-                    <BookOpen className="w-6 h-6 mr-2 text-[#FFB71B]" />
-                    Programs Offered ({filteredSchoolPrograms.length})
-                  </h3>
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-500 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder="Search program..."
-                      value={programsOfferedSearchTerm}
-                      onChange={e => setProgramsOfferedSearchTerm(e.target.value)}
-                      className="pl-9 pr-3 py-2 w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all shadow-sm text-sm"
-                    />
-                    {programsOfferedSearchTerm && (
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600 dark:hover:text-[#FFB71B] rounded-full p-1 transition-colors duration-150"
-                        onClick={() => setProgramsOfferedSearchTerm('')}
-                        tabIndex={-1}
-                        aria-label="Clear program search"
-                        style={{ lineHeight: 0, background: 'transparent' }}
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Programs Grid */}
-                {filteredSchoolPrograms.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-4">
-                    {filteredSchoolPrograms.map((program) => (
-                      <div 
-                        key={program.programId}
-                        className="bg-white dark:bg-gray-700 rounded-xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-600 overflow-hidden transition-shadow cursor-pointer animate-fade-in-up"
-                      >
-                        {/* ...existing program card code... */}
-                        <div className="p-5">
-                          <div className="flex items-start mb-4">
-                            <div className="w-12 h-12 rounded-full bg-[#2B3E4E] flex items-center justify-center mr-3 flex-shrink-0">
-                              <BookOpen className="w-6 h-6 text-[#FFB71B]" />
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">{program.programName}</h4>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">Academic Program</p>
-                            </div>
-                          </div>
-                          {program.description && (
-                            <div className="mt-3 pl-3 border-l-2 border-gray-200 dark:border-gray-600">
-                              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                                {program.description}
-                              </p>
-                            </div>
-                          )}
-                          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-end">
-                            {program.schoolProgramURL ? (
-                              <a
-                                href={program.schoolProgramURL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[#2B3E4E] dark:text-[#FFB71B] text-sm font-medium flex items-center hover:underline"
-                                style={{ wordBreak: 'break-all' }}
-                              >
-                                {program.schoolProgramURLType === "department_page"
-                                  ? "Visit Department Page"
-                                  : program.schoolProgramURLType === "general_academic_page"
-                                  ? "Visit Academics Page"
-                                  : "Visit Program Page"}
-                                <ChevronRight className="w-4 h-4 ml-1" />
-                              </a>
-                            ) : (
-                              <button
-                                className="text-gray-400 dark:text-gray-500 text-sm font-medium flex items-center cursor-not-allowed"
-                                disabled
-                                title="No online information available for this program"
-                              >
-                                No Online Info
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                    <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 dark:text-gray-400 text-lg">
-                      {programsOfferedSearchTerm
-                        ? 'No programs found matching your search.'
-                        : 'No programs available for this school'}
-                    </p>
-                  </div>
-                )}
-              </div>
+              <SchoolSearchResults
+                searchedSchool={searchedSchool}
+                schoolPrograms={schoolPrograms}
+                programsOfferedSearchTerm={programsOfferedSearchTerm}
+                setProgramsOfferedSearchTerm={setProgramsOfferedSearchTerm}
+              />
             ) : !selectedProgram && filteredSchools.length === 0 ? (
-              <div className="flex flex-col md:flex-row items-center justify-center gap-12 w-full h-full min-h-[500px]">
-                {/* Left: Program search info */}
-                <div className="flex flex-col items-center justify-center w-full md:w-1/2 h-full">
-                  <div
-                    className={`w-48 h-48 mb-6 transition-all duration-300 ${mascotWiggle ? 'mascot-wiggle' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img
-                      src={ohMy}
-                      alt="Program search mascot"
-                      className="w-full h-full"
-                      draggable={false}
-                    />
-                  </div>
-                  <div className="flex flex-row items-center bg-[#FFB71B] text-[#1B2836] px-6 py-4 rounded-lg shadow font-medium text-base max-w-xs min-h-[90px]">
-                    <BookOpen className="w-7 h-7 mr-3 text-[#2B3E4E] flex-shrink-0" />
-                    <span className="text-left">
-                      Use the program search bar to browse or search for programs. Selecting a program will display all the schools that offer it.
-                    </span>
-                  </div>
-                </div>
-                {/* Right: School search info */}
-                <div className="flex flex-col items-center justify-center w-full md:w-1/2 h-full">
-                  <div
-                    className={`w-48 h-48 mb-6 transition-all duration-300 ${mascotWiggle ? 'mascot-wiggle' : ''}`}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img
-                      src={ohMyLeft}
-                      alt="School search mascot"
-                      className="w-full h-full"
-                      draggable={false}
-                    />
-                  </div>
-                  <div className="flex flex-row items-center bg-[#FFB71B] text-[#1B2836] px-6 py-4 rounded-lg shadow font-medium text-base max-w-xs min-h-[90px]">
-                    <School className="w-7 h-7 mr-3 text-[#2B3E4E] flex-shrink-0" />
-                    <span className="text-left">
-                      Use the school search bar to browse or search for schools. Selecting a school will display all the programs it offers.
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <EmptyStateWithMascots mascotWiggle={mascotWiggle} />
             ) : loading && selectedProgram ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-                ))}
-              </div>
+              <LoadingGrid />
             ) : filteredAndSearchedSchools.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="bg-gray-100 dark:bg-gray-700 p-5 rounded-full inline-block mb-5">
-                  <Search className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">No schools found</h3>
-                <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
-              {searchTerm ? 'Try adjusting your search term or filters'
-                    : filterOptions.locationSearch 
-                      ? `No schools found matching location "${filterOptions.locationSearch}"`
-                      : 'Select a program to view available schools'}
-                </p>
-              </div>
+              <NoSchoolsFound 
+                searchTerm={searchTerm} 
+                filterOptions={filterOptions} 
+              />
             ) : (
-              // Grid for displaying school cards (when a program is selected and schools are found)
-              <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 auto-rows-max transition-all duration-300 ${ // This is the school card grid
-                showProgramSidePanel ? 'grid-with-panel' : 'lg:grid-cols-3'
-              }`}>
-                {filteredAndSearchedSchools.map((school, index) => {
-                  const schoolLogo = schoolLogos[school.schoolId];
-                  const schoolBackground = getSchoolBackground(school.name);
-
-                  return (
-                    <div
-                      key={school.schoolId}
-                      className={`relative bg-white dark:bg-gray-700 border rounded-xl transition-all duration-300 overflow-hidden ${getAnimationClass(index)} ${
-                        'border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-lg hover:-translate-y-1'
-                      }`}
-                      style={{}}
-                      onMouseEnter={(e) => handleMouseEnter(school, e)}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <div className="flex flex-col h-full">
-                        {/* Top half with image and logo */}
-                        <div className="relative w-full h-44 bg-blue-100 overflow-hidden">
-                          {/* Banner image - using a gradient overlay to ensure text readability */}
-                          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
-                          
-                          {/* School background image */}
-                          {getSchoolBackground(school.name) ? (
-                            <img 
-                              src={getSchoolBackground(school.name)} 
-                              alt={`${school.name} campus`}
-                              className="w-full h-full object-cover object-center"
-                            />
-                          ) : (
-                            <img 
-                              src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school.schoolId}`} 
-                              alt={`${school.name} campus`}
-                              className="w-full h-full object-cover object-center"
-                            />
-                          )}
-
-                          {/* Logo positioned in the middle with no white background */}
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                          {schoolLogo ? (
-                            <img 
-                              src={schoolLogo} 
-                              alt={`${school.name} logo`}
-                                className="w-32 h-32 object-cover rounded-full shadow-lg"
-                            />
-                          ) : (
-                              <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
-                                <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
-                            </div>
-                          )}
-                          </div>
-                        </div>
-
-                        {/* Bottom half with school information */}
-                        <div className="p-5 flex flex-col flex-1">
-                          {/* School name centered */}
-                          <h3 className="font-bold text-lg text-gray-900 dark:text-white text-center mb-4">{school.name}</h3>
-                          
-                          {/* All information in one container with shadow */}
-                          <div className="space-y-3 bg-white dark:bg-gray-700/60 p-5 rounded-lg mb-4 border border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow">
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                <MapPin className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                              <span className="truncate">{school.location}</span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                                <Globe className="w-5 h-5 mr-3 text-[#FFB71B] flex-shrink-0" />
-                              <span>{school.type}</span>
-                            </div>
-                          </div>
-                          
-                          {/* View More button */}
-                          <div className="mt-3">
-                            <button
-                              className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-2.5 px-3 rounded-md transition-colors text-sm font-medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSchoolDetails(school);
-                                setShowSchoolDetailsModal(true);
-                              }}
-                            >
-                              <ChevronRight className="w-4 h-4 mr-2" />
-                              View More
-                            </button>
-                            </div>
-                        </div>
-                      </div>
-
-                      {tooltipVisible && hoveredSchool?.schoolId === school.schoolId && (
-                        <div 
-                          className="fixed z-50 w-[400px] rounded-xl shadow-2xl p-6 transform transition-all duration-200 ease-in-out backdrop-blur-sm bg-white/95 dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700"
-                          style={{
-                            top: tooltipPosition.y + 'px',
-                            left: tooltipPosition.x + 'px'
-                          }}
-                        >
-                          <div className="flex items-center mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-                            {schoolLogo ? (
-                              <img 
-                                src={schoolLogo} 
-                                alt={`${school.name} logo`}
-                                className="w-32 h-32 object-cover rounded-full shadow-lg"
-                              />
-                            ) : (
-                              <div className="w-32 h-32 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow-lg">
-                                <School className="w-16 h-16 text-indigo-600 dark:text-indigo-400" />
-                              </div>
-                            )}
-                            <div className="ml-4">
-                              <h4 className="font-bold text-xl text-gray-900 dark:text-white">{school.name}</h4>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{school.location}</p>
-                            </div>
-                          </div>
-                          <div className="space-y-5">
-                            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                              <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">About</h5>
-                              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                                {school.description || 'No description available'}
-                              </p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                <div className="flex items-center mb-2">
-                                  <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400 mr-2" />
-                                  <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Requirements</h5>
-                                </div>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                  {school.admissionRequirements || 'Not specified'}
-                                </p>
-                              </div>
-                              {school.tuitionFee && (
-                                <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-                                  <div className="flex items-center mb-2">
-                                    <div className="w-4 h-4 mr-2 text-yellow-500">💰</div>
-                                    <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300">Tuition</h5>
-                                  </div>
-                                  <p className="text-gray-600 dark:text-gray-400 text-sm">{school.tuitionFee}</p>
-                                </div>
-                              )}
-                            </div>
-                            <button
-                              className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-3 px-4 rounded-lg transition-colors font-medium"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSchoolDetails(school);
-                                setShowSchoolDetailsModal(true);
-                              }}
-                            >
-                              <ChevronRight className="w-5 h-5 mr-2" />
-                              View More Details
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+              <SchoolGrid
+                schools={filteredAndSearchedSchools}
+                showProgramSidePanel={showProgramSidePanel}
+                onViewDetails={handleViewSchoolDetails}
+              />
             )}
           </div>
         </div>
@@ -1620,8 +536,14 @@ const AcademicExplorer = () => {
         </div>
       )}
 
-      {/* Keep all other existing modals and code */}
-      {/* ... */}
+      <SchoolDetailsModal
+        show={showSchoolDetailsModal}
+        onClose={() => setShowSchoolDetailsModal(false)}
+        school={selectedSchoolDetails}
+        selectedProgramDetails={selectedProgramDetails}
+        programs={programs}
+        selectedProgram={selectedProgram}
+      />
     </div>
   );
 };
