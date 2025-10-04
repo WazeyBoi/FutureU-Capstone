@@ -114,8 +114,16 @@ const LandingPage = () => {
     const onStorage = (e) => {
       if (e.key === 'futureu_refresh_testimonials') fetchTestimonials();
     };
+    const onTestimonialUpdate = () => {
+      fetchTestimonials();
+    };
+    
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener('futureu_testimonials_updated', onTestimonialUpdate);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('futureu_testimonials_updated', onTestimonialUpdate);
+    };
   }, []);
 
   // Check authentication status
