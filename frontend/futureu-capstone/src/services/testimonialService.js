@@ -142,9 +142,7 @@ export const createTestimonial = async (testimonialData) => {
     
     // Clear related caches
     dataCacheService.clear('testimonials');
-    if (testimonialData.schoolId) {
-      dataCacheService.clear(`testimonials_school_${testimonialData.schoolId}`);
-    }
+    dataCacheService.clearByPattern('testimonials_school_'); // Clear all school-specific caches
     
     return response;
   } catch (error) {
@@ -189,9 +187,7 @@ export const updateTestimonial = async (testimonyId, testimonialData) => {
     
     // Clear related caches
     dataCacheService.clear('testimonials');
-    if (testimonialData.schoolId) {
-      dataCacheService.clear(`testimonials_school_${testimonialData.schoolId}`);
-    }
+    dataCacheService.clearByPattern('testimonials_school_'); // Clear all school-specific caches
     
     return response;
   } catch (error) {
@@ -267,8 +263,13 @@ export const deleteTestimonial = async (testimonyId) => {
  */
 export const getSchoolAverageRating = async (schoolId) => {
   try {
-    // Get testimonials for this school (will use cache if available)
-    const response = await getTestimonialsBySchool(schoolId);
+    // Get testimonials for this school - fetch fresh data to avoid caching issues
+    const cacheKey = `testimonials_school_${schoolId}`;
+    
+    // Clear cache to ensure fresh data
+    dataCacheService.clear(cacheKey);
+    
+    const response = await apiClient.get(`/testimony/getTestimoniesBySchool/${schoolId}`);
     const testimonials = response.data || [];
     
     if (testimonials.length === 0) {
@@ -285,10 +286,12 @@ export const getSchoolAverageRating = async (schoolId) => {
     
     const averageRating = totalRating / testimonials.length;
     
-    return {
+    const result = {
       averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
       totalReviews: testimonials.length
     };
+    
+    return result;
   } catch (error) {
     console.error(`Error calculating average rating for school ${schoolId}:`, error);
     return {
