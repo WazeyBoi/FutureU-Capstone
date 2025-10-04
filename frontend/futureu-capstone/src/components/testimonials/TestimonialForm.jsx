@@ -197,7 +197,15 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
       
       // Call the success callback with the response data
         onSubmitSuccess(response.data || testimonialData);
-        // Broadcast to refresh landing page testimonials immediately
+        
+        // Trigger refresh for testimonials and ratings IMMEDIATELY with new testimonial data
+        window.dispatchEvent(new CustomEvent('futureu_testimonials_updated', { 
+          detail: { 
+            newTestimonial: response.data || testimonialData,
+            schoolId: parseInt(formData.schoolId),
+            rating: formData.rating
+          } 
+        }));
         try { localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); } catch {}
         
         // Since data is actually saved to the database even when we get errors later,

@@ -112,7 +112,8 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
   const handleDelete = () => {
     setShowOptions(false);
     if (onDelete && window.confirm('Are you sure you want to delete this review?')) {
-      onDelete(testimonialId);
+      // Pass full testimonial data for instant rating calculation
+      onDelete(testimonialId, testimonial);
     }
   };
   
