@@ -9,6 +9,7 @@ import SchoolsSection from './testimonials/SchoolsSection';
 import { FaSearch, FaFilter, FaArrowLeft, FaPlus, FaTimes, FaStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { getAllTestimonials, getTestimonialsBySchool, deleteTestimonial, createTestimonial, updateTestimonial } from '../services/testimonialService';
 import authService from '../services/authService';
+import dataCacheService from '../services/dataCache';
 // Import Swiper and required modules
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
@@ -123,12 +124,25 @@ const Testimonials = () => {
     setCurrentUser(user);
   }, []);
 
-  // Fetch schools from the API
+  // Fetch schools from the API with caching
   useEffect(() => {
+    const cacheKey = 'schools';
     const fetchSchools = async () => {
       try {
+        // Check cache first
+        const cached = dataCacheService.get(cacheKey);
+        if (cached) {
+          setSchools(cached);
+          setLoading(false);
+          return;
+        }
+
         const response = await axios.get('/api/school/getAllSchools');
-        setSchools(response.data);
+        const schoolsData = response.data;
+        
+        // Cache the schools data
+        dataCacheService.set(cacheKey, schoolsData);
+        setSchools(schoolsData);
       } catch (error) {
         console.error('Error fetching schools:', error);
         // Fallback with some mock data in case the API fails
@@ -148,35 +162,53 @@ const Testimonials = () => {
     fetchSchools();
   }, []);
 
-  // Fetch testimonials using the service
-  useEffect(() => {
-    const fetchTestimonials = async () => {
-      setLoading(true);
-      try {
-        const response = await getAllTestimonials();
-        setTestimonials(response.data);
-        setFilteredTestimonials(response.data);
+  // Fetch testimonials function that can be reused
+  const fetchTestimonials = async () => {
+    try {
+      // Try cached data first (don't show loading if cached)
+      const response = await getAllTestimonials();
+      const testimonialsData = response.data || [];
+      
+      setTestimonials(testimonialsData);
+      setFilteredTestimonials(testimonialsData);
+      
+      // Calculate testimonial counts per school
+      const counts = {};
+      testimonialsData.forEach(testimonial => {
+        const schoolId = testimonial.schoolId || 
+                       (testimonial.school && testimonial.school.schoolId);
         
-        // Calculate testimonial counts per school
-        const counts = {};
-        response.data.forEach(testimonial => {
-          const schoolId = testimonial.schoolId || 
-                         (testimonial.school && testimonial.school.schoolId);
-          
-          if (schoolId) {
-            counts[schoolId] = (counts[schoolId] || 0) + 1;
-          }
-        });
-        setSchoolTestimonialCounts(counts);
-      } catch (error) {
-        console.error('Error fetching testimonials:', error);
-        // Fallback to mock data if API fails
-      } finally {
-        setLoading(false);
-      }
+        if (schoolId) {
+          counts[schoolId] = (counts[schoolId] || 0) + 1;
+        }
+      });
+      setSchoolTestimonialCounts(counts);
+      
+      // Only set loading to false once we have data
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching testimonials:', error);
+      setLoading(false);
+      // Fallback to mock data if API fails
+    }
+  };
+
+  // Fetch testimonials on mount
+  useEffect(() => {
+    fetchTestimonials();
+  }, []);
+
+  // Listen for testimonial updates to refresh data
+  useEffect(() => {
+    const handleTestimonialUpdate = () => {
+      fetchTestimonials();
     };
 
-    fetchTestimonials();
+    window.addEventListener('futureu_testimonials_updated', handleTestimonialUpdate);
+    
+    return () => {
+      window.removeEventListener('futureu_testimonials_updated', handleTestimonialUpdate);
+    };
   }, []);
 
   // Filter testimonials based on selected school and search query
@@ -293,7 +325,7 @@ const Testimonials = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteTestimonial = async (testimonialId) => {
+  const handleDeleteTestimonial = async (testimonialId, testimonialData = null) => {
     // Check if user is logged in
     if (!currentUser) {
       alert('Please log in to delete a review.');
@@ -303,11 +335,14 @@ const Testimonials = () => {
     try {
       await deleteTestimonial(testimonialId);
       
-      // Find the school ID of the deleted testimonial
-      const deletedTestimonial = testimonials.find(t => {
-        const id = t.id || t.testimonyId;
-        return id === testimonialId;
-      });
+      // Use passed testimonial data first, otherwise find it
+      let deletedTestimonial = testimonialData;
+      if (!deletedTestimonial) {
+        deletedTestimonial = testimonials.find(t => {
+          const id = t.id || t.testimonyId;
+          return id === testimonialId;
+        });
+      }
       
       if (deletedTestimonial) {
         const schoolId = deletedTestimonial.schoolId || 
@@ -332,6 +367,35 @@ const Testimonials = () => {
         const id = t.id || t.testimonyId;
         return id !== testimonialId;
       }));
+
+      // Trigger instant rating update for deletion
+        if (deletedTestimonial) {
+          const schoolId = deletedTestimonial.schoolId || 
+                         (deletedTestimonial.school && deletedTestimonial.school.schoolId);
+          const deletedRating = deletedTestimonial.rating;
+                         
+          console.log('Testimonials: Dispatching deletion event:', { schoolId, deletedRating, testimonialId });
+                         
+          if (schoolId && deletedRating) {
+            const eventDetail = { 
+              action: 'delete',
+              schoolId: schoolId,
+              deletedRating: deletedRating,
+              deletedTestimonialId: testimonialId
+            };
+            
+            console.log('Testimonials: About to dispatch event with detail:', eventDetail);
+            
+            window.dispatchEvent(new CustomEvent('futureu_testimonials_updated', { 
+              detail: eventDetail
+            }));
+            
+            console.log('Testimonials: Deletion event dispatched successfully');
+          
+          // Also trigger a cache refresh to ensure SchoolSection updates
+          try { localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); } catch {}
+        }
+      }
     } catch (error) {
       console.error('Error deleting testimonial:', error);
       // Show the specific error message from the backend if available
