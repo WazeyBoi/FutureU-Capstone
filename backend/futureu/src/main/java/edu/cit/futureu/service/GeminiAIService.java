@@ -26,6 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +37,20 @@ public class GeminiAIService {
     private final String geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    
+    // Rate limiting variables - VERY conservative for free tier
+    private static final long RATE_LIMIT_DELAY_MS = 10000; // 10 seconds between API calls for free tier
+    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 300000; // 5 minute circuit breaker
+    private static final int MAX_CONSECUTIVE_FAILURES = 1; // Open after first failure
+    
+    private final AtomicLong lastApiCall = new AtomicLong(0);
+    private final AtomicLong circuitBreakerUntil = new AtomicLong(0);
+    private final AtomicLong consecutiveFailures = new AtomicLong(0);
+    
+    // Simple cache for AI responses (in production, use Redis or similar)
+    private final Map<String, String> responseCache = new ConcurrentHashMap<>();
+    private static final long CACHE_EXPIRY_MS = 3600000; // 1 hour
+    private final Map<String, Long> cacheTimestamps = new ConcurrentHashMap<>();
     
     @Autowired
     private CareerService careerService;
@@ -61,61 +77,83 @@ public class GeminiAIService {
     }
     
     /**
-     * Generate career pathway recommendations based on assessment results
+     * Generate career pathway recommendations based on assessment results with rate limiting
      */
     public Map<String, Object> generateCareerRecommendations(
             AssessmentResultEntity assessmentResult,
             List<UserAssessmentSectionResultEntity> sectionResults) {
         
+        // Check circuit breaker first
+        if (isCircuitBreakerOpen()) {
+            System.out.println("Circuit breaker is open, using fallback career recommendations");
+            return createFallbackRecommendations();
+        }
+        
         try {
             // Prepare the prompt for Gemini API
             String prompt = buildPromptFromAssessmentResults(assessmentResult, sectionResults);
+            String cacheKey = generatePromptCacheKey(assessmentResult, sectionResults);
             
-            // Set up the request headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            
-            // Create the request body
-            ObjectNode requestBody = objectMapper.createObjectNode();
-            ArrayNode contents = requestBody.putArray("contents");
-            ObjectNode content = contents.addObject();
-            ObjectNode parts = content.putObject("parts");
-            parts.put("text", prompt);
-            
-            // Add API key to the URL
-            String url = geminiEndpoint + "?key=" + apiKey;
-            
-            // Make the API call
-            HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-            
-            // Parse the response
-            JsonNode responseJson = objectMapper.readTree(response.getBody());
-            
-            // Extract the generated text from the response
-            String generatedText = "";
-            if (responseJson.has("candidates") && responseJson.get("candidates").isArray() && 
-                responseJson.get("candidates").size() > 0) {
-                
-                JsonNode candidate = responseJson.get("candidates").get(0);
-                if (candidate.has("content") && candidate.get("content").has("parts") && 
-                    candidate.get("content").get("parts").isArray() && 
-                    candidate.get("content").get("parts").size() > 0) {
-                    
-                    generatedText = candidate.get("content").get("parts").get(0).get("text").asText();
-                }
+            // Check cache first
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                System.out.println("Using cached career recommendations");
+                return parseRecommendationsFromText(cachedResponse);
             }
+            
+            // Apply rate limiting
+            waitForRateLimit();
+            
+            String generatedText = makeAIRequest(prompt);
+            
+            // Cache the response
+            cacheResponse(cacheKey, generatedText);
+            
+            // Reset failure counter on success
+            consecutiveFailures.set(0);
             
             // Process the generated text to extract recommendations
             return parseRecommendationsFromText(generatedText);
             
         } catch (Exception e) {
-            e.printStackTrace();
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("error", "Failed to generate recommendations: " + e.getMessage());
-            errorResult.put("suggestedCareers", new ArrayList<>());
-            return errorResult;
+            handleApiFailure(e);
+            System.err.println("Error generating career recommendations: " + e.getMessage());
+            return createFallbackRecommendations();
         }
+    }
+    
+    /**
+     * Create fallback recommendations when AI is unavailable
+     */
+    private Map<String, Object> createFallbackRecommendations() {
+        Map<String, Object> result = new HashMap<>();
+        List<CareerEntity> databaseCareers = careerService.getAllCareers();
+        
+        result.put("error", "AI recommendations unavailable, using fallback");
+        result.put("suggestedCareers", createRecommendationsFromDatabase(databaseCareers, 5));
+        result.put("explanation", "Fallback recommendations from available careers.");
+        result.put("confidenceScore", 60.0);
+        result.put("fallback", true);
+        
+        return result;
+    }
+    
+    /**
+     * Generate cache key for main recommendation prompts
+     */
+    private String generatePromptCacheKey(AssessmentResultEntity assessmentResult, 
+                                         List<UserAssessmentSectionResultEntity> sectionResults) {
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder.append("main_recommendation_");
+        keyBuilder.append(assessmentResult.getResultId());
+        keyBuilder.append("_overall_").append((int)(assessmentResult.getOverallScore() != null ? assessmentResult.getOverallScore() : 0));
+        
+        // Add key assessment scores for cache differentiation
+        if (assessmentResult.getStemScore() != null) keyBuilder.append("_stem_").append(assessmentResult.getStemScore().intValue());
+        if (assessmentResult.getAbmScore() != null) keyBuilder.append("_abm_").append(assessmentResult.getAbmScore().intValue());
+        if (assessmentResult.getHumssScore() != null) keyBuilder.append("_humss_").append(assessmentResult.getHumssScore().intValue());
+        
+        return keyBuilder.toString().replaceAll("[^a-zA-Z0-9_]", "");
     }
     
     /**
@@ -856,5 +894,567 @@ public class GeminiAIService {
         if (recog.contains("COD")) return 2;
         if (!recog.equals("NONE") && !recog.isEmpty()) return 1;
         return 0;
+    }
+
+    /**
+     * Generate personalized career summary using AI with rate limiting (SELECTIVE - only for top recommendations)
+     */
+    public String generatePersonalizedCareerSummary(CareerEntity career, double matchPercentage, 
+                                                   Map<String, Object> studentProfile, boolean isTopRecommendation) {
+        
+        System.out.println("🎯 CAREER SUMMARY REQUEST - Career: " + career.getCareerTitle() + 
+                          " | Match: " + String.format("%.1f", matchPercentage) + "% | IsTop: " + isTopRecommendation);
+        
+        // Only use AI for top recommendations to save quota
+        if (!isTopRecommendation) {
+            System.out.println("⚡ Using fallback summary for non-top career: " + career.getCareerTitle());
+            return getFallbackCareerSummary(career, matchPercentage);
+        }
+        
+        // Check circuit breaker first
+        if (isCircuitBreakerOpen()) {
+            System.out.println("🚫 Circuit breaker is open, using fallback for career: " + career.getCareerTitle());
+            return getFallbackCareerSummary(career, matchPercentage);
+        }
+        
+        try {
+            String prompt = buildCareerSummaryPrompt(career, matchPercentage, studentProfile);
+            String cacheKey = generateCacheKey("career", career.getCareerId(), matchPercentage, studentProfile);
+            
+            // Check cache first
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                System.out.println("💾 Using cached AI summary for career: " + career.getCareerTitle());
+                return cachedResponse;
+            }
+            
+            System.out.println("🤖 Generating AI summary for TOP career: " + career.getCareerTitle());
+            
+            // Apply rate limiting
+            waitForRateLimit();
+            
+            String response = makeAIRequest(prompt);
+            
+            // Cache the response
+            cacheResponse(cacheKey, response);
+            
+            // Reset failure counter on success
+            consecutiveFailures.set(0);
+            
+            System.out.println("✅ Successfully generated AI summary for career: " + career.getCareerTitle());
+            return response.trim();
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Error generating AI career summary for " + career.getCareerTitle() + ": " + e.getMessage());
+            return getFallbackCareerSummary(career, matchPercentage);
+        }
+    }
+
+    /**
+     * Generate personalized program summary using AI with rate limiting (SELECTIVE - only for top recommendations)
+     */
+    public String generatePersonalizedProgramSummary(ProgramEntity program, double matchPercentage, 
+                                                    Map<String, Object> studentProfile, boolean isTopRecommendation) {
+        
+        System.out.println("📚 PROGRAM SUMMARY REQUEST - Program: " + program.getProgramName() + 
+                          " | Match: " + String.format("%.1f", matchPercentage) + "% | IsTop: " + isTopRecommendation);
+        
+        // Only use AI for top recommendations to save quota
+        if (!isTopRecommendation) {
+            System.out.println("⚡ Using fallback summary for non-top program: " + program.getProgramName());
+            return getFallbackProgramSummary(program, matchPercentage);
+        }
+        
+        // Check circuit breaker first
+        if (isCircuitBreakerOpen()) {
+            System.out.println("🚫 Circuit breaker is open, using fallback for program: " + program.getProgramName());
+            return getFallbackProgramSummary(program, matchPercentage);
+        }
+        
+        try {
+            String prompt = buildProgramSummaryPrompt(program, matchPercentage, studentProfile);
+            String cacheKey = generateCacheKey("program", program.getProgramId(), matchPercentage, studentProfile);
+            
+            // Check cache first
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                System.out.println("💾 Using cached AI summary for program: " + program.getProgramName());
+                return cachedResponse;
+            }
+            
+            System.out.println("🤖 Generating AI summary for TOP program: " + program.getProgramName());
+            
+            // Apply rate limiting
+            waitForRateLimit();
+            
+            String response = makeAIRequest(prompt);
+            
+            // Cache the response
+            cacheResponse(cacheKey, response);
+            
+            // Reset failure counter on success
+            consecutiveFailures.set(0);
+            
+            System.out.println("✅ Successfully generated AI summary for program: " + program.getProgramName());
+            return response.trim();
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Error generating AI program summary for " + program.getProgramName() + ": " + e.getMessage());
+            return getFallbackProgramSummary(program, matchPercentage);
+        }
+    }
+
+    /**
+     * Backward compatibility method for career summaries
+     */
+    public String generatePersonalizedCareerSummary(CareerEntity career, double matchPercentage, 
+                                                   Map<String, Object> studentProfile) {
+        return generatePersonalizedCareerSummary(career, matchPercentage, studentProfile, true);
+    }
+
+    /**
+     * Backward compatibility method for program summaries
+     */
+    public String generatePersonalizedProgramSummary(ProgramEntity program, double matchPercentage, 
+                                                    Map<String, Object> studentProfile) {
+        return generatePersonalizedProgramSummary(program, matchPercentage, studentProfile, true);
+    }
+
+    /**
+     * Rate limiting: Wait if necessary to respect API limits
+     */
+    private void waitForRateLimit() {
+        long currentTime = System.currentTimeMillis();
+        long timeSinceLastCall = currentTime - lastApiCall.get();
+        
+        if (timeSinceLastCall < RATE_LIMIT_DELAY_MS) {
+            long waitTime = RATE_LIMIT_DELAY_MS - timeSinceLastCall;
+            System.out.println("Rate limiting: waiting " + waitTime + "ms before next API call");
+            
+            try {
+                Thread.sleep(waitTime);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Rate limiting interrupted", e);
+            }
+        }
+        
+        lastApiCall.set(System.currentTimeMillis());
+    }
+
+    /**
+     * Check if circuit breaker is open (too many recent failures)
+     */
+    private boolean isCircuitBreakerOpen() {
+        long currentTime = System.currentTimeMillis();
+        
+        // If circuit breaker timeout has passed, reset it
+        if (circuitBreakerUntil.get() > 0 && currentTime > circuitBreakerUntil.get()) {
+            System.out.println("Circuit breaker timeout expired, resetting");
+            circuitBreakerUntil.set(0);
+            consecutiveFailures.set(0);
+            return false;
+        }
+        
+        return circuitBreakerUntil.get() > currentTime;
+    }
+
+    /**
+     * Handle API failure - increment counter and potentially open circuit breaker
+     */
+    private void handleApiFailure(Exception e) {
+        long failures = consecutiveFailures.incrementAndGet();
+        System.err.println("API failure count: " + failures + ", Error: " + e.getMessage());
+        
+        if (failures >= MAX_CONSECUTIVE_FAILURES) {
+            long currentTime = System.currentTimeMillis();
+            circuitBreakerUntil.set(currentTime + CIRCUIT_BREAKER_TIMEOUT_MS);
+            System.err.println("Circuit breaker opened due to " + failures + " consecutive failures. Will retry after " + 
+                             (CIRCUIT_BREAKER_TIMEOUT_MS / 1000) + " seconds");
+        }
+    }
+
+    /**
+     * Manually reset the circuit breaker and failure counter
+     * Call this when you want to try AI generation again after quota reset
+     */
+    public void resetCircuitBreaker() {
+        consecutiveFailures.set(0);
+        circuitBreakerUntil.set(0);
+        System.out.println("🔄 Circuit breaker manually reset. AI generation will be attempted again.");
+    }
+
+    /**
+     * Get current circuit breaker status for debugging
+     */
+    public String getCircuitBreakerStatus() {
+        boolean isOpen = isCircuitBreakerOpen();
+        long failures = consecutiveFailures.get();
+        long timeUntilReset = Math.max(0, circuitBreakerUntil.get() - System.currentTimeMillis());
+        
+        return String.format("Circuit Breaker Status: %s | Failures: %d/%d | Reset in: %d seconds", 
+                           isOpen ? "OPEN" : "CLOSED", failures, MAX_CONSECUTIVE_FAILURES, timeUntilReset / 1000);
+    }
+
+    /**
+     * Generate cache key for AI responses
+     */
+    private String generateCacheKey(String type, int entityId, double matchPercentage, Map<String, Object> studentProfile) {
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder.append(type).append("_").append(entityId).append("_").append((int)matchPercentage);
+        
+        // Add relevant student profile data to cache key
+        if (studentProfile != null) {
+            // Use top 3 RIASEC scores for cache key to group similar profiles
+            Object riasecProfile = studentProfile.get("personalityType");
+            if (riasecProfile instanceof Map) {
+                Map<?, ?> riasec = (Map<?, ?>) riasecProfile;
+                keyBuilder.append("_riasec");
+                riasec.entrySet().stream()
+                    .sorted((e1, e2) -> Double.compare(
+                        Double.parseDouble(e2.getValue().toString()), 
+                        Double.parseDouble(e1.getValue().toString())))
+                    .limit(3)
+                    .forEach(entry -> keyBuilder.append("_").append(entry.getKey()).append((int)(Double.parseDouble(entry.getValue().toString()) * 100)));
+            }
+        }
+        
+        return keyBuilder.toString().replaceAll("[^a-zA-Z0-9_]", "");
+    }
+
+    /**
+     * Get cached response if available and not expired
+     */
+    private String getCachedResponse(String cacheKey) {
+        Long timestamp = cacheTimestamps.get(cacheKey);
+        if (timestamp != null) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - timestamp < CACHE_EXPIRY_MS) {
+                return responseCache.get(cacheKey);
+            } else {
+                // Remove expired cache entry
+                responseCache.remove(cacheKey);
+                cacheTimestamps.remove(cacheKey);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Cache AI response
+     */
+    private void cacheResponse(String cacheKey, String response) {
+        responseCache.put(cacheKey, response);
+        cacheTimestamps.put(cacheKey, System.currentTimeMillis());
+        
+        // Simple cache cleanup - remove old entries if cache gets too large
+        if (responseCache.size() > 1000) {
+            cleanupOldCacheEntries();
+        }
+    }
+
+    /**
+     * Clean up old cache entries
+     */
+    private void cleanupOldCacheEntries() {
+        long currentTime = System.currentTimeMillis();
+        List<String> keysToRemove = new ArrayList<>();
+        
+        cacheTimestamps.entrySet().forEach(entry -> {
+            if (currentTime - entry.getValue() > CACHE_EXPIRY_MS) {
+                keysToRemove.add(entry.getKey());
+            }
+        });
+        
+        keysToRemove.forEach(key -> {
+            responseCache.remove(key);
+            cacheTimestamps.remove(key);
+        });
+        
+        System.out.println("Cleaned up " + keysToRemove.size() + " expired cache entries");
+    }
+
+    /**
+     * Make the actual AI request with consistent error handling
+     */
+    private String makeAIRequest(String prompt) throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        
+        ObjectNode requestBody = objectMapper.createObjectNode();
+        ArrayNode contents = requestBody.putArray("contents");
+        ObjectNode content = contents.addObject();
+        ObjectNode parts = content.putObject("parts");
+        parts.put("text", prompt);
+        
+        String url = geminiEndpoint + "?key=" + apiKey;
+        HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+        
+        JsonNode responseJson = objectMapper.readTree(response.getBody());
+        
+        if (responseJson.has("candidates") && responseJson.get("candidates").isArray() && 
+            responseJson.get("candidates").size() > 0) {
+            
+            JsonNode candidate = responseJson.get("candidates").get(0);
+            if (candidate.has("content") && candidate.get("content").has("parts") && 
+                candidate.get("content").get("parts").isArray() && 
+                candidate.get("content").get("parts").size() > 0) {
+                
+                return candidate.get("content").get("parts").get(0).get("text").asText();
+            }
+        }
+        
+        throw new RuntimeException("No valid response content from AI API");
+    }
+
+    /**
+     * Fallback career summary when AI is unavailable
+     */
+    private String getFallbackCareerSummary(CareerEntity career, double matchPercentage) {
+        return String.format("%s aligns well with your strengths (%.0f%% match).", 
+            career.getCareerTitle(), matchPercentage);
+    }
+
+    /**
+     * Fallback program summary when AI is unavailable
+     */
+    private String getFallbackProgramSummary(ProgramEntity program, double matchPercentage) {
+        return String.format("%s supports your target skills (%.0f%% match).", 
+            program.getProgramName(), matchPercentage);
+    }
+
+    /**
+     * Batch generate career summaries with smart rate limiting
+     * This method reduces API calls by generating multiple summaries in one request when possible
+     */
+    public Map<Integer, String> batchGenerateCareerSummaries(List<CareerEntity> careers, 
+                                                            List<Double> matchPercentages,
+                                                            Map<String, Object> studentProfile) {
+        Map<Integer, String> results = new HashMap<>();
+        List<CareerEntity> remainingCareers = new ArrayList<>();
+        List<Double> remainingPercentages = new ArrayList<>();
+        
+        // First, check cache for existing summaries
+        for (int i = 0; i < careers.size(); i++) {
+            CareerEntity career = careers.get(i);
+            Double percentage = matchPercentages.get(i);
+            String cacheKey = generateCacheKey("career", career.getCareerId(), percentage, studentProfile);
+            String cached = getCachedResponse(cacheKey);
+            
+            if (cached != null) {
+                results.put(career.getCareerId(), cached);
+            } else {
+                remainingCareers.add(career);
+                remainingPercentages.add(percentage);
+            }
+        }
+        
+        // If circuit breaker is open, use fallback for remaining careers
+        if (isCircuitBreakerOpen()) {
+            for (int i = 0; i < remainingCareers.size(); i++) {
+                CareerEntity career = remainingCareers.get(i);
+                Double percentage = remainingPercentages.get(i);
+                results.put(career.getCareerId(), getFallbackCareerSummary(career, percentage));
+            }
+            return results;
+        }
+        
+        // Process remaining careers with rate limiting
+        for (int i = 0; i < remainingCareers.size(); i++) {
+            CareerEntity career = remainingCareers.get(i);
+            Double percentage = remainingPercentages.get(i);
+            
+            try {
+                if (i > 0) { // Don't wait before the first request
+                    waitForRateLimit();
+                }
+                
+                String summary = generatePersonalizedCareerSummary(career, percentage, studentProfile);
+                results.put(career.getCareerId(), summary);
+                
+            } catch (Exception e) {
+                System.err.println("Failed to generate summary for career " + career.getCareerTitle() + ": " + e.getMessage());
+                results.put(career.getCareerId(), getFallbackCareerSummary(career, percentage));
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * Batch generate program summaries with smart rate limiting
+     */
+    public Map<Integer, String> batchGenerateProgramSummaries(List<ProgramEntity> programs, 
+                                                             List<Double> matchPercentages,
+                                                             Map<String, Object> studentProfile) {
+        Map<Integer, String> results = new HashMap<>();
+        List<ProgramEntity> remainingPrograms = new ArrayList<>();
+        List<Double> remainingPercentages = new ArrayList<>();
+        
+        // First, check cache for existing summaries
+        for (int i = 0; i < programs.size(); i++) {
+            ProgramEntity program = programs.get(i);
+            Double percentage = matchPercentages.get(i);
+            String cacheKey = generateCacheKey("program", program.getProgramId(), percentage, studentProfile);
+            String cached = getCachedResponse(cacheKey);
+            
+            if (cached != null) {
+                results.put(program.getProgramId(), cached);
+            } else {
+                remainingPrograms.add(program);
+                remainingPercentages.add(percentage);
+            }
+        }
+        
+        // If circuit breaker is open, use fallback for remaining programs
+        if (isCircuitBreakerOpen()) {
+            for (int i = 0; i < remainingPrograms.size(); i++) {
+                ProgramEntity program = remainingPrograms.get(i);
+                Double percentage = remainingPercentages.get(i);
+                results.put(program.getProgramId(), getFallbackProgramSummary(program, percentage));
+            }
+            return results;
+        }
+        
+        // Process remaining programs with rate limiting
+        for (int i = 0; i < remainingPrograms.size(); i++) {
+            ProgramEntity program = remainingPrograms.get(i);
+            Double percentage = remainingPercentages.get(i);
+            
+            try {
+                if (i > 0) { // Don't wait before the first request
+                    waitForRateLimit();
+                }
+                
+                String summary = generatePersonalizedProgramSummary(program, percentage, studentProfile);
+                results.put(program.getProgramId(), summary);
+                
+            } catch (Exception e) {
+                System.err.println("Failed to generate summary for program " + program.getProgramName() + ": " + e.getMessage());
+                results.put(program.getProgramId(), getFallbackProgramSummary(program, percentage));
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * Build engaging prompt for career summary generation
+     */
+    private String buildCareerSummaryPrompt(CareerEntity career, double matchPercentage, 
+                                           Map<String, Object> studentProfile) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are a career counselor writing a personalized and engaging summary for a student. ");
+        prompt.append("Create a motivational, specific, and encouraging description in 2-3 sentences. ");
+        prompt.append("Keep it conversational and exciting, avoiding generic language.\n\n");
+        
+        prompt.append("Career: ").append(career.getCareerTitle()).append("\n");
+        prompt.append("Match Percentage: ").append(String.format("%.0f", matchPercentage)).append("%\n");
+        
+        if (career.getCareerDescription() != null) {
+            prompt.append("Career Description: ").append(career.getCareerDescription()).append("\n");
+        }
+        
+        if (studentProfile != null) {
+            prompt.append("\nStudent Profile:\n");
+            studentProfile.forEach((key, value) -> {
+                if (value != null && !value.toString().isEmpty()) {
+                    prompt.append("- ").append(key).append(": ").append(value).append("\n");
+                }
+            });
+        }
+        
+        prompt.append("\nWrite an engaging, personalized summary that:\n");
+        prompt.append("1. Highlights why this career is exciting for THIS specific student\n");
+        prompt.append("2. Mentions specific aspects that align with their profile\n");
+        prompt.append("3. Uses motivational language that creates enthusiasm\n");
+        prompt.append("4. Avoids clichés and generic statements\n");
+        prompt.append("5. Keeps it under 100 words\n\n");
+        prompt.append("Response format: Just the summary text, no headers or labels.");
+        
+        return prompt.toString();
+    }
+
+    /**
+     * Build engaging prompt for program summary generation
+     */
+    private String buildProgramSummaryPrompt(ProgramEntity program, double matchPercentage, 
+                                            Map<String, Object> studentProfile) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are an academic advisor writing a personalized and engaging summary for a student. ");
+        prompt.append("Create a motivational, specific, and encouraging description in 2-3 sentences. ");
+        prompt.append("Keep it conversational and exciting, avoiding generic language.\n\n");
+        
+        prompt.append("Program: ").append(program.getProgramName()).append("\n");
+        prompt.append("Match Percentage: ").append(String.format("%.0f", matchPercentage)).append("%\n");
+        
+        if (program.getDescription() != null) {
+            prompt.append("Program Description: ").append(program.getDescription()).append("\n");
+        }
+        
+        if (studentProfile != null) {
+            prompt.append("\nStudent Profile:\n");
+            studentProfile.forEach((key, value) -> {
+                if (value != null && !value.toString().isEmpty()) {
+                    prompt.append("- ").append(key).append(": ").append(value).append("\n");
+                }
+            });
+        }
+        
+        prompt.append("\nWrite an engaging, personalized summary that:\n");
+        prompt.append("1. Explains why this program is perfect for THIS specific student\n");
+        prompt.append("2. Highlights how it builds on their strengths and interests\n");
+        prompt.append("3. Uses exciting language about learning opportunities\n");
+        prompt.append("4. Avoids academic jargon and generic descriptions\n");
+        prompt.append("5. Keeps it under 100 words\n\n");
+        prompt.append("Response format: Just the summary text, no headers or labels.");
+        
+        return prompt.toString();
+    }
+
+    /**
+     * Test rate limiting functionality
+     */
+    public Map<String, Object> testRateLimiting() {
+        Map<String, Object> result = new HashMap<>();
+        long startTime = System.currentTimeMillis();
+        
+        try {
+            System.out.println("Testing rate limiting with 3 API calls...");
+            
+            // Make 3 test calls to see rate limiting in action
+            for (int i = 1; i <= 3; i++) {
+                long callStart = System.currentTimeMillis();
+                System.out.println("Making test API call #" + i);
+                
+                if (i > 1) {
+                    waitForRateLimit();
+                }
+                
+                // Make a simple test call
+                String testResponse = makeAIRequest("Write a single word: 'Hello'");
+                long callEnd = System.currentTimeMillis();
+                
+                System.out.println("Call #" + i + " completed in " + (callEnd - callStart) + "ms. Response: " + testResponse.substring(0, Math.min(50, testResponse.length())));
+            }
+            
+            long totalTime = System.currentTimeMillis() - startTime;
+            result.put("success", true);
+            result.put("totalTimeMs", totalTime);
+            result.put("rateLimitDelayMs", RATE_LIMIT_DELAY_MS);
+            result.put("message", "Rate limiting test completed successfully");
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            result.put("circuitBreakerOpen", isCircuitBreakerOpen());
+        }
+        
+        return result;
     }
 }
