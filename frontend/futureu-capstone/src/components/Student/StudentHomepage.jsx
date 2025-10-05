@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
 import assessmentTakingService from '../../services/assessmentTakingService';
+import programService from '../../services/programService';
+import schoolService from '../../services/schoolService';
+import careerService from '../../services/careerService';
 import {
   BookOpen, User, BarChart3, Target, Calendar, Bell, 
   TrendingUp, Award, Clock, ChevronRight, Star, 
@@ -26,9 +29,24 @@ const StudentHomepage = () => {
   const [completedAssessments, setCompletedAssessments] = useState([]);
   const [inProgressAssessments, setInProgressAssessments] = useState([]);
   const [latestAssessmentResult, setLatestAssessmentResult] = useState(null);
+  const [statsData, setStatsData] = useState({
+    programs: 0,
+    schools: 0,
+    careers: 0,
+    loading: true
+  });
 
   const getCurrentUserId = () => {
     return authService.getCurrentUserId() || 1; // Fallback to 1 during development
+  };
+
+  // Helper function to navigate and scroll to top
+  const navigateAndScrollToTop = (path) => {
+    navigate(path);
+    // Use setTimeout to ensure navigation completes before scrolling
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 100);
   };
 
   // Mock data - replace with real API calls
@@ -36,32 +54,39 @@ const StudentHomepage = () => {
     // Feature 5: Exploration Tools
     explorationTools: [
       { 
-        title: "Virtual Campus Tours", 
-        desc: "Explore university campuses from home",
-        icon: <Video className="w-5 h-5" />,
-        action: () => navigate('/virtual-campus-tours'),
-        color: "from-green-500 to-green-600"
-      },
-      { 
-        title: "Industry Insights", 
-        desc: "Real-world career information",
-        icon: <Globe className="w-5 h-5" />,
-        action: () => navigate('/career-pathways'),
+        title: "Academic Exploration", 
+        desc: "Search for a program and find the schools that offer it",
+        icon: <BookOpen className="w-5 h-5" />,
+        action: () => navigateAndScrollToTop('/academic-explorer'),
         color: "from-blue-500 to-blue-600"
       },
       { 
-        title: "Career Deep Dives", 
-        desc: "Detailed exploration of careers",
-        icon: <Eye className="w-5 h-5" />,
-        action: () => navigate('/career-pathways'),
+        title: "Programs Accreditation", 
+        desc: "View programs' accreditation level in every school",
+        icon: <Award className="w-5 h-5" />,
+        action: () => navigateAndScrollToTop('/accreditation'),
+        color: "from-green-500 to-green-600"
+      },
+      { 
+        title: "Virtual Campus Tours", 
+        desc: "Explore universities from home",
+        icon: <Video className="w-5 h-5" />,
+        action: () => navigateAndScrollToTop('/virtual-campus-tours'),
         color: "from-purple-500 to-purple-600"
       },
       { 
-        title: "Resource Library", 
-        desc: "Articles, videos, and guides",
-        icon: <FileText className="w-5 h-5" />,
-        action: () => navigate('/academic-explorer'),
+        title: "Testimonials", 
+        desc: "View students, alumni, or educators testimonies towards their school",
+        icon: <MessageSquare className="w-5 h-5" />,
+        action: () => navigateAndScrollToTop('/testimonials'),
         color: "from-orange-500 to-orange-600"
+      },
+      { 
+        title: "Career Deep Dives", 
+        desc: "View detailed information of different careers",
+        icon: <Briefcase className="w-5 h-5" />,
+        action: () => navigateAndScrollToTop('/career-pathways'),
+        color: "from-indigo-500 to-indigo-600"
       }
     ]
   });
@@ -73,8 +98,8 @@ const StudentHomepage = () => {
     // Update time every minute
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     
-    // Fetch assessment data
-    const fetchAssessmentData = async () => {
+    // Fetch assessment data and stats data
+    const fetchAllData = async () => {
       try {
         setLoading(true);
         const userId = getCurrentUserId();
@@ -107,14 +132,34 @@ const StudentHomepage = () => {
           }
         }
         
+        // Fetch stats data for quick stats section
+        try {
+          const [programsData, schoolsData, careersData] = await Promise.all([
+            programService.getAllPrograms().catch(() => []),
+            schoolService.getAllSchools().catch(() => []),
+            careerService.getAllCareers().catch(() => [])
+          ]);
+          
+          setStatsData({
+            programs: Array.isArray(programsData) ? programsData.length : 0,
+            schools: Array.isArray(schoolsData) ? schoolsData.length : 0,
+            careers: Array.isArray(careersData) ? careersData.length : 0,
+            loading: false
+          });
+        } catch (error) {
+          console.error('Error fetching stats data:', error);
+          setStatsData(prev => ({ ...prev, loading: false }));
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching assessment data:', error);
         setLoading(false);
+        setStatsData(prev => ({ ...prev, loading: false }));
       }
     };
     
-    fetchAssessmentData();
+    fetchAllData();
     
     return () => clearInterval(timer);
   }, []);
@@ -129,7 +174,7 @@ const StudentHomepage = () => {
   const handleViewResults = () => {
     if (completedAssessments.length > 0) {
       const latest = completedAssessments[completedAssessments.length - 1];
-      navigate(`/assessment-results/${latest.userQuizAssessment}`);
+      navigateAndScrollToTop(`/assessment-results/${latest.userQuizAssessment}`);
     }
   };
 
@@ -139,7 +184,7 @@ const StudentHomepage = () => {
       desc: "Discover the FutureU - Take our comprehensive assessment",
       icon: <BookOpen className="w-6 h-6" />,
       color: "from-blue-500 to-blue-600",
-      action: () => navigate('/take-assessment/1'), // Assessment ID 1 for "Discover the FutureU"
+      action: () => navigateAndScrollToTop('/take-assessment/1'), // Assessment ID 1 for "Discover the FutureU"
       priority: !hasCompletedAssessment
     },
     {
@@ -155,14 +200,14 @@ const StudentHomepage = () => {
       desc: "Find purpose-aligned career paths",
       icon: <Target className="w-6 h-6" />,
       color: "from-purple-500 to-purple-600",
-      action: () => navigate('/career-pathways')
+      action: () => navigateAndScrollToTop('/career-pathways')
     },
     {
       title: "Find Programs",
       desc: "Connect to your educational journey",
       icon: <GraduationCap className="w-6 h-6" />,
       color: "from-orange-500 to-orange-600",
-      action: () => navigate('/academic-explorer')
+      action: () => navigateAndScrollToTop('/academic-explorer')
     }
   ];
 
@@ -177,134 +222,79 @@ const StudentHomepage = () => {
         </div>
       ) : (
         <>
-          {/* Main Content */}
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+          {/* Full-width hero */}
+          <section className="w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full transform translate-x-32 -translate-y-32"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full transform -translate-x-24 translate-y-24"></div>
-            </div>
-            
-            <div className="relative z-10">
-              <div className="flex flex-col justify-between items-start">
-                <div className="flex-1">
-                  {/* Discover FutureU Header */}
-                  <div className="flex items-center mb-3">
-                    <Navigation className="w-6 h-6 mr-2 text-[#FFB71B]" />
+            >
+              <div className="relative overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 lg:py-24 text-white text-left">
+                  {/* Eyebrow label */}
+                  <div className="flex items-center mb-4">
+                    <Navigation className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     <span className="text-[#FFB71B] font-semibold text-sm">Your Path to Purpose</span>
                   </div>
-                  
-                  <h1 className="text-3xl md:text-4xl font-bold mb-3">
-                    {getGreeting()}, {currentUser?.firstName || 'Future Leader'}! 👋
+                  {/* Greeting */}
+                  <h1 className="text-5xl md:text-6xl font-bold mb-8 leading-tight tracking-tight">
+                    {getGreeting()}, {currentUser?.firstName || 'Future Leader'}!
                   </h1>
-                  
-                  {/* Assessment Status */}
+                  {/* Status card (glassy) */}
+                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl">
                   {!hasCompletedAssessment ? (
-                    <div className="bg-white/15 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                      <div className="flex items-center mb-2">
-                        <BookOpen className="w-5 h-5 mr-2 text-[#FFB71B]" />
-                        <span className="font-semibold text-sm">Ready to Discover Your Future?</span>
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
+                          <BookOpen className="w-5 h-5" />
                       </div>
-                      <div className="text-sm text-blue-100 mb-3">
-                        Take our comprehensive "Discover the FutureU" assessment to unlock your potential
-                      </div>
+                        <div className="flex-1">
+                          <div className="font-semibold mb-1">Ready to Discover Your Future?</div>
+                          <div className="text-sm text-blue-100/90 mb-4">Take our comprehensive "Discover the FutureU" assessment to unlock your potential.</div>
                       <button 
-                        onClick={() => navigate('/take-assessment/1')}
-                        className="bg-[#FFB71B] text-[#2B3E4E] text-sm font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
+                        onClick={() => navigateAndScrollToTop('/take-assessment/1')}
+                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
                       >
-                        🚀 Take Assessment Now
+                            <Play className="w-4 h-4 mr-2" />
+                            Take Assessment Now
                       </button>
+                        </div>
                     </div>
                   ) : (
-                    <div className="bg-white/15 rounded-lg p-4 mb-4 backdrop-blur-sm">
-                      <div className="flex items-center mb-2">
-                        <CheckCircle className="w-5 h-5 mr-2 text-[#FFB71B]" />
-                        <span className="font-semibold text-sm">Assessment Completed!</span>
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
+                          <CheckCircle className="w-5 h-5" />
                       </div>
-                      <div className="text-sm text-blue-100 mb-3">
-                        Great job! You've completed the FutureU assessment. View your results below.
-                      </div>
+                        <div className="flex-1">
+                          <div className="font-semibold mb-1">Assessment Completed!</div>
+                          <div className="text-sm text-blue-100/90 mb-4">Great job! You've completed the FutureU assessment. View your results below.</div>
                       <button 
                         onClick={handleViewResults}
-                        className="bg-[#FFB71B] text-[#2B3E4E] text-sm font-bold py-2 px-4 rounded-lg hover:bg-yellow-400 transition-colors"
+                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
                       >
-                        📊 View My Results
+                            <BarChart3 className="w-4 h-4 mr-2" />
+                            View My Results
                       </button>
+                        </div>
                     </div>
                   )}
-                  
-                  <div className="flex items-center text-blue-200 text-sm">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {currentTime.toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
                   </div>
-                </div>
+                  {/* Date row */}
+                  <div className="flex items-center text-blue-100/80 text-sm mt-4">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </div>
             </div>
           </div>
         </motion.div>
+          </section>
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-[#2B3E4E] flex items-center">
-              <Zap className="w-6 h-6 mr-2 text-[#FFB71B]" />
-              Your Next Actions
-            </h2>
-            <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              Personalized for you
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer border border-gray-100 relative ${
-                  action.priority ? 'ring-2 ring-[#FFB71B] ring-opacity-50' : ''
-                } ${!action.enabled && action.enabled !== undefined ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={action.enabled !== false ? action.action : undefined}
-              >
-                {action.priority && (
-                  <div className="absolute -top-2 -right-2 bg-[#FFB71B] text-white text-xs font-bold px-2 py-1 rounded-full">
-                    Priority
-                  </div>
-                )}
-                <div className={`w-12 h-12 bg-gradient-to-r ${action.color} rounded-lg flex items-center justify-center mb-4 text-white`}>
-                  {action.icon}
-                </div>
-                <h3 className="font-semibold text-[#2B3E4E] mb-2">{action.title}</h3>
-                <p className="text-sm text-gray-600 mb-3">{action.desc}</p>
-                <div className="flex items-center text-[#1D63A1] text-sm font-medium">
-                  {action.enabled !== false ? 'Get Started' : 'Complete Assessments'} 
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+          {/* Main Content */}
+          <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+        {/* Dashboard Sections - expanded width */}
+        <div className="max-w-[95vw] mx-auto">
+        <div className="grid grid-cols-1 gap-8">
+          {/* Main Content */}
+          <div className="space-y-8">
             {/* Assessment Results Overview or Prompt */}
             {!hasCompletedAssessment ? (
               <motion.div
@@ -334,7 +324,7 @@ const StudentHomepage = () => {
                     career recommendations, and academic pathways.
                   </p>
                   <button 
-                    onClick={() => navigate('/take-assessment/1')}
+                    onClick={() => navigateAndScrollToTop('/take-assessment/1')}
                     className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center mx-auto"
                   >
                     <Play className="w-5 h-5 mr-2" />
@@ -347,65 +337,210 @@ const StudentHomepage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+                className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden w-full text-left"
               >
-                <div className="flex items-center justify-between mb-6">
+                {/* Header bar */}
+                <div className="flex items-center justify-between bg-amber-50 px-6 py-3 border-b border-amber-100">
                   <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
-                    <Brain className="w-5 h-5 mr-2 text-[#1D63A1]" />
+                    <Brain className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     Your Assessment Overview
                   </h3>
                   <button 
                     onClick={handleViewResults}
-                    className="text-[#1D63A1] text-sm font-medium hover:underline"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg border border-blue-200 text-[#1D63A1] bg-white hover:bg-blue-50"
                   >
                     View Full Report
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
                 
                 {/* Assessment Sections */}
                 {latestAssessmentResult && (
-                  <div className="space-y-4">
-                    {/* GSA Overview */}
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <Trophy className="w-4 h-4 mr-2 text-blue-600" />
-                        General Scholastic Ability (GSA)
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Overall Score: <span className="font-bold text-blue-600">{latestAssessmentResult.overallScore || 'N/A'}</span>
+                  <div className="p-6 space-y-6">
+                    {/* Row 1: Aptitude Score and RIASEC Personality Profile (2 columns) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Aptitude Score Section */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
+                              <Trophy className="w-8 h-8" />
+                            </div>
+                            <div>
+                              <h4 className="text-xl font-bold text-[#2B3E4E] mb-1">Aptitude Score</h4>
+                              <p className="text-sm text-gray-600">Your overall academic ability assessment</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-4xl font-bold text-blue-600 mb-2">
+                              {latestAssessmentResult.overallScore ? `${latestAssessmentResult.overallScore.toFixed(1)}%` : 'N/A'}
+                            </div>
+                            <div className="text-base font-bold text-red-600 mt-2">
+                              {latestAssessmentResult.overallScore >= 80 ? 'Excellent' : 
+                               latestAssessmentResult.overallScore >= 60 ? 'Good' : 
+                               latestAssessmentResult.overallScore >= 40 ? 'Average' : 'Needs Improvement'}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Score Explanation */}
+                        <div className="mt-4 p-4 bg-white/70 rounded-lg border border-blue-200">
+                          <h5 className="font-semibold text-[#2B3E4E] mb-2">What does this score mean?</h5>
+                          <div className="text-sm text-gray-700 text-justify leading-relaxed">
+                            {(() => {
+                              const score = latestAssessmentResult.overallScore || 0;
+                              if (score >= 80) {
+                                return (
+                                  <p>
+                                    You demonstrate strong academic abilities across multiple areas. 
+                                    Your high aptitude suggests you're well-prepared for challenging academic programs and have the potential 
+                                    to excel in rigorous educational environments. Consider exploring advanced or specialized programs that 
+                                    match your interests.
+                                  </p>
+                                );
+                              } else if (score >= 60) {
+                                return (
+                                  <p>
+                                    You show solid academic capabilities 
+                                    with room for growth. Your aptitude indicates you can handle most academic challenges effectively. 
+                                    Focus on areas where you can strengthen your skills while building on your existing strengths 
+                                    to reach your full potential.
+                                  </p>
+                                );
+                              } else if (score >= 40) {
+                                return (
+                                  <p>
+                                    You demonstrate baseline academic 
+                                    abilities with significant potential for improvement. Consider focusing on developing foundational skills 
+                                    and seeking additional support in areas that challenge you. With dedicated effort and the right resources, 
+                                    you can substantially improve your academic performance.
+                                  </p>
+                                );
+                              } else {
+                                return (
+                                  <p>
+                                    Your current performance suggests 
+                                    you may benefit from additional academic support and focused skill development. Don't be discouraged - 
+                                    everyone learns at their own pace. Consider working with educators, tutors, or counselors to identify 
+                                    specific areas for growth and develop a personalized learning plan.
+                                  </p>
+                                );
+                              }
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* RIASEC Personality Profile Section */}
+                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white flex items-center justify-center">
+                            <User className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-bold text-[#2B3E4E]">RIASEC Personality Profile</h4>
+                            <p className="text-sm text-gray-600">Your top personality matches</p>
+                          </div>
+                        </div>
+                        
+                        {/* RIASEC Images Display */}
+                        <div className="grid grid-cols-3 gap-3 mt-4">
+                          {(() => {
+                            const riasecTypes = [
+                              { key: 'realisticScore', name: 'Realistic', image: 'Realistic.png', score: latestAssessmentResult.realisticScore },
+                              { key: 'investigativeScore', name: 'Investigative', image: 'Investigative.png', score: latestAssessmentResult.investigativeScore },
+                              { key: 'artisticScore', name: 'Artistic', image: 'Artistic.png', score: latestAssessmentResult.artisticScore },
+                              { key: 'socialScore', name: 'Social', image: 'Social.png', score: latestAssessmentResult.socialScore },
+                              { key: 'enterprisingScore', name: 'Enterprising', image: 'Enterprising.png', score: latestAssessmentResult.enterprisingScore },
+                              { key: 'conventionalScore', name: 'Conventional', image: 'Conventional.png', score: latestAssessmentResult.conventionalScore }
+                            ];
+                            
+                            // Sort by score and take top 3
+                            const topTypes = riasecTypes.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
+                            
+                            return topTypes.map((type, index) => (
+                              <div key={type.key} className="relative group">
+                                {/* Top Match Badge - positioned outside the main content area */}
+                                {index === 0 && (
+                                  <div className="absolute -top-2 -right-2 bg-[#FFB71B] text-white text-xs font-bold px-2 py-1 rounded-full z-10 shadow-lg">
+                                    Top Match
+                                  </div>
+                                )}
+                                
+                                {/* Content */}
+                                <div className="relative bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-[#FFB71B]/20 hover:shadow-lg transition-all duration-300">
+                                  <div className="flex flex-col items-center text-center">
+                                    <img 
+                                      src={`/src/assets/characters/${type.image}`} 
+                                      alt={type.name}
+                                      className="w-28 h-28 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
+                                    />
+                                    <h5 className="font-semibold text-[#2B3E4E] text-sm mb-1">{type.name}</h5>
+                                    <div className="text-sm text-[#FFB71B] font-bold">
+                                      {type.score ? `${type.score.toFixed(1)}%` : 'N/A'}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ));
+                          })()}
+                        </div>
                       </div>
                     </div>
 
-                    {/* RIASEC Personality */}
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <User className="w-4 h-4 mr-2 text-purple-600" />
-                        RIASEC Personality Profile
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Personality Type: <span className="font-bold text-purple-600">{latestAssessmentResult.riasecCode || 'View Results'}</span>
+                    {/* Row 2: Career Pathways & Sample Careers (Full Width) */}
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center">
+                              <Target className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="text-xl font-bold text-[#2B3E4E] mb-1">Career Pathways & Sample Careers</h4>
+                              <p className="text-sm text-gray-600">Recommended career directions and specific job examples</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              Coming Soon
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-green-200">
+                          <div className="text-gray-400 mb-2">
+                            <Compass className="w-8 h-8 mx-auto" />
+                          </div>
+                          <p className="text-gray-500 text-sm">Career pathway and sample career recommendations will be available soon</p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Career Options */}
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <Target className="w-4 h-4 mr-2 text-green-600" />
-                        Career Options
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Top matches available in your detailed results
-                      </div>
-                    </div>
-
-                    {/* Program Options */}
-                    <div className="p-4 bg-orange-50 rounded-lg">
-                      <h4 className="font-semibold text-[#2B3E4E] mb-2 flex items-center">
-                        <GraduationCap className="w-4 h-4 mr-2 text-orange-600" />
-                        Program Options
-                      </h4>
-                      <div className="text-sm text-gray-600">
-                        Recommended academic programs based on your assessment
+                    {/* Row 3: Academic Programs (Full Width) */}
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white flex items-center justify-center">
+                              <GraduationCap className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="text-xl font-bold text-[#2B3E4E] mb-1">Academic Programs</h4>
+                              <p className="text-sm text-gray-600">Recommended degree programs and courses based on your profile</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+                              Coming Soon
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-amber-200">
+                          <div className="text-gray-400 mb-2">
+                            <GraduationCap className="w-8 h-8 mx-auto" />
+                          </div>
+                          <p className="text-gray-500 text-sm">Academic program recommendations will be available soon</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -418,36 +553,35 @@ const StudentHomepage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
+              className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 w-full"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
-                  <Globe className="w-5 h-5 mr-2 text-[#1D63A1]" />
+                <h3 className="text-2xl font-bold text-[#2B3E4E] flex items-center">
+                  <Globe className="w-6 h-6 mr-2 text-[#2B3E4E]" />
                   Exploration Tools
                 </h3>
-                <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                  Discover More
-                </span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
                 {studentData.explorationTools.map((tool, index) => (
                   <motion.div
                     key={index}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
+                    whileHover={{ y: -3, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
+                    whileTap={{ scale: 0.99 }}
+                    className="bg-white border border-gray-200 rounded-2xl px-6 py-5 cursor-pointer transition-all"
                     onClick={tool.action}
                   >
-                    <div className="flex items-center">
-                      <div className={`p-2 bg-gradient-to-r ${tool.color} rounded-lg mr-3 text-white`}>
-                        {tool.icon}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-left">
+                        <div className={`w-12 h-12 mr-4 rounded-xl bg-gradient-to-r ${tool.color} text-white flex items-center justify-center`}>
+                          {tool.icon}
+                        </div>
+                        <div className="text-left">
+                          <div className="text-base font-semibold text-[#2B3E4E]">{tool.title}</div>
+                          <div className="text-sm text-gray-600">{tool.desc}</div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-[#2B3E4E]">{tool.title}</div>
-                        <div className="text-xs text-gray-600">{tool.desc}</div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-gray-400" />
+                      <ArrowRight className="w-5 h-5 text-gray-400" />
                     </div>
                   </motion.div>
                 ))}
@@ -456,25 +590,29 @@ const StudentHomepage = () => {
               {/* Quick Stats */}
               <div className="mt-6 grid grid-cols-3 gap-4">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-lg font-bold text-[#1D63A1]">50+</div>
-                  <div className="text-xs text-gray-600">Universities</div>
+                  <div className="text-lg font-bold text-[#1D63A1]">
+                    {statsData.loading ? '...' : `${statsData.programs}`}
+                  </div>
+                  <div className="text-xs text-gray-600">Programs</div>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-lg font-bold text-purple-600">200+</div>
-                  <div className="text-xs text-gray-600">Careers</div>
+                  <div className="text-lg font-bold text-purple-600">
+                    {statsData.loading ? '...' : `${statsData.schools}`}
+                  </div>
+                  <div className="text-xs text-gray-600">Universities</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-lg font-bold text-green-600">1000+</div>
-                  <div className="text-xs text-gray-600">Resources</div>
+                  <div className="text-lg font-bold text-green-600">
+                    {statsData.loading ? '...' : `${statsData.careers}`}
+                  </div>
+                  <div className="text-xs text-gray-600">Careers</div>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Keep only Exploration Tools in sidebar for now */}
-          </div>
+          {/* (Optional sidebar area removed to allow full-width cards) */}
+        </div>
         </div>
       </main>
       </>

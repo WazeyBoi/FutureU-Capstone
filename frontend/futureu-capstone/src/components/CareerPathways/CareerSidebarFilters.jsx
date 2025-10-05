@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 
 const CareerSidebarFilters = ({
-    industries,
-    selectedIndustry,
+    industries = [],
+    selectedIndustry = "",
     setSelectedIndustry,
-    filteredProgramsOptions,
-    programSearch,
+    filteredProgramsOptions = [], // Add default value
+    programSearch = "",
     setProgramSearch,
-    selectedProgram,
+    selectedProgram = "",
     setSelectedProgram,
-    jobTrends,
-    selectedJobTrend,
+    jobTrends = [],
+    selectedJobTrend = "",
     setSelectedJobTrend,
-    selectedFilters, // Object containing selectedIndustry, selectedProgram, selectedJobTrend, searchTerm
+    selectedFilters = {}, // Add default value
     clearAllFilters
 }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
@@ -25,7 +25,7 @@ const CareerSidebarFilters = ({
     const CustomDropdown = ({ 
         title, 
         icon, 
-        options, 
+        options = [], // Add default value
         selectedValue, 
         onSelect, 
         placeholder,
@@ -37,13 +37,11 @@ const CareerSidebarFilters = ({
                     {icon}
                     <span className="text-base font-medium text-gray-800">{title}</span>
                 </div>
-                {/* Removed chevron button from header */}
             </div>
             
             {openDropdown === dropdownKey && (
                 <div className="relative">
                     <div className="absolute top-0 left-0 right-0 z-10 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
-                        {/* Back arrow button at the top of dropdown */}
                         <button
                             className="flex items-center gap-2 px-4 py-2 text-[#2B3E4E] hover:bg-[#FFB71B] hover:text-[#2B3E4E] rounded-t-xl w-full text-left font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B] border-2 border-[#FFB71B] hover:border-[#FFB71B] !ring-[#FFB71B] !border-[#FFB71B]"
                             style={{ boxShadow: '0 0 0 2px #FFB71B' }}
@@ -68,7 +66,7 @@ const CareerSidebarFilters = ({
                                 </svg>
                                 {placeholder}
                             </button>
-                            {options.map((option) => (
+                            {Array.isArray(options) && options.map((option) => (
                                 <button
                                     key={option.value || option}
                                     className={`w-full text-left px-4 py-4 rounded-lg text-sm transition-colors duration-200 flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFB71B] focus-visible:border-[#FFB71B] border-2 border-transparent ${
@@ -85,8 +83,8 @@ const CareerSidebarFilters = ({
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                                     </svg>
                                     {option.label || option}
-                            </button>
-                        ))}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -136,10 +134,9 @@ const CareerSidebarFilters = ({
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                     </svg>
                 }
-                options={filteredProgramsOptions.map(p => ({ value: String(p.programId), label: p.programName }))}
+                options={filteredProgramsOptions?.map(p => ({ value: String(p.programId), label: p.programName })) || []}
                 selectedValue={selectedProgram}
                 onSelect={setSelectedProgram}
                 placeholder="All Programs"
@@ -174,7 +171,7 @@ const CareerSidebarFilters = ({
                         {selectedFilters.selectedProgram && (
                             <span className="bg-yellow-100 px-3 py-1.5 rounded-full text-xs font-medium text-yellow-800">
                                 Program: {
-                                    filteredProgramsOptions.find(p => String(p.programId) === selectedFilters.selectedProgram)?.programName || selectedFilters.selectedProgram
+                                    filteredProgramsOptions?.find(p => String(p.programId) === selectedFilters.selectedProgram)?.programName || selectedFilters.selectedProgram
                                 }
                             </span>
                         )}

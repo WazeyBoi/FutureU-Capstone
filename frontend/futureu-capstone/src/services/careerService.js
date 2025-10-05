@@ -1,20 +1,53 @@
 import apiClient from './api';
+import dataCacheService from './dataCache';
 
 /**
  * Service for handling career-related API requests
  */
 class CareerService {
   /**
-   * Get all careers
+   * Get all careers with caching
+   * @param {boolean} forceRefresh - Force refresh from API
    * @returns {Promise<Array>} - List of all careers
    */
-  async getAllCareers() {
+  async getAllCareers(forceRefresh = false) {
+    const cacheKey = 'careers';
+    
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = dataCacheService.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+    
+    // Check if already loading
+    if (dataCacheService.isLoading(cacheKey)) {
+      return new Promise((resolve) => {
+        const checkInterval = setInterval(() => {
+          if (!dataCacheService.isLoading(cacheKey)) {
+            clearInterval(checkInterval);
+            resolve(dataCacheService.get(cacheKey));
+          }
+        }, 100);
+      });
+    }
+
     try {
+      dataCacheService.setLoading(cacheKey, true);
+      
       const response = await apiClient.get('/career/getAllCareers');
-      return response.data;
+      const careers = response.data || [];
+      
+      // Cache the result
+      dataCacheService.set(cacheKey, careers);
+      
+      return careers;
     } catch (error) {
       this.handleError(error, 'Fetching all careers');
       throw error;
+    } finally {
+      dataCacheService.setLoading(cacheKey, false);
     }
   }
 
@@ -41,6 +74,11 @@ class CareerService {
   async createCareer(careerData) {
     try {
       const response = await apiClient.post('/career/postCareerRecord', careerData);
+      
+      // Clear cache to force refresh
+      dataCacheService.clear('careers');
+      console.log('🗑️ Cleared careers cache after creation');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, 'Creating career');
@@ -57,6 +95,11 @@ class CareerService {
   async updateCareer(careerId, careerData) {
     try {
       const response = await apiClient.put(`/career/putCareerDetails?careerId=${careerId}`, careerData);
+      
+      // Clear cache to force refresh
+      dataCacheService.clear('careers');
+      console.log('🗑️ Cleared careers cache after update');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, 'Updating career');
@@ -72,6 +115,11 @@ class CareerService {
   async deleteCareer(careerId) {
     try {
       const response = await apiClient.delete(`/career/deleteCareerDetails/${careerId}`);
+      
+      // Clear cache to force refresh
+      dataCacheService.clear('careers');
+      console.log('🗑️ Cleared careers cache after deletion');
+      
       return response.data;
     } catch (error) {
       this.handleError(error, `Deleting career with ID ${careerId}`);

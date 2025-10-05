@@ -114,6 +114,11 @@ public class SecurityConfig {
                 // Allow public access to read-only school and program endpoints
                 .requestMatchers(HttpMethod.GET, "/api/school/getAllSchools").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/program/getAllPrograms").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/schoolprogram/getAllSchoolPrograms").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/user/public/countStudents").permitAll()
+                
+                // Allow public read-only access to testimonials for landing page
+                .requestMatchers(HttpMethod.GET, "/api/testimony/**").permitAll()
                 
                 // All other API endpoints require authentication
                 .requestMatchers("/error").permitAll()

@@ -190,6 +190,9 @@ const MapBox3DView = ({
             }}
           >
             <div className="school-marker-container">
+              {/* Blinking circle background */}
+              <div className="school-marker-pulse"></div>
+              {/* School logo */}
               <div 
                 className={`school-marker ${selectedSchool && selectedSchool.schoolId === school.schoolId ? 'active' : ''}`}
                 style={{
@@ -198,7 +201,6 @@ const MapBox3DView = ({
                     undefined,
                 }}
               />
-              <div className="pulse-ring"></div>
             </div>
           </Marker>
         ))}
