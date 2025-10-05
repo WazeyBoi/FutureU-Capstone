@@ -319,7 +319,7 @@ const AssessmentResults = () => {
                 {tab === 'overview' && 'Overview'}
                 {tab === 'interests' && 'Interest Profile'}
                 {tab === 'academic' && 'Academic Tracks'}
-                {tab === 'recommendations' && 'Recommendations'}
+                {tab === 'recommendations' && 'Career Path Options'}
               </button>
             ))}
           </nav>

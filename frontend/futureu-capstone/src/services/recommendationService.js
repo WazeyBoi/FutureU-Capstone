@@ -21,7 +21,10 @@ export const fetchRecommendations = (userAssessmentId) => {
  */
 export const generateRecommendations = (userAssessmentId) => {
   try {
-    return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`);
+    // Use longer timeout for AI generation process (3 minutes)
+    return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`, {}, {
+      timeout: 180000 // 3 minutes to allow for AI generation and rate limiting
+    });
   } catch (error) {
     console.error('Error generating recommendations:', error);
     throw error;

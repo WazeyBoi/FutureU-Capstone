@@ -100,6 +100,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' }
   const [expandedPathPrograms, setExpandedPathPrograms] = useState({}); // { [pathId]: programId }
   const [loading, setLoading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState(null);
   const [checkedExisting, setCheckedExisting] = useState(false);
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
@@ -264,16 +265,31 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const handleGenerateRecommendations = async () => {
     const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
     setLoading(true);
+    setIsRegenerating(true);
+    setError(null);
     try {
+      console.log('Starting AI recommendation regeneration...');
       await recommendationService.generateRecommendations(userAssessmentId);
+      console.log('AI recommendation regeneration completed, fetching results...');
       localStorage.removeItem(storageKey);
       await fetchComprehensiveRecommendations({ forceRefresh: true });
-      setError(null);
+      console.log('New recommendations loaded successfully');
     } catch (err) {
-      const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
-      setError(backendMessage || 'Failed to generate recommendations. Please try again later.');
+      console.error('Regeneration failed:', err);
+      let errorMessage = 'Failed to generate recommendations. Please try again later.';
+      
+      // Check if it's a timeout error
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        errorMessage = 'The AI generation process is taking longer than expected. The system may still be processing in the background. Please wait a moment and try refreshing the page.';
+      } else {
+        const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
+        errorMessage = backendMessage || errorMessage;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
+      setIsRegenerating(false);
     }
   };
 
@@ -308,10 +324,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       >
         {/* Header section */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-          <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Recommendations</h3>
+          <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Career Path Options</h3>
           <p className="text-sm text-gray-600">
             Based on your assessment results, we've identified careers and academic paths that align with your skills, 
-            interests, and strengths. Explore these recommendations to find the best fit for your future.
+            interests, and strengths. Explore these options to find the best fit for your future.
           </p>
           {recommendationPacket?.dateCompleted && (
             <p className="text-xs text-gray-500 mt-3">
@@ -322,15 +338,32 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={handleRefreshRecommendations}
-                className="px-4 py-2 text-sm font-semibold text-[#1D63A1] border border-[#1D63A1]/40 rounded-xl hover:bg-[#1D63A1]/10 transition-colors"
+                disabled={isRegenerating}
+                className={`px-4 py-2 text-sm font-semibold border rounded-xl transition-colors ${
+                  isRegenerating 
+                    ? 'text-gray-400 border-gray-300 cursor-not-allowed' 
+                    : 'text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#1D63A1]/10'
+                }`}
               >
-                Refresh Recommendations
+                Refresh Outputs
               </button>
               <button
                 onClick={handleGenerateRecommendations}
-                className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] rounded-xl hover:from-[#232D35] hover:to-[#232D35] transition-all"
+                disabled={isRegenerating}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                  isRegenerating
+                    ? 'text-gray-400 bg-gray-300 cursor-not-allowed'
+                    : 'text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#232D35] hover:to-[#232D35]'
+                }`}
               >
-                Regenerate Matches
+                {isRegenerating ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                    <span>Generating...</span>
+                  </div>
+                ) : (
+                  'Regenerate Matches'
+                )}
               </button>
             </div>
           )}
@@ -345,7 +378,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 className="quirky-bounce h-32 mx-auto"
               />
             </div>
-            <p className="text-sm text-gray-600 mb-3 mt-4">Loading your personalized recommendations...</p>
+            {isRegenerating ? (
+              <div className="mt-4">
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">🤖 Generating AI Recommendations</p>
+                <p className="text-sm text-gray-600 mb-3">
+                  Our AI is analyzing your profile and creating personalized career path explanations. 
+                  This may take 2-3 minutes due to advanced processing...
+                </p>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
+                  <span className="text-sm text-[#1D63A1] font-medium">Please wait, this is worth it!</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600 mb-3 mt-4">Loading your personalized recommendations...</p>
+            )}
           </motion.div>
         )}
         {/* Error state */}
@@ -358,47 +405,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             >
               Try Again
             </button>
-          </motion.div>
-        )}
-        {/* Career recommendations - only show if recommendations exist */}
-        {aiRecommendations && aiRecommendations.recommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Career Recommendations</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score and your Personality
-            </p>
-            <div className="space-y-6">
-              {aiRecommendations.recommendations.careers
-                ?.slice(0, 5)
-                .map((career, index) => (
-                  <motion.div key={index} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-lg font-semibold text-[#232D35]">{career.name}</h4>
-                      <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                        {career.confidenceScore?.toFixed(1)}% Match
-                      </span>
-                    </div>
-                    <p className="text-left text-sm text-gray-600 mb-4">{career.description}</p>
-                    <div className="flex gap-2">
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                        #{index+1} Recommended Career Pathway
-                      </span>
-                      {index === 0 && (
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                          Best Match
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                ))
-              }
-            </div>
-            {aiRecommendations.recommendations.personalized && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-6 p-5 bg-[#1D63A1]/10 rounded-2xl border border-[#1D63A1]/20 animate-card-pop">
-                <h4 className="text-md font-semibold text-[#232D35] mb-2">Personalized Insight</h4>
-                <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
-              </motion.div>
-            )}
           </motion.div>
         )}
         {careerPathDetails.length > 0 && (
@@ -579,6 +585,47 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
           </motion.div>
         )}
+        {/* Career recommendations - only show if recommendations exist */}
+        {aiRecommendations && aiRecommendations.recommendations && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
+            <h3 className="text-xl font-bold text-[#232D35] mb-2">Top Career Options</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score and your Personality
+            </p>
+            <div className="space-y-6">
+              {aiRecommendations.recommendations.careers
+                ?.slice(0, 5)
+                .map((career, index) => (
+                  <motion.div key={index} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-lg font-semibold text-[#232D35]">{career.name}</h4>
+                      <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
+                        {career.confidenceScore?.toFixed(1)}% Match
+                      </span>
+                    </div>
+                    <p className="text-left text-sm text-gray-600 mb-4">{career.description}</p>
+                    <div className="flex gap-2">
+                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
+                        #{index+1} Career Option
+                      </span>
+                      {index === 0 && (
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
+                          Best Option
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                ))
+              }
+            </div>
+            {aiRecommendations.recommendations.personalized && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-6 p-5 bg-[#1D63A1]/10 rounded-2xl border border-[#1D63A1]/20 animate-card-pop">
+                <h4 className="text-md font-semibold text-[#232D35] mb-2">Personalized Insight</h4>
+                <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
         {dreamInsight && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -739,9 +786,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </p>
             <button 
               onClick={handleGenerateRecommendations}
-              className="px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white font-bold rounded-xl hover:from-[#232D35] hover:to-[#232D35] transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] animate-bounce-short"
+              disabled={isRegenerating}
+              className={`px-6 py-3 font-bold rounded-xl transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] ${
+                isRegenerating
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white hover:from-[#232D35] hover:to-[#232D35] animate-bounce-short'
+              }`}
             >
-              See My Results
+              {isRegenerating ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+                  <span>Generating...</span>
+                </div>
+              ) : (
+                'See My Results'
+              )}
             </button>
           </motion.div>
         )}
