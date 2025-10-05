@@ -40,17 +40,33 @@ public class CareerPathRecommendation {
     public int getCareerPathId() {
         return careerPathId;
     }
+    
+    public void setCareerPathId(int careerPathId) {
+        this.careerPathId = careerPathId;
+    }
 
     public String getCareerPathName() {
         return careerPathName;
+    }
+    
+    public void setCareerPathName(String careerPathName) {
+        this.careerPathName = careerPathName;
     }
 
     public double getMatchPercentage() {
         return matchPercentage;
     }
+    
+    public void setMatchPercentage(double matchPercentage) {
+        this.matchPercentage = matchPercentage;
+    }
 
     public Map<String, Double> getComponentBreakdown() {
         return componentBreakdown;
+    }
+    
+    public void setComponentBreakdown(Map<String, Double> componentBreakdown) {
+        this.componentBreakdown = componentBreakdown;
     }
 
     public List<CareerRecommendationDetail> getCareers() {

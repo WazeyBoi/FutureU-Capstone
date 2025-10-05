@@ -104,7 +104,7 @@ public class GeminiAIService {
             // Apply rate limiting
             waitForRateLimit();
             
-            String generatedText = makeAIRequest(prompt);
+            String generatedText = makeAIRequestInternal(prompt);
             
             // Cache the response
             cacheResponse(cacheKey, generatedText);
@@ -933,7 +933,7 @@ public class GeminiAIService {
             // Apply rate limiting
             waitForRateLimit();
             
-            String response = makeAIRequest(prompt);
+            String response = makeAIRequestInternal(prompt);
             
             // Cache the response
             cacheResponse(cacheKey, response);
@@ -988,7 +988,7 @@ public class GeminiAIService {
             // Apply rate limiting
             waitForRateLimit();
             
-            String response = makeAIRequest(prompt);
+            String response = makeAIRequestInternal(prompt);
             
             // Cache the response
             cacheResponse(cacheKey, response);
@@ -1055,7 +1055,7 @@ public class GeminiAIService {
             System.out.println("🤖 Generating AI career path summary for: " + careerPathName);
             
             // Call Gemini API
-            String response = makeAIRequest(prompt);
+            String response = makeAIRequestInternal(prompt);
             
             // Cache the response
             cacheResponse(cacheKey, response);
@@ -1071,9 +1071,10 @@ public class GeminiAIService {
     }
 
     /**
-     * Rate limiting: Wait if necessary to respect API limits
+     * PUBLIC: Apply rate limiting before making AI requests
+     * Used by hybrid recommendation system
      */
-    private void waitForRateLimit() {
+    public void waitForRateLimit() {
         long currentTime = System.currentTimeMillis();
         long timeSinceLastCall = currentTime - lastApiCall.get();
         
@@ -1090,6 +1091,14 @@ public class GeminiAIService {
         }
         
         lastApiCall.set(System.currentTimeMillis());
+    }
+    
+    /**
+     * PUBLIC: Make AI request for hybrid recommendation system
+     * Used by StructuredRecommendationService for career path refinement
+     */
+    public String makeAIRequest(String prompt) throws Exception {
+        return makeAIRequestInternal(prompt);
     }
 
     /**
@@ -1253,7 +1262,7 @@ public class GeminiAIService {
     /**
      * Make the actual AI request with consistent error handling
      */
-    private String makeAIRequest(String prompt) throws Exception {
+    private String makeAIRequestInternal(String prompt) throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
@@ -1584,7 +1593,7 @@ public class GeminiAIService {
                 }
                 
                 // Make a simple test call
-                String testResponse = makeAIRequest("Write a single word: 'Hello'");
+                String testResponse = makeAIRequestInternal("Write a single word: 'Hello'");
                 long callEnd = System.currentTimeMillis();
                 
                 System.out.println("Call #" + i + " completed in " + (callEnd - callStart) + "ms. Response: " + testResponse.substring(0, Math.min(50, testResponse.length())));

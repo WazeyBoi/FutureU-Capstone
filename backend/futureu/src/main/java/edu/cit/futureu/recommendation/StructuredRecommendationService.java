@@ -156,16 +156,27 @@ public class StructuredRecommendationService {
             scoredPaths.add(recommendation);
         }
         
-        // STEP 2: Get TOP 3 career paths FIRST
-        List<CareerPathRecommendation> topPaths = scoredPaths.stream()
+        // STEP 2: HYBRID APPROACH - Get TOP 10 deterministic paths, then AI refines to TOP 3
+        List<CareerPathRecommendation> top10Paths = scoredPaths.stream()
             .sorted(Comparator.comparingDouble(CareerPathRecommendation::getMatchPercentage).reversed())
-            .limit(3)
+            .limit(10)
             .collect(Collectors.toList());
             
-        System.out.println("🏆 Selected TOP 3 career paths for detailed processing:");
+        System.out.println("� HYBRID APPROACH: Deterministic scoring found TOP 10, now AI will refine to TOP 3");
+        System.out.println("📊 Deterministic TOP 10 career paths:");
+        for (int i = 0; i < top10Paths.size(); i++) {
+            System.out.println("   " + (i+1) + ". " + top10Paths.get(i).getCareerPathName() + 
+                             " (" + String.format("%.1f", top10Paths.get(i).getMatchPercentage()) + "%)");
+        }
+        System.out.println();
+        
+        // STEP 2.5: Let AI refine the top 10 to top 3 with enhanced reasoning
+        List<CareerPathRecommendation> topPaths = refineCareerPathsWithAI(top10Paths, studentProfile);
+        
+        System.out.println("🤖 AI-REFINED TOP 3 career paths for detailed processing:");
         for (int i = 0; i < topPaths.size(); i++) {
             System.out.println("   " + (i+1) + ". " + topPaths.get(i).getCareerPathName() + 
-                             " (" + String.format("%.1f", topPaths.get(i).getMatchPercentage()) + "%)");
+                             " (" + String.format("%.1f", topPaths.get(i).getMatchPercentage()) + "%) [AI-Enhanced]");
         }
         System.out.println();
         
@@ -620,4 +631,198 @@ public class StructuredRecommendationService {
             default: return code;
         }
     }
+    
+    /**
+     * HYBRID APPROACH: Use AI to refine deterministic top 10 to final top 3
+     * This combines mathematical scoring reliability with AI insights
+     */
+    private List<CareerPathRecommendation> refineCareerPathsWithAI(
+            List<CareerPathRecommendation> top10Paths, 
+            StudentProfile studentProfile) {
+        
+        if (top10Paths.size() <= 3) {
+            // If we have 3 or fewer paths, just return them all
+            return top10Paths;
+        }
+        
+        try {
+            System.out.println("🤖 Starting AI refinement of career paths...");
+            
+            // Build comprehensive prompt for AI refinement
+            String refinementPrompt = buildCareerPathRefinementPrompt(top10Paths, studentProfile);
+            
+            // Apply rate limiting before AI call
+            geminiAIService.waitForRateLimit();
+            
+            // Get AI refinement
+            String aiResponse = geminiAIService.makeAIRequest(refinementPrompt);
+            
+            // Parse AI response to get refined rankings
+            List<CareerPathRecommendation> refinedPaths = parseAIRefinementResponse(aiResponse, top10Paths);
+            
+            if (refinedPaths.size() >= 3) {
+                System.out.println("✅ AI successfully refined career paths");
+                return refinedPaths.subList(0, 3);
+            } else {
+                System.out.println("⚠️ AI refinement returned insufficient paths, falling back to deterministic top 3");
+                return top10Paths.subList(0, 3);
+            }
+            
+        } catch (Exception e) {
+            LOGGER.warn("AI refinement failed: {}, falling back to deterministic top 3", e.getMessage());
+            System.out.println("❌ AI refinement failed, using deterministic top 3: " + e.getMessage());
+            return top10Paths.subList(0, 3);
+        }
+    }
+    
+    /**
+     * Build prompt for AI to refine career path rankings
+     */
+    private String buildCareerPathRefinementPrompt(
+            List<CareerPathRecommendation> top10Paths, 
+            StudentProfile studentProfile) {
+        
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are an expert career counselor tasked with refining career pathway recommendations.\n\n");
+        
+        prompt.append("STUDENT PROFILE:\n");
+        Map<String, Object> profile = buildStudentProfileForAI(studentProfile);
+        
+        // Add student profile details
+        profile.forEach((key, value) -> {
+            if (value != null) {
+                prompt.append("- ").append(key).append(": ").append(value).append("\n");
+            }
+        });
+        
+        prompt.append("\nDETERMINISTIC TOP 10 CAREER PATHS (with mathematical scores):\n");
+        for (int i = 0; i < top10Paths.size(); i++) {
+            CareerPathRecommendation path = top10Paths.get(i);
+            prompt.append((i + 1)).append(". ").append(path.getCareerPathName())
+                  .append(" - ").append(String.format("%.1f", path.getMatchPercentage())).append("% match\n");
+            
+            // Add component breakdown
+            if (path.getComponentBreakdown() != null) {
+                prompt.append("   Components: ");
+                path.getComponentBreakdown().forEach((component, score) -> 
+                    prompt.append(component).append(": ").append(String.format("%.1f", score)).append("%, "));
+                prompt.append("\n");
+            }
+        }
+        
+        prompt.append("\nTASK:\n");
+        prompt.append("Analyze this student's profile holistically and select the TOP 3 career paths that would be most suitable.\n");
+        prompt.append("Consider:\n");
+        prompt.append("1. Mathematical scores (but don't be bound by them)\n");
+        prompt.append("2. Student's personality patterns and interests\n");
+        prompt.append("3. Potential for growth and fulfillment\n");
+        prompt.append("4. Market trends and future opportunities\n");
+        prompt.append("5. Work-life balance alignment\n");
+        prompt.append("6. Student's life circumstances and goals\n\n");
+        
+        prompt.append("RESPONSE FORMAT:\n");
+        prompt.append("Return a JSON array with exactly 3 career paths in your recommended order:\n");
+        prompt.append("[\n");
+        prompt.append("  {\n");
+        prompt.append("    \"careerPathName\": \"Exact name from the list above\",\n");
+        prompt.append("    \"rank\": 1,\n");
+        prompt.append("    \"adjustedScore\": 85.5,\n");
+        prompt.append("    \"aiReasoning\": \"Why this path is best for this student\"\n");
+        prompt.append("  },\n");
+        prompt.append("  ... (2 more entries)\n");
+        prompt.append("]\n\n");
+        
+        prompt.append("Ensure all careerPathName values EXACTLY match the names from the list above.");
+        
+        return prompt.toString();
+    }
+    
+    /**
+     * Parse AI response to get refined career path rankings
+     */
+    private List<CareerPathRecommendation> parseAIRefinementResponse(
+            String aiResponse, 
+            List<CareerPathRecommendation> originalPaths) {
+        
+        List<CareerPathRecommendation> refinedPaths = new ArrayList<>();
+        
+        try {
+            // Extract JSON from AI response
+            String jsonStart = aiResponse.indexOf("[") >= 0 ? aiResponse.substring(aiResponse.indexOf("[")) : aiResponse;
+            String jsonEnd = jsonStart.indexOf("]") >= 0 ? jsonStart.substring(0, jsonStart.indexOf("]") + 1) : jsonStart;
+            
+            // Parse JSON array
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode rootNode = mapper.readTree(jsonEnd);
+            
+            if (rootNode.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode pathNode : rootNode) {
+                    String pathName = pathNode.get("careerPathName").asText();
+                    double adjustedScore = pathNode.has("adjustedScore") ? 
+                        pathNode.get("adjustedScore").asDouble() : 0.0;
+                    String aiReasoning = pathNode.has("aiReasoning") ? 
+                        pathNode.get("aiReasoning").asText() : "";
+                    
+                    // Find matching original path
+                    CareerPathRecommendation matchedPath = originalPaths.stream()
+                        .filter(p -> p.getCareerPathName().equals(pathName))
+                        .findFirst()
+                        .orElse(null);
+                    
+                    if (matchedPath != null) {
+                        // Create enhanced copy with AI adjustments
+                        CareerPathRecommendation enhancedPath = createEnhancedCareerPath(
+                            matchedPath, adjustedScore, aiReasoning);
+                        refinedPaths.add(enhancedPath);
+                        
+                        System.out.println("   ✅ AI refined: " + pathName + 
+                            " (Score: " + String.format("%.1f", adjustedScore) + "%)");
+                    }
+                }
+            }
+            
+        } catch (Exception e) {
+            LOGGER.warn("Failed to parse AI refinement response: {}", e.getMessage());
+            System.out.println("❌ Failed to parse AI response, using fallback");
+        }
+        
+        return refinedPaths;
+    }
+    
+    /**
+     * Create enhanced career path with AI adjustments
+     */
+    private CareerPathRecommendation createEnhancedCareerPath(
+            CareerPathRecommendation original, 
+            double adjustedScore, 
+            String aiReasoning) {
+        
+        // Create new recommendation by copying from original
+        CareerPathRecommendation enhanced = new CareerPathRecommendation();
+        
+        // Copy all original data
+        enhanced.setCareerPathId(original.getCareerPathId());
+        enhanced.setCareerPathName(original.getCareerPathName());
+        enhanced.setMatchPercentage(adjustedScore > 0 ? adjustedScore : original.getMatchPercentage());
+        enhanced.setComponentBreakdown(new HashMap<>(original.getComponentBreakdown()));
+        
+        // Enhance summary with AI reasoning
+        String enhancedSummary = original.getSummary();
+        if (aiReasoning != null && !aiReasoning.isEmpty()) {
+            enhancedSummary = aiReasoning;
+        }
+        enhanced.setSummary(enhancedSummary);
+        
+        // Copy careers and programs
+        for (CareerRecommendationDetail career : original.getCareers()) {
+            enhanced.addCareer(career);
+        }
+        for (ProgramRecommendationDetail program : original.getPrograms()) {
+            enhanced.addProgram(program);
+        }
+        
+        return enhanced;
+    }
 }
+
