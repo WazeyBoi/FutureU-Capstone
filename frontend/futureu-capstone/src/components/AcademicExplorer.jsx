@@ -188,7 +188,7 @@ const AcademicExplorer = () => {
 
   // Update program details fetching
   useEffect(() => {
-    if (showProgramSidePanel && selectedProgram && !selectedProgramDetails) {
+    if (showProgramSidePanel && selectedProgram) {
       setLoadingProgramDetails(true);
       programService.getProgramById(selectedProgram)
         .then(response => {
@@ -204,7 +204,7 @@ const AcademicExplorer = () => {
           setLoadingProgramDetails(false);
         });
     }
-  }, [showProgramSidePanel, selectedProgram, selectedProgramDetails, programs]);
+  }, [showProgramSidePanel, selectedProgram, programs]);
 
   // Mascot animation effects
   useEffect(() => {
@@ -241,6 +241,7 @@ const AcademicExplorer = () => {
     setSearchedSchool(null);
     setShowSchoolSearchResults(false);
     setSelectedProgram(programId);
+    setSelectedProgramDetails(null); // Clear previous program details
     setShowProgramSidePanel(true);
     setFilterOptions(prev => ({ ...prev, schoolNameFilter: '' }));
   };

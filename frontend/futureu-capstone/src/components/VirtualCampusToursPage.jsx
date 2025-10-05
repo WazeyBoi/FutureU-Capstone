@@ -414,58 +414,69 @@ const VirtualCampusToursPage = () => {
           delay: index * 0.05,
           duration: 0.3,
         }}
-        className="bg-white rounded-xl overflow-hidden shadow-[rgba(0,0,0,0.08)_0px_8px_24px] border border-gray-100 transition-all duration-300"
+        className="bg-white rounded-2xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-100 transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] group"
       >
-        <div className="relative aspect-video overflow-hidden">
+        {/* Video Container with Professional Frame */}
+        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-slate-50 to-gray-100">
           <iframe
-            className="w-full h-full"
+            className="w-full h-full transition-transform duration-300 group-hover:scale-105"
             src={tour.virtualCampusTourUrl}
             title={school.name || "Virtual Tour"}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           ></iframe>
-          {tour.featured && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="absolute top-3 right-3 bg-amber-400 text-xs font-bold px-3 py-1 rounded-full text-black shadow-md"
-            >
-              FEATURED
-            </motion.div>
-          )}
         </div>
-        <div className="p-5 text-left">
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
-            {school.name || "Unknown School"}
-          </h3>
-          <div className="flex items-center space-x-3 mt-3">
-            <div className="flex items-center text-sm text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {school.location}
-            </div>
-            <div className="text-sm text-gray-400">•</div>
-            <div className="flex items-center text-sm text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              {school.type}
-            </div>
-            <div className="text-sm text-gray-400">•</div>
-            <div className="flex items-center text-sm text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-                <text x="12" y="16" textAnchor="middle" fontSize="10" fill="currentColor">{tour.views}</text>
-              </svg>
-              {tour.views} views
+        
+        {/* Content Section with Better Spacing */}
+        <div className="p-6">
+          {/* School Name with Better Typography */}
+          <div className="mb-4">
+            <h3 className="text-xl font-bold text-slate-800 mb-2 line-clamp-2 leading-tight group-hover:text-blue-700 transition-colors duration-300">
+              {school.name || "Unknown School"}
+            </h3>
+            
+            {/* School Info Pills */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {school.location && (
+                <div className="inline-flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                  <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {school.location}
+                </div>
+              )}
+              
+              {school.type && (
+                <div className="inline-flex items-center bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-medium">
+                  <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path d="M12 3L2 9l10 6 10-6-10-6z" />
+                    <path d="M2 9v6c0 2.21 4.48 4 10 4s10-1.79 10-4V9" />
+                  </svg>
+                  {school.type}
+                </div>
+              )}
             </div>
           </div>
-          <div className="mt-4 bg-white p-4 rounded-lg shadow-md">
-            <p className="text-sm text-gray-600">{tour.caption}</p>
+          
+          {/* Tour Description */}
+          {tour.caption && (
+            <div className="bg-gradient-to-br from-slate-50 to-gray-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
+                {tour.caption}
+              </p>
+            </div>
+          )}
+          
+          {/* Action Bar */}
+          <div className="flex items-center mt-4 pt-4 border-t border-slate-100">
+            <div className="flex items-center text-xs text-slate-500">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1M9 16h1m4 0h1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Virtual Tour
+            </div>
           </div>
         </div>
       </motion.div>
@@ -545,52 +556,71 @@ const VirtualCampusToursPage = () => {
         </div>
       </motion.div>
 
-      {/* Map section - Controls moved to a dedicated bar above the map */}
+
+
+      {/* Control Bar positioned above the map container */}
       <div className="max-w-7xl mx-auto mb-4 mt-2 px-4">
-        {/* Control Bar - Map style selector and view toggle */}
-        <div className="flex flex-wrap items-center justify-between bg-white rounded-xl shadow-lg border border-blue-100 p-3 mb-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <label className="mr-2 text-sm font-medium text-gray-600">Map Style:</label>
-              <select
-                className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300"
-                value={tileUrl}
-                onChange={handleTileChange}
-              >
-                {tileOptions.map(opt => (
-                  <option key={opt.name} value={opt.url}>{opt.name}</option>
-                ))}
-              </select>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          {/* Left side controls */}
+          <div className="flex items-center gap-4">
+            {/* Map Style Control Panel */}
+            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-blue-100 p-3">
+              <div className="flex items-center">
+                <label className="mr-2 text-sm font-medium text-gray-600">Map Style:</label>
+                <select
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all duration-300 text-sm"
+                  value={tileUrl}
+                  onChange={handleTileChange}
+                >
+                  {tileOptions.map(opt => (
+                    <option key={opt.name} value={opt.url}>{opt.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
-            <button
-              onClick={toggleMapView}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1 text-sm font-medium transition-all duration-300 shadow-sm"
-            >
-              <span>{mapView === "2d" ? "3D" : "2D"} View</span>
-              <span className="ml-1">
-                {mapView === "2d" ? 
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
-                  </svg> : 
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd" />
-                  </svg>
-                }
-              </span>
-            </button>
+            {/* Map View Toggle Panel with State Indication */}
+            <div className="bg-white/95 backdrop-blur-md rounded-xl shadow-lg border border-blue-100 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="text-sm font-medium text-gray-600 mr-3">Current View:</span>
+                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                    {mapView.toUpperCase()}
+                  </span>
+                </div>
+                <button
+                  onClick={toggleMapView}
+                  className="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-4 rounded-lg flex items-center space-x-1 text-sm font-medium transition-all duration-300 shadow-sm ml-3"
+                >
+                  <span>Switch to {mapView === "2d" ? "3D" : "2D"}</span>
+                  <span className="ml-1">
+                    {mapView === "2d" ? 
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clipRule="evenodd" />
+                      </svg> : 
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.004 6.004 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.004 6.004 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.004 6.004 0 01-2.783 4.118zm-6.268 0C6.412 13.97 6.118 12.546 6.03 11H4.083a6.004 6.004 0 002.783 4.118z" clipRule="evenodd" />
+                      </svg>
+                    }
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
-          
+
+          {/* Right side clear selection button */}
           {selectedSchool && (
-            <button
-              onClick={handleClearSchool}
-              className="bg-white border border-yellow-200 rounded-lg px-4 py-1.5 shadow-sm hover:bg-yellow-50 transition flex items-center text-sm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Clear School Selection
-            </button>
+            <div className="bg-white/95 backdrop-blur-md border border-yellow-200 rounded-xl px-4 py-2 shadow-lg">
+              <button
+                onClick={handleClearSchool}
+                className="hover:bg-yellow-50/95 transition flex items-center text-sm font-medium px-2 py-1 rounded-lg"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Clear Selection
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -839,10 +869,10 @@ const VirtualCampusToursPage = () => {
             </motion.div>
 
             {/* Filter Controls */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div className="flex flex-col md:flex-row justify-start items-start md:items-center mb-8">
               <div className="flex-1 flex flex-col md:flex-row gap-4">
-                {/* Unified School Search/Dropdown */}
-                <div className="relative w-full md:w-64" ref={dropdownRef}>
+                {/* Unified School Search/Dropdown - Increased width */}
+                <div className="relative w-full md:w-120" ref={dropdownRef}>
                   <input
                     type="text"
                     ref={schoolInputRef}
@@ -894,7 +924,7 @@ const VirtualCampusToursPage = () => {
                     </ul>
                   )}
                 </div>
-                {/* School Type Dropdown remains */}
+                {/* School Type Dropdown */}
                 <select
                   value={schoolType}
                   onChange={(e) => setSchoolType(e.target.value)}
@@ -905,18 +935,6 @@ const VirtualCampusToursPage = () => {
                   <option value="Private">Private</option>
                 </select>
               </div>
-              {/* Reset Button */}
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={handleReset}
-                className="mt-4 md:mt-0 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg flex items-center text-sm font-medium transition-all duration-300"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Reset Filters
-              </motion.button>
             </div>
 
             {/* Filtered Tours */}
@@ -973,6 +991,31 @@ const VirtualCampusToursPage = () => {
           border: none;
           font-size: 1rem;
           letter-spacing: 0.01em;
+        }
+        
+        /* Line clamp utilities for better text truncation */
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        .line-clamp-3 {
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        
+        /* Enhanced hover effects for tour cards */
+        .group:hover .group-hover\\:scale-105 {
+          transform: scale(1.05);
+        }
+        
+        /* Smooth button hover effects */
+        .group\\/btn:hover .group-hover\\/btn\\:translate-x-1 {
+          transform: translateX(0.25rem);
         }
         `}
       </style>
