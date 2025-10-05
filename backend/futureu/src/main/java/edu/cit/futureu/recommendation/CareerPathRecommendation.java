@@ -1,11 +1,13 @@
 package edu.cit.futureu.recommendation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import edu.cit.futureu.entity.CareerPathEntity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import edu.cit.futureu.entity.CareerPathEntity;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CareerPathRecommendation {
@@ -14,6 +16,7 @@ public class CareerPathRecommendation {
     private String careerPathName;
     private double matchPercentage;
     private Map<String, Double> componentBreakdown;
+    private String summary; // AI-generated explanation of career path fit
     private final List<CareerRecommendationDetail> careers = new ArrayList<>();
     private final List<ProgramRecommendationDetail> programs = new ArrayList<>();
 
@@ -56,6 +59,14 @@ public class CareerPathRecommendation {
 
     public List<ProgramRecommendationDetail> getPrograms() {
         return programs;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
     }
 
     public void addCareer(CareerRecommendationDetail detail) {

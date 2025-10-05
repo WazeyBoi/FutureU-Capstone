@@ -21,7 +21,7 @@ export const fetchRecommendations = (userAssessmentId) => {
  */
 export const generateRecommendations = (userAssessmentId) => {
   try {
-    return apiClient.post(`/recommendation/generate-for-assessment/${userAssessmentId}`);
+    return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`);
   } catch (error) {
     console.error('Error generating recommendations:', error);
     throw error;

@@ -1,19 +1,36 @@
 package edu.cit.futureu.service;
 
-import edu.cit.futureu.entity.*;
-import edu.cit.futureu.recommendation.*;
-import edu.cit.futureu.repository.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import edu.cit.futureu.entity.AssessmentResultEntity;
+import edu.cit.futureu.entity.CareerEntity;
+import edu.cit.futureu.entity.CareerPathEntity;
+import edu.cit.futureu.entity.CareerPathRecommendationEntity;
+import edu.cit.futureu.entity.CareerRecommendationDetailEntity;
+import edu.cit.futureu.entity.DreamCareerInsightEntity;
+import edu.cit.futureu.entity.ProgramEntity;
+import edu.cit.futureu.entity.ProgramRecommendationDetailEntity;
+import edu.cit.futureu.recommendation.AdvancedRecommendationResponse;
+import edu.cit.futureu.recommendation.CareerPathRecommendation;
+import edu.cit.futureu.recommendation.CareerRecommendationDetail;
+import edu.cit.futureu.recommendation.DreamCareerInsight;
+import edu.cit.futureu.recommendation.ProgramRecommendationDetail;
+import edu.cit.futureu.recommendation.RecommendationScore;
+import edu.cit.futureu.repository.CareerPathRecommendationRepository;
+import edu.cit.futureu.repository.CareerPathRepository;
+import edu.cit.futureu.repository.CareerRepository;
+import edu.cit.futureu.repository.DreamCareerInsightRepository;
+import edu.cit.futureu.repository.ProgramRepository;
 
 @Service
 public class RecommendationPersistenceService {
@@ -80,6 +97,11 @@ public class RecommendationPersistenceService {
             
             entity.setMatchPercentage(recommendation.getMatchPercentage());
             entity.setRecommendationType("STRUCTURED");
+            
+            // Set AI-generated summary if available
+            if (recommendation.getSummary() != null) {
+                entity.setSummary(recommendation.getSummary());
+            }
             
             // Set component scores
             if (recommendation.getComponentBreakdown() != null) {
@@ -160,47 +182,60 @@ public class RecommendationPersistenceService {
         }
     }
 
+    @Transactional
     private void persistDreamCareerInsight(AssessmentResultEntity assessmentResult,
                                          DreamCareerInsight insight) {
         
         logger.debug("Persisting dream career insight for assessment result: {}", assessmentResult.getResultId());
         
-        // First, try to find existing insight
-        Optional<DreamCareerInsightEntity> existingInsight = 
-            dreamCareerInsightRepository.findByAssessmentResult(assessmentResult);
-        
-        DreamCareerInsightEntity entity;
-        if (existingInsight.isPresent()) {
-            // Update existing entity
-            entity = existingInsight.get();
-            logger.debug("Updating existing dream career insight ID: {} for assessment result: {}", 
-                        entity.getId(), assessmentResult.getResultId());
-        } else {
+        try {
+            // First, try to delete any existing insight to avoid unique constraint violation
+            dreamCareerInsightRepository.deleteByAssessmentResult(assessmentResult);
+            // Force the delete to be executed immediately
+            dreamCareerInsightRepository.flush();
+            logger.debug("Cleared any existing dream career insight for assessment result: {}", assessmentResult.getResultId());
+            
             // Create new entity
-            entity = new DreamCareerInsightEntity();
+            DreamCareerInsightEntity entity = new DreamCareerInsightEntity();
             entity.setAssessmentResult(assessmentResult);
             logger.debug("Creating new dream career insight for assessment result: {}", assessmentResult.getResultId());
-        }
-        
-        entity.setDreamCareer(insight.getDreamCareer());
-        entity.setClosenessScore(insight.getClosenessScore());
-        entity.setGuidance(insight.getGuidance());
-        entity.setEncouragement(insight.getEncouragement());
-        
-        // Serialize gap maps to JSON
-        try {
-            if (insight.getRiasecGap() != null) {
-                entity.setRiasecGap(objectMapper.writeValueAsString(insight.getRiasecGap()));
+            
+            entity.setDreamCareer(insight.getDreamCareer());
+            entity.setClosenessScore(insight.getClosenessScore());
+            entity.setGuidance(insight.getGuidance());
+            entity.setEncouragement(insight.getEncouragement());
+            
+            // Serialize gap maps to JSON
+            try {
+                if (insight.getRiasecGap() != null) {
+                    entity.setRiasecGap(objectMapper.writeValueAsString(insight.getRiasecGap()));
+                }
+                if (insight.getAptitudeGap() != null) {
+                    entity.setAptitudeGap(objectMapper.writeValueAsString(insight.getAptitudeGap()));
+                }
+            } catch (JsonProcessingException e) {
+                logger.warn("Failed to serialize gap data for dream career insight: {}", e.getMessage());
             }
-            if (insight.getAptitudeGap() != null) {
-                entity.setAptitudeGap(objectMapper.writeValueAsString(insight.getAptitudeGap()));
-            }
-        } catch (JsonProcessingException e) {
-            logger.warn("Failed to serialize gap data for dream career insight: {}", e.getMessage());
+            
+            DreamCareerInsightEntity saved = dreamCareerInsightRepository.save(entity);
+            logger.debug("Successfully saved dream career insight with ID: {}", saved.getId());
+            
+        } catch (Exception e) {
+            logger.error("Failed to persist dream career insight for assessment result {}: {}", 
+                        assessmentResult.getResultId(), e.getMessage(), e);
+            // Don't throw - we want the rest of the recommendations to persist even if this fails
         }
-        
-        DreamCareerInsightEntity saved = dreamCareerInsightRepository.save(entity);
-        logger.debug("Successfully saved dream career insight with ID: {}", saved.getId());
+    }
+
+    /**
+     * Check if recommendations already exist for an assessment result
+     */
+    @Transactional(readOnly = true)
+    public boolean hasPersistedRecommendations(AssessmentResultEntity assessmentResult) {
+        // Check if career path recommendations exist
+        List<CareerPathRecommendationEntity> pathRecommendations = 
+            careerPathRecommendationRepository.findByAssessmentResult(assessmentResult);
+        return !pathRecommendations.isEmpty();
     }
 
     /**
@@ -239,6 +274,11 @@ public class RecommendationPersistenceService {
         
         CareerPathRecommendation recommendation = CareerPathRecommendation.from(
             entity.getCareerPath(), entity.getMatchPercentage(), score);
+        
+        // Set the AI-generated summary if available
+        if (entity.getSummary() != null) {
+            recommendation.setSummary(entity.getSummary());
+        }
         
         // Convert career details
         for (CareerRecommendationDetailEntity careerEntity : entity.getCareerDetails()) {

@@ -417,12 +417,18 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                       <div>
                         <h4 className="text-lg font-semibold text-[#232D35]">{path.careerPathName}</h4>
-                        <p className="text-xs text-gray-500">Rank #{idx + 1}</p>
+                        <p className="text-xs text-left text-gray-500">Option #{idx + 1}</p>
                       </div>
-                      <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full text-sm font-bold self-start sm:self-auto">
+                      <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-l text-sm font-bold self-start sm:self-auto">
                         {(path.matchPercentage || 0).toFixed(1)}% Match
                       </span>
                     </div>
+                    {path.summary && (
+                      <div className="mb-4 p-4 bg-gradient-to-r from-[#1D63A1]/5 to-[#FFB71B]/5 rounded-xl border border-[#1D63A1]/10">
+                        <h5 className="text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
+                        <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
                       {Object.entries(breakdown).map(([key, value]) => (
                         <div key={key} className="bg-[#F8F9FA] rounded-xl p-3">
@@ -435,14 +441,14 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                       <button
                         type="button"
                         onClick={() => handlePathTabChange(pathKey, 'careers')}
-                        className={`px-4 py-2 text-xs font-semibold rounded-full border transition-colors ${activeTab === 'careers' ? 'bg-[#1D63A1] text-white border-[#1D63A1]' : 'bg-white text-[#1D63A1] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'}`}
+                        className={`px-4 py-2 text-xs font-semibold rounded-l border transition-colors ${activeTab === 'careers' ? 'bg-[#1D63A1] text-white border-[#1D63A1]' : 'bg-white text-[#1D63A1] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'}`}
                       >
                         Careers
                       </button>
                       <button
                         type="button"
                         onClick={() => handlePathTabChange(pathKey, 'programs')}
-                        className={`px-4 py-2 text-xs font-semibold rounded-full border transition-colors ${activeTab === 'programs' ? 'bg-[#FFB71B] text-white border-[#FFB71B]' : 'bg-white text-[#FFB71B] border-[#FFB71B]/30 hover:bg-[#FFB71B]/10'}`}
+                        className={`px-4 py-2 text-xs font-semibold rounded-l border transition-colors ${activeTab === 'programs' ? 'bg-[#FFB71B] text-white border-[#FFB71B]' : 'bg-white text-[#FFB71B] border-[#FFB71B]/30 hover:bg-[#FFB71B]/10'}`}
                       >
                         Programs
                       </button>
@@ -454,8 +460,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                             {careers.map((career) => (
                               <div key={career.careerId || career.careerTitle} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-inner">
                                 <p className="text-sm font-semibold text-[#232D35] mb-1">{career.careerTitle}</p>
-                                <p className="text-xs text-gray-600 mb-2">{career.summary || 'This career aligns with your strengths.'}</p>
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-full">
+                                <p className="text-xs text-left text-gray-600 mb-2">{career.summary || 'This career aligns with your strengths.'}</p>
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-l">
                                   {(career.matchPercentage || 0).toFixed(1)}% Match
                                 </span>
                               </div>

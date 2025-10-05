@@ -1023,6 +1023,54 @@ public class GeminiAIService {
     }
 
     /**
+     * Generate personalized career path summary explaining why this path fits the student
+     */
+    public String generateCareerPathSummary(String careerPathName, double matchPercentage, 
+                                           Map<String, Double> componentBreakdown, 
+                                           Map<String, Object> studentProfile) {
+        
+        System.out.println("🎯 CAREER PATH SUMMARY REQUEST - Path: " + careerPathName + 
+                          " | Match: " + String.format("%.1f", matchPercentage) + "%");
+        
+        // Check circuit breaker first
+        if (isCircuitBreakerOpen()) {
+            System.out.println("🚫 Circuit breaker is open, using fallback for career path: " + careerPathName);
+            return getFallbackCareerPathSummary(careerPathName, matchPercentage, componentBreakdown);
+        }
+        
+        try {
+            String prompt = buildCareerPathSummaryPrompt(careerPathName, matchPercentage, componentBreakdown, studentProfile);
+            String cacheKey = generateCacheKey("career_path", careerPathName.hashCode(), matchPercentage, studentProfile);
+            
+            // Check cache first
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                System.out.println("✅ Using cached career path summary for: " + careerPathName);
+                return cachedResponse;
+            }
+            
+            // Wait for rate limiting
+            waitForRateLimit();
+            
+            System.out.println("🤖 Generating AI career path summary for: " + careerPathName);
+            
+            // Call Gemini API
+            String response = makeAIRequest(prompt);
+            
+            // Cache the response
+            cacheResponse(cacheKey, response);
+            
+            System.out.println("✅ Successfully generated career path summary for: " + careerPathName);
+            return response.trim();
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Error generating AI career path summary for " + careerPathName + ": " + e.getMessage());
+            return getFallbackCareerPathSummary(careerPathName, matchPercentage, componentBreakdown);
+        }
+    }
+
+    /**
      * Rate limiting: Wait if necessary to respect API limits
      */
     private void waitForRateLimit() {
@@ -1250,6 +1298,79 @@ public class GeminiAIService {
     private String getFallbackProgramSummary(ProgramEntity program, double matchPercentage) {
         return String.format("%s supports your target skills (%.0f%% match).", 
             program.getProgramName(), matchPercentage);
+    }
+
+    /**
+     * Fallback career path summary when AI is unavailable
+     */
+    private String getFallbackCareerPathSummary(String careerPathName, double matchPercentage, 
+                                               Map<String, Double> componentBreakdown) {
+        StringBuilder summary = new StringBuilder();
+        summary.append(String.format("%s shows a %.0f%% match with your profile.", careerPathName, matchPercentage));
+        
+        // Add component breakdown explanation
+        if (componentBreakdown != null && !componentBreakdown.isEmpty()) {
+            summary.append(" Key strengths include: ");
+            componentBreakdown.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+                .limit(2)
+                .forEach(entry -> {
+                    String component = entry.getKey();
+                    double score = entry.getValue();
+                    summary.append(String.format("%s (%.1f%%), ", 
+                        component.toUpperCase(), score));
+                });
+            // Remove trailing comma and space
+            if (summary.toString().endsWith(", ")) {
+                summary.setLength(summary.length() - 2);
+            }
+            summary.append(".");
+        }
+        
+        return summary.toString();
+    }
+
+    /**
+     * Build engaging prompt for career path summary generation
+     */
+    private String buildCareerPathSummaryPrompt(String careerPathName, double matchPercentage, 
+                                               Map<String, Double> componentBreakdown, 
+                                               Map<String, Object> studentProfile) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are a career counselor explaining why a specific career path fits a student. ");
+        prompt.append("Create a comprehensive yet engaging explanation in 3-4 sentences. ");
+        prompt.append("Explain what the component scores mean and why this path is a good fit.\n\n");
+        
+        prompt.append("Career Path: ").append(careerPathName).append("\n");
+        prompt.append("Overall Match: ").append(String.format("%.1f", matchPercentage)).append("%\n\n");
+        
+        prompt.append("Component Breakdown Scores:\n");
+        if (componentBreakdown != null) {
+            componentBreakdown.forEach((component, score) -> {
+                prompt.append("- ").append(component.toUpperCase()).append(": ")
+                      .append(String.format("%.1f", score)).append("%\n");
+            });
+        }
+        
+        if (studentProfile != null && !studentProfile.isEmpty()) {
+            prompt.append("\nStudent Profile:\n");
+            studentProfile.forEach((key, value) -> {
+                if (value != null && !value.toString().isEmpty()) {
+                    prompt.append("- ").append(key).append(": ").append(value).append("\n");
+                }
+            });
+        }
+        
+        prompt.append("\nWrite an explanatory summary that:\n");
+        prompt.append("1. Explains what this career path represents and its key characteristics\n");
+        prompt.append("2. Breaks down what the component scores (RIASEC, APTITUDE, SKILLS, CONTEXT) mean for this path\n");
+        prompt.append("3. Connects the student's profile to why this path is a good match\n");
+        prompt.append("4. Uses encouraging and motivational language\n");
+        prompt.append("5. Keeps it under 150 words\n\n");
+        prompt.append("Response format: Just the summary text, no headers or labels.");
+        
+        return prompt.toString();
     }
 
     /**

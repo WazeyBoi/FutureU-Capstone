@@ -1,5 +1,20 @@
 package edu.cit.futureu.recommendation;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.CareerCareerPathEntity;
 import edu.cit.futureu.entity.CareerEntity;
@@ -17,19 +32,6 @@ import edu.cit.futureu.service.CareerInterestProfileService;
 import edu.cit.futureu.service.GeminiAIService;
 import edu.cit.futureu.service.RecommendationPersistenceService;
 import edu.cit.futureu.service.UserAssessmentService;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Orchestrates the deterministic recommendation flow using the existing schema and assessment results.
@@ -167,7 +169,27 @@ public class StructuredRecommendationService {
         }
         System.out.println();
         
-        // STEP 3: ONLY populate careers and programs for TOP 3 paths
+        // STEP 3: Generate AI summaries for career paths
+        System.out.println("🤖 Generating AI summaries for career paths...");
+        for (CareerPathRecommendation recommendation : topPaths) {
+            try {
+                Map<String, Object> studentProfileForAI = buildStudentProfileForAI(studentProfile);
+                String pathSummary = geminiAIService.generateCareerPathSummary(
+                    recommendation.getCareerPathName(),
+                    recommendation.getMatchPercentage(),
+                    recommendation.getComponentBreakdown(),
+                    studentProfileForAI
+                );
+                recommendation.setSummary(pathSummary);
+                System.out.println("   ✅ Summary generated for: " + recommendation.getCareerPathName());
+            } catch (Exception e) {
+                LOGGER.warn("Failed to generate AI summary for career path {}: {}", 
+                    recommendation.getCareerPathName(), e.getMessage());
+                System.out.println("   ❌ Failed to generate summary for: " + recommendation.getCareerPathName());
+            }
+        }
+        
+        // STEP 4: ONLY populate careers and programs for TOP 3 paths
         for (CareerPathRecommendation topPath : topPaths) {
             // Find the original CareerPathEntity 
             CareerPathEntity pathEntity = allPaths.stream()

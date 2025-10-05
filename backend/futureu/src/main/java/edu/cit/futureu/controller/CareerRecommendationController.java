@@ -51,6 +51,9 @@ public class CareerRecommendationController {
     @Autowired
     private GeminiAIService geminiAIService;
 
+    @Autowired
+    private edu.cit.futureu.service.RecommendationPersistenceService recommendationPersistenceService;
+
     @GetMapping("/test")
     public String test() {
         return "Recommendation API is working!";
@@ -194,13 +197,23 @@ public class CareerRecommendationController {
             logger.info("Found assessment result: ID={}, Overall Score={}", 
                        assessmentResult.getResultId(), assessmentResult.getOverallScore());
             
-            // Generate structured recommendations
-            logger.debug("Generating structured recommendations...");
-            AdvancedRecommendationResponse structured =
-                structuredRecommendationService.generate(userAssessment);
-            
-            logger.info("Structured recommendations generated successfully. Career paths count: {}", 
-                       structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
+            // Check if recommendations already exist
+            AdvancedRecommendationResponse structured;
+            if (recommendationPersistenceService.hasPersistedRecommendations(assessmentResult)) {
+                logger.info("Loading existing recommendations for assessment result: {}", assessmentResult.getResultId());
+                structured = recommendationPersistenceService.getPersistedRecommendations(assessmentResult);
+                logger.info("Loaded existing recommendations. Career paths count: {}", 
+                           structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
+            } else {
+                // Generate new recommendations only if they don't exist
+                logger.info("No existing recommendations found. Generating new recommendations for assessment result: {}", 
+                           assessmentResult.getResultId());
+                logger.debug("Generating structured recommendations...");
+                structured = structuredRecommendationService.generate(userAssessment);
+                
+                logger.info("Structured recommendations generated successfully. Career paths count: {}", 
+                           structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
+            }
             
             if (structured != null && structured.getCareerPaths() != null) {
                 logger.debug("Career paths details:");
@@ -232,6 +245,131 @@ public class CareerRecommendationController {
             logger.error("Error generating comprehensive recommendations for userAssessmentId: {}", userAssessmentId, e);
             return new ResponseEntity<>(
                 Map.of("error", "Failed to generate comprehensive recommendations", 
+                       "message", e.getMessage(),
+                       "code", "SERVER_ERROR"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Force regenerate recommendations (clear existing and generate new ones)
+     */
+    @PostMapping("/regenerate/{userAssessmentId}")
+    public ResponseEntity<?> regenerateRecommendations(@PathVariable int userAssessmentId) {
+        logger.info("Force regenerating recommendations for userAssessmentId: {}", userAssessmentId);
+        
+        try {
+            // Get the user assessment
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            
+            // Check if the assessment is completed
+            if (!"COMPLETED".equals(userAssessment.getStatus())) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment is not yet completed", 
+                           "code", "BAD_REQUEST"),
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+            
+            // Get the assessment result
+            Optional<AssessmentResultEntity> resultOpt = 
+                assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            
+            if (!resultOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment result not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            AssessmentResultEntity assessmentResult = resultOpt.get();
+            logger.info("Force regenerating recommendations for assessment result: {}", assessmentResult.getResultId());
+            
+            // Force generate new recommendations (this will clear existing ones)
+            AdvancedRecommendationResponse structured = structuredRecommendationService.generate(userAssessment);
+            
+            logger.info("Recommendations regenerated successfully. Career paths count: {}", 
+                       structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("assessmentId", userAssessment.getUserQuizAssessment());
+            response.put("userId", userAssessment.getUser().getUserId());
+            response.put("dateCompleted", userAssessment.getDateCompleted());
+            response.put("overallScore", assessmentResult.getOverallScore());
+            response.put("recommendations", structured);
+            response.put("regenerated", true);
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            logger.error("Error regenerating recommendations for userAssessmentId: {}", userAssessmentId, e);
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to regenerate recommendations", 
+                       "message", e.getMessage(),
+                       "code", "SERVER_ERROR"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Check if recommendations exist for a user assessment
+     */
+    @GetMapping("/exists/{userAssessmentId}")
+    public ResponseEntity<?> checkRecommendationsExist(@PathVariable int userAssessmentId) {
+        try {
+            // Get the user assessment
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            
+            // Get the assessment result
+            Optional<AssessmentResultEntity> resultOpt = 
+                assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            
+            if (!resultOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment result not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            AssessmentResultEntity assessmentResult = resultOpt.get();
+            boolean hasRecommendations = recommendationPersistenceService.hasPersistedRecommendations(assessmentResult);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("userAssessmentId", userAssessmentId);
+            response.put("assessmentResultId", assessmentResult.getResultId());
+            response.put("hasRecommendations", hasRecommendations);
+            response.put("status", userAssessment.getStatus());
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            logger.error("Error checking recommendations existence for userAssessmentId: {}", userAssessmentId, e);
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to check recommendations existence", 
                        "message", e.getMessage(),
                        "code", "SERVER_ERROR"),
                 HttpStatus.INTERNAL_SERVER_ERROR
