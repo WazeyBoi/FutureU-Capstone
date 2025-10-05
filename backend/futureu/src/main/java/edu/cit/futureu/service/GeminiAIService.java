@@ -1,5 +1,16 @@
 package edu.cit.futureu.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,29 +30,18 @@ import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-
 @Service
 public class GeminiAIService {
     
-    private final String apiKey = "AIzaSyBnxz2d-_geZKM8R3pDrJF5ZCZCOmjSVtk";
-    private final String geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private final String apiKey = "AIzaSyD6eaRsrdObk8XHYIEgu7NucuV5er_-Qw4";
+    private final String geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
-    // Rate limiting variables - VERY conservative for free tier
-    private static final long RATE_LIMIT_DELAY_MS = 10000; // 10 seconds between API calls for free tier
-    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 300000; // 5 minute circuit breaker
-    private static final int MAX_CONSECUTIVE_FAILURES = 1; // Open after first failure
+    // Rate limiting variables - Optimized for better performance
+    private static final long RATE_LIMIT_DELAY_MS = 2000; // 2 seconds between API calls (Gemini allows 60 requests/minute)
+    private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 60000; // 1 minute circuit breaker (faster recovery)
+    private static final int MAX_CONSECUTIVE_FAILURES = 3; // Open after 3 failures (more tolerant)
     
     private final AtomicLong lastApiCall = new AtomicLong(0);
     private final AtomicLong circuitBreakerUntil = new AtomicLong(0);
@@ -1052,13 +1052,21 @@ public class GeminiAIService {
         
         // If circuit breaker timeout has passed, reset it
         if (circuitBreakerUntil.get() > 0 && currentTime > circuitBreakerUntil.get()) {
-            System.out.println("Circuit breaker timeout expired, resetting");
+            System.out.println("🟢 Circuit breaker timeout expired, resetting after " + 
+                             (CIRCUIT_BREAKER_TIMEOUT_MS / 1000) + " seconds");
             circuitBreakerUntil.set(0);
             consecutiveFailures.set(0);
             return false;
         }
         
-        return circuitBreakerUntil.get() > currentTime;
+        boolean isOpen = circuitBreakerUntil.get() > currentTime;
+        if (isOpen) {
+            long timeRemaining = (circuitBreakerUntil.get() - currentTime) / 1000;
+            System.out.println("🔴 Circuit breaker is OPEN - " + consecutiveFailures.get() + "/" + 
+                             MAX_CONSECUTIVE_FAILURES + " failures. Reopens in " + timeRemaining + " seconds");
+        }
+        
+        return isOpen;
     }
 
     /**
@@ -1066,13 +1074,17 @@ public class GeminiAIService {
      */
     private void handleApiFailure(Exception e) {
         long failures = consecutiveFailures.incrementAndGet();
-        System.err.println("API failure count: " + failures + ", Error: " + e.getMessage());
+        System.err.println("🚨 API FAILURE #" + failures + " - " + e.getClass().getSimpleName() + ": " + e.getMessage());
         
         if (failures >= MAX_CONSECUTIVE_FAILURES) {
             long currentTime = System.currentTimeMillis();
             circuitBreakerUntil.set(currentTime + CIRCUIT_BREAKER_TIMEOUT_MS);
-            System.err.println("Circuit breaker opened due to " + failures + " consecutive failures. Will retry after " + 
-                             (CIRCUIT_BREAKER_TIMEOUT_MS / 1000) + " seconds");
+            System.err.println("🔴 CIRCUIT BREAKER OPENED due to " + failures + "/" + MAX_CONSECUTIVE_FAILURES + 
+                             " consecutive failures. Will retry after " + (CIRCUIT_BREAKER_TIMEOUT_MS / 1000) + " seconds");
+            System.err.println("🔧 Reason: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            if (e.getMessage().contains("404")) {
+                System.err.println("💡 TIP: Check if the API endpoint and model name are correct");
+            }
         }
     }
 
@@ -1094,8 +1106,22 @@ public class GeminiAIService {
         long failures = consecutiveFailures.get();
         long timeUntilReset = Math.max(0, circuitBreakerUntil.get() - System.currentTimeMillis());
         
-        return String.format("Circuit Breaker Status: %s | Failures: %d/%d | Reset in: %d seconds", 
-                           isOpen ? "OPEN" : "CLOSED", failures, MAX_CONSECUTIVE_FAILURES, timeUntilReset / 1000);
+        return String.format(
+            """
+            🔧 GEMINI AI SERVICE STATUS:
+            ├─ API Endpoint: %s
+            ├─ Circuit Breaker: %s
+            ├─ Consecutive Failures: %d/%d
+            ├─ Reset in: %d seconds
+            └─ Rate Limit Delay: %d ms
+            """,
+            geminiEndpoint,
+            isOpen ? "🔴 OPEN (Using Fallbacks)" : "🟢 CLOSED (AI Active)",
+            failures,
+            MAX_CONSECUTIVE_FAILURES,
+            timeUntilReset / 1000,
+            RATE_LIMIT_DELAY_MS
+        );
     }
 
     /**
