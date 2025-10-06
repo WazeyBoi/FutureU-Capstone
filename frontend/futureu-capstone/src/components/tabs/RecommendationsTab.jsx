@@ -408,9 +408,14 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           </motion.div>
         )}
         {careerPathDetails.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-4">Top Career Pathways</h3>
-            <div className="space-y-6">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Top {careerPathDetails.length} matches
+              </span>
+            </div>
+            <div className="space-y-8">
               {careerPathDetails.map((path, idx) => {
                 const breakdown = path.componentBreakdown || {};
                 const pathKey = path.careerPathId ?? idx;
@@ -419,165 +424,218 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 const programs = Array.isArray(path.programs) ? path.programs : [];
                 const expandedProgramId = expandedPathPrograms[pathKey] ?? null;
                 return (
-                  <div key={pathKey} className="border border-[#1D63A1]/15 rounded-2xl p-5 shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                      <div>
-                        <h4 className="text-lg font-semibold text-[#232D35]">{path.careerPathName}</h4>
-                        <p className="text-xs text-left text-gray-500">Option #{idx + 1}</p>
+                  <div key={pathKey} className="border border-gray-200 rounded-xl p-6 hover:border-[#1D63A1]/30 transition-colors">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
+                            #{idx + 1} Match
+                          </span>
+                          <span className="text-lg font-bold text-[#1D63A1]">
+                            {(path.matchPercentage || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-[#232D35] mb-2">{path.careerPathName}</h4>
                       </div>
-                      <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-l text-sm font-bold self-start sm:self-auto">
-                        {(path.matchPercentage || 0).toFixed(1)}% Match
-                      </span>
                     </div>
+
+                    {/* AI Summary */}
                     {path.summary && (
-                      <div className="mb-4 p-4 bg-gradient-to-r from-[#1D63A1]/5 to-[#FFB71B]/5 rounded-xl border border-[#1D63A1]/10">
+                      <div className="mb-6 p-4 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
                         <h5 className="text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
                         <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+
+                    {/* Component Breakdown */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       {Object.entries(breakdown).map(([key, value]) => (
-                        <div key={key} className="bg-[#F8F9FA] rounded-xl p-3">
-                          <p className="text-xs uppercase tracking-wide text-gray-500">{key}</p>
-                          <p className="text-sm font-semibold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                        <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{key}</p>
+                          <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
                         </div>
                       ))}
                     </div>
-                    <div className="flex gap-2 mb-4">
-                      <button
-                        type="button"
-                        onClick={() => handlePathTabChange(pathKey, 'careers')}
-                        className={`px-4 py-2 text-xs font-semibold rounded-l border transition-colors ${activeTab === 'careers' ? 'bg-[#1D63A1] text-white border-[#1D63A1]' : 'bg-white text-[#1D63A1] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'}`}
-                      >
-                        Careers
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePathTabChange(pathKey, 'programs')}
-                        className={`px-4 py-2 text-xs font-semibold rounded-l border transition-colors ${activeTab === 'programs' ? 'bg-[#FFB71B] text-white border-[#FFB71B]' : 'bg-white text-[#FFB71B] border-[#FFB71B]/30 hover:bg-[#FFB71B]/10'}`}
-                      >
-                        Programs
-                      </button>
+
+                    {/* Tab Navigation */}
+                    <div className="border-b border-gray-200 mb-6">
+                      <nav className="flex space-x-8">
+                        <button
+                          type="button"
+                          onClick={() => handlePathTabChange(pathKey, 'careers')}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'careers' 
+                              ? 'border-[#1D63A1] text-[#1D63A1]' 
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          Related Careers
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePathTabChange(pathKey, 'programs')}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'programs' 
+                              ? 'border-[#FFB71B] text-[#FFB71B]' 
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          Study Programs
+                        </button>
+                      </nav>
                     </div>
+                    {/* Tab Content */}
                     {activeTab === 'careers' && (
-                      <div>
+                      <motion.div 
+                        key="careers"
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                      >
                         {careers.length > 0 ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {careers.map((career) => (
-                              <div key={career.careerId || career.careerTitle} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-inner">
-                                <p className="text-sm font-semibold text-[#232D35] mb-1">{career.careerTitle}</p>
-                                <p className="text-xs text-left text-gray-600 mb-2">{career.summary || 'This career aligns with your strengths.'}</p>
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-white text-[#1D63A1] rounded-l">
-                                  {(career.matchPercentage || 0).toFixed(1)}% Match
-                                </span>
-                              </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {careers.map((career, careerIdx) => (
+                              <motion.div 
+                                key={career.careerId || career.careerTitle}
+                                initial={{ opacity: 0, y: 20 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                transition={{ duration: 0.3, delay: careerIdx * 0.1 }}
+                                className="p-4 border border-gray-200 rounded-lg hover:border-[#1D63A1]/30 transition-colors"
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h5 className="font-semibold text-[#232D35] text-sm">{career.careerTitle}</h5>
+                                  <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded ml-2">
+                                    {(career.matchPercentage || 0).toFixed(1)}%
+                                  </span>
+                                </div>
+                                <p className="text-xs text-left text-gray-600 leading-relaxed">{career.summary || 'This career aligns with your strengths.'}</p>
+                              </motion.div>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-500">No linked careers found for this pathway.</p>
+                          <motion.div 
+                            initial={{ opacity: 0, y: 20 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            transition={{ duration: 0.3 }}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            <p className="text-sm">No specific careers found for this pathway.</p>
+                            <p className="text-xs mt-1">This pathway may include diverse career options.</p>
+                          </motion.div>
                         )}
-                      </div>
+                      </motion.div>
                     )}
                     {activeTab === 'programs' && (
-                      <div className="space-y-4">
+                      <motion.div 
+                        key="programs"
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
                         {programs.length > 0 ? (
                           programs.map((program, programIdx) => {
                             const programId = program.programId ?? `${pathKey}-${programIdx}`;
                             const schools = Array.isArray(program.recommendedSchools) ? program.recommendedSchools : [];
                             const expanded = expandedProgramId === programId;
                             return (
-                              <div key={programId} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                              <motion.div 
+                                key={programId} 
+                                initial={{ opacity: 0, y: 20 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                transition={{ duration: 0.3, delay: programIdx * 0.1 }}
+                                className="border border-gray-200 rounded-lg p-5 hover:border-[#FFB71B]/30 transition-colors"
+                              >
                                 <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
-                                  <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
-                                  <div className="flex items-center gap-2">
-                                    <span className="px-3 py-1 bg-white text-[#1D63A1] rounded-full text-sm font-bold border border-[#1D63A1]/20">
+                                  <div className="flex-1">
+                                    <h5 className="font-semibold text-[#232D35] mb-1">{program.programName}</h5>
+                                    <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
+                                  </div>
+                                  <div className="flex items-center gap-3 ml-4">
+                                    <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
                                       {(program.matchPercentage || 0).toFixed(1)}% Match
                                     </span>
-                                    {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                   </div>
                                 </div>
-                                <p className="text-left text-sm text-gray-600 mb-4">{program.summary || 'This program supports your career goals.'}</p>
                                 <AccordionContent expanded={expanded}>
-                                  <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2">
-                                    Schools offering this program
-                                  </h5>
-                                  {schools.length > 0 ? (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-1">
-                                      {schools.map((schoolObj, schoolIdx) => {
-                                        const { schoolProgram, reason } = schoolObj;
-                                        const school = schoolProgram?.school || schoolObj?.school;
-                                        const schoolLogo = schoolLogos[school?.schoolId];
-                                        const schoolBackground = getSchoolBackground(school?.name);
-                                        const programSchoolKey = schoolProgram?.schoolProgramId || `${programId}-${schoolIdx}`;
-                                        let rankLabel = `#${schoolIdx + 1}`;
-                                        if (reason && reason.toLowerCase().includes('best')) {
-                                          rankLabel = 'Best School';
-                                        }
-                                        return (
-                                          <div key={programSchoolKey} className="relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group">
-                                            <div className="absolute top-2 right-2 z-10">
-                                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold shadow ${rankLabel === 'Best School' ? 'bg-[#FFB71B] text-white' : 'bg-[#232D35] text-white'}`}>{rankLabel}</span>
-                                            </div>
-                                            <div className="absolute top-2 left-2 z-10">
-                                              <span
-                                                className="cursor-pointer text-[#FFB71B]"
-                                                onMouseEnter={(e) => showTooltip(e, reason)}
-                                                onMouseLeave={hideTooltip}
-                                                onFocus={(e) => showTooltip(e, reason)}
-                                                onBlur={hideTooltip}
-                                                tabIndex={0}
-                                                aria-label="Show reason for ranking"
-                                              >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
-                                              </span>
-                                            </div>
-                                            <div className="flex flex-col h-full">
-                                              <div className="relative w-full h-28 bg-blue-100 overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10" />
-                                                {schoolBackground ? (
-                                                  <img src={schoolBackground} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
+                                  <div className="pt-4 border-t border-gray-100">
+                                    <h6 className="font-medium text-[#232D35] mb-3">Available at these schools:</h6>
+                                    {schools.length > 0 ? (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {schools.map((schoolObj, schoolIdx) => {
+                                          const { schoolProgram, reason } = schoolObj;
+                                          const school = schoolProgram?.school || schoolObj?.school;
+                                          const schoolLogo = schoolLogos[school?.schoolId];
+                                          const schoolBackground = getSchoolBackground(school?.name);
+                                          const programSchoolKey = schoolProgram?.schoolProgramId || `${programId}-${schoolIdx}`;
+                                          const isTopChoice = reason && reason.toLowerCase().includes('best');
+                                          
+                                          return (
+                                            <motion.div 
+                                              key={programSchoolKey} 
+                                              initial={{ opacity: 0, scale: 0.95 }} 
+                                              animate={{ opacity: 1, scale: 1 }} 
+                                              transition={{ duration: 0.2, delay: schoolIdx * 0.05 }}
+                                              className="relative bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                                            >
+                                              {isTopChoice && (
+                                                <span className="absolute top-2 right-2 text-xs font-medium bg-[#FFB71B] text-white px-2 py-1 rounded">
+                                                  Top Choice
+                                                </span>
+                                              )}
+                                              
+                                              <div className="flex items-start gap-3">
+                                                {schoolLogo ? (
+                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-10 h-10 object-cover rounded" />
                                                 ) : (
-                                                  <img src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school?.schoolId}`} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
+                                                  <div className="w-10 h-10 bg-[#1D63A1]/10 rounded flex items-center justify-center">
+                                                    <School className="w-5 h-5 text-[#1D63A1]" />
+                                                  </div>
                                                 )}
-                                                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                                  {schoolLogo ? (
-                                                    <img src={schoolLogo} alt={`${school?.name} logo`} className="w-14 h-14 object-cover rounded-full shadow-md" />
-                                                  ) : (
-                                                    <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow">
-                                                      <School className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-                                                    </div>
+                                                
+                                                <div className="flex-1 min-w-0">
+                                                  <h6 className="font-medium text-[#232D35] text-sm truncate">{school?.name}</h6>
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                    <MapPin className="w-3 h-3 mr-1" />
+                                                    <span className="truncate">{school?.location || 'Location not available'}</span>
+                                                  </div>
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                    <Globe className="w-3 h-3 mr-1" />
+                                                    <span>{school?.type || 'School type unavailable'}</span>
+                                                  </div>
+                                                  {reason && (
+                                                    <p className="text-xs text-[#1D63A1] mt-2 line-clamp-2">{reason}</p>
                                                   )}
                                                 </div>
                                               </div>
-                                              <div className="p-3 flex flex-col flex-1">
-                                                <h3 className="text-xs font-bold text-base text-gray-900 dark:text-white text-left mb-2">{school?.name}</h3>
-                                                <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
-                                                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                                    <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                                    <span className="text-left text-xs">{school?.location || 'Location not available'}</span>
-                                                  </div>
-                                                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                                    <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                                    <span>{school?.type || 'School type unavailable'}</span>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
-                                  )}
+                                            </motion.div>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-500 text-center py-4">No schools found for this program.</p>
+                                    )}
+                                  </div>
                                 </AccordionContent>
-                              </div>
+                              </motion.div>
                             );
                           })
                         ) : (
-                          <p className="text-xs text-gray-500">No linked programs found for this pathway.</p>
+                          <motion.div 
+                            initial={{ opacity: 0, y: 20 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            transition={{ duration: 0.3 }}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            <p className="text-sm">No specific programs found for this pathway.</p>
+                            <p className="text-xs mt-1">This pathway may include diverse program options.</p>
+                          </motion.div>
                         )}
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                 );
@@ -587,42 +645,47 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         )}
         {/* Career recommendations - only show if recommendations exist */}
         {aiRecommendations && aiRecommendations.recommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Top Career Options</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score and your Personality
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-2xl shadow-md p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-[#232D35]">Recommended Careers</h3>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Based on {aiRecommendations.overallScore?.toFixed(1)}% match
+              </span>
+            </div>
+            <p className="text-gray-600 mb-8">
+              These specific career roles align well with your assessment results and personality profile.
             </p>
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {aiRecommendations.recommendations.careers
                 ?.slice(0, 5)
                 .map((career, index) => (
-                  <motion.div key={index} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-lg font-semibold text-[#232D35]">{career.name}</h4>
-                      <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                        {career.confidenceScore?.toFixed(1)}% Match
-                      </span>
-                    </div>
-                    <p className="text-left text-sm text-gray-600 mb-4">{career.description}</p>
-                    <div className="flex gap-2">
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                        #{index+1} Career Option
-                      </span>
-                      {index === 0 && (
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                          Best Option
+                  <div key={index} className="border border-gray-200 rounded-lg p-5 hover:border-[#1D63A1]/30 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
+                          #{index + 1}
                         </span>
-                      )}
+                        {index === 0 && (
+                          <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
+                            Top Pick
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-[#1D63A1]">
+                        {career.confidenceScore?.toFixed(1)}%
+                      </span>
                     </div>
-                  </motion.div>
+                    <h4 className="text-lg font-semibold text-[#232D35] mb-2">{career.name}</h4>
+                    <p className="text-sm text-left text-gray-600 leading-relaxed">{career.description}</p>
+                  </div>
                 ))
               }
             </div>
             {aiRecommendations.recommendations.personalized && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-6 p-5 bg-[#1D63A1]/10 rounded-2xl border border-[#1D63A1]/20 animate-card-pop">
-                <h4 className="text-md font-semibold text-[#232D35] mb-2">Personalized Insight</h4>
+              <div className="mt-8 p-5 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
+                <h4 className="font-semibold text-[#232D35] mb-2">Personal Insight</h4>
                 <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
-              </motion.div>
+              </div>
             )}
           </motion.div>
         )}

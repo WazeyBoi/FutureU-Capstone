@@ -42,7 +42,17 @@ const AssessmentResults = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Initialize activeTab from localStorage or default to 'overview'
+  const [activeTab, setActiveTab] = useState(() => {
+    const savedTab = localStorage.getItem(`assessment_active_tab_${userAssessmentId}`);
+    return savedTab || 'overview';
+  });
+
+  // Save activeTab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(`assessment_active_tab_${userAssessmentId}`, activeTab);
+  }, [activeTab, userAssessmentId]);
   
   useEffect(() => {
     const fetchResults = async () => {
