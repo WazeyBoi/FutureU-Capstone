@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import userAssessmentService from '../services/userAssessmentService';
 import OverviewTab from '../components/tabs/OverviewTab';
 import InterestsTab from '../components/tabs/InterestsTab';
 import AcademicTab from '../components/tabs/AcademicTab';
+import AptitudeTab from '../components/tabs/AptitudeTab';
 import RecommendationsTab from '../components/tabs/RecommendationsTab';
 
 // Import Chart.js components separately
@@ -38,23 +39,26 @@ ChartJS.register(
 const AssessmentResults = () => {
   const { userAssessmentId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
-  
-  // Initialize activeTab from localStorage or default to 'overview'
-  const [activeTab, setActiveTab] = useState(() => {
-    const savedTab = localStorage.getItem(`assessment_active_tab_${userAssessmentId}`);
-    return savedTab || 'overview';
-  });
 
-  // Save activeTab to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem(`assessment_active_tab_${userAssessmentId}`, activeTab);
-  }, [activeTab, userAssessmentId]);
-  
-  useEffect(() => {
+  // Get active tab from URL params, default to 'overview'
+  const activeTab = searchParams.get('tab') || 'overview';
+
+  // Function to change tab via URL
+  const setActiveTab = (tab) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (tab === 'overview') {
+      // Remove tab parameter for overview (clean URL)
+      newSearchParams.delete('tab');
+    } else {
+      newSearchParams.set('tab', tab);
+    }
+    setSearchParams(newSearchParams);
+  };  useEffect(() => {
     const fetchResults = async () => {
       try {
         setLoading(true);
@@ -209,6 +213,54 @@ const AssessmentResults = () => {
     return types.sort((a, b) => b.score - a.score).slice(0, 2);
   };
   
+  // Calculate Academic Performance Score (excluding RIASEC personality interests)
+  const getAcademicPerformanceScore = () => {
+    if (!results?.assessmentResult) return 0;
+    
+    const scores = [];
+    
+    // Include GSA (cognitive aptitude)
+    if (results.assessmentResult.gsaScore) {
+      scores.push(results.assessmentResult.gsaScore);
+    }
+    
+    // Include Academic Track performance
+    if (results.assessmentResult.academicTrackScore) {
+      scores.push(results.assessmentResult.academicTrackScore);
+    }
+    
+    // Include Other Track performance
+    if (results.assessmentResult.otherTrackScore) {
+      scores.push(results.assessmentResult.otherTrackScore);
+    }
+    
+    // Calculate weighted average (GSA gets more weight as it's cognitive ability)
+    if (scores.length === 0) return 0;
+    
+    const gsaWeight = 0.5; // 50% weight for cognitive aptitude
+    const trackWeight = 0.25; // 25% each for academic and other tracks
+    
+    let weightedSum = 0;
+    let totalWeight = 0;
+    
+    if (results.assessmentResult.gsaScore) {
+      weightedSum += results.assessmentResult.gsaScore * gsaWeight;
+      totalWeight += gsaWeight;
+    }
+    
+    if (results.assessmentResult.academicTrackScore) {
+      weightedSum += results.assessmentResult.academicTrackScore * trackWeight;
+      totalWeight += trackWeight;
+    }
+    
+    if (results.assessmentResult.otherTrackScore) {
+      weightedSum += results.assessmentResult.otherTrackScore * trackWeight;
+      totalWeight += trackWeight;
+    }
+    
+    return totalWeight > 0 ? weightedSum / totalWeight : 0;
+  };
+  
   if (loading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen h-full'>
@@ -302,21 +354,36 @@ const AssessmentResults = () => {
               </div>
             </div>
             <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#232D35]/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center shadow-md">
-              <p className="text-sm font-medium text-[#1D63A1] mb-1">Overall Score</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm font-medium text-[#1D63A1]">Academic Performance</p>
+                <div className="relative group">
+                  <svg className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-64 z-10">
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                    Weighted combination of your cognitive abilities (50%) and track performance (50%). This excludes personality interests as those measure preferences, not performance.
+                  </div>
+                </div>
+              </div>
               <div className="text-5xl font-extrabold text-[#232D35] animate-pop">
-                {results?.assessmentResult?.overallScore?.toFixed(1)}%
+                {getAcademicPerformanceScore().toFixed(1)}%
               </div>
-              <div className={`text-sm font-bold mt-2 ${getScoreColor(results?.assessmentResult?.overallScore || 0)}`}>
-                {results?.assessmentResult?.overallScore >= 80 ? 'Excellent' : 
-                 results?.assessmentResult?.overallScore >= 60 ? 'Good' : 
-                 results?.assessmentResult?.overallScore >= 40 ? 'Average' : 'Needs Improvement'}
+              <div className={`text-sm font-bold mt-2 ${getScoreColor(getAcademicPerformanceScore())}`}>
+                {getAcademicPerformanceScore() >= 80 ? 'Excellent' : 
+                 getAcademicPerformanceScore() >= 60 ? 'Good' : 
+                 getAcademicPerformanceScore() >= 40 ? 'Average' : 'Needs Improvement'}
               </div>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Based on aptitude and track performance<br/>
+                <span className="font-medium">(Excludes personality interests)</span>
+              </p>
             </div>
           </div>
         </motion.div>
         <div className="mb-8 border-b-2 border-[#1D63A1]/20">
           <nav className="flex space-x-4 mb-8">
-            {['overview', 'interests', 'academic', 'recommendations'].map(tab => (
+            {['overview', 'interests', 'aptitude', 'academic', 'recommendations'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -328,6 +395,7 @@ const AssessmentResults = () => {
               >
                 {tab === 'overview' && 'Overview'}
                 {tab === 'interests' && 'Interest Profile'}
+                {tab === 'aptitude' && 'Aptitude Profile'}
                 {tab === 'academic' && 'Academic Tracks'}
                 {tab === 'recommendations' && 'Career Path Options'}
               </button>
@@ -348,6 +416,13 @@ const AssessmentResults = () => {
                 results={results} 
                 generateRiasecRadarData={generateRiasecRadarData} 
                 getRiasecDescription={getRiasecDescription} 
+              />
+            )}
+            {activeTab === 'aptitude' && (
+              <AptitudeTab 
+                results={results} 
+                getScoreColor={getScoreColor} 
+                getScoreBgColor={getScoreBgColor} 
               />
             )}
             {activeTab === 'academic' && (
