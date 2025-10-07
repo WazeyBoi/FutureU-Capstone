@@ -44,6 +44,9 @@ const CareerPathways = () => {
     const [selectedProgramsCareer, setSelectedProgramsCareer] = useState(null);
     const [showSchoolsModal, setShowSchoolsModal] = useState(false);
 
+    // Add state to store programs for each career
+    const [careerPrograms, setCareerPrograms] = useState({});
+
     // Helper function to get cached data or fetch from API
     const getCachedData = useCallback(async (cacheKey, apiUrl) => {
         // Check cache first
@@ -149,22 +152,39 @@ const CareerPathways = () => {
         return career.careerPaths.some(cp => cp.careerPathId === parseInt(careerPathId));
     }, []);
 
-    // Helper function to get programs for a career (memoized)
-    const getProgramsForCareer = useCallback((career) => {
-        if (!career || !schoolPrograms || !programs) return [];
+    // OPTIMIZED: Fetch programs for all careers in ONE batch request
+    useEffect(() => {
+        const fetchCareerPrograms = async () => {
+            if (careers.length === 0) return;
+            
+            try {
+                // Extract all career IDs
+                const careerIds = careers.map(career => career.careerId);
+                
+                console.log(`Fetching programs for ${careerIds.length} careers in ONE request...`);
+                
+                // Make ONE batch request instead of multiple individual requests
+                const programsMap = await careerService.getProgramsByCareersBatch(careerIds);
+                
+                console.log('✅ Batch fetch complete!');
+                
+                setCareerPrograms(programsMap);
+            } catch (error) {
+                console.error('Error fetching career programs in batch:', error);
+                setCareerPrograms({});
+            }
+        };
         
-        // Get programs associated with this career through school programs
-        const careerPrograms = schoolPrograms
-            .filter(sp => sp.program && sp.school)
-            .map(sp => sp.program)
-            .filter((program, index, self) => 
-                self.findIndex(p => p.programId === program.programId) === index
-            );
-        
-        return careerPrograms;
-    }, [schoolPrograms, programs]);
+        fetchCareerPrograms();
+    }, [careers]);
 
-    // Helper function to format programs preview (memoized)
+    // UPDATED: Use the pre-fetched programs from state
+    const getProgramsForCareer = useCallback((career) => {
+        if (!career || !career.careerId) return [];
+        return careerPrograms[career.careerId] || [];
+    }, [careerPrograms]);
+
+    // Helper function to format programs preview (synchronous now)
     const formatProgramsPreview = useCallback((career) => {
         const programs = getProgramsForCareer(career);
         if (programs.length === 0) return "No associated programs";
@@ -173,7 +193,7 @@ const CareerPathways = () => {
         return `${programs[0].programName}, ${programs[1].programName}...`;
     }, [getProgramsForCareer]);
 
-    // Helper function to format more programs text (memoized)
+    // Helper function to format more programs text (synchronous now)
     const formatMoreProgramsText = useCallback((career) => {
         const programs = getProgramsForCareer(career);
         const count = programs.length;
