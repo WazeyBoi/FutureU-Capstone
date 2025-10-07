@@ -353,7 +353,55 @@ const AssessmentSection = forwardRef(({
                           <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
                             {indexOfFirstQuestion + index + 1}
                           </span>
-                          <span className="leading-relaxed">{question.questionText}</span>
+                          <span className="leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: (() => {
+                            const raw = question.questionText || '';
+                            const underlineOneInSegment = (segment) => {
+                              if (!segment) return segment;
+                              const words = segment.match(/[A-Za-z]+/g) || [];
+                              if (words.length === 0) return segment;
+                              const preferred = words.find(w => /(?:ous|ful|less|ive|able|ible|al|ic|ish|ary|ory|ent|ant|est|er|ly|ed|ing)$/i.test(w));
+                              const chosen = preferred || words[0];
+                              let done = false;
+                              return segment.replace(new RegExp(`\\b${chosen}\\b`), (m) => {
+                                if (done) return m;
+                                done = true;
+                                return `<u>${m}</u>`;
+                              });
+                            };
+                            const requiresUnderline = (fullText) => /(underlined\s+word|underlined|emphasized|bold\/?emphasized|bold)/i.test(fullText);
+                            let t = raw
+                              .replace(/\[u\]([\s\S]*?)\[\/u\]/g, (_, g1) => underlineOneInSegment(g1))
+                              .replace(/__([^_]+?)__/g, (_, g1) => underlineOneInSegment(g1))
+                              .replace(/(^|\W)_([^_]+?)_(?=\W|$)/g, (m, p1, g1) => `${p1}${underlineOneInSegment(g1)}`)
+                              .replace(/(^|\W)\*([^*]+?)\*(?=\W|$)/g, (m, p1, g1) => `${p1}${underlineOneInSegment(g1)}`);
+                            if (requiresUnderline(t)) {
+                              t = t
+                                .replace(/"([^"\n]+)"/g, (m, g1) => `<u>${g1.trim()}</u>`)
+                                .replace(/“([^”\n]+)”/g, (m, g1) => `<u>${g1.trim()}</u>`);
+                            }
+                            // If still no underline, check approved vocabulary list
+                            if (requiresUnderline(t) && !/<u>/i.test(t)) {
+                              const vocab = [
+                                'eloquent','resilient','meticulous','testament','unanimous','composure','innovative',
+                                'modest','fragile','dilapidated','optimistic','torrent','corroborate','concise','enigmatic'
+                              ];
+                              for (const w of vocab) {
+                                const re = new RegExp(`\\b(${w})\\b`, 'i');
+                                if (re.test(t)) { t = t.replace(re, '<u>$1</u>'); break; }
+                              }
+                            }
+
+                            if (requiresUnderline(t) && /underlined\s+word/i.test(t) && !/<u>/i.test(t)) {
+                              const lines = t.split(/\n+/);
+                              const body = lines.length > 1 ? lines[1] : lines[0];
+                              const match = body && body.match(/\b([A-Za-z]+)\b/);
+                              if (match) {
+                                const w = match[1];
+                                t = t.replace(new RegExp(`\\b${w}\\b`), `<u>${w}</u>`);
+                              }
+                            }
+                            return t;
+                          })() }} />
                           {answers[question.questionId] && (
                             <motion.div
                               initial={{ scale: 0 }}
