@@ -53,6 +53,9 @@ const TakeAssessment = () => {
   const [isInQuizSection, setIsInQuizSection] = useState(false);
   const [quizTimerActive, setQuizTimerActive] = useState(false);
   
+  // Overall assessment timer state (tracks total time spent)
+  const [assessmentStartTime, setAssessmentStartTime] = useState(null);
+  
   // Reference to the assessment section container
   const sectionRef = useRef(null);
   const assessmentSectionRef = useRef(null); // Add a ref to AssessmentSection to control page navigation
@@ -411,7 +414,13 @@ const TakeAssessment = () => {
         }
         
         setLoading(false);
-        // Start time will be set by the elapsed time effect when loading becomes false
+        
+        // Set assessment start time once loading is complete and we have questions
+        const startTime = Date.now();
+        setAssessmentStartTime(startTime);
+        
+        // Also store in localStorage as backup
+        localStorage.setItem(`assessment_start_time_${assessmentId}`, startTime.toString());
         
       } catch (err) {
         setError('Failed to load assessment. Please try again later.');
@@ -468,6 +477,10 @@ const TakeAssessment = () => {
     if (existingProgress.attemptNo) {
       setAttemptNo(existingProgress.attemptNo);
     }
+
+    // Resume assessment timing from when it was originally started
+    // If we don't have a saved start time, set it to now (fallback)
+    setAssessmentStartTime(existingProgress.assessmentStartTime || Date.now());
 
     setShowResumeModal(false);
     setResumeData(null);
@@ -830,17 +843,51 @@ const TakeAssessment = () => {
       // Get the current logged-in user ID
       const userId = getCurrentUserId();
       
-      // Create submission payload including sections and attempt number
+      // Calculate total time spent on assessment (in seconds)
+      let timeSpentSeconds = 0;
+      let startTime = assessmentStartTime;
+      
+      // If assessmentStartTime is null, try to get it from localStorage
+      if (!startTime) {
+        const storedStartTime = localStorage.getItem(`assessment_start_time_${assessmentId}`);
+        if (storedStartTime) {
+          startTime = parseInt(storedStartTime);
+          console.log('Retrieved start time from localStorage:', startTime);
+        }
+      }
+      
+      if (startTime) {
+        timeSpentSeconds = Math.floor((Date.now() - startTime) / 1000);
+      } else {
+        // Fallback: if no start time available, set a default time (e.g., 1 minute)
+        timeSpentSeconds = 60; // 1 minute as fallback
+        console.warn('No start time available, using fallback time');
+      }
+      
+      console.log('Assessment completion time tracking:', {
+        assessmentStartTime,
+        startTimeUsed: startTime,
+        currentTime: Date.now(),
+        timeSpentSeconds
+      });
+      
+      // Create submission payload including sections, attempt number, and time spent
       const payload = {
         userId: userId,
         assessmentId: parseInt(assessmentId),
         answers: formattedAnswers,
         sections: JSON.stringify(sectionList),
-        attemptNo: attemptNo
+        attemptNo: attemptNo,
+        timeSpentSeconds: timeSpentSeconds
       };
+      
+      console.log('Submitting assessment with payload:', payload);
       
       // Submit the complete assessment for scoring
       const result = await userAssessmentService.submitCompletedAssessment(payload);
+      
+      // Clean up localStorage
+      localStorage.removeItem(`assessment_start_time_${assessmentId}`);
       
       // Show completion state
       setCompleted(true);
@@ -899,8 +946,12 @@ const TakeAssessment = () => {
         savedSections: JSON.stringify(sectionList),
         // Save quiz timer state if active
         quizTimeRemaining: quizTimeRemaining,
-        attemptNo: attemptNo
+        attemptNo: attemptNo,
+        // Save assessment start time for accurate time tracking
+        assessmentStartTime: assessmentStartTime
       };
+      
+      console.log('Saving progress with payload:', payload);
       
       // Call API to save progress using the service
       const response = await userAssessmentService.saveProgress(payload);

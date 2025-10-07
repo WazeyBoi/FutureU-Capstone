@@ -2,7 +2,6 @@ package edu.cit.futureu.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +18,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import edu.cit.futureu.entity.AssessmentEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
 import edu.cit.futureu.entity.UserEntity;
-import edu.cit.futureu.entity.AssessmentEntity;
-import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.repository.AssessmentResultRepository;
+import edu.cit.futureu.service.AssessmentService;
 import edu.cit.futureu.service.UserAssessmentService;
 import edu.cit.futureu.service.UserService;
-import edu.cit.futureu.service.AssessmentService;
 
 @RestController
 @RequestMapping(method=RequestMethod.GET, path="/api/userassessment")
@@ -141,9 +139,18 @@ public class UserAssessmentController {
                 attemptNo = Integer.parseInt(payload.get("attemptNo").toString());
             }
             
+            // Get timeSpentSeconds from payload if present
+            Integer timeSpentSeconds = null;
+            if (payload.containsKey("timeSpentSeconds") && payload.get("timeSpentSeconds") != null) {
+                timeSpentSeconds = Integer.parseInt(payload.get("timeSpentSeconds").toString());
+                System.out.println("Received timeSpentSeconds: " + timeSpentSeconds);
+            } else {
+                System.out.println("timeSpentSeconds not found in payload or is null");
+            }
+            
             // Submit and score the assessment
             UserAssessmentEntity result = userAssessmentService.submitAndScoreAssessment(
-                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, attemptNo);
+                userOpt.get(), assessmentOpt.get(), answers, sectionsJson, attemptNo, timeSpentSeconds);
             
             // Return the result with success message
             return new ResponseEntity<>(

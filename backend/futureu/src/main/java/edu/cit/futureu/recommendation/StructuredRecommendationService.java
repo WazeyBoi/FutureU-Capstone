@@ -679,25 +679,25 @@ public class StructuredRecommendationService {
         
         prompt.append("DREAM CAREER ALIGNMENT ANALYSIS\n\n");
         
-        prompt.append("You are an expert career counselor performing a REALITY CHECK analysis. ");
-        prompt.append("A student has stated their dream career, and you need to analyze how this aligns with ");
+        prompt.append("You are an expert career counselor providing personalized guidance. ");
+        prompt.append("A student has shared their dream career, and you need to analyze how this aligns with ");
         prompt.append("the SPECIFIC career recommendations that were generated for them based on their assessment. ");
         prompt.append("This is NOT about general career exploration - it's about comparing their SUBJECTIVE dream ");
-        prompt.append("against their OBJECTIVE AI-generated recommendations.\n\n");
+        prompt.append("against their OBJECTIVE personalized recommendations.\n\n");
         
-        prompt.append("STUDENT'S DREAM CAREER: \"").append(dreamCareer).append("\"\n\n");
+        prompt.append("YOUR DREAM CAREER: \"").append(dreamCareer).append("\"\n\n");
         
         // Add intelligent field interpretation context
         addFieldInterpretationContext(dreamCareer, prompt);
         
         prompt.append("CORE ANALYSIS PURPOSE:\n");
-        prompt.append("Compare the student's dream career against their personalized AI recommendations to determine:\n");
+        prompt.append("Compare their dream career against their personalized recommendations to determine:\n");
         prompt.append("- Does their dream career appear in their recommended career paths?\n");
         prompt.append("- If YES: Validate the alignment and explain why it's a good match\n");
         prompt.append("- If NO: Explain the gap between what they want vs. what we recommend for them\n");
         prompt.append("- Provide insights on bridging any gaps or validating their aspirations\n\n");
         
-        prompt.append("STUDENT ASSESSMENT DATA:\n");
+        prompt.append("YOUR ASSESSMENT DATA:\n");
         
         // Add RIASEC Profile
         if (studentData.containsKey("personalityType")) {
@@ -772,9 +772,9 @@ public class StructuredRecommendationService {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> pathRecommendations = (List<Map<String, Object>>) studentData.get("careerPathRecommendations");
             
-            prompt.append("🎯 STUDENT'S PERSONALIZED AI RECOMMENDATIONS:\n");
-            prompt.append("These are the career paths our AI specifically recommended for THIS student:\n");
-            prompt.append("Your job is to compare their dream career against THESE recommendations, not the general database.\n\n");
+            prompt.append("🎯 YOUR PERSONALIZED RECOMMENDATIONS:\n");
+            prompt.append("These are the career paths specifically recommended for you based on your assessment:\n");
+            prompt.append("Compare the dream career against THESE recommendations, not the general database.\n\n");
             
             for (Map<String, Object> path : pathRecommendations) {
                 prompt.append("✅ RECOMMENDED PATH: ").append(path.get("pathName"))
@@ -795,52 +795,52 @@ public class StructuredRecommendationService {
                 prompt.append("\n");
             }
             
-            prompt.append("� ALIGNMENT QUESTION: Does the student's dream career appear in the above recommendations?\n");
-            prompt.append("If not, what does this reveal about the gap between their aspirations and their assessment profile?\n\n");
+            prompt.append("� ALIGNMENT QUESTION: Does your dream career appear in the above recommendations?\n");
+            prompt.append("If not, what does this reveal about the gap between your aspirations and your assessment profile?\n\n");
         }
         
         prompt.append("ANALYSIS REQUIREMENTS:\n");
         prompt.append("Provide a comprehensive reality-check analysis in 5 structured sections:\n\n");
         
         prompt.append("1. RECOMMENDATION ALIGNMENT (100-150 words):\n");
-        prompt.append("- PRIMARY QUESTION: Does their dream career appear in their AI recommendations above?\n");
-        prompt.append("- IF YES: Explain which recommended path contains their dream career and why it's a strong match\n");
-        prompt.append("- IF NO: Identify the closest recommended career to their dream and explain the differences\n");
-        prompt.append("- FOR VAGUE DREAMS: Interpret their field interest and find the best matching recommended path\n");
+        prompt.append("- PRIMARY QUESTION: Does your dream career appear in your recommendations above?\n");
+        prompt.append("- IF YES: Explain which recommended path contains your dream career and why it's a strong match\n");
+        prompt.append("- IF NO: Identify the closest recommended career to your dream and explain the differences\n");
+        prompt.append("- FOR VAGUE DREAMS: Interpret your field interest and find the best matching recommended path\n");
         prompt.append("- Reference specific recommendation percentages and path summaries\n");
         prompt.append("- Example: 'Your dream of software development aligns perfectly with your #1 recommended Technology Career Path (89% match)'\n\n");
         
         prompt.append("2. STRENGTHS VALIDATION (100-150 words):\n");
-        prompt.append("- Analyze how their assessment strengths support (or don't support) their dream career\n");
-        prompt.append("- Compare their top RIASEC scores against what their dream career typically requires\n");
-        prompt.append("- IF ALIGNED: Celebrate how their natural strengths match their aspirations\n");
-        prompt.append("- IF MISALIGNED: Explain why the AI didn't recommend careers in their dream field\n");
+        prompt.append("- Analyze how your assessment strengths support (or don't support) your dream career\n");
+        prompt.append("- Compare your top RIASEC scores against what your dream career typically requires\n");
+        prompt.append("- IF ALIGNED: Celebrate how your natural strengths match your aspirations\n");
+        prompt.append("- IF MISALIGNED: Explain why the assessment didn't recommend careers in your dream field\n");
         prompt.append("- Use specific percentages: 'Your Investigative score (85%) strongly supports your interest in research'\n");
-        prompt.append("- Connect their academic track performance to career feasibility\n\n");
+        prompt.append("- Connect your academic track performance to career feasibility\n\n");
         
         prompt.append("3. REALITY CHECK INSIGHTS (100-150 words):\n");
-        prompt.append("- Honest assessment of any gaps between their dream and their recommended paths\n");
-        prompt.append("- IF DREAM NOT RECOMMENDED: Explain why the AI didn't suggest careers in their preferred field\n");
-        prompt.append("- Address potential misconceptions about their dream career requirements\n");
-        prompt.append("- Highlight assessment areas that may not align with their dream career demands\n");
+        prompt.append("- Honest assessment of any gaps between your dream and your recommended paths\n");
+        prompt.append("- IF DREAM NOT RECOMMENDED: Explain why the assessment didn't suggest careers in your preferred field\n");
+        prompt.append("- Address potential misconceptions about your dream career requirements\n");
+        prompt.append("- Highlight assessment areas that may not align with your dream career demands\n");
         prompt.append("- Be constructive: frame gaps as development opportunities rather than barriers\n");
         prompt.append("- Example: 'While you dream of marketing, your lower Social score (40%) suggests challenges in client-facing roles'\n\n");
         
         prompt.append("4. BRIDGE-BUILDING STRATEGIES (100-150 words):\n");
-        prompt.append("- IF ALIGNED: Suggest next steps to pursue their recommended path confidently\n");
-        prompt.append("- IF MISALIGNED: Provide strategies to either develop toward their dream or explore recommended alternatives\n");
-        prompt.append("- Suggest ways to explore their dream field while building on their recommended strengths\n");
+        prompt.append("- IF ALIGNED: Suggest next steps to pursue your recommended path confidently\n");
+        prompt.append("- IF MISALIGNED: Provide strategies to either develop toward your dream or explore recommended alternatives\n");
+        prompt.append("- Suggest ways to explore your dream field while building on your recommended strengths\n");
         prompt.append("- Include both immediate actions and longer-term development plans\n");
         prompt.append("- Example: 'To bridge toward marketing, strengthen social skills through recommended business paths first'\n");
-        prompt.append("- Offer compromise careers that blend their dreams with their recommendations\n\n");
+        prompt.append("- Offer compromise careers that blend your dreams with your recommendations\n\n");
         
         prompt.append("5. PERSONALIZED ENCOURAGEMENT (80-120 words):\n");
-        prompt.append("- IF DREAMS ALIGN: Celebrate the convergence of their aspirations and assessment results\n");
-        prompt.append("- IF DREAMS DIVERGE: Encourage exploration while honoring their assessment-based strengths\n");
-        prompt.append("- Acknowledge their self-awareness in stating their dreams\n");
+        prompt.append("- IF DREAMS ALIGN: Celebrate the convergence of your aspirations and assessment results\n");
+        prompt.append("- IF DREAMS DIVERGE: Encourage exploration while honoring your assessment-based strengths\n");
+        prompt.append("- Acknowledge your self-awareness in stating your dreams\n");
         prompt.append("- Frame the analysis as valuable self-discovery rather than limitation\n");
-        prompt.append("- End with motivation about either pursuing their validated dream or exploring new possibilities\n");
-        prompt.append("- Tone: realistic optimism that honors both their aspirations and their assessed capabilities\n\n");
+        prompt.append("- End with motivation about either pursuing your validated dream or exploring new possibilities\n");
+        prompt.append("- Tone: realistic optimism that honors both your aspirations and your assessed capabilities\n\n");
         
         prompt.append("RESPONSE FORMAT:\n");
         prompt.append("Return your analysis as a valid JSON object with exactly these keys:\n");
@@ -863,11 +863,13 @@ public class StructuredRecommendationService {
         prompt.append("}\n\n");
         
         prompt.append("CRITICAL FOCUS:\n");
-        prompt.append("- This is a COMPARISON analysis: Dream Career vs. AI Recommendations\n");
+        prompt.append("- This is a COMPARISON analysis: Dream Career vs. Personalized Recommendations\n");
         prompt.append("- Your primary job is determining alignment/misalignment with their specific recommendations\n");
         prompt.append("- Reference actual recommendation percentages and path names in your analysis\n");
         prompt.append("- Be honest about gaps while remaining encouraging about possibilities\n");
-        prompt.append("- Help them understand WHY the AI made its recommendations vs. their stated dreams\n");
+        prompt.append("- Help them understand WHY the assessment made its recommendations vs. their stated dreams\n");
+        prompt.append("- Write as if you are speaking directly to the student using 'you' and 'your'\n");
+        prompt.append("- Avoid mentioning AI, algorithms, or automated systems - speak as a human counselor\n");
         
         return prompt.toString();
     }

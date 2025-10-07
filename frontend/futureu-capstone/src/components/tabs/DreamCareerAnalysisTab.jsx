@@ -302,7 +302,6 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
               {dreamInsight.fieldAlignment && (
                 <div className="p-6 bg-gradient-to-br from-[#1D63A1]/5 to-[#1D63A1]/10 rounded-2xl border border-[#1D63A1]/20">
                   <h4 className="text-xl font-semibold text-[#1D63A1] mb-4 flex items-center">
-                    <span className="w-3 h-3 bg-[#1D63A1] rounded-full mr-3"></span>
                     Field Alignment
                   </h4>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.fieldAlignment}</p>
@@ -313,7 +312,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
               {dreamInsight.strengthsAlignment && (
                 <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200">
                   <h4 className="text-xl font-semibold text-green-700 mb-4 flex items-center">
-                    <span className="w-3 h-3 bg-green-500 rounded-full mr-3"></span>
+                    
                     Strengths Alignment
                   </h4>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.strengthsAlignment}</p>
@@ -324,7 +323,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
               {dreamInsight.misalignmentInsights && (
                 <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border border-orange-200">
                   <h4 className="text-xl font-semibold text-orange-700 mb-4 flex items-center">
-                    <span className="w-3 h-3 bg-orange-500 rounded-full mr-3"></span>
+                    
                     Growth Opportunities
                   </h4>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.misalignmentInsights}</p>
@@ -335,7 +334,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
               {dreamInsight.personalizedFocusAreas && (
                 <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl border border-purple-200">
                   <h4 className="text-xl font-semibold text-purple-700 mb-4 flex items-center">
-                    <span className="w-3 h-3 bg-purple-500 rounded-full mr-3"></span>
+                    
                     Focus Areas
                   </h4>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.personalizedFocusAreas}</p>
@@ -348,7 +347,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
           {dreamInsight.encouragement && (
             <div className="p-6 bg-gradient-to-br from-[#FFB71B]/5 to-[#FFB71B]/10 rounded-2xl border border-[#FFB71B]/20">
               <h4 className="text-xl font-semibold text-[#FFB71B] mb-4 flex items-center">
-                <span className="w-3 h-3 bg-[#FFB71B] rounded-full mr-3"></span>
+                
                 Personalized Encouragement
               </h4>
               <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.encouragement}</p>

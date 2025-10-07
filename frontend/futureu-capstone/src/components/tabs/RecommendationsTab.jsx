@@ -376,8 +376,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 </svg>
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-[#232D35] mb-1">Dream Career AI Analysis Available!</h4>
-                <p className="text-xs text-gray-600">
+                <h4 className="text-left text-sm font-semibold text-[#232D35] mb-1">Dream Career AI Analysis Available!</h4>
+                <p className="text-left text-xs text-gray-600">
                   Get comprehensive AI-driven insights about your dream career alignment in the dedicated 
                   <span className="font-medium text-[#1D63A1]"> "Dream Career Analysis" </span>tab.
                 </p>
