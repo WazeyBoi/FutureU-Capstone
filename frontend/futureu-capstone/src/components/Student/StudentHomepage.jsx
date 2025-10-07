@@ -19,6 +19,33 @@ import {
   Bookmark, Share2, Building, MapPin, Phone
 } from 'lucide-react';
 
+// Animation variants (subtle/professional)
+const pageVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: 'easeOut' }
+  }
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 }
+  }
+};
+
+const itemFade = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.97 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.35, ease: 'easeOut' } }
+};
+
 const StudentHomepage = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
@@ -212,7 +239,7 @@ const StudentHomepage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-white">
       {loading ? (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
@@ -225,22 +252,23 @@ const StudentHomepage = () => {
           {/* Full-width hero */}
           <section className="w-full">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          variants={pageVariants}
+          initial="hidden"
+          animate="visible"
             >
               <div className="relative overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20 lg:py-24 text-white text-left">
                   {/* Eyebrow label */}
-                  <div className="flex items-center mb-4">
+                  <motion.div className="flex items-center mb-4" variants={itemFade}>
                     <Navigation className="w-5 h-5 mr-2 text-[#FFB71B]" />
                     <span className="text-[#FFB71B] font-semibold text-sm">Your Path to Purpose</span>
-                  </div>
+                  </motion.div>
                   {/* Greeting */}
-                  <h1 className="text-5xl md:text-6xl font-bold mb-8 leading-tight tracking-tight">
+                  <motion.h1 className="text-5xl md:text-6xl font-bold mb-8 leading-tight tracking-tight" variants={itemFade}>
                     {getGreeting()}, {currentUser?.firstName || 'Future Leader'}!
-                  </h1>
+                  </motion.h1>
                   {/* Status card (glassy) */}
-                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl">
+                  <motion.div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl" variants={scaleIn}>
                   {!hasCompletedAssessment ? (
                       <div className="flex items-center">
                         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
@@ -276,12 +304,12 @@ const StudentHomepage = () => {
                         </div>
                     </div>
                   )}
-                  </div>
+                  </motion.div>
                   {/* Date row */}
-                  <div className="flex items-center text-blue-100/80 text-sm mt-4">
+                  <motion.div className="flex items-center text-blue-100/80 text-sm mt-4" variants={itemFade}>
                     <Calendar className="w-4 h-4 mr-2" />
                     {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </div>
+              </motion.div>
             </div>
           </div>
         </motion.div>
@@ -291,18 +319,13 @@ const StudentHomepage = () => {
           <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Dashboard Sections - expanded width */}
-        <div className="max-w-[95vw] mx-auto">
+        <motion.div className="max-w-[95vw] mx-auto" variants={staggerContainer} initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}>
         <div className="grid grid-cols-1 gap-8">
           {/* Main Content */}
           <div className="space-y-8">
             {/* Assessment Results Overview or Prompt */}
             {!hasCompletedAssessment ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-xl p-6 shadow-lg border border-gray-100"
-              >
+              <motion.div variants={itemFade} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
                 <div className="flex items-center justify-center mb-6">
                   <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
                     <BookOpen className="w-5 h-5 mr-2 text-[#1D63A1]" />
@@ -312,9 +335,9 @@ const StudentHomepage = () => {
                 
                 <div className="text-center py-8">
                   <div className="mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#1D63A1] to-[#FFB71B] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <motion.div className="w-16 h-16 bg-gradient-to-r from-[#1D63A1] to-[#FFB71B] rounded-full flex items-center justify-center mx-auto mb-4" initial={{ scale: 0.95, opacity: 0 }} whileInView={{ scale: 1, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.35 }}>
                       <Target className="w-8 h-8 text-white" />
-                    </div>
+                    </motion.div>
                   </div>
                   <h4 className="text-lg font-semibold text-[#2B3E4E] mb-3">
                     Please take the assessment first
@@ -333,12 +356,7 @@ const StudentHomepage = () => {
                 </div>
               </motion.div>
             ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden w-full text-left"
-              >
+              <motion.div variants={itemFade} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden w-full text-left">
                 {/* Header bar */}
                 <div className="flex items-center justify-between bg-amber-50 px-6 py-3 border-b border-amber-100">
                   <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
@@ -356,11 +374,11 @@ const StudentHomepage = () => {
                 
                 {/* Assessment Sections */}
                 {latestAssessmentResult && (
-                  <div className="p-6 space-y-6">
+                  <motion.div className="p-6 space-y-6" variants={staggerContainer}>
                     {/* Row 1: Aptitude Score and RIASEC Personality Profile (2 columns) */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6" variants={staggerContainer}>
                       {/* Aptitude Score Section */}
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                      <motion.div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100" variants={itemFade}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg">
@@ -429,10 +447,10 @@ const StudentHomepage = () => {
                             })()}
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* RIASEC Personality Profile Section */}
-                      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+                      <motion.div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100" variants={itemFade}>
                         <div className="flex items-center gap-3 mb-4">
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white flex items-center justify-center">
                             <User className="w-6 h-6" />
@@ -444,7 +462,7 @@ const StudentHomepage = () => {
                         </div>
                         
                         {/* RIASEC Images Display */}
-                        <div className="grid grid-cols-3 gap-3 mt-4">
+                        <motion.div className="grid grid-cols-3 gap-3 mt-4" variants={staggerContainer}>
                           {(() => {
                             const riasecTypes = [
                               { key: 'realisticScore', name: 'Realistic', image: 'Realistic.png', score: latestAssessmentResult.realisticScore },
@@ -459,7 +477,7 @@ const StudentHomepage = () => {
                             const topTypes = riasecTypes.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 3);
                             
                             return topTypes.map((type, index) => (
-                              <div key={type.key} className="relative group">
+                              <motion.div key={type.key} className="relative group" variants={itemFade}>
                                 {/* Top Match Badge - positioned outside the main content area */}
                                 {index === 0 && (
                                   <div className="absolute -top-2 -right-2 bg-[#FFB71B] text-white text-xs font-bold px-2 py-1 rounded-full z-10 shadow-lg">
@@ -481,16 +499,16 @@ const StudentHomepage = () => {
                                     </div>
                                   </div>
                                 </div>
-                              </div>
+                              </motion.div>
                             ));
                           })()}
-                        </div>
-                      </div>
-                    </div>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
 
                     {/* Row 2: Career Pathways & Sample Careers (Full Width) */}
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+                    <motion.div className="grid grid-cols-1 gap-6" variants={staggerContainer}>
+                      <motion.div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100" variants={itemFade}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white flex items-center justify-center">
@@ -513,12 +531,12 @@ const StudentHomepage = () => {
                           </div>
                           <p className="text-gray-500 text-sm">Career pathway and sample career recommendations will be available soon</p>
                         </div>
-                      </div>
-                    </div>
+                      </motion.div>
+                    </motion.div>
 
                     {/* Row 3: Academic Programs (Full Width) */}
-                    <div className="grid grid-cols-1 gap-6">
-                      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
+                    <motion.div className="grid grid-cols-1 gap-6" variants={staggerContainer}>
+                      <motion.div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100" variants={itemFade}>
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 text-white flex items-center justify-center">
@@ -541,20 +559,15 @@ const StudentHomepage = () => {
                           </div>
                           <p className="text-gray-500 text-sm">Academic program recommendations will be available soon</p>
                         </div>
-                      </div>
-                    </div>
-                  </div>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
                 )}
               </motion.div>
             )}
 
             {/* Feature 5: Exploration Tools Quick Access */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 w-full"
-            >
+            <motion.div variants={itemFade} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100 w-full">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold text-[#2B3E4E] flex items-center">
                   <Globe className="w-6 h-6 mr-2 text-[#2B3E4E]" />
@@ -562,10 +575,11 @@ const StudentHomepage = () => {
                 </h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
+              <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5" variants={staggerContainer}>
                 {studentData.explorationTools.map((tool, index) => (
                   <motion.div
                     key={index}
+                    variants={itemFade}
                     whileHover={{ y: -3, boxShadow: '0 12px 24px rgba(0,0,0,0.08)' }}
                     whileTap={{ scale: 0.99 }}
                     className="bg-white border border-gray-200 rounded-2xl px-6 py-5 cursor-pointer transition-all"
@@ -585,35 +599,35 @@ const StudentHomepage = () => {
                     </div>
                   </motion.div>
                 ))}
-              </div>
+              </motion.div>
 
               {/* Quick Stats */}
-              <div className="mt-6 grid grid-cols-3 gap-4">
+              <motion.div className="mt-6 grid grid-cols-3 gap-4" variants={staggerContainer}>
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-lg font-bold text-[#1D63A1]">
+                  <motion.div className="text-lg font-bold text-[#1D63A1]" variants={scaleIn}>
                     {statsData.loading ? '...' : `${statsData.programs}`}
-                  </div>
+                  </motion.div>
                   <div className="text-xs text-gray-600">Programs</div>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-lg font-bold text-purple-600">
+                  <motion.div className="text-lg font-bold text-purple-600" variants={scaleIn}>
                     {statsData.loading ? '...' : `${statsData.schools}`}
-                  </div>
+                  </motion.div>
                   <div className="text-xs text-gray-600">Universities</div>
                 </div>
                 <div className="text-center p-3 bg-green-50 rounded-lg">
-                  <div className="text-lg font-bold text-green-600">
+                  <motion.div className="text-lg font-bold text-green-600" variants={scaleIn}>
                     {statsData.loading ? '...' : `${statsData.careers}`}
-                  </div>
+                  </motion.div>
                   <div className="text-xs text-gray-600">Careers</div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
 
           {/* (Optional sidebar area removed to allow full-width cards) */}
         </div>
-        </div>
+        </motion.div>
       </main>
       </>
       )}
