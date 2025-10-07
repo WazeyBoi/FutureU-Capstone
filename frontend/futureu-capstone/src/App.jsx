@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ProfileProvider } from './contexts/ProfileContext';
 import AcademicExplorer from './components/AcademicExplorer.jsx';
 import AccreditationRatings from './components/AccreditationRatings.jsx';
@@ -52,7 +52,16 @@ import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
 import ProfilePage from './components/Profile/ProfilePage.jsx';
 import StudentHomepage from './components/Student/StudentHomepage.jsx';
+import ProgramCareerExplorer from './components/ProgramCareerExplorer/ProgramCareerExplorer.jsx';
 // Add any other admin CRUD components you need
+
+function ScrollToTop() {
+  const location = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
+  return null;
+}
 
 function App() {
   return (
@@ -60,6 +69,7 @@ function App() {
     <ProfileProvider>
       <Router>
         <div className="App">
+          <ScrollToTop />
           <Navigation />
           <Routes>
             {/* Public homepage - show landing for guests; redirect authenticated users */}
@@ -323,6 +333,7 @@ function App() {
                 <StudentReportPage />
               </CounselorRoute>
             } />
+            <Route path="/program-career-explorer" element={<ProgramCareerExplorer />} />
             
             {/* For any route that doesn't match */}
             <Route path="*" element={<Navigate to="/" />} />

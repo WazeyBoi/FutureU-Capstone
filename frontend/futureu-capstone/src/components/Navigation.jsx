@@ -301,21 +301,21 @@ const Navigation = () => {
             onClick={() => setShowDropdown(false)}
           />
           <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-[9999] animate-fadeIn">
-            <div className="px-4 py-3 border-b border-gray-100">
+            <div className="px-4 py-4 bg-[#2B3E4E] rounded-t-xl">
               <div className="flex items-center space-x-3">
                 <ProfilePicture size="w-12 h-12" showBorder={false} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#232D35] truncate">
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-sm font-semibold text-white truncate">
                     {userProfile?.firstName || currentUser?.firstName} {userProfile?.lastname || currentUser?.lastname}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">{userProfile?.email || currentUser?.email}</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-[#FFB71B]/20 text-[#232D35] mt-1">
-                    {userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR' ? 'Counselor' : userRole || 'Student'}
+                  <p className="text-xs text-white/80 truncate">{userProfile?.email || currentUser?.email}</p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FFB71B] text-black mt-2">
+                    {(userRole || 'STUDENT').toUpperCase()}
                   </span>
                 </div>
               </div>
             </div>
-
+ 
             <div className="py-1">
               <button
                 onClick={handleProfileClick}
@@ -326,7 +326,7 @@ const Navigation = () => {
                 <User className="w-5 h-5 mr-3 text-[#FFB71B]" />
                 <span className="font-medium">My Profile</span>
               </button>
-              
+               
               <button
                 onClick={handleLogout}
                 onMouseDown={(e) => e.preventDefault()}
@@ -586,6 +586,18 @@ const Navigation = () => {
                   }`}
                 >
                   <span className="relative z-10">Assessments</span>
+                </Link>
+                
+                {/* Add this link in your navigation menu */}
+                <Link
+                  to="/program-career-explorer"
+                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                    isActive('/program-career-explorer')
+                      ? 'bg-[#FFB71B] text-black shadow-lg'
+                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                  }`}
+                >
+                  <span className="relative z-10">Program Explorer</span>
                 </Link>
               </>
             )}

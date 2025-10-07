@@ -445,8 +445,11 @@ const LandingPage = () => {
             </h2>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link
-                    to="#"
-                    className="inline-flex items-center text-yellow-500 font-semibold hover:text-yellow-600 transition-colors"
+                    to="/about-us"
+                    className="inline-flex items-center font-semibold transition-colors"
+                    style={{ color: '#FFB71B' }}
+                    onMouseOver={(e) => (e.currentTarget.style.color = '#e09b00')}
+                    onMouseOut={(e) => (e.currentTarget.style.color = '#FFB71B')}
                   >
                     Learn more about us
                     <FaChevronRight className="ml-2" />
