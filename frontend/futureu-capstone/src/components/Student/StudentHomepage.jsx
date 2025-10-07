@@ -241,11 +241,15 @@ const StudentHomepage = () => {
   return (
     <div className="min-h-screen bg-white">
       {loading ? (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D63A1] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your dashboard...</p>
+        <div className="flex flex-col items-center justify-center min-h-screen h-full">
+          <div>
+            <img 
+              src="/src/assets/characters/quirky.svg" 
+              alt="FutureU mascot" 
+              className="quirky-bounce h-50 mx-auto"
+            />
           </div>
+          <p className="text-lg font-bold text-gray-600">Loading your dashboard...</p>
         </div>
       ) : (
         <>
