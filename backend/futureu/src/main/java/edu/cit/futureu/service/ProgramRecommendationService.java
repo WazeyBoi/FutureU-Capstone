@@ -67,6 +67,22 @@ public class ProgramRecommendationService {
         return programRecommendationRepository.save(pre);
     }
 
+    public ProgramRecommendationEntity createOrUpdateStructured(AssessmentResultEntity assessmentResult,
+                                                                ProgramEntity programEntity,
+                                                                double confidence,
+                                                                String explanation) {
+        ProgramRecommendationEntity existing = programRecommendationRepository
+            .findFirstByAssessmentResultAndProgram(assessmentResult, programEntity);
+        if (existing == null) {
+            existing = new ProgramRecommendationEntity();
+        }
+        existing.setAssessmentResult(assessmentResult);
+        existing.setProgram(programEntity);
+        existing.setConfidenceScore(confidence);
+        existing.setExplanation(explanation);
+        return programRecommendationRepository.save(existing);
+    }
+
     public List<ProgramRecommendationEntity> getAllProgramRecommendations() {
         return programRecommendationRepository.findAll();
     }

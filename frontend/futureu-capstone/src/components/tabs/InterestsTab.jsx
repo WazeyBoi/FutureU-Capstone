@@ -89,7 +89,7 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
               <motion.div key={index} whileHover={{ scale: 1.03 }} className="mb-4 p-4 bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl shadow-md transition-all">
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-bold text-[#232D35]">{type.name} ({type.code || type.type})</h4>
-                  <span className="text-sm font-semibold text-[#FFB71B]">{type.score.toFixed(1)}%</span>
+                  <span className="text-sm font-semibold text-[#FFB71B]">{((type.score / 40) * 100).toFixed(1)}%</span>
                 </div>
                 <p className="text-left text-sm text-gray-600">{type.description || getRiasecTypeDescription(type.type || type.code)}</p>
               </motion.div>
@@ -103,7 +103,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Realistic</h4>
-                <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.realisticScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.realisticScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.realisticScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "doers" who enjoy working with tools, machines, and objects. They typically prefer practical, hands-on problems and solutions.
@@ -113,7 +116,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Investigative</h4>
-                <span className="text-sm font-bold text-[#FFB71B]">{results.assessmentResult?.investigativeScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.investigativeScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.investigativeScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "thinkers" who enjoy analytical, intellectual, and scientific activities. They tend to be curious and precise.
@@ -123,7 +129,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Artistic</h4>
-                <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.artisticScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.artisticScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.artisticScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "creators" who value self-expression, aesthetics, and independence. They tend to be creative, original, and unconventional.
@@ -133,7 +142,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Social</h4>
-                <span className="text-sm font-bold text-[#FFB71B]">{results.assessmentResult?.socialScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.socialScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.socialScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "helpers" who enjoy working with people and helping others. They tend to be friendly, cooperative, and supportive.
@@ -143,7 +155,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Enterprising</h4>
-                <span className="text-sm font-bold text-[#1D63A1]">{results.assessmentResult?.enterprisingScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.enterprisingScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.enterprisingScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "persuaders" who enjoy leading, selling, and influencing others. They tend to be assertive, ambitious, and energetic.
@@ -153,7 +168,10 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
             <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-[#232D35]">Conventional</h4>
-                <span className="text-sm font-bold text-[#FFB71B]">{results.assessmentResult?.conventionalScore}</span>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.conventionalScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-500">{results.assessmentResult?.conventionalScore}/40</div>
+                </div>
               </div>
               <p className="text-left text-xs text-gray-600">
                 These are "organizers" who enjoy working with data, numbers, and details. They tend to be orderly, careful, and efficient.

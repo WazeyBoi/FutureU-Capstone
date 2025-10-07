@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef, Fragment } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
-import userAssessmentService from '../../services/userAssessmentService';
-import programRecommendationService from '../../services/programRecommendationService';
-import schoolProgramService from '../../services/schoolProgramService';
-import * as programSchoolRecommendationService from '../../services/programSchoolRecommendationService';
 import { MapPin, Globe, ChevronDown, ChevronUp, School } from 'lucide-react';
 import '../../styles/animations.css'; // Import the animations CSS
 
@@ -96,19 +92,141 @@ const AccordionContent = ({ expanded, children }) => {
 };
 
 const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
+  const [recommendationPacket, setRecommendationPacket] = useState(null);
+  const [structuredRecommendations, setStructuredRecommendations] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
+  const [careerPathDetails, setCareerPathDetails] = useState([]);
+  const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' }
+  const [expandedPathPrograms, setExpandedPathPrograms] = useState({}); // { [pathId]: programId }
   const [loading, setLoading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState(null);
   const [checkedExisting, setCheckedExisting] = useState(false);
-  const [programRecommendations, setProgramRecommendations] = useState(null);
-  const [loadingPrograms, setLoadingPrograms] = useState(false);
-  const [programError, setProgramError] = useState(null);
-  const [expandedPrograms, setExpandedPrograms] = useState([]); // Track expanded accordions
-  const [programSchoolRecs, setProgramSchoolRecs] = useState({}); // { [programId]: { schools: [] } }
-  const [loadingSchoolRecs, setLoadingSchoolRecs] = useState(false);
-  const [showTip, setShowTip] = useState(true); // State to show/hide tip
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
   const tooltipRef = useRef(null);
+
+  const formatDate = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const processStructuredResponse = useCallback((payload) => {
+    if (!payload || !payload.recommendations) {
+      setStructuredRecommendations(null);
+      setAiRecommendations(null);
+      setCareerPathDetails([]);
+      setPathTabs({});
+      setExpandedPathPrograms({});
+      return;
+    }
+
+    const advanced = payload.recommendations;
+    setStructuredRecommendations(advanced);
+
+    const paths = Array.isArray(advanced.careerPaths) ? advanced.careerPaths : [];
+    setCareerPathDetails(paths);
+    setPathTabs((prev) => {
+      if (paths.length === 0) return {};
+      const updated = { ...prev };
+      paths.forEach((path, idx) => {
+        const key = path?.careerPathId ?? idx;
+        if (!updated[key]) {
+          updated[key] = 'careers';
+        }
+      });
+      return updated;
+    });
+    setExpandedPathPrograms({});
+
+    const allCareers = [];
+
+    paths.forEach((path) => {
+      const pathName = path?.careerPathName || 'Career Path';
+      if (Array.isArray(path?.careers)) {
+        path.careers.forEach((career) => {
+          allCareers.push({
+            ...career,
+            pathName,
+          });
+        });
+      }
+    });
+
+    allCareers.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+    const topCareerDetails = allCareers.slice(0, 5).map((careerDetail) => {
+      const summary = careerDetail.summary || 'This career aligns with your strengths.';
+      const pathSuffix = careerDetail.pathName ? ` | Pathway: ${careerDetail.pathName}` : '';
+      return {
+        name: careerDetail.careerTitle || 'Career Recommendation',
+        confidenceScore: careerDetail.matchPercentage,
+        description: `${summary}${pathSuffix}`,
+      };
+    });
+
+    setAiRecommendations({
+      assessmentId: payload.assessmentId,
+      overallScore: payload.overallScore,
+      recommendations: {
+        careers: topCareerDetails,
+      },
+    });
+
+  }, []);
+
+  const fetchComprehensiveRecommendations = useCallback(async (options = {}) => {
+    const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
+    const forceRefresh = options.forceRefresh || false;
+
+    if (!forceRefresh) {
+      const cached = localStorage.getItem(storageKey);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setRecommendationPacket(parsed);
+          processStructuredResponse(parsed);
+          setError(null);
+          setCheckedExisting(true);
+          return;
+        } catch (parseError) {
+          localStorage.removeItem(storageKey);
+        }
+      }
+    }
+
+    setLoading(true);
+    try {
+      const response = await recommendationService.fetchRecommendations(userAssessmentId);
+      const payload = response.data;
+      setRecommendationPacket(payload);
+      processStructuredResponse(payload);
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+      setError(null);
+    } catch (err) {
+      const status = err?.response?.status;
+      const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
+      let message = 'Failed to load recommendations.';
+      if (status === 404) {
+        message = 'No recommendations found yet. Generate new recommendations to get started.';
+      } else if (status === 400) {
+        message = backendMessage || 'Complete your assessment to unlock recommendations.';
+      } else if (backendMessage) {
+        message = backendMessage;
+      }
+      setError(message);
+      setRecommendationPacket(null);
+      processStructuredResponse(null);
+      localStorage.removeItem(storageKey);
+    } finally {
+      setCheckedExisting(true);
+      setLoading(false);
+    }
+  }, [processStructuredResponse, userAssessmentId]);
 
   // Helper to show tooltip
   const showTooltip = (e, content) => {
@@ -137,166 +255,55 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   };
   const hideTooltip = () => setTooltip(t => ({ ...t, visible: false }));
 
-  // Load from localStorage on mount
   useEffect(() => {
-    const localKey = `futureu_recommendations_${userAssessmentId}`;
-    const saved = localStorage.getItem(localKey);
-    if (saved) {
-      setAiRecommendations(JSON.parse(saved));
-      setCheckedExisting(true);
-      return;
-    }
-    // On mount, check if recommendations exist in the database
-    const fetchExistingRecommendations = async () => {
-      setLoading(true);
-      try {
-        const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-        const resultId = assessmentData.assessmentResult?.resultId;
-        const overallScore = assessmentData.assessmentResult?.overallScore || 0;
-        if (!resultId) throw new Error('No assessment result found');
-        const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
-        let recommendationsArr = [];
-        if (existingRecommendations.data && (Array.isArray(existingRecommendations.data) ? existingRecommendations.data.length > 0 : true)) {
-          recommendationsArr = Array.isArray(existingRecommendations.data) ? existingRecommendations.data : [existingRecommendations.data];
-          // Sort and format
-          const sortedRecommendations = [...recommendationsArr]
-            .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-            .slice(0, 5);
-          const formattedData = {
-            assessmentId: userAssessmentId,
-            overallScore: overallScore,
-            recommendations: {
-              careers: sortedRecommendations.map(rec => ({
-                name: rec.careerPath?.careerTitle || 'Unknown Career',
-                confidenceScore: rec.confidenceScore,
-                description: rec.description
-              }))
-            }
-          };
-          setAiRecommendations(formattedData);
-          localStorage.setItem(localKey, JSON.stringify(formattedData));
-        }
-      } catch (err) {
-        // Do not set error here, just allow button to show
-      } finally {
-        setCheckedExisting(true);
-        setLoading(false);
-      }
-    };
-    fetchExistingRecommendations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userAssessmentId]);
-
-  // Fetch program recommendations when career recommendations are loaded
-  useEffect(() => {
-    if (!aiRecommendations || !aiRecommendations.assessmentId) return;
-    const localKey = `futureu_program_recommendations_${userAssessmentId}`;
-    const saved = localStorage.getItem(localKey);
-    if (saved) {
-      setProgramRecommendations(JSON.parse(saved));
-    } else {
-      const fetchPrograms = async () => {
-        setLoadingPrograms(true);
-        try {
-          const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-          const resultId = assessmentData.assessmentResult?.resultId;
-          if (!resultId) throw new Error('No assessment result found');
-          const res = await programRecommendationService.fetchProgramRecommendationsByResult(resultId);
-          let arr = Array.isArray(res.data) ? res.data : [res.data];
-          arr = arr
-            .filter(p => p && p.program && p.program.programName)
-            .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-            .slice(0, 5)
-            .map(p => ({
-              programName: p.program.programName,
-              programId: p.program.programId,
-              description: p.program.description,
-              confidenceScore: p.confidenceScore,
-              explanation: p.explanation
-            }));
-          setProgramRecommendations(arr);
-          localStorage.setItem(localKey, JSON.stringify(arr));
-          setProgramError(null);
-        } catch (err) {
-          setProgramError('Failed to load program recommendations.');
-        } finally {
-          setLoadingPrograms(false);
-        }
-      };
-      fetchPrograms();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiRecommendations, userAssessmentId]);
-
-  // Fetch schools for all recommended programs
-  useEffect(() => {
-    if (!programRecommendations || programRecommendations.length === 0) return;
-    const programIds = programRecommendations.map(p => p.programId);
-    setLoadingSchoolRecs(true);
-    programSchoolRecommendationService.getProgramSchoolRecommendations(programIds)
-      .then((data) => {
-        // data: [{ programId, schools: [...]}]
-        const recMap = {};
-        (data || []).forEach(rec => {
-          recMap[rec.programId] = rec;
-        });
-        setProgramSchoolRecs(recMap);
-      })
-      .catch(() => {
-        setProgramSchoolRecs({});
-      })
-      .finally(() => {
-        setLoadingSchoolRecs(false);
-      });
-  }, [programRecommendations]);
+    fetchComprehensiveRecommendations();
+  }, [fetchComprehensiveRecommendations]);
 
   const handleGenerateRecommendations = async () => {
+    const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
     setLoading(true);
+    setIsRegenerating(true);
+    setError(null);
     try {
-      // Fetch assessment resultId
-      const assessmentData = await userAssessmentService.getAssessmentResults(userAssessmentId);
-      const resultId = assessmentData.assessmentResult?.resultId;
-      const overallScore = assessmentData.assessmentResult?.overallScore || 0;
-      if (!resultId) throw new Error('No assessment result found');
-      // Try to fetch existing recommendations
-      const existingRecommendations = await recommendationService.fetchRecommendationsByResult(resultId);
-      let recommendationsArr = [];
-      if (existingRecommendations.data && (Array.isArray(existingRecommendations.data) ? existingRecommendations.data.length > 0 : true)) {
-        recommendationsArr = Array.isArray(existingRecommendations.data) ? existingRecommendations.data : [existingRecommendations.data];
-      } else {
-        // Generate and save recommendations if not found
-        const generated = await recommendationService.generateRecommendations(userAssessmentId);
-        recommendationsArr = Array.isArray(generated.data) ? generated.data : [generated.data];
-      }
-      // Sort and format
-      const sortedRecommendations = [...recommendationsArr]
-        .sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0))
-        .slice(0, 5);
-      const formattedData = {
-        assessmentId: userAssessmentId,
-        overallScore: overallScore,
-        recommendations: {
-          careers: sortedRecommendations.map(rec => ({
-            name: rec.careerPath?.careerTitle || 'Unknown Career',
-            confidenceScore: rec.confidenceScore,
-            description: rec.description
-          }))
-        }
-      };
-      setAiRecommendations(formattedData);
-      localStorage.setItem(`futureu_recommendations_${userAssessmentId}`, JSON.stringify(formattedData));
-      setError(null);
+      console.log('Starting AI recommendation regeneration...');
+      await recommendationService.generateRecommendations(userAssessmentId);
+      console.log('AI recommendation regeneration completed, fetching results...');
+      localStorage.removeItem(storageKey);
+      await fetchComprehensiveRecommendations({ forceRefresh: true });
+      console.log('New recommendations loaded successfully');
     } catch (err) {
-      setError('Failed to generate recommendations. Please try again later.');
+      console.error('Regeneration failed:', err);
+      let errorMessage = 'Failed to generate recommendations. Please try again later.';
+      
+      // Check if it's a timeout error
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        errorMessage = 'The AI generation process is taking longer than expected. The system may still be processing in the background. Please wait a moment and try refreshing the page.';
+      } else {
+        const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
+        errorMessage = backendMessage || errorMessage;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
+      setIsRegenerating(false);
     }
   };
 
-  // Accordion toggle handler (only one open at a time)
-  const handleToggleProgram = (program, idx) => {
-    setExpandedPrograms((prev) => (prev[0] === idx ? [] : [idx]));
-  };
+  const handleRefreshRecommendations = useCallback(() => {
+    fetchComprehensiveRecommendations({ forceRefresh: true });
+  }, [fetchComprehensiveRecommendations]);
+
+  const handlePathTabChange = useCallback((pathKey, tab) => {
+    setPathTabs((prev) => ({ ...prev, [pathKey]: tab }));
+  }, []);
+
+  const handleTogglePathProgram = useCallback((pathKey, programId) => {
+    setExpandedPathPrograms((prev) => ({
+      ...prev,
+      [pathKey]: prev[pathKey] === programId ? null : programId,
+    }));
+  }, []);
 
   return (
     <div className="relative">
@@ -314,12 +321,71 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       >
         {/* Header section */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-          <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Recommendations</h3>
+          <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Career Path Options</h3>
           <p className="text-sm text-gray-600">
             Based on your assessment results, we've identified careers and academic paths that align with your skills, 
-            interests, and strengths. Explore these recommendations to find the best fit for your future.
+            interests, and strengths. Explore these options to find the best fit for your future.
           </p>
+          {recommendationPacket?.dateCompleted && (
+            <p className="text-xs text-gray-500 mt-3">
+              Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
+            </p>
+          )}
+          {checkedExisting && !loading && !error && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                onClick={handleRefreshRecommendations}
+                disabled={isRegenerating}
+                className={`px-4 py-2 text-sm font-semibold border rounded-xl transition-colors ${
+                  isRegenerating 
+                    ? 'text-gray-400 border-gray-300 cursor-not-allowed' 
+                    : 'text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#1D63A1]/10'
+                }`}
+              >
+                Refresh Outputs
+              </button>
+              <button
+                onClick={handleGenerateRecommendations}
+                disabled={isRegenerating}
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                  isRegenerating
+                    ? 'text-gray-400 bg-gray-300 cursor-not-allowed'
+                    : 'text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#232D35] hover:to-[#232D35]'
+                }`}
+              >
+                {isRegenerating ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                    <span>Generating...</span>
+                  </div>
+                ) : (
+                  'Regenerate Matches'
+                )}
+              </button>
+            </div>
+          )}
         </motion.div>
+
+        {/* Dream Career Analysis Notice */}
+        {checkedExisting && !loading && !error && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-gradient-to-r from-[#1D63A1]/5 to-[#FFB71B]/5 rounded-2xl p-4 border border-[#1D63A1]/20 animate-card-pop">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-[#1D63A1]/10 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-left text-sm font-semibold text-[#232D35] mb-1">Dream Career AI Analysis Available!</h4>
+                <p className="text-left text-xs text-gray-600">
+                  Get comprehensive AI-driven insights about your dream career alignment in the dedicated 
+                  <span className="font-medium text-[#1D63A1]"> "Dream Career Analysis" </span>tab.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Loading state */}
         {loading && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop">
@@ -330,7 +396,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 className="quirky-bounce h-32 mx-auto"
               />
             </div>
-            <p className="text-sm text-gray-600 mb-3 mt-4">Loading your personalized recommendations...</p>
+            {isRegenerating ? (
+              <div className="mt-4">
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">🤖 Generating AI Recommendations</p>
+                <p className="text-sm text-gray-600 mb-3">
+                  Our AI is analyzing your profile and creating personalized career path explanations. 
+                  This may take 2-3 minutes due to advanced processing...
+                </p>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
+                  <span className="text-sm text-[#1D63A1] font-medium">Please wait, this is worth it!</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600 mb-3 mt-4">Loading your personalized recommendations...</p>
+            )}
           </motion.div>
         )}
         {/* Error state */}
@@ -345,216 +425,286 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </button>
           </motion.div>
         )}
+        {careerPathDetails.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Top {careerPathDetails.length} matches
+              </span>
+            </div>
+            <div className="space-y-8">
+              {careerPathDetails.map((path, idx) => {
+                const breakdown = path.componentBreakdown || {};
+                const pathKey = path.careerPathId ?? idx;
+                const activeTab = pathTabs[pathKey] || 'careers';
+                const careers = Array.isArray(path.careers) ? path.careers.slice(0, 5) : [];
+                const programs = Array.isArray(path.programs) ? path.programs : [];
+                const expandedProgramId = expandedPathPrograms[pathKey] ?? null;
+                return (
+                  <div key={pathKey} className="border border-gray-200 rounded-xl p-6 hover:border-[#1D63A1]/30 transition-colors">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
+                            #{idx + 1} Match
+                          </span>
+                          <span className="text-lg font-bold text-[#1D63A1]">
+                            {(path.matchPercentage || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold text-[#232D35] mb-2">{path.careerPathName}</h4>
+                      </div>
+                    </div>
+
+                    {/* AI Summary */}
+                    {path.summary && (
+                      <div className="mb-6 p-4 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
+                        <h5 className="text-left text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
+                        <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
+                      </div>
+                    )}
+
+                    {/* Component Breakdown */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      {Object.entries(breakdown).map(([key, value]) => (
+                        <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{key}</p>
+                          <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tab Navigation */}
+                    <div className="border-b border-gray-200 mb-6">
+                      <nav className="flex space-x-8">
+                        <button
+                          type="button"
+                          onClick={() => handlePathTabChange(pathKey, 'careers')}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'careers' 
+                              ? 'border-[#1D63A1] text-[#1D63A1]' 
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          Related Careers
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePathTabChange(pathKey, 'programs')}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'programs' 
+                              ? 'border-[#FFB71B] text-[#FFB71B]' 
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          Study Programs
+                        </button>
+                      </nav>
+                    </div>
+                    {/* Tab Content */}
+                    {activeTab === 'careers' && (
+                      <motion.div 
+                        key="careers"
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {careers.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {careers.map((career, careerIdx) => (
+                              <motion.div 
+                                key={career.careerId || career.careerTitle}
+                                initial={{ opacity: 0, y: 20 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                transition={{ duration: 0.3, delay: careerIdx * 0.1 }}
+                                className="p-4 border border-gray-200 rounded-lg hover:border-[#1D63A1]/30 transition-colors"
+                              >
+                                <div className="flex justify-between items-start mb-2">
+                                  <h5 className="font-semibold text-[#232D35] text-sm">{career.careerTitle}</h5>
+                                  <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded ml-2">
+                                    {(career.matchPercentage || 0).toFixed(1)}%
+                                  </span>
+                                </div>
+                                <p className="text-xs text-left text-gray-600 leading-relaxed">{career.summary || 'This career aligns with your strengths.'}</p>
+                              </motion.div>
+                            ))}
+                          </div>
+                        ) : (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 20 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            transition={{ duration: 0.3 }}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            <p className="text-sm">No specific careers found for this pathway.</p>
+                            <p className="text-xs mt-1">This pathway may include diverse career options.</p>
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )}
+                    {activeTab === 'programs' && (
+                      <motion.div 
+                        key="programs"
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
+                        {programs.length > 0 ? (
+                          programs.map((program, programIdx) => {
+                            const programId = program.programId ?? `${pathKey}-${programIdx}`;
+                            const schools = Array.isArray(program.recommendedSchools) ? program.recommendedSchools : [];
+                            const expanded = expandedProgramId === programId;
+                            return (
+                              <motion.div 
+                                key={programId} 
+                                initial={{ opacity: 0, y: 20 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                transition={{ duration: 0.3, delay: programIdx * 0.1 }}
+                                className="border border-gray-200 rounded-lg p-5 hover:border-[#FFB71B]/30 transition-colors"
+                              >
+                                <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
+                                  <div className="flex-1">
+                                    <h5 className="text-left font-semibold text-[#232D35] mb-1">{program.programName}</h5>
+                                    <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
+                                  </div>
+                                  <div className="flex items-center gap-3 ml-4">
+                                    <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
+                                      {(program.matchPercentage || 0).toFixed(1)}% Match
+                                    </span>
+                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                  </div>
+                                </div>
+                                <AccordionContent expanded={expanded}>
+                                  <div className="pt-4 border-t border-gray-100">
+                                    <h6 className="font-medium text-[#232D35] mb-3">Available at these schools:</h6>
+                                    {schools.length > 0 ? (
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {schools.map((schoolObj, schoolIdx) => {
+                                          const { schoolProgram, reason } = schoolObj;
+                                          const school = schoolProgram?.school || schoolObj?.school;
+                                          const schoolLogo = schoolLogos[school?.schoolId];
+                                          const schoolBackground = getSchoolBackground(school?.name);
+                                          const programSchoolKey = schoolProgram?.schoolProgramId || `${programId}-${schoolIdx}`;
+                                          const isTopChoice = reason && reason.toLowerCase().includes('best');
+                                          
+                                          return (
+                                            <motion.div 
+                                              key={programSchoolKey} 
+                                              initial={{ opacity: 0, scale: 0.95 }} 
+                                              animate={{ opacity: 1, scale: 1 }} 
+                                              transition={{ duration: 0.2, delay: schoolIdx * 0.05 }}
+                                              className="relative bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                                            >
+                                              {isTopChoice && (
+                                                <span className="absolute top-2 right-2 text-xs font-medium bg-[#FFB71B] text-white px-2 py-1 rounded">
+                                                  Top Choice
+                                                </span>
+                                              )}
+                                              
+                                              <div className="flex items-start gap-3">
+                                                {schoolLogo ? (
+                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-10 h-10 object-cover rounded" />
+                                                ) : (
+                                                  <div className="w-10 h-10 bg-[#1D63A1]/10 rounded flex items-center justify-center">
+                                                    <School className="w-5 h-5 text-[#1D63A1]" />
+                                                  </div>
+                                                )}
+                                                
+                                                <div className="flex-1 min-w-0">
+                                                  <h6 className="font-medium text-[#232D35] text-sm truncate">{school?.name}</h6>
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                    <MapPin className="w-3 h-3 mr-1" />
+                                                    <span className="truncate">{school?.location || 'Location not available'}</span>
+                                                  </div>
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                    <Globe className="w-3 h-3 mr-1" />
+                                                    <span>{school?.type || 'School type unavailable'}</span>
+                                                  </div>
+                                                  {reason && (
+                                                    <p className="text-xs text-[#1D63A1] mt-2 line-clamp-2">{reason}</p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </motion.div>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm text-gray-500 text-center py-4">No schools found for this program.</p>
+                                    )}
+                                  </div>
+                                </AccordionContent>
+                              </motion.div>
+                            );
+                          })
+                        ) : (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 20 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            transition={{ duration: 0.3 }}
+                            className="text-center py-8 text-gray-500"
+                          >
+                            <p className="text-sm">No specific programs found for this pathway.</p>
+                            <p className="text-xs mt-1">This pathway may include diverse program options.</p>
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
         {/* Career recommendations - only show if recommendations exist */}
         {aiRecommendations && aiRecommendations.recommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Career Recommendations</h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Based on your assessment profile with <span className="text-[#1D63A1] font-semibold">{aiRecommendations.overallScore?.toFixed(1)}%</span> overall score and your Personality
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-2xl shadow-md p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-[#232D35]">Recommended Careers</h3>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Based on {aiRecommendations.overallScore?.toFixed(1)}% match
+              </span>
+            </div>
+            <p className="text-gray-600 mb-8">
+              These specific career roles align well with your assessment results and personality profile.
             </p>
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {aiRecommendations.recommendations.careers
                 ?.slice(0, 5)
                 .map((career, index) => (
-                  <motion.div key={index} whileHover={{ scale: 1.01 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-lg font-semibold text-[#232D35]">{career.name}</h4>
-                      <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                        {career.confidenceScore?.toFixed(1)}% Match
-                      </span>
-                    </div>
-                    <p className="text-left text-sm text-gray-600 mb-4">{career.description}</p>
-                    <div className="flex gap-2">
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                        #{index+1} Recommended Career Pathway
-                      </span>
-                      {index === 0 && (
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                          Best Match
+                  <div key={index} className="border border-gray-200 rounded-lg p-5 hover:border-[#1D63A1]/30 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
+                          #{index + 1}
                         </span>
-                      )}
+                        {index === 0 && (
+                          <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
+                            Top Pick
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-sm font-bold text-[#1D63A1]">
+                        {career.confidenceScore?.toFixed(1)}%
+                      </span>
                     </div>
-                  </motion.div>
+                    <h4 className="text-lg font-semibold text-[#232D35] mb-2">{career.name}</h4>
+                    <p className="text-sm text-left text-gray-600 leading-relaxed">{career.description}</p>
+                  </div>
                 ))
               }
             </div>
             {aiRecommendations.recommendations.personalized && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="mt-6 p-5 bg-[#1D63A1]/10 rounded-2xl border border-[#1D63A1]/20 animate-card-pop">
-                <h4 className="text-md font-semibold text-[#232D35] mb-2">Personalized Insight</h4>
+              <div className="mt-8 p-5 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
+                <h4 className="font-semibold text-[#232D35] mb-2">Personal Insight</h4>
                 <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-        {/* Program recommendations - only show if loaded and not loading */}
-        {aiRecommendations && programRecommendations && !loadingPrograms && (
-          <div className="relative">
-            {/* Overlapping tip container */}
-            {showTip && (
-              <div className="absolute -top-4 -left-15 z-20 w-90 h-28 flex flex-row items-center px-2 py-4 rounded-2xl shadow-lg bg-[#FFB71B] animate-fade-in-up">
-                <img src="/src/assets/characters/ohMy.svg" alt="Oh My character" className="w-28 h-28 mr-2" />
-                <div className="flex-1 flex flex-col">
-                <span className="text-left text-xs font-semibold text-white text-center flex-1 pr-2">
-                  <p className='text-lg text-[#2B3E4E]'><b>Tip</b></p> You can lick the Program to expand and see the list of schools offering it.
-                </span>
-                <div className='text-right pr-6'>
-                  <span
-                    className="text-xs font-bold text-[#2B3E4E] cursor-pointer hover:underline"
-                    onClick={() => setShowTip(false)}
-                  >
-                    Okay
-                  </span>
-                </div>
-                </div>
               </div>
             )}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop mt-8">
-              <h3 className="text-xl font-bold text-[#232D35] mb-2">Recommended College Programs</h3>
-              <p className="text-sm text-gray-600 mb-2">
-                These programs are matched to your top career recommendations and assessment profile.
-              </p>
-              <div className="space-y-6">
-                {programRecommendations.map((program, idx) => {
-                  const rec = programSchoolRecs[program.programId] || {};
-                  // schools is now an array of { reason, schoolProgram }
-                  const schools = rec.schools || [];
-                  return (
-                    <motion.div key={idx} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
-                      <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleToggleProgram(program, idx)}>
-                        <h4 className="text-lg font-semibold text-[#232D35]">{program.programName}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
-                            {program.confidenceScore?.toFixed(1)}% Match
-                          </span>
-                          {expandedPrograms.includes(idx) ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                        </div>
-                      </div>
-                      <p className="text-left text-sm text-gray-600 mb-4">{program.description}</p>
-                      <div className="flex gap-2">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-[#1D63A1]/10 text-[#1D63A1] rounded">
-                          #{idx+1} Recommended Program
-                        </span>
-                        {idx === 0 && (
-                          <span className="inline-block px-2 py-1 text-xs font-medium bg-[#FFB71B]/10 text-[#FFB71B] rounded">
-                            Best Match
-                          </span>
-                        )}
-                      </div>
-                      {program.explanation && (
-                        <div className="mt-3 mb-3 p-3 bg-[#F8F9FA] rounded-xl shadow-inner">
-                          <span className="block text-xs text-[#1D63A1] font-semibold mb-1">Why this program?</span>
-                          <span className="block text-xs text-gray-700 text-left">{program.explanation}</span>
-                        </div>
-                      )}
-                      {/* Accordion content: Schools offering this program */}
-                      <AccordionContent expanded={expandedPrograms.includes(idx)}>
-                        <h5 className="font-semibold text-[#1D63A1] mb-3 flex items-center gap-2 ">
-                          Schools offering this program
-                        </h5>
-                        {loadingSchoolRecs ? (
-                          <div className="flex items-center justify-center h-12">
-                            <div className="loader"></div>
-                            <div className="text-gray-500 text-sm">Loading schools...</div>
-                          </div>
-                        ) : (schools.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 px-1">
-                            {schools.map((schoolObj, schoolIdx) => {
-                              const { schoolProgram, reason } = schoolObj;
-                              const school = schoolProgram.school;
-                              const schoolLogo = schoolLogos[school?.schoolId];
-                              const schoolBackground = getSchoolBackground(school?.name);
-                              // Extract rank from reason if present
-                              let rank = schoolIdx + 1;
-                              let rankLabel = `#${rank}`;
-                              if (reason && reason.toLowerCase().includes('best')) rankLabel = 'Best School';
-                              // Short summary for badge
-                              let shortReason = reason;
-                              if (reason.startsWith('Best')) shortReason = 'Best accreditation';
-                              else if (reason.startsWith('Ranked #')) {
-                                const match = reason.match(/^Ranked #(\d+)/);
-                                if (match) shortReason = `Ranked #${match[1]}`;
-                                else shortReason = 'Ranked';
-                              }
-                              // Tooltip for full reason
-                              return (
-                                <div key={schoolProgram.schoolProgramId} className={`relative bg-white dark:bg-gray-700 rounded-lg transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 animate-card-pop text-xs group`}>
-                                  {/* Rank badge */}
-                                  <div className="absolute top-2 right-2 z-10">
-                                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-bold shadow ${rank === 1 ? 'bg-[#FFB71B] text-white' : 'bg-[#232D35] text-white'}`}>{rankLabel}</span>
-                                  </div>
-                                  {/* Info icon with tooltip */}
-                                  <div className="absolute top-2 left-2 z-10">
-                                    <div className="group">
-                                      <span
-                                        className="cursor-pointer text-[#FFB71B]"
-                                        onMouseEnter={e => showTooltip(e, reason)}
-                                        onMouseLeave={hideTooltip}
-                                        onFocus={e => showTooltip(e, reason)}
-                                        onBlur={hideTooltip}
-                                        tabIndex={0}
-                                        aria-label="Show reason for ranking"
-                                      >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 16v-4m0-4h.01" /></svg>
-                                      </span>
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col h-full">
-                                    {/* Top half with image and logo */}
-                                    <div className="relative w-full h-28 bg-blue-100 overflow-hidden">
-                                      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/30 to-blue-500/10"></div>
-                                      {schoolBackground ? (
-                                        <img src={schoolBackground} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
-                                      ) : (
-                                        <img src={`https://source.unsplash.com/800x450/?university,school,campus,college&${school?.schoolId}`} alt={`${school?.name} campus`} className="w-full h-full object-cover object-center" />
-                                      )}
-                                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                                        {schoolLogo ? (
-                                          <img src={schoolLogo} alt={`${school?.name} logo`} className="w-14 h-14 object-cover rounded-full shadow-md" />
-                                        ) : (
-                                          <div className="w-14 h-14 flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/30 dark:to-blue-900/30 rounded-full shadow">
-                                            <School className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {/* Bottom half with school information */}
-                                    <div className="p-3 flex flex-col flex-1">
-                                      <h3 className="text-xs font-bold text-base text-gray-900 dark:text-white text-left mb-2">{school?.name}</h3>
-                                      <div className="space-y-2 bg-white dark:bg-gray-700/60 p-3 rounded-md mb-2 border border-gray-200 dark:border-gray-700 shadow-sm mt-auto">
-                                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                          <MapPin className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span className="text-left text-xs">{school?.location}</span>
-                                        </div>
-                                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-300">
-                                          <Globe className="w-4 h-4 mr-2 text-[#FFB71B] flex-shrink-0" />
-                                          <span>{school?.type}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-gray-500 text-sm italic">No schools found for this program.</div>
-                        ))}
-                      </AccordionContent>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          </div>
-        )}
-        {loadingPrograms && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop mt-8">
-            <p className="text-sm text-gray-600 mb-3 mt-4">Loading your recommended programs...</p>
-          </motion.div>
-        )}
-        {programError && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 border-2 border-red-300 text-center animate-card-pop mt-8">
-            <p className="text-sm text-red-600 mb-3">{programError}</p>
           </motion.div>
         )}
         {/* Academic Track Recommendations - only show if recommendations exist */}
@@ -646,9 +796,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </p>
             <button 
               onClick={handleGenerateRecommendations}
-              className="px-6 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white font-bold rounded-xl hover:from-[#232D35] hover:to-[#232D35] transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] animate-bounce-short"
+              disabled={isRegenerating}
+              className={`px-6 py-3 font-bold rounded-xl transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-[#1D63A1] ${
+                isRegenerating
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white hover:from-[#232D35] hover:to-[#232D35] animate-bounce-short'
+              }`}
             >
-              See My Results
+              {isRegenerating ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
+                  <span>Generating...</span>
+                </div>
+              ) : (
+                'See My Results'
+              )}
             </button>
           </motion.div>
         )}
@@ -694,6 +856,7 @@ export function clearRecommendationsFromLocalStorage(userAssessmentId) {
   if (!userAssessmentId) return;
   localStorage.removeItem(`futureu_recommendations_${userAssessmentId}`);
   localStorage.removeItem(`futureu_program_recommendations_${userAssessmentId}`);
+  localStorage.removeItem(`futureu_comprehensive_recommendations_${userAssessmentId}`);
 }
 
 export default RecommendationsTab;

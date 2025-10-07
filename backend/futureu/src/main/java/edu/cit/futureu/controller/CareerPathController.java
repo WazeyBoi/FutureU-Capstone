@@ -33,6 +33,11 @@ public class CareerPathController {
     public CareerPathEntity createCareerPath(@RequestBody CareerPathEntity careerPath) {
         return careerPathService.createCareerPath(careerPath);
     }
+
+    @PostMapping("/create/bulk")
+    public List<CareerPathEntity> createCareerPaths(@RequestBody List<CareerPathEntity> careerPaths) {
+        return careerPathService.createCareerPaths(careerPaths);
+    }
     
     // READ
     @GetMapping("/getAll")

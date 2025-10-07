@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import userAssessmentService from '../services/userAssessmentService';
 import OverviewTab from '../components/tabs/OverviewTab';
 import InterestsTab from '../components/tabs/InterestsTab';
 import AcademicTab from '../components/tabs/AcademicTab';
+import AptitudeTab from '../components/tabs/AptitudeTab';
 import RecommendationsTab from '../components/tabs/RecommendationsTab';
+import DreamCareerAnalysisTab from '../components/tabs/DreamCareerAnalysisTab';
 
 // Import Chart.js components separately
 import {
@@ -38,13 +40,26 @@ ChartJS.register(
 const AssessmentResults = () => {
   const { userAssessmentId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
-  
-  useEffect(() => {
+
+  // Get active tab from URL params, default to 'overview'
+  const activeTab = searchParams.get('tab') || 'overview';
+
+  // Function to change tab via URL
+  const setActiveTab = (tab) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (tab === 'overview') {
+      // Remove tab parameter for overview (clean URL)
+      newSearchParams.delete('tab');
+    } else {
+      newSearchParams.set('tab', tab);
+    }
+    setSearchParams(newSearchParams);
+  };  useEffect(() => {
     const fetchResults = async () => {
       try {
         setLoading(true);
@@ -271,8 +286,8 @@ const AssessmentResults = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="bg-white rounded-3xl shadow-xl p-8 mb-10 animate-card-pop border-2 border-[#1D63A1]/10"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
               <h2 className="text-left text-2xl font-bold text-[#232D35] mb-2">
                 {results?.userAssessment?.assessment?.title || 'FutureU Assessment'}
               </h2>
@@ -291,69 +306,114 @@ const AssessmentResults = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#232D35]/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center shadow-md">
-              <p className="text-sm font-medium text-[#1D63A1] mb-1">Overall Score</p>
-              <div className="text-5xl font-extrabold text-[#232D35] animate-pop">
-                {results?.assessmentResult?.overallScore?.toFixed(1)}%
-              </div>
-              <div className={`text-sm font-bold mt-2 ${getScoreColor(results?.assessmentResult?.overallScore || 0)}`}>
-                {results?.assessmentResult?.overallScore >= 80 ? 'Excellent' : 
-                 results?.assessmentResult?.overallScore >= 60 ? 'Good' : 
-                 results?.assessmentResult?.overallScore >= 40 ? 'Average' : 'Needs Improvement'}
+            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-6 text-center shadow-md">
+              {/* <h3 className="text-lg font-bold text-[#232D35] mb-3">Your Assessment Includes</h3> */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Interest Profile</div>
+                  <div className="text-xs text-gray-600">RIASEC personality types</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Aptitude Analysis</div>
+                  <div className="text-xs text-gray-600">Cognitive strengths</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Track Matching</div>
+                  <div className="text-xs text-gray-600">Academic & Non-Academic</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Career Pthway Options</div>
+                  <div className="text-xs text-gray-600">Personalized results</div>
+                </div>
               </div>
             </div>
           </div>
         </motion.div>
-        <div className="mb-8 border-b-2 border-[#1D63A1]/20">
-          <nav className="flex space-x-4 mb-8">
-            {['overview', 'interests', 'academic', 'recommendations'].map(tab => (
+        {/* Sticky Tab Navigation */}
+        <div className="sticky top-0 z-20 bg-[#F8F9FA] pb-4 mb-8 border-b-2 border-[#1D63A1]/20">
+          <nav className="flex space-x-4">
+            {['overview', 'interests', 'aptitude', 'academic', 'recommendations', 'dream-career'].map(tab => (
               <button 
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  // Prevent any scrolling when switching tabs
+                  window.scrollTo({ top: window.scrollY, behavior: 'instant' });
+                }}
                 className={`pb-4 px-6 font-bold text-base rounded-t-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm
                   ${activeTab === tab
-                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]  text-white animate-bounce-short'
+                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white animate-bounce-short'
                     : 'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'}
                 `}
               >
                 {tab === 'overview' && 'Overview'}
                 {tab === 'interests' && 'Interest Profile'}
-                {tab === 'academic' && 'Academic Tracks'}
-                {tab === 'recommendations' && 'Recommendations'}
+                {tab === 'aptitude' && 'Aptitude Profile'}
+                {tab === 'academic' && 'Track Fit'}
+                {tab === 'recommendations' && 'Career Path Options'}
+                {tab === 'dream-career' && 'Dream Career Analysis'}
               </button>
             ))}
           </nav>
         </div>
+        
+        {/* Tab Content Container */}
         {results ? (
-          <div className="min-h-[500px] animate-fade-in">
-            {activeTab === 'overview' && (
-              <OverviewTab 
-                results={results} 
-                getScoreColor={getScoreColor} 
-                getScoreBgColor={getScoreBgColor} 
-              />
-            )}
-            {activeTab === 'interests' && (
-              <InterestsTab 
-                results={results} 
-                generateRiasecRadarData={generateRiasecRadarData} 
-                getRiasecDescription={getRiasecDescription} 
-              />
-            )}
-            {activeTab === 'academic' && (
-              <AcademicTab 
-                results={results} 
-                generateAcademicTracksData={generateAcademicTracksData} 
-                getScoreColor={getScoreColor} 
-                getScoreBgColor={getScoreBgColor} 
-              />
-            )}
-            {activeTab === 'recommendations' && (
-              <RecommendationsTab 
-                getTopRecommendations={getTopRecommendations} 
-                userAssessmentId={userAssessmentId}
-              />
-            )}
+          <div className="min-h-[600px] overflow-hidden">
+            <div className="relative">
+              {activeTab === 'overview' && (
+                <div className="animate-fade-in">
+                  <OverviewTab 
+                    results={results} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'interests' && (
+                <div className="animate-fade-in">
+                  <InterestsTab 
+                    results={results} 
+                    generateRiasecRadarData={generateRiasecRadarData} 
+                    getRiasecDescription={getRiasecDescription} 
+                  />
+                </div>
+              )}
+              {activeTab === 'aptitude' && (
+                <div className="animate-fade-in">
+                  <AptitudeTab 
+                    results={results} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'academic' && (
+                <div className="animate-fade-in">
+                  <AcademicTab 
+                    results={results} 
+                    generateAcademicTracksData={generateAcademicTracksData} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'recommendations' && (
+                <div className="animate-fade-in">
+                  <RecommendationsTab 
+                    getTopRecommendations={getTopRecommendations} 
+                    userAssessmentId={userAssessmentId}
+                  />
+                </div>
+              )}
+              {activeTab === 'dream-career' && (
+                <div className="animate-fade-in">
+                  <DreamCareerAnalysisTab 
+                    userAssessmentId={userAssessmentId}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-center text-gray-500 py-8 bg-white rounded-3xl shadow-xl p-8 border-2 border-[#1D63A1]/10 animate-fade-in">

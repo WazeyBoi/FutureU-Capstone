@@ -21,7 +21,10 @@ export const fetchRecommendations = (userAssessmentId) => {
  */
 export const generateRecommendations = (userAssessmentId) => {
   try {
-    return apiClient.post(`/recommendation/generate-for-assessment/${userAssessmentId}`);
+    // Use longer timeout for AI generation process (3 minutes)
+    return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`, {}, {
+      timeout: 180000 // 3 minutes to allow for AI generation and rate limiting
+    });
   } catch (error) {
     console.error('Error generating recommendations:', error);
     throw error;
@@ -110,6 +113,23 @@ export const fetchAllCareerRecommendations = () => {
     return apiClient.get('/recommendation/getAllCareerRecommendations');
   } catch (error) {
     console.error('Error fetching all career recommendations:', error);
+    throw error;
+  }
+};
+
+/**
+ * Regenerate dream career analysis specifically
+ * @param {number} userAssessmentId - The ID of the user assessment
+ * @returns {Promise} - Axios response promise
+ */
+export const regenerateDreamCareerAnalysis = (userAssessmentId) => {
+  try {
+    // Use longer timeout for AI regeneration process (2 minutes)
+    return apiClient.post(`/recommendation/regenerate-dream-career/${userAssessmentId}`, {}, {
+      timeout: 120000 // 2 minutes for AI regeneration
+    });
+  } catch (error) {
+    console.error('Error regenerating dream career analysis:', error);
     throw error;
   }
 };

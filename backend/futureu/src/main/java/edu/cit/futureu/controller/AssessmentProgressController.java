@@ -9,14 +9,19 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import edu.cit.futureu.entity.AssessmentEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
 import edu.cit.futureu.entity.UserEntity;
-import edu.cit.futureu.entity.AssessmentEntity;
+import edu.cit.futureu.service.AssessmentService;
 import edu.cit.futureu.service.UserAssessmentService;
 import edu.cit.futureu.service.UserService;
-import edu.cit.futureu.service.AssessmentService;
 
 @RestController
 @RequestMapping("/api/assessment-progress")
@@ -48,6 +53,22 @@ public class AssessmentProgressController {
             Integer attemptNo = null;
             if (payload.containsKey("attemptNo") && payload.get("attemptNo") != null) {
                 attemptNo = Integer.parseInt(payload.get("attemptNo").toString());
+            }
+            
+            // Get assessmentStartTime from payload if present (frontend timestamp)
+            Long assessmentStartTime = null;
+            if (payload.containsKey("assessmentStartTime") && payload.get("assessmentStartTime") != null) {
+                try {
+                    Object startTimeObj = payload.get("assessmentStartTime");
+                    if (startTimeObj instanceof Number) {
+                        assessmentStartTime = ((Number) startTimeObj).longValue();
+                    } else {
+                        assessmentStartTime = Long.parseLong(startTimeObj.toString());
+                    }
+                } catch (NumberFormatException e) {
+                    // Log the error but continue without start time
+                    System.err.println("Error parsing assessmentStartTime: " + e.getMessage());
+                }
             }
             
             // Get authenticated user ID from security context
@@ -92,7 +113,7 @@ public class AssessmentProgressController {
             
             // Save progress with sections
             userAssessment = userAssessmentService.saveProgress(
-                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, attemptNo);
+                user, assessment, currentSectionIndex, progressPercentage, savedAnswers, savedSections, attemptNo, assessmentStartTime);
                 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Progress saved successfully");
@@ -101,7 +122,8 @@ public class AssessmentProgressController {
             return new ResponseEntity<>(response, HttpStatus.OK);
             
         } catch (Exception e) {
-            return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            e.printStackTrace(); // This will help us see the actual error
+            return new ResponseEntity<>(Map.of("error", "Error saving progress: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     

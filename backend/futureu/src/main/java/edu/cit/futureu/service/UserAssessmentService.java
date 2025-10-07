@@ -1,6 +1,8 @@
 package edu.cit.futureu.service;
 
 import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -109,13 +111,25 @@ public class UserAssessmentService {
     }
     
     /**
-     * Save assessment progress
+     * Save assessment progress (backward compatibility method)
      */
     @Transactional
     public UserAssessmentEntity saveProgress(UserEntity user, AssessmentEntity assessment, 
                                             int currentSectionIndex, double progressPercentage,
                                             String savedAnswers, String savedSections, 
                                             Integer attemptNo) {
+        return saveProgress(user, assessment, currentSectionIndex, progressPercentage, 
+                          savedAnswers, savedSections, attemptNo, null);
+    }
+
+    /**
+     * Save assessment progress (with assessment start time)
+     */
+    @Transactional
+    public UserAssessmentEntity saveProgress(UserEntity user, AssessmentEntity assessment, 
+                                            int currentSectionIndex, double progressPercentage,
+                                            String savedAnswers, String savedSections, 
+                                            Integer attemptNo, Long assessmentStartTime) {
         // Look for existing in-progress assessment
         List<UserAssessmentEntity> inProgress = userAssessmentRepository.findByUserAndAssessmentAndStatus(user, assessment, "IN_PROGRESS");
         UserAssessmentEntity userAssessment;
@@ -140,6 +154,14 @@ public class UserAssessmentService {
                 long existingAttempts = userAssessmentRepository.countByUserAndAssessmentAndStatus(user, assessment, "COMPLETED");
                 userAssessment.setAttemptNo((int) existingAttempts + 1);
             }
+            
+            // Set assessment start time for new assessments (convert from JS timestamp)
+            if (assessmentStartTime != null) {
+                userAssessment.setAssessmentStartTime(
+                    LocalDateTime.ofInstant(Instant.ofEpochMilli(assessmentStartTime), 
+                                          ZoneId.systemDefault())
+                );
+            }
         }
         
         // Update progress fields
@@ -158,7 +180,7 @@ public class UserAssessmentService {
     @Transactional
     public UserAssessmentEntity submitAndScoreAssessment(UserEntity user, AssessmentEntity assessment,
                                                       List<Map<String, Object>> answers, String sectionsJson,
-                                                      Integer attemptNo) throws JsonProcessingException {
+                                                      Integer attemptNo, Integer timeSpentSeconds) throws JsonProcessingException {
         // SECURITY CHECK: Enforce one-to-one relationship - prevent retaking completed assessments
         long existingCompletions = userAssessmentRepository.countByUserAndAssessmentAndStatus(user, assessment, "COMPLETED");
         if (existingCompletions > 0) {
@@ -199,6 +221,14 @@ public class UserAssessmentService {
         // Set the dateCompleted field
         LocalDateTime now = LocalDateTime.now();
         userAssessment.setDateCompleted(now);
+        
+        // Set time spent on assessment (in seconds)
+        if (timeSpentSeconds != null && timeSpentSeconds >= 0) {
+            userAssessment.setTimeSpentSeconds(timeSpentSeconds);
+            System.out.println("Setting timeSpentSeconds to: " + timeSpentSeconds);
+        } else {
+            System.out.println("timeSpentSeconds is null: " + timeSpentSeconds);
+        }
         
         // Parse sections data
         List<Map<String, Object>> sections = objectMapper.readValue(sectionsJson, 

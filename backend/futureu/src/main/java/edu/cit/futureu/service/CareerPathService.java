@@ -19,6 +19,10 @@ public class CareerPathService {
     public CareerPathEntity createCareerPath(CareerPathEntity careerPath) {
         return careerPathRepository.save(careerPath);
     }
+
+    public List<CareerPathEntity> createCareerPaths(List<CareerPathEntity> careerPaths) {
+        return careerPathRepository.saveAll(careerPaths);
+    }
     
     // Read operations
     public List<CareerPathEntity> getAllCareerPaths() {

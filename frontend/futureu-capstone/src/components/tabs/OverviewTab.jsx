@@ -1,7 +1,78 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HelpCircle } from 'lucide-react';
 
 const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
+  const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0 });
+  const [activeTab, setActiveTab] = useState('gsa');
+  
+  // Tooltip functions
+  const showTooltip = (e, content) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      content,
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 10
+    });
+  };
+  
+  const hideTooltip = () => {
+    setTooltip(prev => ({ ...prev, visible: false }));
+  };
+
+  // Function to group sections by type
+  const getSectionsByType = () => {
+    const filteredSections = results.sectionResults?.filter(section => 
+      !section.sectionType?.toLowerCase().includes('interest') && 
+      !section.sectionName?.toLowerCase().includes('interest')
+    ) || [];
+
+    const groups = {
+      gsa: filteredSections.filter(section => 
+        section.sectionType?.toLowerCase().includes('gsa') ||
+        section.sectionType?.toLowerCase().includes('cognitive') ||
+        section.sectionType?.toLowerCase().includes('aptitude')
+      ),
+      academic: filteredSections.filter(section => 
+        section.sectionType?.toLowerCase().includes('academic') ||
+        section.sectionType?.toLowerCase().includes('stem') ||
+        section.sectionType?.toLowerCase().includes('abm') ||
+        section.sectionType?.toLowerCase().includes('humss')
+      ),
+      others: filteredSections.filter(section => 
+        section.sectionType?.toLowerCase().includes('others') ||
+        section.sectionType?.toLowerCase().includes('other') ||
+        section.sectionType?.toLowerCase().includes('tvl') ||
+        section.sectionType?.toLowerCase().includes('sports') ||
+        section.sectionType?.toLowerCase().includes('arts') ||
+        section.sectionType?.toLowerCase().includes('practical') ||
+        section.sectionType?.toLowerCase().includes('non-academic') ||
+        (!section.sectionType?.toLowerCase().includes('gsa') && 
+         !section.sectionType?.toLowerCase().includes('cognitive') &&
+         !section.sectionType?.toLowerCase().includes('aptitude') &&
+         !section.sectionType?.toLowerCase().includes('academic') &&
+         !section.sectionType?.toLowerCase().includes('stem') &&
+         !section.sectionType?.toLowerCase().includes('abm') &&
+         !section.sectionType?.toLowerCase().includes('humss'))
+      )
+    };
+
+    // Sort each group by score (highest to lowest)
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => (b.percentageScore || 0) - (a.percentageScore || 0));
+    });
+
+    return groups;
+  };
+
+  const sectionGroups = getSectionsByType();
+
+  const tabs = [
+    { id: 'gsa', label: 'Cognitive Abilities', count: sectionGroups.gsa.length },
+    { id: 'academic', label: 'Academic Tracks', count: sectionGroups.academic.length },
+    { id: 'others', label: 'Non-Academic Tracks', count: sectionGroups.others.length }
+  ];
   // Priority sorting function for section types
   const getSectionTypePriority = (sectionType) => {
     const type = (sectionType || '').toLowerCase();
@@ -67,137 +138,236 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
       >
         {/* Top summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* GSA */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[180px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">General Scholastic Aptitude</h3>
-            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop">{results.assessmentResult?.gsaScore?.toFixed(1)}%</div>
-            <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your overall academic aptitude score across various cognitive domains.</p>
+          {/* Top Cognitive Strength */}
+          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
+            <div className="flex items-center justify-between p-5 pb-0">
+              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Top Cognitive Strength</h3>
+              <HelpCircle 
+                className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
+                onMouseEnter={(e) => showTooltip(e, "Your strongest cognitive ability area based on aptitude test performance. This represents your natural intellectual strength.")}
+                onMouseLeave={hideTooltip}
+              />
+            </div>
+            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop">
+              {(() => {
+                // Find the highest aptitude score
+                const aptitudes = [
+                  { name: 'Scientific', score: results.assessmentResult?.scientificAbilityScore || 0 },
+                  { name: 'Mathematical', score: results.assessmentResult?.mathematicalAbilityScore || 0 },
+                  { name: 'Verbal', score: results.assessmentResult?.verbalAbilityScore || 0 },
+                  { name: 'Reading', score: results.assessmentResult?.readingComprehensionScore || 0 },
+                  { name: 'Logical', score: results.assessmentResult?.logicalReasoningScore || 0 }
+                ];
+                const topAptitude = aptitudes.sort((a, b) => b.score - a.score)[0];
+                return topAptitude.name;
+              })()}
+            </div>
+            <div className="text-xl font-semibold text-[#FFB71B] px-5 animate-pop">
+              {(() => {
+                const aptitudes = [
+                  { name: 'Scientific', score: results.assessmentResult?.scientificAbilityScore || 0 },
+                  { name: 'Mathematical', score: results.assessmentResult?.mathematicalAbilityScore || 0 },
+                  { name: 'Verbal', score: results.assessmentResult?.verbalAbilityScore || 0 },
+                  { name: 'Reading', score: results.assessmentResult?.readingComprehensionScore || 0 },
+                  { name: 'Logical', score: results.assessmentResult?.logicalReasoningScore || 0 }
+                ];
+                const topAptitude = aptitudes.sort((a, b) => b.score - a.score)[0];
+                return `${topAptitude.score.toFixed(1)}%`;
+              })()}
+            </div>
+            <div className="mt-auto p-5 pt-2">
+              <p className="text-xs text-gray-600">Your highest-scoring cognitive ability area</p>
+              <p className="text-xs font-medium text-[#1D63A1] mt-1">
+                {(() => {
+                  const aptitudes = [
+                    { name: 'Scientific', score: results.assessmentResult?.scientificAbilityScore || 0 },
+                    { name: 'Mathematical', score: results.assessmentResult?.mathematicalAbilityScore || 0 },
+                    { name: 'Verbal', score: results.assessmentResult?.verbalAbilityScore || 0 },
+                    { name: 'Reading', score: results.assessmentResult?.readingComprehensionScore || 0 },
+                    { name: 'Logical', score: results.assessmentResult?.logicalReasoningScore || 0 }
+                  ];
+                  const topScore = aptitudes.sort((a, b) => b.score - a.score)[0].score;
+                  return topScore >= 85 ? 'Exceptional strength' :
+                         topScore >= 70 ? 'Strong ability' :
+                         topScore >= 55 ? 'Good ability' :
+                         'Developing skill';
+                })()}
+              </p>
+            </div>
           </motion.div>
           {/* Academic Track Fit */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[180px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Academic Track Fit</h3>
+          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
+            <div className="flex items-center justify-between p-5 pb-0">
+              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Academic Track Fit</h3>
+              <HelpCircle 
+                className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
+                onMouseEnter={(e) => showTooltip(e, "How well your abilities match academic tracks (STEM, ABM, HUMSS). Higher percentages mean better compatibility with these tracks.")}
+                onMouseLeave={hideTooltip}
+              />
+            </div>
             <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop">{results.assessmentResult?.academicTrackScore?.toFixed(1)}%</div>
-            <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your alignment with academic tracks like STEM, ABM, and HUMSS.</p>
+            <div className="mt-auto p-5 pt-2">
+              <p className="text-xs text-gray-600">Compatibility with STEM, ABM, and HUMSS tracks</p>
+              <p className="text-xs font-medium text-[#FFB71B] mt-1">
+                {results.assessmentResult?.academicTrackScore >= 80 ? 'Excellent academic track fit' :
+                 results.assessmentResult?.academicTrackScore >= 65 ? 'Good academic track fit' :
+                 results.assessmentResult?.academicTrackScore >= 50 ? 'Moderate academic track fit' :
+                 'Consider exploring alternatives'}
+              </p>
+            </div>
           </motion.div>
           {/* Other Tracks Fit */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[180px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Other Tracks Fit</h3>
+          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
+            <div className="flex items-center justify-between p-5 pb-0">
+              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Non-Academic Track Fit</h3>
+              <HelpCircle 
+                className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
+                onMouseEnter={(e) => showTooltip(e, "How well your abilities match practical tracks (TVL, Sports, Arts & Design). Higher percentages indicate better suitability for hands-on careers.")}
+                onMouseLeave={hideTooltip}
+              />
+            </div>
             <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop">{results.assessmentResult?.otherTrackScore?.toFixed(1)}%</div>
-            <p className="text-xs text-gray-600 mt-auto p-5 pt-2">Your alignment with non-academic tracks like TVL, Sports, and Arts & Design.</p>
+            <div className="mt-auto p-5 pt-2">
+              <p className="text-xs text-gray-600">Compatibility with TVL, Sports, and Arts & Design</p>
+              <p className="text-xs font-medium text-[#1D63A1] mt-1">
+                {results.assessmentResult?.otherTrackScore >= 80 ? 'Excellent practical track fit' :
+                 results.assessmentResult?.otherTrackScore >= 65 ? 'Good practical track fit' :
+                 results.assessmentResult?.otherTrackScore >= 50 ? 'Moderate practical track fit' :
+                 'Consider academic alternatives'}
+              </p>
+            </div>
           </motion.div>
           {/* Interest Assessment */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[180px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-1 p-5 pb-0">Interest Assessment</h3>
+          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
+            <div className="flex items-center justify-between p-5 pb-0">
+              <h3 className="text-lg font-semibold text-[#232D35] mb-1">your RIASEC code</h3>
+              <HelpCircle 
+                className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
+                onMouseEnter={(e) => showTooltip(e, "Your personality type based on career interests. This shows what types of work environments and activities you prefer, not your performance.")}
+                onMouseLeave={hideTooltip}
+              />
+            </div>
             <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop">{getRiasecCode()}</div>
-            <p className="text-xs text-gray-600 mt-auto p-5 pt-2">You are <br/>{getRiasecFullNames(getRiasecCode())}</p>
+            <div className="mt-auto p-5 pt-2">
+              <p className="text-xs text-gray-600">Your personality type and career interests</p>
+              <p className="text-xs font-medium text-[#FFB71B] mt-1">{getRiasecFullNames(getRiasecCode())}</p>
+            </div>
           </motion.div>
         </div>
-        {/* Section Results Table */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-[#1D63A1]/10 animate-card-pop">
+        {/* Section Results with Tabs */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.1 }} 
+          className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-[#1D63A1]/10 animate-card-pop"
+        >
           <div className="p-4 bg-[#F8F9FA] border-b border-[#1D63A1]/20">
-            <h3 className="text-lg font-semibold text-[#232D35]">Section Results</h3>
+            <h3 className="text-lg font-semibold text-[#232D35] mb-4">Section Score Results</h3>
+            
+            {/* Tab Navigation */}
+            <div className="flex space-x-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-[#1D63A1] text-white shadow-md'
+                      : 'bg-white text-[#1D63A1] hover:bg-[#1D63A1]/5 border border-[#1D63A1]/20'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-[#F8F9FA]">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Section</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Section Type</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Score</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Performance</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {results.sectionResults
-                  ?.filter(section => 
-                    !section.sectionType?.toLowerCase().includes('interest') && 
-                    !section.sectionName?.toLowerCase().includes('interest')
-                  )
-                  .sort((a, b) => {
-                    // First sort by section type priority
-                    const typePriorityDiff = getSectionTypePriority(a.sectionType) - getSectionTypePriority(b.sectionType);
-                    // If same type, sort by performance (highest to lowest)
-                    if (typePriorityDiff === 0) {
-                      const scoreA = a.percentageScore || 0;
-                      const scoreB = b.percentageScore || 0;
-                      return scoreB - scoreA; // Descending order (highest first)
-                    }
-                    // Otherwise sort by section type
-                    return typePriorityDiff;
-                  })
-                  .map((section, index) => (
-                  <motion.tr 
-                    key={index} 
-                    className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F9FA]'}
-                  >
-                    <td className="text-left px-6 py-4 whitespace-nowrap text-sm font-semibold text-[#232D35]">{section.sectionName}</td>
-                    <td className="text-left px-6 py-4 whitespace-nowrap text-sm text-[#1D63A1]">{section.sectionType}</td>
-                    <td className="text-left px-6 py-4 whitespace-nowrap text-sm text-[#232D35]">
-                      <span className="text-gray-500">
-                        ({section.correctAnswers}/{section.totalQuestions})
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-full bg-[#F8F9FA] rounded-full h-2.5 max-w-[150px] mr-2 border border-[#1D63A1]/10">
-                          <div 
-                            className="h-2.5 rounded-full transition-all duration-300" 
-                            style={{ 
-                              width: `${section.percentageScore}%`,
-                              background: section.percentageScore >= 80 ? 'linear-gradient(90deg, #1D63A1 60%, #FFB71B 100%)' : 
-                                          section.percentageScore >= 60 ? '#1D63A1' : 
-                                          section.percentageScore >= 40 ? '#FFB71B' : '#dc2626'
-                            }}
-                          ></div>
-                        </div>
-                        <span className={`text-xs font-bold ml-1 ${getScoreColor(section.percentageScore)}`}>
-                          {section.percentageScore?.toFixed(1)}%
-                        </span>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
-        {/* GSA Breakdown */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-3xl shadow-xl p-5 border-2 border-[#1D63A1]/10 animate-card-pop">
-          <h3 className="text-lg font-semibold text-[#232D35] mb-4">General Scholastic Aptitude Breakdown</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <motion.div whileHover={{ scale: 1.06}} className="bg-[#1D63A1]/10 rounded-xl p-4 text-center shadow-md transition-all">
-              <div className={`text-2xl font-extrabold text-[#1D63A1] animate-pop`}>
-                {results.assessmentResult?.scientificAbilityScore?.toFixed(1)}%
-              </div>
-              <p className="text-xs font-semibold text-[#232D35] mt-1">Scientific Ability</p>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.06}} className="bg-[#FFB71B]/10 rounded-xl p-4 text-center shadow-md transition-all">
-              <div className={`text-2xl font-extrabold text-[#FFB71B] animate-pop`}>
-                {results.assessmentResult?.readingComprehensionScore?.toFixed(1)}%
-              </div>
-              <p className="text-xs font-semibold text-[#232D35] mt-1">Reading Comprehension</p>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.06}} className="bg-[#1D63A1]/10 rounded-xl p-4 text-center shadow-md transition-all">
-              <div className={`text-2xl font-extrabold text-[#1D63A1] animate-pop`}>
-                {results.assessmentResult?.verbalAbilityScore?.toFixed(1)}%
-              </div>
-              <p className="text-xs font-semibold text-[#232D35] mt-1">Verbal Ability</p>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.06}} className="bg-[#FFB71B]/10 rounded-xl p-4 text-center shadow-md transition-all">
-              <div className={`text-2xl font-extrabold text-[#FFB71B] animate-pop`}>
-                {results.assessmentResult?.mathematicalAbilityScore?.toFixed(1)}%
-              </div>
-              <p className="text-xs font-semibold text-[#232D35] mt-1">Mathematical Ability</p>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.06}} className="bg-[#1D63A1]/10 rounded-xl p-4 text-center shadow-md transition-all">
-              <div className={`text-2xl font-extrabold text-[#1D63A1] animate-pop`}>
-                {results.assessmentResult?.logicalReasoningScore?.toFixed(1)}%
-              </div>
-              <p className="text-xs font-semibold text-[#232D35] mt-1">Logical Reasoning</p>
-            </motion.div>
+
+          {/* Tab Content Container - Fixed Height */}
+          <div className="min-h-[400px] relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 overflow-x-auto"
+              >
+                <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                  <thead className="bg-[#F8F9FA]">
+                    <tr>
+                      <th scope="col" className="w-1/2 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Section</th>
+                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Score</th>
+                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Performance</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sectionGroups[activeTab]?.length > 0 ? (
+                      sectionGroups[activeTab].map((section, index) => (
+                        <motion.tr 
+                          key={index} 
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className={index % 2 === 0 ? 'bg-white' : 'bg-[#F8F9FA]'}
+                        >
+                          <td className="w-1/2 text-left px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-semibold text-[#232D35] truncate">{section.sectionName}</div>
+                              <div className="text-xs text-gray-500">
+                                {section.correctAnswers}/{section.totalQuestions} correct
+                              </div>
+                            </div>
+                          </td>
+                          <td className="w-1/4 text-left px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-[#232D35]">
+                              {section.percentageScore?.toFixed(1)}%
+                            </div>
+                          </td>
+                          <td className="w-1/4 px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-full bg-[#F8F9FA] rounded-full h-3 max-w-[120px] border border-[#1D63A1]/10">
+                                <div 
+                                  className="h-3 rounded-full transition-all duration-500" 
+                                  style={{ 
+                                    width: `${section.percentageScore}%`,
+                                    background: 'linear-gradient(90deg, #1D63A1 0%, #4A90E2 25%, #7BB3F0 50%, #FFB71B 75%, #FFC947 100%)'
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" className="text-center py-8 text-gray-500">
+                          No {tabs.find(t => t.id === activeTab)?.label.toLowerCase()} sections available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </motion.div>
       </motion.div>
+      
+      {/* Tooltip */}
+      {tooltip.visible && (
+        <div
+          className="fixed z-50 bg-gray-900 text-white text-sm rounded-lg p-3 max-w-xs shadow-lg pointer-events-none"
+          style={{
+            left: tooltip.x - 150, // Center the tooltip
+            top: tooltip.y,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+          {tooltip.content}
+        </div>
+      )}
     </div>
   );
 };

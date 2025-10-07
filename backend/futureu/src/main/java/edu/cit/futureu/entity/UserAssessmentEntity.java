@@ -6,6 +6,8 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -14,8 +16,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 
 @Entity
 @Table(name = "user_assessment")
@@ -43,6 +43,9 @@ public class UserAssessmentEntity {
     
     // New field for tracking when assessment was completed
     private LocalDateTime dateCompleted;
+    
+    // New field for tracking when assessment was started (for accurate time calculation)
+    private LocalDateTime assessmentStartTime;
     
     // New fields for tracking progress
     private String status; // "IN_PROGRESS", "COMPLETED", "ABANDONED"
@@ -182,5 +185,13 @@ public class UserAssessmentEntity {
 
     public void setDateCompleted(LocalDateTime dateCompleted) {
         this.dateCompleted = dateCompleted;
+    }
+
+    public LocalDateTime getAssessmentStartTime() {
+        return assessmentStartTime;
+    }
+
+    public void setAssessmentStartTime(LocalDateTime assessmentStartTime) {
+        this.assessmentStartTime = assessmentStartTime;
     }
 }
