@@ -13,24 +13,22 @@ class CareerService {
   async getAllCareers(forceRefresh = false) {
     const cacheKey = 'careers';
     
-    // Check cache first (unless force refresh)
     if (!forceRefresh) {
       const cached = dataCacheService.get(cacheKey);
       if (cached) {
         return cached;
       }
-    }
-    
-    // Check if already loading
-    if (dataCacheService.isLoading(cacheKey)) {
-      return new Promise((resolve) => {
-        const checkInterval = setInterval(() => {
-          if (!dataCacheService.isLoading(cacheKey)) {
-            clearInterval(checkInterval);
-            resolve(dataCacheService.get(cacheKey));
-          }
-        }, 100);
-      });
+
+      if (dataCacheService.isLoading(cacheKey)) {
+        return new Promise((resolve) => {
+          const checkInterval = setInterval(() => {
+            if (!dataCacheService.isLoading(cacheKey)) {
+              clearInterval(checkInterval);
+              resolve(dataCacheService.get(cacheKey) || []);
+            }
+          }, 100);
+        });
+      }
     }
 
     try {
@@ -58,7 +56,7 @@ class CareerService {
    */
   async getCareerById(careerId) {
     try {
-      const response = await apiClient.get(`/career/getCareer/${careerId}`);
+      const response = await apiClient.get(`/career/getCareerDetails/${careerId}`);
       return response.data;
     } catch (error) {
       this.handleError(error, `Fetching career with ID ${careerId}`);
@@ -73,12 +71,7 @@ class CareerService {
    */
   async createCareer(careerData) {
     try {
-      const response = await apiClient.post('/career/postCareerRecord', careerData);
-      
-      // Clear cache to force refresh
-      dataCacheService.clear('careers');
-      console.log('🗑️ Cleared careers cache after creation');
-      
+      const response = await apiClient.post('/career/postCareerDetails', careerData);
       return response.data;
     } catch (error) {
       this.handleError(error, 'Creating career');
@@ -94,15 +87,13 @@ class CareerService {
    */
   async updateCareer(careerId, careerData) {
     try {
-      const response = await apiClient.put(`/career/putCareerDetails?careerId=${careerId}`, careerData);
-      
-      // Clear cache to force refresh
-      dataCacheService.clear('careers');
-      console.log('🗑️ Cleared careers cache after update');
-      
+      const response = await apiClient.put('/career/putCareerDetails', {
+        careerId,
+        ...careerData
+      });
       return response.data;
     } catch (error) {
-      this.handleError(error, 'Updating career');
+      this.handleError(error, `Updating career with ID ${careerId}`);
       throw error;
     }
   }
@@ -115,11 +106,6 @@ class CareerService {
   async deleteCareer(careerId) {
     try {
       const response = await apiClient.delete(`/career/deleteCareerDetails/${careerId}`);
-      
-      // Clear cache to force refresh
-      dataCacheService.clear('careers');
-      console.log('🗑️ Cleared careers cache after deletion');
-      
       return response.data;
     } catch (error) {
       this.handleError(error, `Deleting career with ID ${careerId}`);
@@ -195,10 +181,67 @@ class CareerService {
    */
   async filterBySalaryRange(minSalary, maxSalary) {
     try {
-      const response = await apiClient.get('/career/filterBySalaryRange', { params: { minSalary, maxSalary } });
+      const response = await apiClient.get('/career/filterBySalaryRange', { 
+        params: { minSalary, maxSalary } 
+      });
       return response.data;
     } catch (error) {
       this.handleError(error, 'Filtering by salary range');
+      throw error;
+    }
+  }
+
+  /**
+   * Get programs associated with a career
+   * @param {number} careerId
+   * @returns {Promise<Array>}
+   */
+  async getProgramsByCareer(careerId) {
+    try {
+      const response = await apiClient.get(`/career/getProgramsByCareer/${careerId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching programs for career ID ${careerId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get programs for multiple careers in one batch request (NEW METHOD)
+   * @param {number[]} careerIds - Array of career IDs
+   * @returns {Promise<Object>} - Map of careerId -> programs array
+   */
+  async getProgramsByCareersBatch(careerIds) {
+    try {
+      if (!careerIds || careerIds.length === 0) {
+        return {};
+      }
+      
+      // Join IDs into comma-separated string
+      const idsString = careerIds.join(',');
+      
+      const response = await apiClient.get('/career/getProgramsByCareersBatch', {
+        params: { careerIds: idsString }
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching programs for careers batch:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get career paths and careers by program ID
+   * @param {number} programId
+   * @returns {Promise<Object>}
+   */
+  async getCareerPathsByProgram(programId) {
+    try {
+      const response = await apiClient.get(`/career/getCareerPathsByProgram/${programId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching career paths for program ID ${programId}:`, error);
       throw error;
     }
   }
