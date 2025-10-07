@@ -51,6 +51,7 @@ import StudentReportPage from './components/Counselor/StudentReportPage.jsx';
 import StudentRoute from './components/routes/StudentRoute.jsx';
 import ProfilePage from './components/Profile/ProfilePage.jsx';
 import StudentHomepage from './components/Student/StudentHomepage.jsx';
+import ProgramCareerExplorer from './components/ProgramCareerExplorer/ProgramCareerExplorer.jsx';
 // Add any other admin CRUD components you need
 
 function App() {
@@ -316,6 +317,7 @@ function App() {
                 <StudentReportPage />
               </CounselorRoute>
             } />
+            <Route path="/program-career-explorer" element={<ProgramCareerExplorer />} />
             
             {/* For any route that doesn't match */}
             <Route path="*" element={<Navigate to="/" />} />
