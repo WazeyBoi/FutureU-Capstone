@@ -7,6 +7,7 @@ import InterestsTab from '../components/tabs/InterestsTab';
 import AcademicTab from '../components/tabs/AcademicTab';
 import AptitudeTab from '../components/tabs/AptitudeTab';
 import RecommendationsTab from '../components/tabs/RecommendationsTab';
+import DreamCareerAnalysisTab from '../components/tabs/DreamCareerAnalysisTab';
 
 // Import Chart.js components separately
 import {
@@ -213,54 +214,6 @@ const AssessmentResults = () => {
     return types.sort((a, b) => b.score - a.score).slice(0, 2);
   };
   
-  // Calculate Academic Performance Score (excluding RIASEC personality interests)
-  const getAcademicPerformanceScore = () => {
-    if (!results?.assessmentResult) return 0;
-    
-    const scores = [];
-    
-    // Include GSA (cognitive aptitude)
-    if (results.assessmentResult.gsaScore) {
-      scores.push(results.assessmentResult.gsaScore);
-    }
-    
-    // Include Academic Track performance
-    if (results.assessmentResult.academicTrackScore) {
-      scores.push(results.assessmentResult.academicTrackScore);
-    }
-    
-    // Include Other Track performance
-    if (results.assessmentResult.otherTrackScore) {
-      scores.push(results.assessmentResult.otherTrackScore);
-    }
-    
-    // Calculate weighted average (GSA gets more weight as it's cognitive ability)
-    if (scores.length === 0) return 0;
-    
-    const gsaWeight = 0.5; // 50% weight for cognitive aptitude
-    const trackWeight = 0.25; // 25% each for academic and other tracks
-    
-    let weightedSum = 0;
-    let totalWeight = 0;
-    
-    if (results.assessmentResult.gsaScore) {
-      weightedSum += results.assessmentResult.gsaScore * gsaWeight;
-      totalWeight += gsaWeight;
-    }
-    
-    if (results.assessmentResult.academicTrackScore) {
-      weightedSum += results.assessmentResult.academicTrackScore * trackWeight;
-      totalWeight += trackWeight;
-    }
-    
-    if (results.assessmentResult.otherTrackScore) {
-      weightedSum += results.assessmentResult.otherTrackScore * trackWeight;
-      totalWeight += trackWeight;
-    }
-    
-    return totalWeight > 0 ? weightedSum / totalWeight : 0;
-  };
-  
   if (loading) {
     return (
       <div className='flex flex-col items-center justify-center min-h-screen h-full'>
@@ -333,8 +286,8 @@ const AssessmentResults = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="bg-white rounded-3xl shadow-xl p-8 mb-10 animate-card-pop border-2 border-[#1D63A1]/10"
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
               <h2 className="text-left text-2xl font-bold text-[#232D35] mb-2">
                 {results?.userAssessment?.assessment?.title || 'FutureU Assessment'}
               </h2>
@@ -353,92 +306,114 @@ const AssessmentResults = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#232D35]/10 rounded-2xl p-8 text-center flex flex-col items-center justify-center shadow-md">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="text-sm font-medium text-[#1D63A1]">Academic Performance</p>
-                <div className="relative group">
-                  <svg className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-64 z-10">
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                    Weighted combination of your cognitive abilities (50%) and track performance (50%). This excludes personality interests as those measure preferences, not performance.
-                  </div>
+            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-6 text-center shadow-md">
+              {/* <h3 className="text-lg font-bold text-[#232D35] mb-3">Your Assessment Includes</h3> */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Interest Profile</div>
+                  <div className="text-xs text-gray-600">RIASEC personality types</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Aptitude Analysis</div>
+                  <div className="text-xs text-gray-600">Cognitive strengths</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Track Matching</div>
+                  <div className="text-xs text-gray-600">Academic & Non-Academic</div>
+                </div>
+                <div className="bg-white/70 rounded-lg p-3">
+                  <div className="font-semibold text-[#1D63A1]">Career Pthway Options</div>
+                  <div className="text-xs text-gray-600">Personalized results</div>
                 </div>
               </div>
-              <div className="text-5xl font-extrabold text-[#232D35] animate-pop">
-                {getAcademicPerformanceScore().toFixed(1)}%
-              </div>
-              <div className={`text-sm font-bold mt-2 ${getScoreColor(getAcademicPerformanceScore())}`}>
-                {getAcademicPerformanceScore() >= 80 ? 'Excellent' : 
-                 getAcademicPerformanceScore() >= 60 ? 'Good' : 
-                 getAcademicPerformanceScore() >= 40 ? 'Average' : 'Needs Improvement'}
-              </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Based on aptitude and track performance<br/>
-                <span className="font-medium">(Excludes personality interests)</span>
-              </p>
             </div>
           </div>
         </motion.div>
-        <div className="mb-8 border-b-2 border-[#1D63A1]/20">
-          <nav className="flex space-x-4 mb-8">
-            {['overview', 'interests', 'aptitude', 'academic', 'recommendations'].map(tab => (
+        {/* Sticky Tab Navigation */}
+        <div className="sticky top-0 z-20 bg-[#F8F9FA] pb-4 mb-8 border-b-2 border-[#1D63A1]/20">
+          <nav className="flex space-x-4">
+            {['overview', 'interests', 'aptitude', 'academic', 'recommendations', 'dream-career'].map(tab => (
               <button 
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  // Prevent any scrolling when switching tabs
+                  window.scrollTo({ top: window.scrollY, behavior: 'instant' });
+                }}
                 className={`pb-4 px-6 font-bold text-base rounded-t-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm
                   ${activeTab === tab
-                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]  text-white animate-bounce-short'
+                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white animate-bounce-short'
                     : 'text-[#232D35]/60 hover:text-[#1D63A1] hover:border-b-4 hover:border-[#FFB71B] hover:bg-[#FFB71B]/10'}
                 `}
               >
                 {tab === 'overview' && 'Overview'}
                 {tab === 'interests' && 'Interest Profile'}
                 {tab === 'aptitude' && 'Aptitude Profile'}
-                {tab === 'academic' && 'Academic Tracks'}
+                {tab === 'academic' && 'Track Fit'}
                 {tab === 'recommendations' && 'Career Path Options'}
+                {tab === 'dream-career' && 'Dream Career Analysis'}
               </button>
             ))}
           </nav>
         </div>
+        
+        {/* Tab Content Container */}
         {results ? (
-          <div className="min-h-[500px] animate-fade-in">
-            {activeTab === 'overview' && (
-              <OverviewTab 
-                results={results} 
-                getScoreColor={getScoreColor} 
-                getScoreBgColor={getScoreBgColor} 
-              />
-            )}
-            {activeTab === 'interests' && (
-              <InterestsTab 
-                results={results} 
-                generateRiasecRadarData={generateRiasecRadarData} 
-                getRiasecDescription={getRiasecDescription} 
-              />
-            )}
-            {activeTab === 'aptitude' && (
-              <AptitudeTab 
-                results={results} 
-                getScoreColor={getScoreColor} 
-                getScoreBgColor={getScoreBgColor} 
-              />
-            )}
-            {activeTab === 'academic' && (
-              <AcademicTab 
-                results={results} 
-                generateAcademicTracksData={generateAcademicTracksData} 
-                getScoreColor={getScoreColor} 
-                getScoreBgColor={getScoreBgColor} 
-              />
-            )}
-            {activeTab === 'recommendations' && (
-              <RecommendationsTab 
-                getTopRecommendations={getTopRecommendations} 
-                userAssessmentId={userAssessmentId}
-              />
-            )}
+          <div className="min-h-[600px] overflow-hidden">
+            <div className="relative">
+              {activeTab === 'overview' && (
+                <div className="animate-fade-in">
+                  <OverviewTab 
+                    results={results} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'interests' && (
+                <div className="animate-fade-in">
+                  <InterestsTab 
+                    results={results} 
+                    generateRiasecRadarData={generateRiasecRadarData} 
+                    getRiasecDescription={getRiasecDescription} 
+                  />
+                </div>
+              )}
+              {activeTab === 'aptitude' && (
+                <div className="animate-fade-in">
+                  <AptitudeTab 
+                    results={results} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'academic' && (
+                <div className="animate-fade-in">
+                  <AcademicTab 
+                    results={results} 
+                    generateAcademicTracksData={generateAcademicTracksData} 
+                    getScoreColor={getScoreColor} 
+                    getScoreBgColor={getScoreBgColor} 
+                  />
+                </div>
+              )}
+              {activeTab === 'recommendations' && (
+                <div className="animate-fade-in">
+                  <RecommendationsTab 
+                    getTopRecommendations={getTopRecommendations} 
+                    userAssessmentId={userAssessmentId}
+                  />
+                </div>
+              )}
+              {activeTab === 'dream-career' && (
+                <div className="animate-fade-in">
+                  <DreamCareerAnalysisTab 
+                    userAssessmentId={userAssessmentId}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="text-center text-gray-500 py-8 bg-white rounded-3xl shadow-xl p-8 border-2 border-[#1D63A1]/10 animate-fade-in">

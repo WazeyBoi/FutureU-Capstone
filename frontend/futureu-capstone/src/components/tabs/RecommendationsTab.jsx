@@ -96,7 +96,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [structuredRecommendations, setStructuredRecommendations] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
   const [careerPathDetails, setCareerPathDetails] = useState([]);
-  const [dreamInsight, setDreamInsight] = useState(null);
   const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' }
   const [expandedPathPrograms, setExpandedPathPrograms] = useState({}); // { [pathId]: programId }
   const [loading, setLoading] = useState(false);
@@ -122,7 +121,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       setStructuredRecommendations(null);
       setAiRecommendations(null);
       setCareerPathDetails([]);
-      setDreamInsight(null);
       setPathTabs({});
       setExpandedPathPrograms({});
       return;
@@ -130,7 +128,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
     const advanced = payload.recommendations;
     setStructuredRecommendations(advanced);
-    setDreamInsight(advanced.dreamCareerInsight || null);
 
     const paths = Array.isArray(advanced.careerPaths) ? advanced.careerPaths : [];
     setCareerPathDetails(paths);
@@ -368,6 +365,27 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
           )}
         </motion.div>
+
+        {/* Dream Career Analysis Notice */}
+        {checkedExisting && !loading && !error && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-gradient-to-r from-[#1D63A1]/5 to-[#FFB71B]/5 rounded-2xl p-4 border border-[#1D63A1]/20 animate-card-pop">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-[#1D63A1]/10 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-[#232D35] mb-1">Dream Career AI Analysis Available!</h4>
+                <p className="text-xs text-gray-600">
+                  Get comprehensive AI-driven insights about your dream career alignment in the dedicated 
+                  <span className="font-medium text-[#1D63A1]"> "Dream Career Analysis" </span>tab.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Loading state */}
         {loading && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop">
@@ -443,7 +461,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                     {/* AI Summary */}
                     {path.summary && (
                       <div className="mb-6 p-4 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
-                        <h5 className="text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
+                        <h5 className="text-left text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
                         <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
                       </div>
                     )}
@@ -551,7 +569,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                               >
                                 <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
                                   <div className="flex-1">
-                                    <h5 className="font-semibold text-[#232D35] mb-1">{program.programName}</h5>
+                                    <h5 className="text-left font-semibold text-[#232D35] mb-1">{program.programName}</h5>
                                     <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
                                   </div>
                                   <div className="flex items-center gap-3 ml-4">
@@ -687,77 +705,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
               </div>
             )}
-          </motion.div>
-        )}
-        {dreamInsight && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-[#232D35] mb-2">Dream Career Alignment</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {dreamInsight.dreamCareer
-                    ? <>Your dream career is <span className="font-semibold text-[#1D63A1]">{dreamInsight.dreamCareer}</span>.</>
-                    : 'Set a dream career in your profile to see a personalized alignment check.'}
-                </p>
-                {dreamInsight.guidance && (
-                  <div className="p-4 bg-[#F8F9FA] rounded-2xl mb-3">
-                    <h4 className="text-sm font-semibold text-[#232D35] mb-1">Focus Areas</h4>
-                    <p className="text-xs text-gray-700">{dreamInsight.guidance}</p>
-                  </div>
-                )}
-                {dreamInsight.encouragement && (
-                  <div className="p-4 bg-[#1D63A1]/10 rounded-2xl">
-                    <h4 className="text-sm font-semibold text-[#232D35] mb-1">Encouragement</h4>
-                    <p className="text-xs text-gray-700">{dreamInsight.encouragement}</p>
-                  </div>
-                )}
-              </div>
-              <div className="md:w-64 flex-shrink-0">
-                {typeof dreamInsight.closenessScore === 'number' && (
-                  <div className="p-4 bg-[#FFB71B]/10 rounded-2xl mb-4 text-center">
-                    <p className="text-xs uppercase tracking-wide text-gray-600 mb-1">Closeness Score</p>
-                    <p className="text-3xl font-bold text-[#FFB71B]">{dreamInsight.closenessScore.toFixed(1)}%</p>
-                  </div>
-                )}
-                {(dreamInsight.riasecGap || dreamInsight.aptitudeGap) && (
-                  <div className="p-4 bg-[#F8F9FA] rounded-2xl">
-                    <h4 className="text-sm font-semibold text-[#232D35] mb-2">Gap Snapshot</h4>
-                    <div className="space-y-2">
-                      {dreamInsight.riasecGap && (
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">RIASEC</p>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(dreamInsight.riasecGap)
-                              .sort((a, b) => (b[1] || 0) - (a[1] || 0))
-                              .slice(0, 3)
-                              .map(([key, value]) => (
-                                <span key={key} className="px-2 py-1 text-xs bg-white rounded-full text-[#1D63A1] border border-[#1D63A1]/20">
-                                  {key}: {value.toFixed(1)}%
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-                      {dreamInsight.aptitudeGap && (
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">Aptitude</p>
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(dreamInsight.aptitudeGap)
-                              .sort((a, b) => (b[1] || 0) - (a[1] || 0))
-                              .slice(0, 3)
-                              .map(([key, value]) => (
-                                <span key={key} className="px-2 py-1 text-xs bg-white rounded-full text-[#232D35] border border-[#232D35]/15">
-                                  {key}: {value.toFixed(1)}%
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
           </motion.div>
         )}
         {/* Academic Track Recommendations - only show if recommendations exist */}

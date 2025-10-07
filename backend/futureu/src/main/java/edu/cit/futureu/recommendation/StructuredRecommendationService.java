@@ -15,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import edu.cit.futureu.entity.AssessmentResultEntity;
 import edu.cit.futureu.entity.CareerCareerPathEntity;
 import edu.cit.futureu.entity.CareerEntity;
@@ -93,7 +96,7 @@ public class StructuredRecommendationService {
         List<CareerPathRecommendation> careerPathRecommendations = buildCareerPathRecommendations(studentProfile);
         LOGGER.info("Built {} career path recommendations", careerPathRecommendations.size());
 
-        DreamCareerInsight insight = buildDreamCareerInsight(userAssessment, studentProfile);
+        DreamCareerInsight insight = buildDreamCareerInsight(userAssessment, studentProfile, careerPathRecommendations);
         LOGGER.debug("Dream career insight built: {}", insight != null ? "Success" : "Null");
 
         AdvancedRecommendationResponse response = new AdvancedRecommendationResponse();
@@ -389,7 +392,7 @@ public class StructuredRecommendationService {
         return result;
     }
 
-    private DreamCareerInsight buildDreamCareerInsight(UserAssessmentEntity userAssessment, StudentProfile studentProfile) {
+    private DreamCareerInsight buildDreamCareerInsight(UserAssessmentEntity userAssessment, StudentProfile studentProfile, List<CareerPathRecommendation> careerPathRecommendations) {
         if (userAssessment == null || userAssessment.getUser() == null) {
             return null;
         }
@@ -402,6 +405,18 @@ public class StructuredRecommendationService {
         DreamCareerInsight insight = new DreamCareerInsight();
         insight.setDreamCareer(profile.getDreamCareer());
 
+        // Try comprehensive AI analysis first
+        try {
+            DreamCareerInsight aiInsight = generateComprehensiveDreamCareerAnalysis(profile, studentProfile, userAssessment, careerPathRecommendations);
+            if (aiInsight != null) {
+                return aiInsight;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to generate AI dream career analysis for user {}: {}", 
+                userAssessment.getUser().getUserId(), e.getMessage());
+        }
+
+        // Fallback to original logic
         CareerEntity matchedDream = matchCareerByName(profile.getDreamCareer());
         if (matchedDream == null) {
             insight.setEncouragement(buildDefaultEncouragement());
@@ -416,6 +431,543 @@ public class StructuredRecommendationService {
         insight.setGuidance(buildGuidanceMessage(insight));
         insight.setEncouragement(buildEncouragementMessage(insight));
         return insight;
+    }
+
+    /**
+     * Generate comprehensive AI-driven dream career analysis
+     * Handles both specific and vague dream career statements with personalized insights
+     */
+    private DreamCareerInsight generateComprehensiveDreamCareerAnalysis(
+            CareerInterestProfileEntity profile, 
+            StudentProfile studentProfile, 
+            UserAssessmentEntity userAssessment,
+            List<CareerPathRecommendation> careerPathRecommendations) throws Exception {
+        
+        // Wait for rate limit before making API call
+        geminiAIService.waitForRateLimit();
+        
+        // Build comprehensive student profile data for AI analysis
+        Map<String, Object> studentData = buildStudentProfileForAI(studentProfile);
+        
+        // Add basic assessment information from userAssessment
+        studentData.put("assessmentScore", userAssessment.getScore());
+        studentData.put("dateTaken", userAssessment.getDateTaken());
+        if (userAssessment.getDateCompleted() != null) {
+            studentData.put("dateCompleted", userAssessment.getDateCompleted());
+        }
+        
+        // Add career interest profile information
+        Map<String, Object> careerProfileData = new HashMap<>();
+        careerProfileData.put("dreamCareer", profile.getDreamCareer());
+        careerProfileData.put("mainInterestsHobbies", profile.getMainInterestsHobbies());
+        careerProfileData.put("personalStrengthsSkills", profile.getPersonalStrengthsSkills());
+        careerProfileData.put("careerValues", profile.getCareerValues());
+        careerProfileData.put("preferredWorkEnvironment", profile.getPreferredWorkEnvironment());
+        careerProfileData.put("educationTrainingAspirations", profile.getEducationTrainingAspirations());
+        studentData.put("careerProfile", careerProfileData);
+        
+        // CRITICAL: Add all available careers from database for AI to reference
+        List<CareerEntity> allCareers = careerRepository.findAll();
+        studentData.put("availableCareers", buildCareerDatabase(allCareers));
+        
+        // Add career pathway recommendations if available
+        if (careerPathRecommendations != null && !careerPathRecommendations.isEmpty()) {
+            studentData.put("careerPathRecommendations", buildCareerPathContext(careerPathRecommendations));
+        }
+        
+        // Build comprehensive AI prompt
+        String aiPrompt = buildDreamCareerAnalysisPrompt(profile.getDreamCareer(), studentData);
+        
+        // Make AI request
+        String aiResponse = geminiAIService.makeAIRequest(aiPrompt);
+        
+        // Parse AI response to create DreamCareerInsight
+        return parseDreamCareerAIResponse(aiResponse, profile.getDreamCareer());
+    }
+
+    /**
+     * Build career database information for AI consumption
+     */
+    private List<Map<String, Object>> buildCareerDatabase(List<CareerEntity> careers) {
+        List<Map<String, Object>> careerData = new ArrayList<>();
+        
+        for (CareerEntity career : careers) {
+            Map<String, Object> careerInfo = new HashMap<>();
+            careerInfo.put("title", career.getCareerTitle());
+            careerInfo.put("description", career.getCareerDescription());
+            careerInfo.put("industry", career.getIndustry());
+            careerInfo.put("salary", career.getSalary());
+            careerInfo.put("jobTrend", career.getJobTrend());
+            
+            // Extract RIASEC information from description if available
+            String description = career.getCareerDescription();
+            if (description != null) {
+                careerInfo.put("riasecHints", extractRiasecFromDescription(description));
+            }
+            
+            careerData.add(careerInfo);
+        }
+        
+        return careerData;
+    }
+
+    /**
+     * Extract RIASEC hints from career description
+     */
+    private String extractRiasecFromDescription(String description) {
+        if (description == null || description.isEmpty()) {
+            return "";
+        }
+        
+        StringBuilder riasecHints = new StringBuilder();
+        String lowerDesc = description.toLowerCase();
+        
+        // Look for RIASEC indicators in the description
+        if (lowerDesc.contains("hands-on") || lowerDesc.contains("manual") || lowerDesc.contains("tools") || 
+            lowerDesc.contains("mechanical") || lowerDesc.contains("practical") || lowerDesc.contains("build")) {
+            riasecHints.append("Realistic, ");
+        }
+        
+        if (lowerDesc.contains("research") || lowerDesc.contains("analyze") || lowerDesc.contains("investigate") || 
+            lowerDesc.contains("scientific") || lowerDesc.contains("data") || lowerDesc.contains("problem-solving")) {
+            riasecHints.append("Investigative, ");
+        }
+        
+        if (lowerDesc.contains("creative") || lowerDesc.contains("artistic") || lowerDesc.contains("design") || 
+            lowerDesc.contains("innovative") || lowerDesc.contains("aesthetic") || lowerDesc.contains("expression")) {
+            riasecHints.append("Artistic, ");
+        }
+        
+        if (lowerDesc.contains("helping") || lowerDesc.contains("teaching") || lowerDesc.contains("counseling") || 
+            lowerDesc.contains("social") || lowerDesc.contains("community") || lowerDesc.contains("support")) {
+            riasecHints.append("Social, ");
+        }
+        
+        if (lowerDesc.contains("leadership") || lowerDesc.contains("management") || lowerDesc.contains("business") || 
+            lowerDesc.contains("sales") || lowerDesc.contains("entrepreneurial") || lowerDesc.contains("influence")) {
+            riasecHints.append("Enterprising, ");
+        }
+        
+        if (lowerDesc.contains("organized") || lowerDesc.contains("systematic") || lowerDesc.contains("detailed") || 
+            lowerDesc.contains("administrative") || lowerDesc.contains("structured") || lowerDesc.contains("procedural")) {
+            riasecHints.append("Conventional, ");
+        }
+        
+        // Remove trailing comma and space
+        String result = riasecHints.toString();
+        return result.endsWith(", ") ? result.substring(0, result.length() - 2) : result;
+    }
+
+    /**
+     * Build career pathway context for AI
+     */
+    private List<Map<String, Object>> buildCareerPathContext(List<CareerPathRecommendation> careerPaths) {
+        List<Map<String, Object>> pathData = new ArrayList<>();
+        
+        for (CareerPathRecommendation path : careerPaths) {
+            Map<String, Object> pathInfo = new HashMap<>();
+            pathInfo.put("pathName", path.getCareerPathName());
+            pathInfo.put("matchPercentage", path.getMatchPercentage());
+            pathInfo.put("summary", path.getSummary());
+            
+            // Add career details if available
+            if (path.getCareers() != null && !path.getCareers().isEmpty()) {
+                List<Map<String, String>> careers = new ArrayList<>();
+                for (CareerRecommendationDetail career : path.getCareers()) {
+                    Map<String, String> careerInfo = new HashMap<>();
+                    careerInfo.put("title", career.getCareerTitle());
+                    careerInfo.put("summary", career.getSummary());
+                    careers.add(careerInfo);
+                }
+                pathInfo.put("careers", careers);
+            }
+            
+            pathData.add(pathInfo);
+        }
+        
+        return pathData;
+    }
+
+    /**
+     * Detect if a dream career statement is vague and provide field context
+     */
+    private boolean isVagueCareerStatement(String dreamCareer) {
+        if (dreamCareer == null || dreamCareer.trim().isEmpty()) {
+            return true;
+        }
+        
+        String normalized = dreamCareer.toLowerCase().trim();
+        
+        // Common vague indicators
+        String[] vagueIndicators = {
+            "field", "area", "something", "anything", "related to", "involving", 
+            "helping", "working with", "dealing with", "focused on", "based on",
+            "technology", "business", "creative", "innovative", "scientific"
+        };
+        
+        for (String indicator : vagueIndicators) {
+            if (normalized.contains(indicator)) {
+                return true;
+            }
+        }
+        
+        // Check if it's too short or too general
+        return normalized.split("\\s+").length <= 3 || 
+               normalized.contains("don't know") || 
+               normalized.contains("not sure") ||
+               normalized.contains("undecided");
+    }
+
+    /**
+     * Add field interpretation context to help AI understand vague responses
+     */
+    private void addFieldInterpretationContext(String dreamCareer, StringBuilder prompt) {
+        prompt.append("FIELD INTERPRETATION GUIDANCE:\n");
+        
+        if (isVagueCareerStatement(dreamCareer)) {
+            prompt.append("⚠️  VAGUE RESPONSE DETECTED - Use intelligent interpretation with database constraints:\n\n");
+            
+            String normalized = dreamCareer.toLowerCase();
+            
+            if (normalized.contains("technolog") || normalized.contains("computer") || normalized.contains("software") || normalized.contains("digital")) {
+                prompt.append("TECHNOLOGY FIELD INDICATORS detected. Search the career database for technology-related careers such as:\n");
+                prompt.append("- Look for careers with 'Software', 'Computer', 'Data', 'Systems', 'Technology' in their titles\n");
+                prompt.append("- Prioritize based on student's Investigative and Realistic RIASEC scores\n\n");
+            }
+            
+            if (normalized.contains("help") || normalized.contains("service") || normalized.contains("people") || normalized.contains("society")) {
+                prompt.append("HELPING/SERVICE FIELD INDICATORS detected. Search the career database for service-oriented careers such as:\n");
+                prompt.append("- Look for careers with 'Social', 'Teacher', 'Counselor', 'Healthcare', 'Community' in their titles\n");
+                prompt.append("- Prioritize based on student's Social RIASEC scores\n\n");
+            }
+            
+            if (normalized.contains("business") || normalized.contains("management") || normalized.contains("leader") || normalized.contains("entrepreneur")) {
+                prompt.append("BUSINESS/LEADERSHIP FIELD INDICATORS detected. Search the career database for business careers such as:\n");
+                prompt.append("- Look for careers with 'Manager', 'Business', 'Marketing', 'Finance', 'Sales' in their titles\n");
+                prompt.append("- Prioritize based on student's Enterprising RIASEC scores\n\n");
+            }
+            
+            if (normalized.contains("creative") || normalized.contains("art") || normalized.contains("design") || normalized.contains("innovation")) {
+                prompt.append("CREATIVE/DESIGN FIELD INDICATORS detected. Search the career database for creative careers such as:\n");
+                prompt.append("- Look for careers with 'Design', 'Creative', 'Art', 'Media', 'Innovation' in their titles\n");
+                prompt.append("- Prioritize based on student's Artistic RIASEC scores\n\n");
+            }
+            
+            if (normalized.contains("science") || normalized.contains("research") || normalized.contains("analyz") || normalized.contains("discover")) {
+                prompt.append("SCIENCE/RESEARCH FIELD INDICATORS detected. Search the career database for research careers such as:\n");
+                prompt.append("- Look for careers with 'Research', 'Scientist', 'Analyst', 'Laboratory', 'Study' in their titles\n");
+                prompt.append("- Prioritize based on student's Investigative RIASEC scores\n\n");
+            }
+            
+            if (normalized.contains("health") || normalized.contains("medical") || normalized.contains("care") || normalized.contains("wellness")) {
+                prompt.append("HEALTHCARE FIELD INDICATORS detected. Search the career database for healthcare careers such as:\n");
+                prompt.append("- Look for careers with 'Doctor', 'Nurse', 'Medical', 'Health', 'Therapy' in their titles\n");
+                prompt.append("- Prioritize based on student's Social and Investigative RIASEC scores\n\n");
+            }
+            
+            prompt.append("🎯 CRITICAL: Only suggest careers that actually exist in the provided database. Do not suggest careers not listed.\n\n");
+        } else {
+            prompt.append("✅ SPECIFIC CAREER detected - Find exact or close matches in the career database and analyze alignment.\n\n");
+        }
+    }
+
+    /**
+     * Build comprehensive AI prompt for dream career analysis
+     */
+    private String buildDreamCareerAnalysisPrompt(String dreamCareer, Map<String, Object> studentData) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("DREAM CAREER ALIGNMENT ANALYSIS\n\n");
+        
+        prompt.append("You are an expert career counselor performing a REALITY CHECK analysis. ");
+        prompt.append("A student has stated their dream career, and you need to analyze how this aligns with ");
+        prompt.append("the SPECIFIC career recommendations that were generated for them based on their assessment. ");
+        prompt.append("This is NOT about general career exploration - it's about comparing their SUBJECTIVE dream ");
+        prompt.append("against their OBJECTIVE AI-generated recommendations.\n\n");
+        
+        prompt.append("STUDENT'S DREAM CAREER: \"").append(dreamCareer).append("\"\n\n");
+        
+        // Add intelligent field interpretation context
+        addFieldInterpretationContext(dreamCareer, prompt);
+        
+        prompt.append("CORE ANALYSIS PURPOSE:\n");
+        prompt.append("Compare the student's dream career against their personalized AI recommendations to determine:\n");
+        prompt.append("- Does their dream career appear in their recommended career paths?\n");
+        prompt.append("- If YES: Validate the alignment and explain why it's a good match\n");
+        prompt.append("- If NO: Explain the gap between what they want vs. what we recommend for them\n");
+        prompt.append("- Provide insights on bridging any gaps or validating their aspirations\n\n");
+        
+        prompt.append("STUDENT ASSESSMENT DATA:\n");
+        
+        // Add RIASEC Profile
+        if (studentData.containsKey("personalityType")) {
+            prompt.append("RIASEC Personality Profile:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> riasecScores = (Map<String, Object>) studentData.get("personalityType");
+            for (Map.Entry<String, Object> entry : riasecScores.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(entry.getValue()).append("%\n");
+            }
+            prompt.append("\n");
+        }
+        
+        // Add Academic Tracks
+        if (studentData.containsKey("academicTracks")) {
+            prompt.append("Academic Track Strengths:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Double> tracks = (Map<String, Double>) studentData.get("academicTracks");
+            for (Map.Entry<String, Double> entry : tracks.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", entry.getValue() * 100)).append("%\n");
+            }
+            prompt.append("\n");
+        }
+        
+        // Add Skills
+        if (studentData.containsKey("skillAreas")) {
+            prompt.append("Skill Assessment Results:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Double> skills = (Map<String, Double>) studentData.get("skillAreas");
+            for (Map.Entry<String, Double> entry : skills.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", entry.getValue() * 100)).append("%\n");
+            }
+            prompt.append("\n");
+        }
+        
+        // Add Career Profile Data
+        if (studentData.containsKey("careerProfile")) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> careerProfile = (Map<String, Object>) studentData.get("careerProfile");
+            
+            prompt.append("CAREER INTEREST PROFILE:\n");
+            if (careerProfile.get("careerValues") != null) {
+                prompt.append("Core Values: ").append(careerProfile.get("careerValues")).append("\n");
+            }
+            if (careerProfile.get("mainInterestsHobbies") != null) {
+                prompt.append("Main Interests & Hobbies: ").append(careerProfile.get("mainInterestsHobbies")).append("\n");
+            }
+            if (careerProfile.get("personalStrengthsSkills") != null) {
+                prompt.append("Personal Strengths & Skills: ").append(careerProfile.get("personalStrengthsSkills")).append("\n");
+            }
+            if (careerProfile.get("preferredWorkEnvironment") != null) {
+                prompt.append("Preferred Work Environment: ").append(careerProfile.get("preferredWorkEnvironment")).append("\n");
+            }
+            if (careerProfile.get("educationTrainingAspirations") != null) {
+                prompt.append("Education/Training Aspirations: ").append(careerProfile.get("educationTrainingAspirations")).append("\n");
+            }
+            prompt.append("\n");
+        }
+        
+        // Add Available Careers Database - REFERENCE ONLY
+        if (studentData.containsKey("availableCareers")) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> careers = (List<Map<String, Object>>) studentData.get("availableCareers");
+            
+            prompt.append("📚 REFERENCE DATABASE (for context only):\n");
+            prompt.append("Use this database only to understand career descriptions if needed, ");
+            prompt.append("but focus your analysis on the RECOMMENDED careers above.\n");
+            prompt.append("Database contains ").append(careers.size()).append(" total careers across all industries.\n\n");
+        }
+        
+        // Add Career Pathway Recommendations if available - CRITICAL SECTION
+        if (studentData.containsKey("careerPathRecommendations")) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> pathRecommendations = (List<Map<String, Object>>) studentData.get("careerPathRecommendations");
+            
+            prompt.append("🎯 STUDENT'S PERSONALIZED AI RECOMMENDATIONS:\n");
+            prompt.append("These are the career paths our AI specifically recommended for THIS student:\n");
+            prompt.append("Your job is to compare their dream career against THESE recommendations, not the general database.\n\n");
+            
+            for (Map<String, Object> path : pathRecommendations) {
+                prompt.append("✅ RECOMMENDED PATH: ").append(path.get("pathName"))
+                      .append(" (").append(path.get("matchPercentage")).append("% match)\n");
+                
+                if (path.get("summary") != null) {
+                    prompt.append("   Why recommended: ").append(path.get("summary")).append("\n");
+                }
+                
+                @SuppressWarnings("unchecked")
+                List<Map<String, String>> pathCareers = (List<Map<String, String>>) path.get("careers");
+                if (pathCareers != null && !pathCareers.isEmpty()) {
+                    prompt.append("   Specific careers in this path:\n");
+                    for (Map<String, String> career : pathCareers) {
+                        prompt.append("     • ").append(career.get("title")).append("\n");
+                    }
+                }
+                prompt.append("\n");
+            }
+            
+            prompt.append("� ALIGNMENT QUESTION: Does the student's dream career appear in the above recommendations?\n");
+            prompt.append("If not, what does this reveal about the gap between their aspirations and their assessment profile?\n\n");
+        }
+        
+        prompt.append("ANALYSIS REQUIREMENTS:\n");
+        prompt.append("Provide a comprehensive reality-check analysis in 5 structured sections:\n\n");
+        
+        prompt.append("1. RECOMMENDATION ALIGNMENT (100-150 words):\n");
+        prompt.append("- PRIMARY QUESTION: Does their dream career appear in their AI recommendations above?\n");
+        prompt.append("- IF YES: Explain which recommended path contains their dream career and why it's a strong match\n");
+        prompt.append("- IF NO: Identify the closest recommended career to their dream and explain the differences\n");
+        prompt.append("- FOR VAGUE DREAMS: Interpret their field interest and find the best matching recommended path\n");
+        prompt.append("- Reference specific recommendation percentages and path summaries\n");
+        prompt.append("- Example: 'Your dream of software development aligns perfectly with your #1 recommended Technology Career Path (89% match)'\n\n");
+        
+        prompt.append("2. STRENGTHS VALIDATION (100-150 words):\n");
+        prompt.append("- Analyze how their assessment strengths support (or don't support) their dream career\n");
+        prompt.append("- Compare their top RIASEC scores against what their dream career typically requires\n");
+        prompt.append("- IF ALIGNED: Celebrate how their natural strengths match their aspirations\n");
+        prompt.append("- IF MISALIGNED: Explain why the AI didn't recommend careers in their dream field\n");
+        prompt.append("- Use specific percentages: 'Your Investigative score (85%) strongly supports your interest in research'\n");
+        prompt.append("- Connect their academic track performance to career feasibility\n\n");
+        
+        prompt.append("3. REALITY CHECK INSIGHTS (100-150 words):\n");
+        prompt.append("- Honest assessment of any gaps between their dream and their recommended paths\n");
+        prompt.append("- IF DREAM NOT RECOMMENDED: Explain why the AI didn't suggest careers in their preferred field\n");
+        prompt.append("- Address potential misconceptions about their dream career requirements\n");
+        prompt.append("- Highlight assessment areas that may not align with their dream career demands\n");
+        prompt.append("- Be constructive: frame gaps as development opportunities rather than barriers\n");
+        prompt.append("- Example: 'While you dream of marketing, your lower Social score (40%) suggests challenges in client-facing roles'\n\n");
+        
+        prompt.append("4. BRIDGE-BUILDING STRATEGIES (100-150 words):\n");
+        prompt.append("- IF ALIGNED: Suggest next steps to pursue their recommended path confidently\n");
+        prompt.append("- IF MISALIGNED: Provide strategies to either develop toward their dream or explore recommended alternatives\n");
+        prompt.append("- Suggest ways to explore their dream field while building on their recommended strengths\n");
+        prompt.append("- Include both immediate actions and longer-term development plans\n");
+        prompt.append("- Example: 'To bridge toward marketing, strengthen social skills through recommended business paths first'\n");
+        prompt.append("- Offer compromise careers that blend their dreams with their recommendations\n\n");
+        
+        prompt.append("5. PERSONALIZED ENCOURAGEMENT (80-120 words):\n");
+        prompt.append("- IF DREAMS ALIGN: Celebrate the convergence of their aspirations and assessment results\n");
+        prompt.append("- IF DREAMS DIVERGE: Encourage exploration while honoring their assessment-based strengths\n");
+        prompt.append("- Acknowledge their self-awareness in stating their dreams\n");
+        prompt.append("- Frame the analysis as valuable self-discovery rather than limitation\n");
+        prompt.append("- End with motivation about either pursuing their validated dream or exploring new possibilities\n");
+        prompt.append("- Tone: realistic optimism that honors both their aspirations and their assessed capabilities\n\n");
+        
+        prompt.append("RESPONSE FORMAT:\n");
+        prompt.append("Return your analysis as a valid JSON object with exactly these keys:\n");
+        prompt.append("{\n");
+        prompt.append("  \"fieldAlignment\": \"your field alignment analysis\",\n");
+        prompt.append("  \"strengthsAlignment\": \"your strengths alignment analysis\",\n");
+        prompt.append("  \"misalignmentInsights\": \"your misalignment insights\",\n");
+        prompt.append("  \"personalizedFocusAreas\": \"your personalized focus areas\",\n");
+        prompt.append("  \"encouragement\": \"your encouragement message\"\n");
+        prompt.append("}\n\n");
+        
+        prompt.append("RESPONSE FORMAT:\n");
+        prompt.append("Return your analysis as a valid JSON object with exactly these keys:\n");
+        prompt.append("{\n");
+        prompt.append("  \"fieldAlignment\": \"your recommendation alignment analysis\",\n");
+        prompt.append("  \"strengthsAlignment\": \"your strengths validation analysis\",\n");
+        prompt.append("  \"misalignmentInsights\": \"your reality check insights\",\n");
+        prompt.append("  \"personalizedFocusAreas\": \"your bridge-building strategies\",\n");
+        prompt.append("  \"encouragement\": \"your personalized encouragement\"\n");
+        prompt.append("}\n\n");
+        
+        prompt.append("CRITICAL FOCUS:\n");
+        prompt.append("- This is a COMPARISON analysis: Dream Career vs. AI Recommendations\n");
+        prompt.append("- Your primary job is determining alignment/misalignment with their specific recommendations\n");
+        prompt.append("- Reference actual recommendation percentages and path names in your analysis\n");
+        prompt.append("- Be honest about gaps while remaining encouraging about possibilities\n");
+        prompt.append("- Help them understand WHY the AI made its recommendations vs. their stated dreams\n");
+        
+        return prompt.toString();
+    }
+
+    /**
+     * Parse AI response into DreamCareerInsight object
+     */
+    private DreamCareerInsight parseDreamCareerAIResponse(String aiResponse, String dreamCareer) {
+        try {
+            // Clean the response - extract JSON if wrapped in other text
+            String jsonResponse = extractJSONFromResponse(aiResponse);
+            
+            // Parse the JSON response
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode responseNode = mapper.readTree(jsonResponse);
+            
+            // Create and populate DreamCareerInsight
+            DreamCareerInsight insight = new DreamCareerInsight();
+            insight.setDreamCareer(dreamCareer);
+            
+            // Extract AI analysis sections
+            if (responseNode.has("fieldAlignment")) {
+                insight.setFieldAlignment(responseNode.get("fieldAlignment").asText());
+            }
+            if (responseNode.has("strengthsAlignment")) {
+                insight.setStrengthsAlignment(responseNode.get("strengthsAlignment").asText());
+            }
+            if (responseNode.has("misalignmentInsights")) {
+                insight.setMisalignmentInsights(responseNode.get("misalignmentInsights").asText());
+            }
+            if (responseNode.has("personalizedFocusAreas")) {
+                insight.setPersonalizedFocusAreas(responseNode.get("personalizedFocusAreas").asText());
+            }
+            if (responseNode.has("encouragement")) {
+                insight.setEncouragement(responseNode.get("encouragement").asText());
+            }
+            
+            // Set a synthetic closeness score based on field alignment quality
+            // This provides backward compatibility for frontend components expecting this field
+            insight.setClosenessScore(calculateSyntheticClosenessScore(insight));
+            
+            return insight;
+            
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse AI dream career response: {}", e.getMessage());
+            throw new RuntimeException("Failed to parse AI analysis response", e);
+        }
+    }
+
+    /**
+     * Extract JSON object from AI response text
+     */
+    private String extractJSONFromResponse(String response) {
+        if (response == null || response.trim().isEmpty()) {
+            throw new IllegalArgumentException("AI response is empty");
+        }
+        
+        // Try to find JSON object boundaries
+        int jsonStart = response.indexOf("{");
+        int jsonEnd = response.lastIndexOf("}");
+        
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            return response.substring(jsonStart, jsonEnd + 1);
+        }
+        
+        // If no clear JSON boundaries, return the response as-is and let JSON parser handle it
+        return response.trim();
+    }
+
+    /**
+     * Calculate a synthetic closeness score based on AI analysis quality
+     * This provides backward compatibility for components expecting numerical scores
+     */
+    private Double calculateSyntheticClosenessScore(DreamCareerInsight insight) {
+        // Simple heuristic based on the presence and positive tone of analysis sections
+        double score = 50.0; // Base score
+        
+        // Boost score based on comprehensive analysis
+        if (insight.getFieldAlignment() != null && insight.getFieldAlignment().length() > 100) {
+            score += 15.0;
+        }
+        if (insight.getStrengthsAlignment() != null && insight.getStrengthsAlignment().length() > 100) {
+            score += 15.0;
+        }
+        if (insight.getPersonalizedFocusAreas() != null && insight.getPersonalizedFocusAreas().length() > 100) {
+            score += 10.0;
+        }
+        
+        // Check for positive indicators in field alignment
+        if (insight.getFieldAlignment() != null) {
+            String fieldText = insight.getFieldAlignment().toLowerCase();
+            if (fieldText.contains("strong") || fieldText.contains("excellent") || fieldText.contains("well-aligned")) {
+                score += 10.0;
+            }
+            if (fieldText.contains("perfect") || fieldText.contains("ideal")) {
+                score += 5.0;
+            }
+        }
+        
+        return Math.min(100.0, Math.max(0.0, score));
     }
 
     private CareerEntity matchCareerByName(String name) {
@@ -823,6 +1375,75 @@ public class StructuredRecommendationService {
         }
         
         return enhanced;
+    }
+
+    /**
+     * Get existing recommendations for a user assessment
+     */
+    public AdvancedRecommendationResponse getExistingRecommendations(UserAssessmentEntity userAssessment) {
+        try {
+            // Check if recommendations already exist in the database
+            Optional<AssessmentResultEntity> resultOpt = assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            
+            if (resultOpt.isPresent()) {
+                AssessmentResultEntity assessmentResult = resultOpt.get();
+                
+                // Load existing recommendations
+                return persistenceService.getPersistedRecommendations(assessmentResult);
+            }
+            
+            return null;
+        } catch (Exception e) {
+            LOGGER.error("Error getting existing recommendations for assessment {}: {}", 
+                userAssessment.getUserQuizAssessment(), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Regenerate only the dream career analysis using existing career path recommendations
+     */
+    public DreamCareerInsight regenerateDreamCareerAnalysis(UserAssessmentEntity userAssessment, List<CareerPathRecommendation> careerPaths) throws Exception {
+        LOGGER.info("Regenerating dream career analysis for user assessment: {}", userAssessment.getUserQuizAssessment());
+        
+        // Get career interest profile
+        Optional<CareerInterestProfileEntity> profileOpt = careerInterestProfileService.getMostRecentActiveProfile(userAssessment.getUser().getUserId());
+        if (!profileOpt.isPresent() || profileOpt.get().getDreamCareer() == null || profileOpt.get().getDreamCareer().trim().isEmpty()) {
+            throw new IllegalStateException("No dream career set in user profile");
+        }
+        
+        // Get assessment result to build student profile
+        Optional<AssessmentResultEntity> resultOpt = assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+        if (!resultOpt.isPresent()) {
+            throw new IllegalStateException("Assessment result not found");
+        }
+        
+        AssessmentResultEntity assessmentResult = resultOpt.get();
+        List<UserAssessmentSectionResultEntity> sectionResults = userAssessmentService.getSectionResultsForAssessment(userAssessment);
+        
+        // Build student profile the same way as in the main generation method
+        StudentProfile studentProfile = StudentProfile.from(assessmentResult, sectionResults);
+        
+        // Generate new dream career analysis with existing career recommendations
+        return buildDreamCareerInsight(userAssessment, studentProfile, careerPaths);
+    }
+
+    /**
+     * Persist updated recommendations with new dream career analysis
+     */
+    public void persistUpdatedRecommendations(AssessmentResultEntity assessmentResult, AdvancedRecommendationResponse updatedRecommendations) {
+        try {
+            LOGGER.info("Persisting updated recommendations with new dream career analysis for assessment result: {}", assessmentResult.getResultId());
+            
+            // Use the existing persistence service to save the updated recommendations
+            persistenceService.persistRecommendations(assessmentResult, updatedRecommendations);
+            
+            LOGGER.info("Successfully persisted updated recommendations with new dream career analysis");
+        } catch (Exception e) {
+            LOGGER.error("Error persisting updated recommendations for assessment result {}: {}", 
+                assessmentResult.getResultId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to persist updated recommendations", e);
+        }
     }
 }
 

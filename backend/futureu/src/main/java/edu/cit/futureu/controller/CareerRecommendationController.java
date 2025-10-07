@@ -1,30 +1,38 @@
 package edu.cit.futureu.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import edu.cit.futureu.entity.CareerRecommendationEntity;
 import edu.cit.futureu.entity.AssessmentResultEntity;
+import edu.cit.futureu.entity.CareerRecommendationEntity;
 import edu.cit.futureu.entity.UserAssessmentEntity;
-import edu.cit.futureu.service.CareerRecommendationService;
-import edu.cit.futureu.service.AssessmentResultService;
-import edu.cit.futureu.service.UserAssessmentService;
-import edu.cit.futureu.service.GeminiAIService;
 import edu.cit.futureu.recommendation.AdvancedRecommendationResponse;
+import edu.cit.futureu.recommendation.DreamCareerInsight;
 import edu.cit.futureu.recommendation.StructuredRecommendationService;
 import edu.cit.futureu.repository.CareerPathRepository;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.HashMap;
-import java.util.ArrayList;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import edu.cit.futureu.service.AssessmentResultService;
+import edu.cit.futureu.service.CareerRecommendationService;
+import edu.cit.futureu.service.GeminiAIService;
+import edu.cit.futureu.service.UserAssessmentService;
 
 
 @RestController
@@ -317,6 +325,80 @@ public class CareerRecommendationController {
             logger.error("Error regenerating recommendations for userAssessmentId: {}", userAssessmentId, e);
             return new ResponseEntity<>(
                 Map.of("error", "Failed to regenerate recommendations", 
+                       "message", e.getMessage(),
+                       "code", "SERVER_ERROR"),
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    /**
+     * Regenerate only the dream career analysis component
+     */
+    @PostMapping("/regenerate-dream-career/{userAssessmentId}")
+    public ResponseEntity<?> regenerateDreamCareerAnalysis(@PathVariable int userAssessmentId) {
+        logger.info("Regenerating dream career analysis for userAssessmentId: {}", userAssessmentId);
+        
+        try {
+            // Get the user assessment
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            
+            // Check if the assessment is completed
+            if (!"COMPLETED".equals(userAssessment.getStatus())) {
+                return new ResponseEntity<>(
+                    Map.of("error", "Assessment is not yet completed", 
+                           "code", "BAD_REQUEST"),
+                    HttpStatus.BAD_REQUEST
+                );
+            }
+            
+            // Get existing recommendations to use for dream career analysis
+            AdvancedRecommendationResponse existingRecommendations = structuredRecommendationService.getExistingRecommendations(userAssessment);
+            
+            if (existingRecommendations == null || existingRecommendations.getCareerPaths() == null || existingRecommendations.getCareerPaths().isEmpty()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "No existing career recommendations found. Please generate recommendations first.", 
+                           "code", "PRECONDITION_FAILED"),
+                    HttpStatus.PRECONDITION_FAILED
+                );
+            }
+            
+            // Regenerate only the dream career analysis using existing recommendations
+            DreamCareerInsight newDreamInsight = structuredRecommendationService.regenerateDreamCareerAnalysis(userAssessment, existingRecommendations.getCareerPaths());
+            
+            // Update the existing recommendations with the new dream career insight
+            existingRecommendations.setDreamCareerInsight(newDreamInsight);
+            
+            // Save the updated recommendations back to the database
+            Optional<AssessmentResultEntity> resultOpt = assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
+            if (resultOpt.isPresent()) {
+                AssessmentResultEntity assessmentResult = resultOpt.get();
+                structuredRecommendationService.persistUpdatedRecommendations(assessmentResult, existingRecommendations);
+                logger.info("Updated recommendations with new dream career analysis saved to database");
+            }
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("dreamCareerInsight", newDreamInsight);
+            response.put("regenerated", true);
+            response.put("timestamp", new java.util.Date());
+            
+            logger.info("Dream career analysis regenerated successfully for userAssessmentId: {}", userAssessmentId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            logger.error("Error regenerating dream career analysis for userAssessmentId: {}", userAssessmentId, e);
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to regenerate dream career analysis", 
                        "message", e.getMessage(),
                        "code", "SERVER_ERROR"),
                 HttpStatus.INTERNAL_SERVER_ERROR

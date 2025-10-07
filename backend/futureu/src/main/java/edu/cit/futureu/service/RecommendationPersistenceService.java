@@ -202,8 +202,16 @@ public class RecommendationPersistenceService {
             
             entity.setDreamCareer(insight.getDreamCareer());
             entity.setClosenessScore(insight.getClosenessScore());
-            entity.setGuidance(insight.getGuidance());
+            
+            // New comprehensive AI analysis fields
+            entity.setFieldAlignment(insight.getFieldAlignment());
+            entity.setStrengthsAlignment(insight.getStrengthsAlignment());
+            entity.setMisalignmentInsights(insight.getMisalignmentInsights());
+            entity.setPersonalizedFocusAreas(insight.getPersonalizedFocusAreas());
             entity.setEncouragement(insight.getEncouragement());
+            
+            // Legacy fields - keep for backward compatibility
+            entity.setGuidance(insight.getGuidance());
             
             // Serialize gap maps to JSON
             try {
@@ -315,8 +323,16 @@ public class RecommendationPersistenceService {
         DreamCareerInsight insight = new DreamCareerInsight();
         insight.setDreamCareer(entity.getDreamCareer());
         insight.setClosenessScore(entity.getClosenessScore());
-        insight.setGuidance(entity.getGuidance());
+        
+        // New comprehensive AI analysis fields
+        insight.setFieldAlignment(entity.getFieldAlignment());
+        insight.setStrengthsAlignment(entity.getStrengthsAlignment());
+        insight.setMisalignmentInsights(entity.getMisalignmentInsights());
+        insight.setPersonalizedFocusAreas(entity.getPersonalizedFocusAreas());
         insight.setEncouragement(entity.getEncouragement());
+        
+        // Legacy fields - keep for backward compatibility
+        insight.setGuidance(entity.getGuidance());
         
         // Deserialize gap maps
         try {

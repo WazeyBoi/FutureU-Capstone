@@ -240,7 +240,7 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
           {/* Interest Assessment */}
           <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
             <div className="flex items-center justify-between p-5 pb-0">
-              <h3 className="text-lg font-semibold text-[#232D35] mb-1">your RIASEC</h3>
+              <h3 className="text-lg font-semibold text-[#232D35] mb-1">your RIASEC code</h3>
               <HelpCircle 
                 className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
                 onMouseEnter={(e) => showTooltip(e, "Your personality type based on career interests. This shows what types of work environments and activities you prefer, not your performance.")}

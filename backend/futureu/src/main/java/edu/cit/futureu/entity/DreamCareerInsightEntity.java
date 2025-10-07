@@ -34,13 +34,31 @@ public class DreamCareerInsightEntity {
     @Column
     private Double closenessScore; // How close the student is to their dream career
 
+    // New comprehensive AI analysis fields
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String guidance; // Specific guidance on how to reach the dream career
+    private String fieldAlignment; // JSON string containing field analysis
 
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String encouragement; // Encouraging message
+    private String strengthsAlignment; // JSON string containing strengths analysis
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String misalignmentInsights; // JSON string containing gap analysis
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String personalizedFocusAreas; // JSON string containing focus areas
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String encouragement; // JSON string containing encouragement analysis
+
+    // Legacy fields - keep for backward compatibility
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String guidance; // Specific guidance on how to reach the dream career
 
     @Column(length = 1000)
     private String riasecGap; // JSON string of RIASEC gaps
@@ -69,11 +87,25 @@ public class DreamCareerInsightEntity {
     public Double getClosenessScore() { return closenessScore; }
     public void setClosenessScore(Double closenessScore) { this.closenessScore = closenessScore; }
 
-    public String getGuidance() { return guidance; }
-    public void setGuidance(String guidance) { this.guidance = guidance; }
+    // New comprehensive AI analysis getters and setters
+    public String getFieldAlignment() { return fieldAlignment; }
+    public void setFieldAlignment(String fieldAlignment) { this.fieldAlignment = fieldAlignment; }
+
+    public String getStrengthsAlignment() { return strengthsAlignment; }
+    public void setStrengthsAlignment(String strengthsAlignment) { this.strengthsAlignment = strengthsAlignment; }
+
+    public String getMisalignmentInsights() { return misalignmentInsights; }
+    public void setMisalignmentInsights(String misalignmentInsights) { this.misalignmentInsights = misalignmentInsights; }
+
+    public String getPersonalizedFocusAreas() { return personalizedFocusAreas; }
+    public void setPersonalizedFocusAreas(String personalizedFocusAreas) { this.personalizedFocusAreas = personalizedFocusAreas; }
 
     public String getEncouragement() { return encouragement; }
     public void setEncouragement(String encouragement) { this.encouragement = encouragement; }
+
+    // Legacy getters and setters - keep for backward compatibility
+    public String getGuidance() { return guidance; }
+    public void setGuidance(String guidance) { this.guidance = guidance; }
 
     public String getRiasecGap() { return riasecGap; }
     public void setRiasecGap(String riasecGap) { this.riasecGap = riasecGap; }
