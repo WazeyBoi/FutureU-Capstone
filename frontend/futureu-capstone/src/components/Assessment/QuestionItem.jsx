@@ -25,6 +25,69 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
     show: { opacity: 1, y: 0 }
   };
 
+  // Formatter: underline a single word from various markers and preserve newlines
+  const formatText = (text) => {
+    if (!text) return '';
+    let t = String(text);
+
+    const requiresUnderline = (fullText) => {
+      // Only underline when instructions indicate an underlined/emphasized/bold target
+      return /(underlined\s+word|underlined|emphasized|bold\/?emphasized|bold)/i.test(fullText);
+    };
+
+    const underlineOneInSegment = (segment) => {
+      if (!segment) return segment;
+      const words = segment.match(/[A-Za-z]+/g) || [];
+      if (words.length === 0) return segment;
+      const preferred = words.find(w => /(?:ous|ful|less|ive|able|ible|al|ic|ish|ary|ory|ent|ant|est|er|ly|ed|ing)$/i.test(w));
+      const chosen = preferred || words[0];
+      let done = false;
+      return segment.replace(new RegExp(`\\b${chosen}\\b`), (m) => {
+        if (done) return m;
+        done = true;
+        return `<u>${m}</u>`;
+      });
+    };
+
+    // Marker-based underlines
+    t = t
+      .replace(/\[u\]([\s\S]*?)\[\/u\]/g, (_, g1) => underlineOneInSegment(g1))
+      .replace(/__([^_]+?)__/g, (_, g1) => underlineOneInSegment(g1))
+      .replace(/(^|\W)_([^_]+?)_(?=\W|$)/g, (m, p1, g1) => `${p1}${underlineOneInSegment(g1)}`)
+      .replace(/(^|\W)\*([^*]+?)\*(?=\W|$)/g, (m, p1, g1) => `${p1}${underlineOneInSegment(g1)}`);
+
+    // Quote-based underlines: underline the exact quoted token and remove quotes (only if required)
+    if (requiresUnderline(t)) {
+      t = t
+        .replace(/"([^"\n]+)"/g, (m, g1) => `<u>${g1.trim()}</u>`)
+        .replace(/“([^”\n]+)”/g, (m, g1) => `<u>${g1.trim()}</u>`);
+    }
+
+    // If still no underline, underline from approved vocabulary list (case-insensitive) but only if required
+    if (requiresUnderline(t) && !/<u>/i.test(t)) {
+      const vocab = [
+        'eloquent','resilient','meticulous','testament','unanimous','composure','innovative',
+        'modest','fragile','dilapidated','optimistic','torrent','corroborate','concise','enigmatic'
+      ];
+      for (const w of vocab) {
+        const re = new RegExp(`\\b(${w})\\b`, 'i');
+        if (re.test(t)) { t = t.replace(re, '<u>$1</u>'); break; }
+      }
+    }
+
+    // Fallback when prompt mentions underlined word but none provided
+    if (requiresUnderline(t) && /underlined\s+word/i.test(t) && !/<u>/i.test(t)) {
+      const lines = t.split(/\n+/);
+      const body = lines.length > 1 ? lines[1] : lines[0];
+      const match = body && body.match(/\b([A-Za-z]+)\b/);
+      if (match) {
+        const w = match[1];
+        t = t.replace(new RegExp(`\\b${w}\\b`), `<u>${w}</u>`);
+      }
+    }
+    return t;
+  };
+
   return (
     <div className="question-container">
       <div className="mb-5">
@@ -32,7 +95,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
           <span className="inline-flex items-center justify-center w-8 h-8 bg-[#1D63A1] text-white text-sm font-bold rounded-full mr-3 flex-shrink-0">
             {questionNumber}
           </span>
-          {question.questionText}
+          <span className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: formatText(question.questionText) }} />
         </h5>
         
         {/* Question meta info - hide for RIASEC/Likert questions */}
@@ -97,7 +160,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                   />
                 </div>
                 <div className="ml-3 flex-1">
-                  <span className="text-gray-800 text-left block">{choice.choiceText}</span>
+                  <span className="text-gray-800 text-left block whitespace-pre-line">{choice.choiceText}</span>
                 </div>
               </label>
             </motion.div>
