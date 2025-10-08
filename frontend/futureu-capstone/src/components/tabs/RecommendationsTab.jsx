@@ -96,7 +96,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [structuredRecommendations, setStructuredRecommendations] = useState(null);
   const [aiRecommendations, setAiRecommendations] = useState(null);
   const [careerPathDetails, setCareerPathDetails] = useState([]);
-  const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' }
+  const [careerPathDescriptions, setCareerPathDescriptions] = useState({}); // Store descriptions by pathId
+  const [pathTabs, setPathTabs] = useState({}); // { [pathId]: 'careers' | 'programs' | 'description' }
   const [expandedPathPrograms, setExpandedPathPrograms] = useState({}); // { [pathId]: programId }
   const [loading, setLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -296,6 +297,38 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
   const handlePathTabChange = useCallback((pathKey, tab) => {
     setPathTabs((prev) => ({ ...prev, [pathKey]: tab }));
+    
+    // Fetch career path description if switching to description tab and not already loaded
+    if (tab === 'description') {
+      const path = careerPathDetails.find(p => (p.careerPathId ?? careerPathDetails.indexOf(p)) === pathKey);
+      if (path && path.careerPathId && !careerPathDescriptions[path.careerPathId]) {
+        fetchCareerPathDescription(path.careerPathId);
+      }
+    }
+  }, [careerPathDetails, careerPathDescriptions]);
+
+  const fetchCareerPathDescription = useCallback(async (careerPathId) => {
+    try {
+      const response = await recommendationService.fetchCareerPathDetails(careerPathId);
+      const careerPath = response.data;
+      
+      setCareerPathDescriptions(prev => ({
+        ...prev,
+        [careerPathId]: {
+          description: careerPath.careerPathDescription || 'No description available.',
+          name: careerPath.careerPathName || 'Career Path'
+        }
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch career path description for ID ${careerPathId}:`, error);
+      setCareerPathDescriptions(prev => ({
+        ...prev,
+        [careerPathId]: {
+          description: 'Unable to load description at this time.',
+          name: 'Career Path'
+        }
+      }));
+    }
   }, []);
 
   const handleTogglePathProgram = useCallback((pathKey, programId) => {
@@ -501,6 +534,17 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         >
                           Study Programs
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePathTabChange(pathKey, 'description')}
+                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'description' 
+                              ? 'border-[#232D35] text-[#232D35]' 
+                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          Description
+                        </button>
                       </nav>
                     </div>
                     {/* Tab Content */}
@@ -653,6 +697,69 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                             <p className="text-xs mt-1">This pathway may include diverse program options.</p>
                           </motion.div>
                         )}
+                      </motion.div>
+                    )}
+                    {activeTab === 'description' && (
+                      <motion.div 
+                        key="description"
+                        initial={{ opacity: 0, x: -20 }} 
+                        animate={{ opacity: 1, x: 0 }} 
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-4"
+                      >
+                        {(() => {
+                          const pathData = careerPathDetails.find(p => (p.careerPathId ?? careerPathDetails.indexOf(p)) === pathKey);
+                          const pathId = pathData?.careerPathId;
+                          const descriptionData = pathId ? careerPathDescriptions[pathId] : null;
+                          
+                          if (!pathId) {
+                            return (
+                              <div className="text-center py-8 text-gray-500">
+                                <p className="text-sm">Unable to load pathway information.</p>
+                              </div>
+                            );
+                          }
+                          
+                          if (!descriptionData) {
+                            return (
+                              <div className="text-center py-8">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#232D35] mx-auto mb-3"></div>
+                                <p className="text-sm text-gray-600">Loading pathway description...</p>
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 20 }} 
+                              animate={{ opacity: 1, y: 0 }} 
+                              transition={{ duration: 0.3 }}
+                              className="bg-gradient-to-r from-[#232D35]/5 to-[#232D35]/10 rounded-lg p-6 border border-[#232D35]/20"
+                            >
+                              <div className="flex items-center gap-3 mb-4">
+                                <div>
+                                  <h4 className="text-left font-semibold text-[#232D35] text-lg">About This Career Pathway</h4>
+                                  <p className="text-sm text-gray-600">Detailed information about {pathData.careerPathName}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="prose prose-gray max-w-none">
+                                <p className="text-sm text-left text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                  {descriptionData.description}
+                                </p>
+                              </div>
+                              
+                              <div className="mt-6 p-4 bg-white/50 rounded-lg border border-[#232D35]/10">
+                                <h5 className="font-medium text-[#232D35] mb-2">Why This Pathway Matches You</h5>
+                                <p className="text-sm text-gray-600 text-left">
+                                  This pathway achieved a <span className="font-semibold text-[#232D35]">{(pathData.matchPercentage || 0).toFixed(1)}%</span> match 
+                                  with your assessment results, indicating strong alignment with your demonstrated strengths and interests.
+                                </p>
+                              </div>
+                            </motion.div>
+                          );
+                        })()}
                       </motion.div>
                     )}
                   </div>

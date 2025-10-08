@@ -14,6 +14,7 @@ public class CareerPathRecommendation {
 
     private int careerPathId;
     private String careerPathName;
+    private String careerPathDescription; // Added to expose description to frontend
     private double matchPercentage;
     private Map<String, Double> componentBreakdown;
     private String summary; // AI-generated explanation of career path fit
@@ -26,6 +27,7 @@ public class CareerPathRecommendation {
         if (path != null) {
             recommendation.careerPathId = path.getCareerPathId();
             recommendation.careerPathName = path.getCareerPathName();
+            recommendation.careerPathDescription = path.getCareerPathDescription(); // Include description
         }
         recommendation.matchPercentage = matchPercentage;
         Map<String, Double> breakdown = new HashMap<>();
@@ -51,6 +53,14 @@ public class CareerPathRecommendation {
     
     public void setCareerPathName(String careerPathName) {
         this.careerPathName = careerPathName;
+    }
+
+    public String getCareerPathDescription() {
+        return careerPathDescription;
+    }
+    
+    public void setCareerPathDescription(String careerPathDescription) {
+        this.careerPathDescription = careerPathDescription;
     }
 
     public double getMatchPercentage() {
