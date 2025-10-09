@@ -1,6 +1,7 @@
 package edu.cit.futureu.recommendation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import edu.cit.futureu.entity.CareerEntity;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

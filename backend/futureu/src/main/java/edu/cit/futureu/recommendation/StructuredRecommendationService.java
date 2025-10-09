@@ -252,6 +252,37 @@ public class StructuredRecommendationService {
             scoredCareers.add(detail);
             careerMap.put(career.getCareerId(), career); // Store for AI processing
         }
+        // Allow AI to re-evaluate the scored careers and adjust match percentages
+        try {
+            List<edu.cit.futureu.entity.CareerEntity> careerEntities = new ArrayList<>();
+            List<Double> currentMatches = new ArrayList<>();
+            for (CareerRecommendationDetail d : scoredCareers) {
+                CareerEntity ce = careerMap.get(d.getCareerId());
+                if (ce != null) {
+                    careerEntities.add(ce);
+                    currentMatches.add(d.getMatchPercentage());
+                }
+            }
+
+            Map<Integer, Double> adjusted = geminiAIService.generateCareerScoreAdjustments(careerEntities, currentMatches, buildStudentProfileForAI(studentProfile));
+            if (adjusted != null && !adjusted.isEmpty()) {
+                // Apply adjusted scores where available
+                for (int i = 0; i < scoredCareers.size(); i++) {
+                    CareerRecommendationDetail d = scoredCareers.get(i);
+                    Double adj = adjusted.get(d.getCareerId());
+                    if (adj != null) {
+                        // replace with a new object keeping summary; we will re-sort using adjusted score
+                        CareerEntity ce = careerMap.get(d.getCareerId());
+                        String sum = d.getSummary();
+                        scoredCareers.set(i, CareerRecommendationDetail.from(ce, adj, sum));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("AI re-scoring for careers failed for path {}: {}", path.getCareerPathName(), e.getMessage());
+        }
+
+        // Sort by (possibly adjusted) match percentage
         scoredCareers.sort(Comparator.comparingDouble(CareerRecommendationDetail::getMatchPercentage).reversed());
         
         System.out.println("🎯 CAREER PATH: " + path.getCareerPathName() + " | Found " + scoredCareers.size() + " careers");
