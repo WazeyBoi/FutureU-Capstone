@@ -146,6 +146,9 @@ export const ProfileProvider = ({ children }) => {
   // Save profile to localStorage cache
   const saveToCache = (userId, profile, pictureUrl = null) => {
     try {
+      // Do not write to cache when not authenticated (e.g., during logout teardown)
+      if (!authService.isAuthenticated()) return;
+
       const cacheKeys = getCacheKeys(userId);
       
       localStorage.setItem(cacheKeys.profile, JSON.stringify(profile));
