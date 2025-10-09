@@ -567,14 +567,14 @@ const Navigation = () => {
                 </Link>
                 
                 <Link
-                  to="/career-pathways"
+                  to="/program-career-explorer"
                   className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/career-pathways')
+                    isActive('/program-career-explorer')
                       ? 'bg-[#FFB71B] text-black shadow-lg'
                       : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
                 >
-                  <span className="relative z-10">Career Pathways</span>
+                  <span className="relative z-10">Career Program Explorer</span>
                 </Link>
                 
                 <Link
@@ -586,18 +586,6 @@ const Navigation = () => {
                   }`}
                 >
                   <span className="relative z-10">Assessments</span>
-                </Link>
-                
-                {/* Add this link in your navigation menu */}
-                <Link
-                  to="/program-career-explorer"
-                  className={`relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/program-career-explorer')
-                      ? 'bg-[#FFB71B] text-black shadow-lg'
-                      : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
-                  }`}
-                >
-                  <span className="relative z-10">Program Explorer</span>
                 </Link>
               </>
             )}
