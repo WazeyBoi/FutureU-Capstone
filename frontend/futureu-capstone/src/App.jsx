@@ -24,6 +24,7 @@ import AdminLogin from './components/Admin/AdminLogin.jsx';
 import AdminDashboardTest from './components/Admin/AdminDashboard.jsx';
 import PrivateRoute from './components/routes/PrivateRoute';
 import PublicRoute from './components/routes/PublicRoute';
+import PublicOrStudentRoute from './components/routes/PublicOrStudentRoute.jsx';
 import AdminRoute from './components/routes/AdminRoute';
 import CounselorRoute from './components/routes/CounselorRoute.jsx';
 import Unauthorized from './components/Admin/Unauthorized.jsx';
@@ -45,6 +46,7 @@ import CRUD_AssessmentSubCategory from './components/Admin/adminCRUD/CRUD_Assess
 import CRUD_QuizSubCategory from './components/Admin/adminCRUD/CRUD_QuizSubCategory.jsx'
 import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
+import CRUD_CareerProgram from './components/Admin/adminCRUD/CRUD_CareerProgram.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
 import InstitutionalDashboard from './components/Counselor/InstitutionalDashboard.jsx';
@@ -139,7 +141,11 @@ function App() {
                 <Testimonials />
               </StudentRoute>
             } />
-            <Route path="/about-us" element={<AboutUsPage />} />
+            <Route path="/about-us" element={
+              <PublicOrStudentRoute>
+                <AboutUsPage />
+              </PublicOrStudentRoute>
+            } />
               <Route path="/profile" element={
                 <PrivateRoute>
                   <ProfilePage />
@@ -198,9 +204,9 @@ function App() {
             } />
 
             <Route path="/questions" element={
-              <PrivateRoute>
+              <AdminRoute>
                 <Questions />
-              </PrivateRoute>
+              </AdminRoute>
             } />
             
             {/* Add routes for all other admin tools
@@ -312,6 +318,12 @@ function App() {
               </AdminRoute>
             } />
             
+            <Route path="/admin/career-program" element={
+              <AdminRoute>
+                <CRUD_CareerProgram />
+              </AdminRoute>
+            } />
+            
             {/* Counselor routes */}
             <Route path="/counselor/login" element={
               <PublicRoute>
@@ -333,7 +345,11 @@ function App() {
                 <StudentReportPage />
               </CounselorRoute>
             } />
-            <Route path="/program-career-explorer" element={<ProgramCareerExplorer />} />
+            <Route path="/program-career-explorer" element={
+              <StudentRoute>
+                <ProgramCareerExplorer />
+              </StudentRoute>
+            } />
             
             {/* For any route that doesn't match */}
             <Route path="*" element={<Navigate to="/" />} />

@@ -13,11 +13,12 @@ import adminAssessmentService from '../../services/adminServices/adminAssessment
 import adminAssessmentCategoryService from '../../services/adminServices/adminAssessmentCategoryService';
 import adminAssessmentSubCategoryService from '../../services/adminServices/adminAssessmentSubCategoryService';
 import adminQuizSubCatService from '../../services/adminServices/adminQuizSubCatService';
+import adminCareerProgramService from '../../services/adminServices/adminCareerProgramService';
 import { 
   Shield, Users, Settings, FileText, Search,
   School, GraduationCap, BookOpen, Award, Clock,
   Briefcase, HelpCircle, List, Folder, FolderPlus, 
-  FilePlus, User, LogOut, TrendingUp
+  FilePlus, User, LogOut, TrendingUp, Link
 } from 'lucide-react';
 
 const AdminDashboardTest = () => {
@@ -39,6 +40,7 @@ const AdminDashboardTest = () => {
   const [assessmentCategoryCount, setAssessmentCategoryCount] = useState(0);
   const [assessmentSubCategoryCount, setAssessmentSubCategoryCount] = useState(0);
   const [quizSubCategoryCount, setQuizSubCategoryCount] = useState(0);
+  const [careerProgramCount, setCareerProgramCount] = useState(0);
   
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +81,7 @@ const AdminDashboardTest = () => {
           setAssessmentCategoryCount(data.assessmentCategoryCount);
           setAssessmentSubCategoryCount(data.assessmentSubCategoryCount);
           setQuizSubCategoryCount(data.quizSubCategoryCount);
+          setCareerProgramCount(data.careerProgramCount ?? 0);
           setLastUpdated(new Date(timestamp));
           setIsLoading(false);
           return;
@@ -98,7 +101,8 @@ const AdminDashboardTest = () => {
         choices,
         assessmentCategories,
         assessmentSubCategories,
-        quizSubCategories
+        quizSubCategories,
+        careerProgramAssociations
       ] = await Promise.all([
         // Your existing API calls
         adminSchoolService.getAllSchools(),
@@ -112,7 +116,8 @@ const AdminDashboardTest = () => {
         adminChoiceService.getAllChoices(),
         adminAssessmentCategoryService.getAllAssessmentCategories(),
         adminAssessmentSubCategoryService.getAllAssessmentSubCategories(),
-        adminQuizSubCatService.getAllQuizSubCategories()
+        adminQuizSubCatService.getAllQuizSubCategories(),
+        adminCareerProgramService.getAllAssociations()
       ]);
       
       // Create a data object for caching
@@ -128,7 +133,8 @@ const AdminDashboardTest = () => {
         choiceCount: choices.length,
         assessmentCategoryCount: assessmentCategories.length,
         assessmentSubCategoryCount: assessmentSubCategories.length,
-        quizSubCategoryCount: quizSubCategories.length
+        quizSubCategoryCount: quizSubCategories.length,
+        careerProgramCount: careerProgramAssociations.length
       };
       
       // Update state with actual counts
@@ -144,6 +150,7 @@ const AdminDashboardTest = () => {
       setAssessmentCategoryCount(dashboardData.assessmentCategoryCount);
       setAssessmentSubCategoryCount(dashboardData.assessmentSubCategoryCount);
       setQuizSubCategoryCount(dashboardData.quizSubCategoryCount);
+      setCareerProgramCount(dashboardData.careerProgramCount);
       
       // Cache the data
       const timestamp = now;
@@ -231,6 +238,9 @@ const AdminDashboardTest = () => {
       case 'Quiz-Sub-Category':
         navigate('/admin/quiz-sub-category');
         break;
+      case 'Career-Program':
+        navigate('/admin/career-program');
+        break;
       default:
         // For tools not yet implemented
         alert(`${toolName} management coming soon!`);
@@ -287,6 +297,7 @@ const AdminDashboardTest = () => {
     { name: 'Assessment-Category', icon: <Folder className="h-8 w-8 mb-3" />, count: assessmentCategoryCount },
     { name: 'Assessment-Sub-Category', icon: <FolderPlus className="h-8 w-8 mb-3" />, count: assessmentSubCategoryCount },
     { name: 'Quiz-Sub-Category', icon: <FilePlus className="h-8 w-8 mb-3" />, count: quizSubCategoryCount },
+    { name: 'Career-Program', icon: <Link className="h-8 w-8 mb-3" />, count: careerProgramCount },
     { name: 'Users', icon: <User className="h-8 w-8 mb-3" />, count: userCount }
   ];
 
