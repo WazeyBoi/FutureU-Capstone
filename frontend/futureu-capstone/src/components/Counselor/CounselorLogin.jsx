@@ -5,10 +5,8 @@ import authService from '../../services/authService';
 import { Mail, Lock, LogIn, AlertCircle, Heart, Eye, EyeOff } from 'lucide-react';
 
 const customSignout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('current_assessment');
-  localStorage.removeItem('assessment_progress');
+  // Reuse centralized cleanup to ensure full parity with student/admin logout
+  try { authService.clearClientData(); } catch {}
   // No automatic redirect
 };
 
