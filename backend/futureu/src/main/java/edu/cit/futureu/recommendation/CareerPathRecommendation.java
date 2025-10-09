@@ -30,12 +30,13 @@ public class CareerPathRecommendation {
             recommendation.careerPathDescription = path.getCareerPathDescription(); // Include description
         }
         recommendation.matchPercentage = matchPercentage;
-        Map<String, Double> breakdown = new HashMap<>();
-        breakdown.put("riasec", score.getRiasecComponent());
-        breakdown.put("aptitude", score.getTrackComponent());
-        breakdown.put("skills", score.getSkillComponent());
-        breakdown.put("context", score.getContextComponent());
-        recommendation.componentBreakdown = breakdown;
+    Map<String, Double> breakdown = new HashMap<>();
+    // Store raw similarity scores (0-100%) for each component
+    breakdown.put("riasec", score.getRiasecComponent()); // 0-100%
+    breakdown.put("track", score.getTrackComponent());   // 0-100%
+    breakdown.put("skills", score.getSkillComponent());  // 0-100%
+    breakdown.put("market_demand", score.getContextComponent()); // 0-100%
+    recommendation.componentBreakdown = breakdown;
         return recommendation;
     }
 
