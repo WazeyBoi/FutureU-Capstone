@@ -81,7 +81,7 @@ const Navigation = () => {
     setTooltipPinned(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const userId = authService.getCurrentUserId();
     if (userId) {
       Object.keys(localStorage).forEach(key => {
@@ -90,11 +90,10 @@ const Navigation = () => {
         }
       });
     }
-    authService.signout();
+    await authService.signout();
     setIsAuthenticated(false);
     setCurrentUser(null);
     setShowDropdown(false);
-    navigate('/');
   };
 
   const handleProfileClick = (e) => {

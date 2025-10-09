@@ -47,6 +47,9 @@ class AuthService {
    * Sign out user and clear all cookies
    */
   async signout() {
+    // Pre-clear to avoid race with components writing on unmount
+    this.clearClientData();
+
     try {
       await apiClient.post('/auth/signout', {}, {
         withCredentials: true
@@ -56,11 +59,11 @@ class AuthService {
       // Continue with logout even if server request fails
     }
     
-    // Clear any remaining client-side data
+    // Post-clear to ensure nothing was re-written by teardown effects
     this.clearClientData();
     
     // Redirect to login page
-    window.location.href = '/login';
+    window.location.replace('/login');
   }
 
   /**
@@ -72,6 +75,54 @@ class AuthService {
     localStorage.removeItem('assessment_progress');
     localStorage.removeItem('assessment_answers');
     localStorage.removeItem('user_preferences');
+
+    // Remove cached profile data stored per-user
+    try {
+      const prefixesToClear = [
+        'futureu_profile_',
+        'futureu_profile_picture_',
+        'futureu_profile_picture_blob_',
+        'futureu_profile_timestamp_',
+        // assessment related
+        'assessment_start_time_',
+        // recommendations related
+        'futureu_recommendations_',
+        'futureu_program_recommendations_',
+        'futureu_comprehensive_recommendations_'
+      ];
+
+      const exactKeysToClear = [
+        'admin_dashboard_data',
+        'futureu_pending_deletion',
+        'futureu_refresh_testimonials',
+        'academicExplorerWelcomeSeen'
+      ];
+
+      // Clear exact keys if present
+      exactKeysToClear.forEach((key) => {
+        try { localStorage.removeItem(key); } catch {}
+      });
+
+      // Clear keys by prefix
+      Object.keys(localStorage).forEach((key) => {
+        if (prefixesToClear.some((prefix) => key.startsWith(prefix))) {
+          try { localStorage.removeItem(key); } catch {}
+        }
+      });
+    } catch (e) {
+      console.error('Error clearing localStorage caches:', e);
+    }
+
+    // Clear any session-scoped hints/prompts
+    try {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('futureu_profile_prompt_shown_')) {
+          try { sessionStorage.removeItem(key); } catch {}
+        }
+      });
+    } catch (e) {
+      console.error('Error clearing sessionStorage caches:', e);
+    }
   }
 
   /**
