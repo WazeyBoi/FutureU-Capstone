@@ -45,6 +45,7 @@ import CRUD_AssessmentSubCategory from './components/Admin/adminCRUD/CRUD_Assess
 import CRUD_QuizSubCategory from './components/Admin/adminCRUD/CRUD_QuizSubCategory.jsx'
 import CRUD_Question from './components/Admin/adminCRUD/CRUD_Question.jsx'
 import CRUD_Choice from './components/Admin/adminCRUD/CRUD_Choice.jsx'
+import CRUD_CareerProgram from './components/Admin/adminCRUD/CRUD_CareerProgram.jsx'
 import CounselorLogin from './components/Counselor/CounselorLogin.jsx';
 import CounselorDashboard from './components/Counselor/CounselorDashboard.jsx';
 import InstitutionalDashboard from './components/Counselor/InstitutionalDashboard.jsx';
@@ -309,6 +310,12 @@ function App() {
             <Route path="/admin/career-path" element={
               <AdminRoute>
                 <CRUD_CareerPath />
+              </AdminRoute>
+            } />
+            
+            <Route path="/admin/career-program" element={
+              <AdminRoute>
+                <CRUD_CareerProgram />
               </AdminRoute>
             } />
             
