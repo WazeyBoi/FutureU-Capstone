@@ -14,6 +14,7 @@ public class CareerPathRecommendation {
 
     private int careerPathId;
     private String careerPathName;
+    private String careerPathDescription; // Added to expose description to frontend
     private double matchPercentage;
     private Map<String, Double> componentBreakdown;
     private String summary; // AI-generated explanation of career path fit
@@ -26,14 +27,16 @@ public class CareerPathRecommendation {
         if (path != null) {
             recommendation.careerPathId = path.getCareerPathId();
             recommendation.careerPathName = path.getCareerPathName();
+            recommendation.careerPathDescription = path.getCareerPathDescription(); // Include description
         }
         recommendation.matchPercentage = matchPercentage;
-        Map<String, Double> breakdown = new HashMap<>();
-        breakdown.put("riasec", score.getRiasecComponent());
-        breakdown.put("aptitude", score.getTrackComponent());
-        breakdown.put("skills", score.getSkillComponent());
-        breakdown.put("context", score.getContextComponent());
-        recommendation.componentBreakdown = breakdown;
+    Map<String, Double> breakdown = new HashMap<>();
+    // Store raw similarity scores (0-100%) for each component
+    breakdown.put("riasec", score.getRiasecComponent()); // 0-100%
+    breakdown.put("track", score.getTrackComponent());   // 0-100%
+    breakdown.put("skills", score.getSkillComponent());  // 0-100%
+    breakdown.put("market_demand", score.getContextComponent()); // 0-100%
+    recommendation.componentBreakdown = breakdown;
         return recommendation;
     }
 
@@ -51,6 +54,14 @@ public class CareerPathRecommendation {
     
     public void setCareerPathName(String careerPathName) {
         this.careerPathName = careerPathName;
+    }
+
+    public String getCareerPathDescription() {
+        return careerPathDescription;
+    }
+    
+    public void setCareerPathDescription(String careerPathDescription) {
+        this.careerPathDescription = careerPathDescription;
     }
 
     public double getMatchPercentage() {

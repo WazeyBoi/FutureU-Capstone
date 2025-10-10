@@ -1,14 +1,15 @@
 package edu.cit.futureu.recommendation;
 
-import edu.cit.futureu.entity.CareerEntity;
-import edu.cit.futureu.entity.CareerPathEntity;
-import edu.cit.futureu.entity.ProgramEntity;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
+
+import edu.cit.futureu.entity.CareerEntity;
+import edu.cit.futureu.entity.CareerPathEntity;
+import edu.cit.futureu.entity.ProgramEntity;
 
 /**
  * Extracts heuristic weight vectors for career paths, careers, and programs based on textual descriptions.

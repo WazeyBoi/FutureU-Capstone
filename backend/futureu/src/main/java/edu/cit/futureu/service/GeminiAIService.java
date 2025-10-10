@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1291,6 +1292,142 @@ public class GeminiAIService {
         }
         
         throw new RuntimeException("No valid response content from AI API");
+    }
+
+    /**
+     * Ask AI to re-evaluate a short list of careers and return adjusted match scores (0-100).
+     * Returns a map of careerId -> adjustedScore. This method is tolerant of AI failures and
+     * will return an empty map on error (caller should fallback to deterministic scores).
+     */
+    public Map<Integer, Double> generateCareerScoreAdjustments(
+            List<edu.cit.futureu.entity.CareerEntity> careers,
+            List<Double> currentMatches,
+            Map<String, Object> studentProfile) {
+
+        Map<Integer, Double> adjustments = new HashMap<>();
+        if (careers == null || careers.isEmpty()) {
+            return adjustments;
+        }
+
+        try {
+            // Build a concise prompt that includes career titles, descriptions and current scores
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("You are an expert career counselor. For each career provided, re-evaluate the strength of fit for the student and return an adjusted match score (0-100).\n");
+            prompt.append("Use the career description and industry fields where available. Use objective assessment evidence (student profile) to adjust the score. Return ONLY a JSON array of objects with keys 'careerTitle' and 'adjustedScore'. Example: [{\"careerTitle\": \"Software Engineer\", \"adjustedScore\": 87.5}, ...]\n\n");
+
+            for (int i = 0; i < careers.size(); i++) {
+                edu.cit.futureu.entity.CareerEntity c = careers.get(i);
+                double cur = (currentMatches != null && i < currentMatches.size()) ? currentMatches.get(i) : 0.0;
+                prompt.append("CAREER #").append(i + 1).append("\n");
+                prompt.append("Title: ").append(c.getCareerTitle() == null ? "[Unknown]" : c.getCareerTitle()).append("\n");
+                if (c.getCareerDescription() != null) {
+                    prompt.append("Description: ").append(c.getCareerDescription()).append("\n");
+                }
+                if (c.getIndustry() != null) {
+                    prompt.append("Industry: ").append(c.getIndustry()).append("\n");
+                }
+                prompt.append("CurrentMatch: ").append(String.format(Locale.ENGLISH, "%.1f", cur)).append("\n\n");
+            }
+
+            // Add brief student profile snapshot
+            prompt.append("STUDENT PROFILE SUMMARY:\n");
+            if (studentProfile != null) {
+                if (studentProfile.containsKey("personalityType")) {
+                    prompt.append("RIASEC: ");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> riasec = (Map<String, Object>) studentProfile.get("personalityType");
+                    riasec.forEach((k, v) -> prompt.append(k).append(": ").append(v).append("%, ")); 
+                    prompt.append("\n");
+                }
+                if (studentProfile.containsKey("academicTracks")) {
+                    prompt.append("Academic Tracks: ");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Double> tracks = (Map<String, Double>) studentProfile.get("academicTracks");
+                    tracks.forEach((k, v) -> prompt.append(k).append(": ").append(String.format(Locale.ENGLISH, "%.1f", v * 100)).append("%, "));
+                    prompt.append("\n");
+                }
+                if (studentProfile.containsKey("skillAreas")) {
+                    prompt.append("Skills: ");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Double> skills = (Map<String, Double>) studentProfile.get("skillAreas");
+                    skills.forEach((k, v) -> prompt.append(k).append(": ").append(String.format(Locale.ENGLISH, "%.1f", v * 100)).append("%, "));
+                    prompt.append("\n");
+                }
+            } else {
+                prompt.append("(Student profile not provided)\n");
+            }
+
+            prompt.append("\nIMPORTANT: Return ONLY a JSON array with objects containing 'careerTitle' and 'adjustedScore' (0-100).\n");
+
+            // Rate limit and make AI call
+            waitForRateLimit();
+            String aiResponse = makeAIRequest(prompt.toString());
+
+            // Try to parse response as JSON array
+            String json = aiResponse;
+            // If AI wraps the JSON in text, attempt to extract the first array
+            int arrStart = aiResponse.indexOf("[");
+            int arrEnd = aiResponse.lastIndexOf("]");
+            if (arrStart >= 0 && arrEnd > arrStart) {
+                json = aiResponse.substring(arrStart, arrEnd + 1);
+            }
+
+            JsonNode root = objectMapper.readTree(json);
+            if (root.isArray()) {
+                // Build title -> id map for matching
+                Map<String, Integer> titleToId = new HashMap<>();
+                for (edu.cit.futureu.entity.CareerEntity c : careers) {
+                    if (c.getCareerTitle() != null) {
+                        titleToId.put(c.getCareerTitle().toLowerCase(Locale.ENGLISH), c.getCareerId());
+                    }
+                }
+
+                for (JsonNode node : root) {
+                    String title = node.has("careerTitle") ? node.get("careerTitle").asText() : (node.has("title") ? node.get("title").asText() : null);
+                    double adjusted = node.has("adjustedScore") ? node.get("adjustedScore").asDouble() : (node.has("score") ? node.get("score").asDouble() : -1);
+                    if (title == null || adjusted < 0) continue;
+                    Integer matchedId = titleToId.get(title.toLowerCase(Locale.ENGLISH));
+                    if (matchedId == null) {
+                        // Try fuzzy matching against provided career entities
+                        try {
+                            edu.cit.futureu.entity.CareerEntity fuzzy = findClosestCareerMatch(title, careers);
+                            if (fuzzy != null) {
+                                matchedId = fuzzy.getCareerId();
+                            }
+                        } catch (Exception ex) {
+                            // ignore fuzzy matching errors and continue
+                        }
+                    }
+                    if (matchedId != null) {
+                        // Clamp to 0-100
+                        double clamped = Math.max(0.0, Math.min(100.0, adjusted));
+                        adjustments.put(matchedId, clamped);
+                    }
+                }
+            }
+
+            // Cache the raw AI response for potential reuse keyed by concatenated career ids and top riasec
+            try {
+                StringBuilder key = new StringBuilder("career_rescore_");
+                for (edu.cit.futureu.entity.CareerEntity c : careers) key.append(c.getCareerId()).append("_");
+                if (studentProfile != null && studentProfile.containsKey("personalityType")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> riasec = (Map<String, Object>) studentProfile.get("personalityType");
+                    riasec.entrySet().stream().sorted((e1,e2)-> Double.compare(Double.parseDouble(e2.getValue().toString()), Double.parseDouble(e1.getValue().toString()))).limit(3).forEach(e-> key.append(e.getKey()).append((int)(Double.parseDouble(e.getValue().toString())*100)));
+                }
+                String cacheKey = key.toString().replaceAll("[^a-zA-Z0-9_]", "");
+                cacheResponse(cacheKey, aiResponse);
+            } catch (Exception ex) {
+                // non-fatal cache errors
+            }
+
+        } catch (Exception e) {
+            // Handle AI failure but do not throw - return empty adjustments map
+            handleApiFailure(e);
+            System.err.println("AI career re-scoring failed: " + e.getMessage());
+        }
+
+        return adjustments;
     }
 
     /**

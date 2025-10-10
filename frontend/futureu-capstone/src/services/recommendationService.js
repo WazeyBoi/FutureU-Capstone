@@ -133,3 +133,17 @@ export const regenerateDreamCareerAnalysis = (userAssessmentId) => {
     throw error;
   }
 };
+
+/**
+ * Fetch career path details including description by career path ID
+ * @param {number} careerPathId - The ID of the career path
+ * @returns {Promise} - Axios response promise with career path details
+ */
+export const fetchCareerPathDetails = (careerPathId) => {
+  try {
+    return apiClient.get(`/careerpath/get/${careerPathId}`);
+  } catch (error) {
+    console.error(`Error fetching career path details for ID ${careerPathId}:`, error);
+    throw error;
+  }
+};

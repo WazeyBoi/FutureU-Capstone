@@ -107,9 +107,9 @@ public class RecommendationPersistenceService {
             if (recommendation.getComponentBreakdown() != null) {
                 Map<String, Double> breakdown = recommendation.getComponentBreakdown();
                 entity.setRiasecScore(breakdown.get("riasec"));
-                entity.setAptitudeScore(breakdown.get("aptitude"));
+                entity.setAptitudeScore(breakdown.get("track"));
                 entity.setSkillScore(breakdown.get("skills"));
-                entity.setContextScore(breakdown.get("context"));
+                entity.setContextScore(breakdown.get("market_demand"));
             }
 
             // Save the main recommendation first

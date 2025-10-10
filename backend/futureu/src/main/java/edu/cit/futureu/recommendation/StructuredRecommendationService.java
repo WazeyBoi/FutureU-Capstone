@@ -252,6 +252,37 @@ public class StructuredRecommendationService {
             scoredCareers.add(detail);
             careerMap.put(career.getCareerId(), career); // Store for AI processing
         }
+        // Allow AI to re-evaluate the scored careers and adjust match percentages
+        try {
+            List<edu.cit.futureu.entity.CareerEntity> careerEntities = new ArrayList<>();
+            List<Double> currentMatches = new ArrayList<>();
+            for (CareerRecommendationDetail d : scoredCareers) {
+                CareerEntity ce = careerMap.get(d.getCareerId());
+                if (ce != null) {
+                    careerEntities.add(ce);
+                    currentMatches.add(d.getMatchPercentage());
+                }
+            }
+
+            Map<Integer, Double> adjusted = geminiAIService.generateCareerScoreAdjustments(careerEntities, currentMatches, buildStudentProfileForAI(studentProfile));
+            if (adjusted != null && !adjusted.isEmpty()) {
+                // Apply adjusted scores where available
+                for (int i = 0; i < scoredCareers.size(); i++) {
+                    CareerRecommendationDetail d = scoredCareers.get(i);
+                    Double adj = adjusted.get(d.getCareerId());
+                    if (adj != null) {
+                        // replace with a new object keeping summary; we will re-sort using adjusted score
+                        CareerEntity ce = careerMap.get(d.getCareerId());
+                        String sum = d.getSummary();
+                        scoredCareers.set(i, CareerRecommendationDetail.from(ce, adj, sum));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("AI re-scoring for careers failed for path {}: {}", path.getCareerPathName(), e.getMessage());
+        }
+
+        // Sort by (possibly adjusted) match percentage
         scoredCareers.sort(Comparator.comparingDouble(CareerRecommendationDetail::getMatchPercentage).reversed());
         
         System.out.println("🎯 CAREER PATH: " + path.getCareerPathName() + " | Found " + scoredCareers.size() + " careers");
@@ -1231,6 +1262,7 @@ public class StructuredRecommendationService {
     
     /**
      * Build prompt for AI to refine career path rankings
+     * Enhanced to include career path descriptions and focus on objective assessment data
      */
     private String buildCareerPathRefinementPrompt(
             List<CareerPathRecommendation> top10Paths, 
@@ -1238,42 +1270,95 @@ public class StructuredRecommendationService {
         
         StringBuilder prompt = new StringBuilder();
         
-        prompt.append("You are an expert career counselor tasked with refining career pathway recommendations.\n\n");
+        prompt.append("You are an expert career counselor tasked with intelligently refining career pathway recommendations.\n");
+        prompt.append("Your goal is to compare the deterministic mathematical scores against the actual career pathway descriptions ");
+        prompt.append("and the student's objective assessment performance to select the TOP 3 most suitable paths.\n\n");
         
-        prompt.append("STUDENT PROFILE:\n");
+        prompt.append("STUDENT ASSESSMENT RESULTS (OBJECTIVE DATA ONLY):\n");
         Map<String, Object> profile = buildStudentProfileForAI(studentProfile);
         
-        // Add student profile details
-        profile.forEach((key, value) -> {
-            if (value != null) {
-                prompt.append("- ").append(key).append(": ").append(value).append("\n");
+        // Add only objective assessment data
+        if (profile.containsKey("personalityType")) {
+            prompt.append("RIASEC Personality Assessment Results:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> riasecScores = (Map<String, Object>) profile.get("personalityType");
+            for (Map.Entry<String, Object> entry : riasecScores.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", ((Number)entry.getValue()).doubleValue())).append("%\n");
             }
-        });
+            prompt.append("\n");
+        }
         
-        prompt.append("\nDETERMINISTIC TOP 10 CAREER PATHS (with mathematical scores):\n");
+        if (profile.containsKey("academicTracks")) {
+            prompt.append("Academic Track Performance:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Double> tracks = (Map<String, Double>) profile.get("academicTracks");
+            for (Map.Entry<String, Double> entry : tracks.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", entry.getValue() * 100)).append("%\n");
+            }
+            prompt.append("\n");
+        }
+        
+        if (profile.containsKey("skillAreas")) {
+            prompt.append("Skill Assessment Results:\n");
+            @SuppressWarnings("unchecked")
+            Map<String, Double> skills = (Map<String, Double>) profile.get("skillAreas");
+            for (Map.Entry<String, Double> entry : skills.entrySet()) {
+                prompt.append("- ").append(entry.getKey()).append(": ").append(String.format("%.1f", entry.getValue() * 100)).append("%\n");
+            }
+            prompt.append("\n");
+        }
+        
+        if (profile.containsKey("overallScore")) {
+            prompt.append("Overall Assessment Score: ").append(profile.get("overallScore")).append("%\n\n");
+        }
+        
+        prompt.append("CAREER PATHWAYS TO ANALYZE (with descriptions and mathematical scores):\n");
+        
+        // Get all career path entities to access descriptions
+        List<CareerPathEntity> allPaths = careerPathRepository.findAll();
+        
         for (int i = 0; i < top10Paths.size(); i++) {
             CareerPathRecommendation path = top10Paths.get(i);
-            prompt.append((i + 1)).append(". ").append(path.getCareerPathName())
-                  .append(" - ").append(String.format("%.1f", path.getMatchPercentage())).append("% match\n");
+            prompt.append("=== PATHWAY #").append(i + 1).append(" ===\n");
+            prompt.append("Name: ").append(path.getCareerPathName()).append("\n");
+            prompt.append("Mathematical Score: ").append(String.format("%.1f", path.getMatchPercentage())).append("% match\n");
             
             // Add component breakdown
             if (path.getComponentBreakdown() != null) {
-                prompt.append("   Components: ");
+                prompt.append("Score Components: ");
                 path.getComponentBreakdown().forEach((component, score) -> 
                     prompt.append(component).append(": ").append(String.format("%.1f", score)).append("%, "));
                 prompt.append("\n");
             }
+            
+            // ADD CAREER PATH DESCRIPTION - This was the missing piece!
+            CareerPathEntity pathEntity = allPaths.stream()
+                .filter(p -> p.getCareerPathId() == path.getCareerPathId())
+                .findFirst()
+                .orElse(null);
+            
+            if (pathEntity != null && pathEntity.getCareerPathDescription() != null) {
+                prompt.append("Description: ").append(pathEntity.getCareerPathDescription()).append("\n");
+            } else {
+                prompt.append("Description: [No description available]\n");
+            }
+            prompt.append("\n");
         }
         
-        prompt.append("\nTASK:\n");
-        prompt.append("Analyze this student's profile holistically and select the TOP 3 career paths that would be most suitable.\n");
-        prompt.append("Consider:\n");
-        prompt.append("1. Mathematical scores (but don't be bound by them)\n");
-        prompt.append("2. Student's personality patterns and interests\n");
-        prompt.append("3. Potential for growth and fulfillment\n");
-        prompt.append("4. Market trends and future opportunities\n");
-        prompt.append("5. Work-life balance alignment\n");
-        prompt.append("6. Student's life circumstances and goals\n\n");
+        prompt.append("ANALYSIS TASK:\n");
+        prompt.append("Intelligently compare the student's objective assessment results against each career pathway description ");
+        prompt.append("and mathematical score. Select the TOP 3 pathways that best align with the student's demonstrated strengths and capabilities.\n\n");
+        
+        prompt.append("ANALYSIS CRITERIA (based on objective data only):\n");
+        prompt.append("1. RIASEC Alignment: How well do the student's RIASEC scores match what each pathway description requires?\n");
+        prompt.append("2. Academic Track Match: Do the student's academic strengths align with pathway requirements?\n");
+        prompt.append("3. Skill Compatibility: Are the student's assessed skills relevant to each pathway?\n");
+        prompt.append("4. Mathematical Score Validation: Does the pathway description support or contradict the algorithmic score?\n");
+        prompt.append("5. Assessment Performance Consistency: Is there coherent alignment across all assessment dimensions?\n\n");
+        
+        prompt.append("IMPORTANT: Base your analysis ONLY on the objective assessment data provided. ");
+        prompt.append("Do NOT make assumptions about the student's personal preferences, life circumstances, ");
+        prompt.append("work-life balance desires, or subjective goals that are not evidenced in their assessment results.\n\n");
         
         prompt.append("RESPONSE FORMAT:\n");
         prompt.append("Return a JSON array with exactly 3 career paths in your recommended order:\n");
@@ -1282,18 +1367,24 @@ public class StructuredRecommendationService {
         prompt.append("    \"careerPathName\": \"Exact name from the list above\",\n");
         prompt.append("    \"rank\": 1,\n");
         prompt.append("    \"adjustedScore\": 85.5,\n");
-        prompt.append("    \"aiReasoning\": \"Why this path is best for this student\"\n");
+        prompt.append("    \"comprehensiveReasoning\": \"Provide 2-3 paragraphs explaining: (1) How this pathway description aligns with the student's specific RIASEC scores, academic track performance, and skill assessments. (2) Whether the mathematical score accurately reflects this alignment or if your analysis suggests adjustments. (3) Why this pathway ranks in your top 3 based on objective assessment evidence. Be specific about which assessment results support this recommendation and cite actual percentages from their results.\"\n");
         prompt.append("  },\n");
-        prompt.append("  ... (2 more entries)\n");
+        prompt.append("  ... (2 more entries with equally comprehensive reasoning)\n");
         prompt.append("]\n\n");
         
-        prompt.append("Ensure all careerPathName values EXACTLY match the names from the list above.");
+        prompt.append("CRITICAL REQUIREMENTS:\n");
+        prompt.append("- All careerPathName values must EXACTLY match the names from the pathways listed above\n");
+        prompt.append("- Each comprehensiveReasoning must be 2-3 substantial paragraphs (minimum 150 words each)\n");
+        prompt.append("- Reference specific assessment scores and percentages in your reasoning\n");
+        prompt.append("- Explain how the pathway description aligns with or contradicts the mathematical scoring\n");
+        prompt.append("- Base recommendations solely on objective assessment data, not assumptions\n");
         
         return prompt.toString();
     }
     
     /**
      * Parse AI response to get refined career path rankings
+     * Updated to handle comprehensive reasoning instead of brief aiReasoning
      */
     private List<CareerPathRecommendation> parseAIRefinementResponse(
             String aiResponse, 
@@ -1315,8 +1406,14 @@ public class StructuredRecommendationService {
                     String pathName = pathNode.get("careerPathName").asText();
                     double adjustedScore = pathNode.has("adjustedScore") ? 
                         pathNode.get("adjustedScore").asDouble() : 0.0;
-                    String aiReasoning = pathNode.has("aiReasoning") ? 
-                        pathNode.get("aiReasoning").asText() : "";
+                    
+                    // Handle both old and new reasoning field names for backward compatibility
+                    String comprehensiveReasoning = "";
+                    if (pathNode.has("comprehensiveReasoning")) {
+                        comprehensiveReasoning = pathNode.get("comprehensiveReasoning").asText();
+                    } else if (pathNode.has("aiReasoning")) {
+                        comprehensiveReasoning = pathNode.get("aiReasoning").asText();
+                    }
                     
                     // Find matching original path
                     CareerPathRecommendation matchedPath = originalPaths.stream()
@@ -1325,13 +1422,13 @@ public class StructuredRecommendationService {
                         .orElse(null);
                     
                     if (matchedPath != null) {
-                        // Create enhanced copy with AI adjustments
+                        // Create enhanced copy with AI adjustments and comprehensive reasoning
                         CareerPathRecommendation enhancedPath = createEnhancedCareerPath(
-                            matchedPath, adjustedScore, aiReasoning);
+                            matchedPath, adjustedScore, comprehensiveReasoning);
                         refinedPaths.add(enhancedPath);
                         
                         System.out.println("   ✅ AI refined: " + pathName + 
-                            " (Score: " + String.format("%.1f", adjustedScore) + "%)");
+                            " (Score: " + String.format("%.1f", adjustedScore) + "%) with comprehensive analysis");
                     }
                 }
             }
@@ -1345,12 +1442,12 @@ public class StructuredRecommendationService {
     }
     
     /**
-     * Create enhanced career path with AI adjustments
+     * Create enhanced career path with AI adjustments and comprehensive reasoning
      */
     private CareerPathRecommendation createEnhancedCareerPath(
             CareerPathRecommendation original, 
             double adjustedScore, 
-            String aiReasoning) {
+            String comprehensiveReasoning) {
         
         // Create new recommendation by copying from original
         CareerPathRecommendation enhanced = new CareerPathRecommendation();
@@ -1361,10 +1458,10 @@ public class StructuredRecommendationService {
         enhanced.setMatchPercentage(adjustedScore > 0 ? adjustedScore : original.getMatchPercentage());
         enhanced.setComponentBreakdown(new HashMap<>(original.getComponentBreakdown()));
         
-        // Enhance summary with AI reasoning
+        // Enhance summary with comprehensive AI reasoning
         String enhancedSummary = original.getSummary();
-        if (aiReasoning != null && !aiReasoning.isEmpty()) {
-            enhancedSummary = aiReasoning;
+        if (comprehensiveReasoning != null && !comprehensiveReasoning.isEmpty()) {
+            enhancedSummary = comprehensiveReasoning;
         }
         enhanced.setSummary(enhancedSummary);
         

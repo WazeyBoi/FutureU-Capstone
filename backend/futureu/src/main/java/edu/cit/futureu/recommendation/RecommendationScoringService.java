@@ -20,19 +20,20 @@ public class RecommendationScoringService {
         if (target == null || student == null) {
             return new RecommendationScore(0, 0, 0, 0, 0);
         }
-        double riasecScore = similarity(target.getRiasecWeights(), student.getRiasecWeights());
-        double trackScore = similarity(target.getTrackWeights(), student.getTrackWeights());
-        double skillScore = similarity(target.getSkillWeights(), student.getSkillWeights());
-        double contextScore = Math.min(target.getContextSignal(), 1.0);
+    double riasecScore = similarity(target.getRiasecWeights(), student.getRiasecWeights());
+    double trackScore = similarity(target.getTrackWeights(), student.getTrackWeights());
+    double skillScore = similarity(target.getSkillWeights(), student.getSkillWeights());
+    double contextScore = Math.min(target.getContextSignal(), 1.0);
     double overall = (riasecScore * RIASEC_WEIGHT) +
-             (trackScore * TRACK_WEIGHT) +
-             (skillScore * SKILL_WEIGHT) +
-             (contextScore * CONTEXT_WEIGHT);
+        (trackScore * TRACK_WEIGHT) +
+        (skillScore * SKILL_WEIGHT) +
+        (contextScore * CONTEXT_WEIGHT);
+    // For breakdown, use raw similarity scores (0-1), scaled to percentage
     return new RecommendationScore(round(overall * 100),
-                    round(riasecScore * RIASEC_WEIGHT * 100),
-                    round(trackScore * TRACK_WEIGHT * 100),
-                    round(skillScore * SKILL_WEIGHT * 100),
-                    round(contextScore * CONTEXT_WEIGHT * 100));
+        round(riasecScore * 100),
+        round(trackScore * 100),
+        round(skillScore * 100),
+        round(contextScore * 100));
     }
 
     private double similarity(Map<?, Double> target, Map<?, Double> student) {
