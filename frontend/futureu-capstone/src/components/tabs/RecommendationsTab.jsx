@@ -68,6 +68,14 @@ function getSchoolBackground(schoolName) {
   return null;
 }
 
+// Friendly labels for componentBreakdown keys (frontend-only)
+const COMPONENT_LABELS = {
+  riasec: 'RIASEC',
+  track: 'Track',
+  skills: 'Skills',
+  market_demand: 'Market Demand'
+};
+
 const AccordionContent = ({ expanded, children }) => {
   const ref = useRef(null);
   const [maxHeight, setMaxHeight] = useState(0);
@@ -266,19 +274,88 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     setIsRegenerating(true);
     setError(null);
     try {
-      console.log('Starting AI recommendation regeneration...');
-      await recommendationService.generateRecommendations(userAssessmentId);
-      console.log('AI recommendation regeneration completed, fetching results...');
-      localStorage.removeItem(storageKey);
-      await fetchComprehensiveRecommendations({ forceRefresh: true });
-      console.log('New recommendations loaded successfully');
+      console.log('Requesting regeneration job enqueue...');
+      try {
+        const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
+        const jobId = enqueueResp.data?.jobId;
+        if (!jobId) throw new Error('No jobId returned from enqueue');
+
+        console.log('Enqueued job, id=', jobId, ' - polling for status...');
+        const POLL_INTERVAL_MS = 5000; // 5s
+        const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
+        let elapsed = 0;
+        let done = false;
+        while (elapsed < MAX_POLL_MS) {
+          try {
+            const statusResp = await recommendationService.getJobStatus(jobId);
+            const status = statusResp.data?.status;
+            if (status === 'SUCCEEDED') {
+              done = true;
+              break;
+            } else if (status === 'FAILED') {
+              // stop polling on failure and show message
+              const msg = statusResp.data?.message || 'Job failed on server';
+              setError(`Generation failed: ${msg}`);
+              done = false;
+              break;
+            }
+          } catch (pollErr) {
+            console.warn('Job status poll error:', pollErr?.message);
+          }
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+          elapsed += POLL_INTERVAL_MS;
+        }
+
+        if (done) {
+          console.log('Job completed, fetching results...');
+          localStorage.removeItem(storageKey);
+          await fetchComprehensiveRecommendations({ forceRefresh: true });
+        } else if (!error) {
+          setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
+        }
+      } catch (enqueueErr) {
+        console.warn('Enqueue failed, falling back to direct POST:', enqueueErr?.message);
+        // Fallback to previous behavior: try direct POST then exists polling
+        try {
+          await recommendationService.generateRecommendations(userAssessmentId);
+          localStorage.removeItem(storageKey);
+          await fetchComprehensiveRecommendations({ forceRefresh: true });
+        } catch (postErr) {
+          console.warn('Fallback POST failed, starting exists polling:', postErr?.message);
+          // Start short polling on exists
+          const POLL_INTERVAL_MS = 5000;
+          const MAX_POLL_MS = 10 * 60 * 1000;
+          let elapsed = 0;
+          let found = false;
+          while (elapsed < MAX_POLL_MS) {
+            try {
+              const existResp = await recommendationService.checkRecommendationsExist(userAssessmentId);
+              const data = existResp.data;
+              if (data && data.hasRecommendations) {
+                found = true;
+                break;
+              }
+            } catch (pollErr) {
+              console.warn('Poll error while checking recommendations exist:', pollErr?.message);
+            }
+            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+          }
+          if (found) {
+            localStorage.removeItem(storageKey);
+            await fetchComprehensiveRecommendations({ forceRefresh: true });
+          } else {
+            setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
+          }
+        }
+      }
     } catch (err) {
       console.error('Regeneration failed:', err);
       let errorMessage = 'Failed to generate recommendations. Please try again later.';
       
       // Check if it's a timeout error
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        errorMessage = 'The AI generation process is taking longer than expected. The system may still be processing in the background. Please wait a moment and try refreshing the page.';
+        errorMessage = 'The AI generation request timed out locally. The backend may still be processing; we started a background check and will fetch results when available. Please wait a moment and try refreshing the page.';
       } else {
         const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
         errorMessage = backendMessage || errorMessage;
@@ -431,10 +508,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
             {isRegenerating ? (
               <div className="mt-4">
-                <p className="text-lg font-semibold text-[#1D63A1] mb-2">🤖 Generating AI Recommendations</p>
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Recommendations</p>
                 <p className="text-sm text-gray-600 mb-3">
-                  Our AI is analyzing your profile and creating personalized career path explanations. 
-                  This may take 2-3 minutes due to advanced processing...
+                  Currently analyzing your profile and creating personalized career path explanations. 
+                  This may take 6-10 minutes due to advanced processing...
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
@@ -501,12 +578,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
                     {/* Component Breakdown */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {Object.entries(breakdown).map(([key, value]) => (
-                        <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{key}</p>
-                          <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
-                        </div>
-                      ))}
+                      {Object.entries(breakdown).map(([key, value]) => {
+                        // Use friendly frontend-only labels where available
+                        const rawLabel = COMPONENT_LABELS[key] || key.replace(/_/g, ' ');
+                        return (
+                          <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{rawLabel}</p>
+                            <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Tab Navigation */}

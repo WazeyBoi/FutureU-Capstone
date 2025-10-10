@@ -28,6 +28,8 @@ import edu.cit.futureu.entity.UserAssessmentEntity;
 import edu.cit.futureu.recommendation.AdvancedRecommendationResponse;
 import edu.cit.futureu.recommendation.DreamCareerInsight;
 import edu.cit.futureu.recommendation.StructuredRecommendationService;
+import edu.cit.futureu.entity.RecommendationJobEntity;
+import edu.cit.futureu.service.RecommendationJobService;
 import edu.cit.futureu.repository.CareerPathRepository;
 import edu.cit.futureu.service.AssessmentResultService;
 import edu.cit.futureu.service.CareerRecommendationService;
@@ -61,6 +63,9 @@ public class CareerRecommendationController {
 
     @Autowired
     private edu.cit.futureu.service.RecommendationPersistenceService recommendationPersistenceService;
+
+    @Autowired
+    private RecommendationJobService recommendationJobService;
 
     @GetMapping("/test")
     public String test() {
@@ -265,70 +270,36 @@ public class CareerRecommendationController {
      */
     @PostMapping("/regenerate/{userAssessmentId}")
     public ResponseEntity<?> regenerateRecommendations(@PathVariable int userAssessmentId) {
-        logger.info("Force regenerating recommendations for userAssessmentId: {}", userAssessmentId);
-        
+        logger.info("Enqueueing regeneration job for userAssessmentId: {}", userAssessmentId);
         try {
-            // Get the user assessment
-            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
-            
-            if (!userAssessmentOpt.isPresent()) {
-                return new ResponseEntity<>(
-                    Map.of("error", "User assessment not found", 
-                           "code", "NOT_FOUND"),
-                    HttpStatus.NOT_FOUND
-                );
-            }
-            
-            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
-            
-            // Check if the assessment is completed
-            if (!"COMPLETED".equals(userAssessment.getStatus())) {
-                return new ResponseEntity<>(
-                    Map.of("error", "Assessment is not yet completed", 
-                           "code", "BAD_REQUEST"),
-                    HttpStatus.BAD_REQUEST
-                );
-            }
-            
-            // Get the assessment result
-            Optional<AssessmentResultEntity> resultOpt = 
-                assessmentResultService.getAssessmentResultByUserAssessment(userAssessment);
-            
-            if (!resultOpt.isPresent()) {
-                return new ResponseEntity<>(
-                    Map.of("error", "Assessment result not found", 
-                           "code", "NOT_FOUND"),
-                    HttpStatus.NOT_FOUND
-                );
-            }
-            
-            AssessmentResultEntity assessmentResult = resultOpt.get();
-            logger.info("Force regenerating recommendations for assessment result: {}", assessmentResult.getResultId());
-            
-            // Force generate new recommendations (this will clear existing ones)
-            AdvancedRecommendationResponse structured = structuredRecommendationService.generate(userAssessment);
-            
-            logger.info("Recommendations regenerated successfully. Career paths count: {}", 
-                       structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("assessmentId", userAssessment.getUserQuizAssessment());
-            response.put("userId", userAssessment.getUser().getUserId());
-            response.put("dateCompleted", userAssessment.getDateCompleted());
-            response.put("overallScore", assessmentResult.getOverallScore());
-            response.put("recommendations", structured);
-            response.put("regenerated", true);
-            
-            return new ResponseEntity<>(response, HttpStatus.OK);
-            
+            RecommendationJobEntity job = recommendationJobService.enqueueJob(userAssessmentId);
+            Map<String, Object> resp = Map.of("jobId", job.getId(), "status", job.getStatus());
+            return ResponseEntity.accepted().body(resp);
         } catch (Exception e) {
-            logger.error("Error regenerating recommendations for userAssessmentId: {}", userAssessmentId, e);
-            return new ResponseEntity<>(
-                Map.of("error", "Failed to regenerate recommendations", 
-                       "message", e.getMessage(),
-                       "code", "SERVER_ERROR"),
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
+            logger.error("Failed to enqueue regeneration job for {}: {}", userAssessmentId, e.getMessage(), e);
+            return new ResponseEntity<>(Map.of("error", "Failed to enqueue regeneration job", "message", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/job/{jobId}")
+    public ResponseEntity<?> getJobStatus(@PathVariable Long jobId) {
+        try {
+            Optional<RecommendationJobEntity> jobOpt = recommendationJobService.getJob(jobId);
+            if (jobOpt.isEmpty()) {
+                return new ResponseEntity<>(Map.of("error", "Job not found"), HttpStatus.NOT_FOUND);
+            }
+            RecommendationJobEntity job = jobOpt.get();
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("jobId", job.getId());
+            resp.put("userAssessmentId", job.getUserAssessmentId());
+            resp.put("status", job.getStatus());
+            // message/createdAt/finishedAt may be null while the job is queued or running
+            resp.put("message", job.getMessage());
+            resp.put("createdAt", job.getCreatedAt());
+            resp.put("finishedAt", job.getFinishedAt());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("error", "Failed to get job status", "message", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
