@@ -876,21 +876,23 @@ public class StructuredRecommendationService {
         prompt.append("RESPONSE FORMAT:\n");
         prompt.append("Return your analysis as a valid JSON object with exactly these keys:\n");
         prompt.append("{\n");
-        prompt.append("  \"fieldAlignment\": \"your field alignment analysis\",\n");
-        prompt.append("  \"strengthsAlignment\": \"your strengths alignment analysis\",\n");
-        prompt.append("  \"misalignmentInsights\": \"your misalignment insights\",\n");
-        prompt.append("  \"personalizedFocusAreas\": \"your personalized focus areas\",\n");
-        prompt.append("  \"encouragement\": \"your encouragement message\"\n");
+    prompt.append("  \"fieldAlignment\": \"your field alignment analysis\",\n");
+    prompt.append("  \"strengthsAlignment\": \"your strengths alignment analysis\",\n");
+    prompt.append("  \"misalignmentInsights\": \"your misalignment insights\",\n");
+    prompt.append("  \"personalizedFocusAreas\": \"your personalized focus areas\",\n");
+    prompt.append("  \"encouragement\": \"your encouragement message\",\n");
+    prompt.append("  \"alignmentScore\": number (0-100) // OPTIONAL: numeric alignment percentage where 100 means perfect alignment\n");
         prompt.append("}\n\n");
         
         prompt.append("RESPONSE FORMAT:\n");
         prompt.append("Return your analysis as a valid JSON object with exactly these keys:\n");
         prompt.append("{\n");
-        prompt.append("  \"fieldAlignment\": \"your recommendation alignment analysis\",\n");
-        prompt.append("  \"strengthsAlignment\": \"your strengths validation analysis\",\n");
-        prompt.append("  \"misalignmentInsights\": \"your reality check insights\",\n");
-        prompt.append("  \"personalizedFocusAreas\": \"your bridge-building strategies\",\n");
-        prompt.append("  \"encouragement\": \"your personalized encouragement\"\n");
+    prompt.append("  \"fieldAlignment\": \"your recommendation alignment analysis\",\n");
+    prompt.append("  \"strengthsAlignment\": \"your strengths validation analysis\",\n");
+    prompt.append("  \"misalignmentInsights\": \"your reality check insights\",\n");
+    prompt.append("  \"personalizedFocusAreas\": \"your bridge-building strategies\",\n");
+    prompt.append("  \"encouragement\": \"your personalized encouragement\",\n");
+    prompt.append("  \"alignmentScore\": number (0-100) // OPTIONAL numeric alignment percentage\n");
         prompt.append("}\n\n");
         
         prompt.append("CRITICAL FOCUS:\n");
@@ -937,10 +939,16 @@ public class StructuredRecommendationService {
             if (responseNode.has("encouragement")) {
                 insight.setEncouragement(responseNode.get("encouragement").asText());
             }
-            
-            // Set a synthetic closeness score based on field alignment quality
-            // This provides backward compatibility for frontend components expecting this field
-            insight.setClosenessScore(calculateSyntheticClosenessScore(insight));
+            // If the AI provided an explicit numeric alignment score, use it. Otherwise fall back
+            // to the synthetic heuristic for backward compatibility.
+            if (responseNode.has("alignmentScore") && responseNode.get("alignmentScore").isNumber()) {
+                double alignment = responseNode.get("alignmentScore").asDouble();
+                // Clamp to [0,100]
+                alignment = Math.max(0.0, Math.min(100.0, alignment));
+                insight.setClosenessScore(alignment);
+            } else {
+                insight.setClosenessScore(calculateSyntheticClosenessScore(insight));
+            }
             
             return insight;
             
