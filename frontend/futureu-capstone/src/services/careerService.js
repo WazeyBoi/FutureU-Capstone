@@ -56,7 +56,7 @@ class CareerService {
    */
   async getCareerById(careerId) {
     try {
-      const response = await apiClient.get(`/career/getCareer/${careerId}`);
+      const response = await apiClient.get(`/career/getCareerDetails/${careerId}`);
       return response.data;
     } catch (error) {
       this.handleError(error, `Fetching career with ID ${careerId}`);
