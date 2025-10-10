@@ -24,7 +24,8 @@ const Navigation = () => {
   const [tooltipPinned, setTooltipPinned] = useState(false);
   const dropdownRef = useRef(null);
   const notificationRef = useRef(null);
- 
+  const [lastUserId, setLastUserId] = useState(null);
+
   const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
   
   // Use ProfileContext instead of local state
@@ -42,16 +43,18 @@ const Navigation = () => {
       if (role && role.toUpperCase() === 'GUIDANCE_COUNSELOR') role = 'CAREER_COUNSELOR';
       setUserRole(role);
       
-      // Only trigger refresh on location change, not every render
-      if (user && user.id) {
-        refreshUserProfile(true);
-        refreshProfile(true);
+      // Only refresh if user changed (not on every navigation)
+      if (user && user.id && user.id !== lastUserId) {
+        setLastUserId(user.id);
+        refreshUserProfile(false); // Don't force refresh
+        refreshProfile(false);
       }
     } else {
       setCurrentUser(null);
       setUserRole(null);
+      setLastUserId(null);
     }
-  }, [location.pathname]); // Only depend on location pathname, not the functions
+  }, [location.pathname, lastUserId, refreshUserProfile, refreshProfile]);
 
   // Enhanced click outside handling for both dropdowns
   useEffect(() => {
@@ -84,8 +87,9 @@ const Navigation = () => {
   const handleLogout = async () => {
     const userId = authService.getCurrentUserId();
     if (userId) {
+      // Remove all profile-related keys
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('futureu_recommendations_') || key.startsWith('futureu_program_recommendations_')) {
+        if (key.startsWith('futureu_profile_')) {
           localStorage.removeItem(key);
         }
       });
@@ -158,29 +162,15 @@ const Navigation = () => {
   // Enhanced ProfilePicture component with cached image support
   const ProfilePicture = ({ size = "w-10 h-10", showBorder = true, isClickable = false }) => {
     const [imageError, setImageError] = useState(false);
-    const [imageLoading, setImageLoading] = useState(false);
     
-    // Get cached profile picture URL from ProfileContext
+    // Get resolved URL from ProfileContext
     const cachedProfilePictureUrl = getProfilePictureUrl();
     
-    const handleImageError = () => {
-      setImageError(true);
-      setImageLoading(false);
-    };
- 
-    const handleImageLoad = () => {
-      setImageLoading(false);
-    };
+    const handleImageError = () => setImageError(true);
     
-    // Reset error state when URL changes
-    useEffect(() => {
-      if (cachedProfilePictureUrl) {
-        setImageError(false);
-        // Only set loading if it's not a blob URL (which loads instantly)
-        if (!cachedProfilePictureUrl.startsWith('blob:')) {
-          setImageLoading(true);
-        }
-      }
+    // Reset error when URL changes
+    React.useEffect(() => {
+      setImageError(false);
     }, [cachedProfilePictureUrl]);
 
     const borderClass = showBorder ? "border-2 border-white shadow-lg" : "";
@@ -192,26 +182,12 @@ const Navigation = () => {
         onClick={isClickable ? handleDropdownToggle : undefined}
       >
         {cachedProfilePictureUrl && !imageError ? (
-          <>
           <img
-              src={cachedProfilePictureUrl}
+            src={cachedProfilePictureUrl}
             alt="Profile"
-              className="w-full h-full object-cover object-center"
-              style={{
-                imageRendering: 'auto',
-                msInterpolationMode: 'nearest-neighbor'
-              }}
+            className="w-full h-full object-cover"
             onError={handleImageError}
-              onLoad={handleImageLoad}
-              loading="lazy"
-            />
-            {/* Only show loading overlay for non-blob URLs and when actually loading */}
-            {imageLoading && !cachedProfilePictureUrl.startsWith('blob:') && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80 transition-opacity duration-200">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
-          </>
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <User className={`${size === "w-10 h-10" ? "w-6 h-6" : "w-7 h-7"} text-white`} />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
@@ -7,12 +7,17 @@ import assessmentTakingService from '../../services/assessmentTakingService';
 import programService from '../../services/programService';
 import schoolService from '../../services/schoolService';
 import careerService from '../../services/careerService';
+// Add Career Interest Profile imports
+import { useCareerInterestProfile } from '../../hooks/useCareerInterestProfile';
+import CareerInterestProfileWizard from '../CareerInterestProfile/CareerInterestProfileWizard';
+import ProfilePrompt from '../CareerInterestProfile/ProfilePrompt';
 import {
   BookOpen, User, BarChart3, Target, Calendar, Bell, 
   TrendingUp, Award, Clock, ChevronRight, Star, 
   Play, Users, MessageSquare, Search, Menu, X,
   GraduationCap, Briefcase, Heart, Settings,
   Compass, Navigation, CheckCircle, Circle, 
+
   AlertCircle, ArrowRight, Zap, Map, Brain,
   Trophy, Lightbulb, TrendingDown, Globe, Eye,
   Video, FileText, UserCheck, MessageCircle,
@@ -63,18 +68,63 @@ const StudentHomepage = () => {
     loading: true
   });
 
+  // Add Career Interest Profile states
+  const [showProfileWizard, setShowProfileWizard] = useState(false);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
+
   const getCurrentUserId = () => {
-    return authService.getCurrentUserId() || 1; // Fallback to 1 during development
+    return authService.getCurrentUserId() || 1;
   };
 
   // Helper function to navigate and scroll to top
   const navigateAndScrollToTop = (path) => {
     navigate(path);
-    // Use setTimeout to ensure navigation completes before scrolling
     setTimeout(() => {
       window.scrollTo(0, 0);
     }, 100);
   };
+
+  // Career Interest Profile handlers
+  const handleProfileComplete = () => {
+    setShowProfileWizard(false);
+    setShowProfilePrompt(false);
+    refreshProfile();
+  };
+
+  const handleProfileSkip = () => {
+    setShowProfileWizard(false);
+    setShowProfilePrompt(false);
+  };
+
+  const handleSetupNow = () => {
+    setShowProfilePrompt(false);
+    setShowProfileWizard(true);
+  };
+
+  const handleSetupLater = () => {
+    setShowProfilePrompt(false);
+  };
+
+  // Session-based profile prompt logic (same as landing page)
+  useEffect(() => {
+    if (currentUser && !profileLoading && hasProfile === false) {
+      // Create session-specific key for this user
+      const sessionKey = `futureu_profile_prompt_shown_${currentUser.userId}`;
+      const promptShown = sessionStorage.getItem(sessionKey);
+
+      // Only show prompt if it hasn't been shown this session
+      if (!promptShown) {
+        const timer = setTimeout(() => {
+          setShowProfilePrompt(true);
+          // Mark prompt as shown for this session
+          sessionStorage.setItem(sessionKey, 'true');
+        }, 3000); // Show after 3 seconds
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentUser, hasProfile, profileLoading]);
 
   // Mock data - replace with real API calls
   const [studentData, setStudentData] = useState({
@@ -211,7 +261,7 @@ const StudentHomepage = () => {
       desc: "Discover the FutureU - Take our comprehensive assessment",
       icon: <BookOpen className="w-6 h-6" />,
       color: "from-blue-500 to-blue-600",
-      action: () => navigateAndScrollToTop('/take-assessment/1'), // Assessment ID 1 for "Discover the FutureU"
+      action: () => navigateAndScrollToTop('/take-assessment/1'),
       priority: !hasCompletedAssessment
     },
     {
@@ -240,6 +290,40 @@ const StudentHomepage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Career Interest Profile Wizard */}
+      <AnimatePresence>
+        {showProfileWizard && (
+          <CareerInterestProfileWizard
+            onComplete={handleProfileComplete}
+            onSkip={handleProfileSkip}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Profile Setup Prompt */}
+      <AnimatePresence>
+        {showProfilePrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-2xl"
+            >
+              <ProfilePrompt
+                onSetupNow={handleSetupNow}
+                onSetupLater={handleSetupLater}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-screen h-full">
           <div>
@@ -309,6 +393,29 @@ const StudentHomepage = () => {
                     </div>
                   )}
                   </motion.div>
+
+                  {/* Profile Status Badge - Similar to Landing Page */}
+                  {!profileLoading && hasProfile === false && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="mt-4"
+                    >
+                    </motion.div>
+                  )}
+
+                  {/* Profile Complete Badge */}
+                  {!profileLoading && hasProfile === true && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="mt-4"
+                    >
+                    </motion.div>
+                  )}
+
                   {/* Date row */}
                   <motion.div className="flex items-center text-blue-100/80 text-sm mt-4" variants={itemFade}>
                     <Calendar className="w-4 h-4 mr-2" />
