@@ -68,6 +68,14 @@ function getSchoolBackground(schoolName) {
   return null;
 }
 
+// Friendly labels for componentBreakdown keys (frontend-only)
+const COMPONENT_LABELS = {
+  riasec: 'RIASEC',
+  track: 'Track',
+  skills: 'Skills',
+  market_demand: 'Market Demand'
+};
+
 const AccordionContent = ({ expanded, children }) => {
   const ref = useRef(null);
   const [maxHeight, setMaxHeight] = useState(0);
@@ -500,10 +508,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
             {isRegenerating ? (
               <div className="mt-4">
-                <p className="text-lg font-semibold text-[#1D63A1] mb-2">🤖 Generating AI Recommendations</p>
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Recommendations</p>
                 <p className="text-sm text-gray-600 mb-3">
-                  Our AI is analyzing your profile and creating personalized career path explanations. 
-                  This may take 2-3 minutes due to advanced processing...
+                  Currently analyzing your profile and creating personalized career path explanations. 
+                  This may take 6-10 minutes due to advanced processing...
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
@@ -570,12 +578,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
                     {/* Component Breakdown */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {Object.entries(breakdown).map(([key, value]) => (
-                        <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{key}</p>
-                          <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
-                        </div>
-                      ))}
+                      {Object.entries(breakdown).map(([key, value]) => {
+                        // Use friendly frontend-only labels where available
+                        const rawLabel = COMPONENT_LABELS[key] || key.replace(/_/g, ' ');
+                        return (
+                          <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{rawLabel}</p>
+                            <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Tab Navigation */}
