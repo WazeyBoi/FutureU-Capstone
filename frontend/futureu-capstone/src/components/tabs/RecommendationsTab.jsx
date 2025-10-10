@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
-import careerService from '../../services/careerService';
-import { MapPin, Globe, ChevronDown, ChevronUp, School, Award, BadgeCheck } from 'lucide-react';
+import { MapPin, Globe, ChevronDown, ChevronUp, School } from 'lucide-react';
 import '../../styles/animations.css'; // Import the animations CSS
 
 // Import school logos and images for parity with AcademicExplorer
@@ -69,6 +68,14 @@ function getSchoolBackground(schoolName) {
   return null;
 }
 
+// Friendly labels for componentBreakdown keys (frontend-only)
+const COMPONENT_LABELS = {
+  riasec: 'RIASEC',
+  track: 'Track',
+  skills: 'Skills',
+  market_demand: 'Market Demand'
+};
+
 const AccordionContent = ({ expanded, children }) => {
   const ref = useRef(null);
   const [maxHeight, setMaxHeight] = useState(0);
@@ -106,13 +113,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [checkedExisting, setCheckedExisting] = useState(false);
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
   const tooltipRef = useRef(null);
-
-  // Modal state for real career details
-  const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
-  const [selectedCareer, setSelectedCareer] = useState(null); // { id, title }
-  const [careerDetailsCache, setCareerDetailsCache] = useState({}); // { [careerId]: details }
-  const [careerDetailsLoading, setCareerDetailsLoading] = useState(false);
-  const [careerDetailsError, setCareerDetailsError] = useState(null);
 
   const formatDate = (value) => {
     if (!value) return null;
@@ -274,19 +274,88 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     setIsRegenerating(true);
     setError(null);
     try {
-      console.log('Starting AI recommendation regeneration...');
-      await recommendationService.generateRecommendations(userAssessmentId);
-      console.log('AI recommendation regeneration completed, fetching results...');
-      localStorage.removeItem(storageKey);
-      await fetchComprehensiveRecommendations({ forceRefresh: true });
-      console.log('New recommendations loaded successfully');
+      console.log('Requesting regeneration job enqueue...');
+      try {
+        const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
+        const jobId = enqueueResp.data?.jobId;
+        if (!jobId) throw new Error('No jobId returned from enqueue');
+
+        console.log('Enqueued job, id=', jobId, ' - polling for status...');
+        const POLL_INTERVAL_MS = 5000; // 5s
+        const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
+        let elapsed = 0;
+        let done = false;
+        while (elapsed < MAX_POLL_MS) {
+          try {
+            const statusResp = await recommendationService.getJobStatus(jobId);
+            const status = statusResp.data?.status;
+            if (status === 'SUCCEEDED') {
+              done = true;
+              break;
+            } else if (status === 'FAILED') {
+              // stop polling on failure and show message
+              const msg = statusResp.data?.message || 'Job failed on server';
+              setError(`Generation failed: ${msg}`);
+              done = false;
+              break;
+            }
+          } catch (pollErr) {
+            console.warn('Job status poll error:', pollErr?.message);
+          }
+          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+          elapsed += POLL_INTERVAL_MS;
+        }
+
+        if (done) {
+          console.log('Job completed, fetching results...');
+          localStorage.removeItem(storageKey);
+          await fetchComprehensiveRecommendations({ forceRefresh: true });
+        } else if (!error) {
+          setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
+        }
+      } catch (enqueueErr) {
+        console.warn('Enqueue failed, falling back to direct POST:', enqueueErr?.message);
+        // Fallback to previous behavior: try direct POST then exists polling
+        try {
+          await recommendationService.generateRecommendations(userAssessmentId);
+          localStorage.removeItem(storageKey);
+          await fetchComprehensiveRecommendations({ forceRefresh: true });
+        } catch (postErr) {
+          console.warn('Fallback POST failed, starting exists polling:', postErr?.message);
+          // Start short polling on exists
+          const POLL_INTERVAL_MS = 5000;
+          const MAX_POLL_MS = 10 * 60 * 1000;
+          let elapsed = 0;
+          let found = false;
+          while (elapsed < MAX_POLL_MS) {
+            try {
+              const existResp = await recommendationService.checkRecommendationsExist(userAssessmentId);
+              const data = existResp.data;
+              if (data && data.hasRecommendations) {
+                found = true;
+                break;
+              }
+            } catch (pollErr) {
+              console.warn('Poll error while checking recommendations exist:', pollErr?.message);
+            }
+            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+            elapsed += POLL_INTERVAL_MS;
+          }
+          if (found) {
+            localStorage.removeItem(storageKey);
+            await fetchComprehensiveRecommendations({ forceRefresh: true });
+          } else {
+            setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
+          }
+        }
+      }
     } catch (err) {
       console.error('Regeneration failed:', err);
       let errorMessage = 'Failed to generate recommendations. Please try again later.';
       
       // Check if it's a timeout error
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        errorMessage = 'The AI generation process is taking longer than expected. The system may still be processing in the background. Please wait a moment and try refreshing the page.';
+        errorMessage = 'The AI generation request timed out locally. The backend may still be processing; we started a background check and will fetch results when available. Please wait a moment and try refreshing the page.';
       } else {
         const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
         errorMessage = backendMessage || errorMessage;
@@ -344,67 +413,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       ...prev,
       [pathKey]: prev[pathKey] === programId ? null : programId,
     }));
-  }, []);
-
-  const openCareerModal = useCallback(async (career) => {
-    if (!career) return;
-    const careerId = career.careerId;
-    setSelectedCareer({ id: careerId, title: career.careerTitle });
-    setIsCareerModalOpen(true);
-    setCareerDetailsError(null);
-
-    if (careerId && !careerDetailsCache[careerId]) {
-      setCareerDetailsLoading(true);
-      try {
-        const details = await careerService.getCareerById(careerId);
-        setCareerDetailsCache((prev) => ({ ...prev, [careerId]: details }));
-      } catch (err) {
-        const status = err?.response?.status;
-        if (status === 429) {
-          setCareerDetailsError('Rate limit reached. Showing fallback description if available.');
-        } else {
-          setCareerDetailsError('Unable to load career details right now.');
-        }
-      } finally {
-        setCareerDetailsLoading(false);
-      }
-    }
-  }, [careerDetailsCache]);
-
-  const closeCareerModal = useCallback(() => {
-    setIsCareerModalOpen(false);
-    setSelectedCareer(null);
-    setCareerDetailsError(null);
-  }, []);
-
-  // Open modal from a title-only item (e.g., Recommended Careers grid)
-  const openCareerModalByTitle = useCallback(async (title) => {
-    if (!title) return;
-    setSelectedCareer({ id: null, title });
-    setIsCareerModalOpen(true);
-    setCareerDetailsError(null);
-    setCareerDetailsLoading(true);
-    try {
-      const results = await careerService.searchCareers(title);
-      const exact = Array.isArray(results) ? results.find(c => c.careerTitle?.toLowerCase() === title.toLowerCase()) : null;
-      const chosen = exact || (Array.isArray(results) && results.length > 0 ? results[0] : null);
-      if (!chosen) {
-        setCareerDetailsError('No matching career found.');
-        return;
-      }
-      const details = await careerService.getCareerById(chosen.careerId);
-      setSelectedCareer({ id: chosen.careerId, title: chosen.careerTitle || title });
-      setCareerDetailsCache((prev) => ({ ...prev, [chosen.careerId]: details }));
-    } catch (err) {
-      const status = err?.response?.status;
-      if (status === 429) {
-        setCareerDetailsError('Rate limit reached. Showing fallback description if available.');
-      } else {
-        setCareerDetailsError('Unable to load career details right now.');
-      }
-    } finally {
-      setCareerDetailsLoading(false);
-    }
   }, []);
 
   return (
@@ -500,10 +508,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
             {isRegenerating ? (
               <div className="mt-4">
-                <p className="text-lg font-semibold text-[#1D63A1] mb-2">🤖 Generating AI Recommendations</p>
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Recommendations</p>
                 <p className="text-sm text-gray-600 mb-3">
-                  Our AI is analyzing your profile and creating personalized career path explanations. 
-                  This may take 2-3 minutes due to advanced processing...
+                  Currently analyzing your profile and creating personalized career path explanations. 
+                  This may take 6-10 minutes due to advanced processing...
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
@@ -531,8 +539,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#232D35] bg-gray-100 px-4 py-1.5 rounded-full border border-[#FFB71B] shadow-sm">
-                <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                 Top {careerPathDetails.length} matches
               </span>
             </div>
@@ -553,7 +560,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
                             #{idx + 1} Match
                           </span>
-                          <span className="text-lg font-bold text-[#232D35]">
+                          <span className="text-lg font-bold text-[#1D63A1]">
                             {(path.matchPercentage || 0).toFixed(1)}%
                           </span>
                         </div>
@@ -563,7 +570,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
                     {/* AI Summary */}
                     {path.summary && (
-                      <div className="mb-6 p-5 bg-white rounded-xl border border-gray-200 shadow-md">
+                      <div className="mb-6 p-4 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
                         <h5 className="text-left text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
                         <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
                       </div>
@@ -571,12 +578,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
                     {/* Component Breakdown */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      {Object.entries(breakdown).map(([key, value]) => (
-                        <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{key}</p>
-                          <p className="text-lg font-bold text-[#232D35]">{(value || 0).toFixed(1)}%</p>
-                        </div>
-                      ))}
+                      {Object.entries(breakdown).map(([key, value]) => {
+                        // Use friendly frontend-only labels where available
+                        const rawLabel = COMPONENT_LABELS[key] || key.replace(/_/g, ' ');
+                        return (
+                          <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{rawLabel}</p>
+                            <p className="text-lg font-bold text-[#1D63A1]">{(value || 0).toFixed(1)}%</p>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Tab Navigation */}
@@ -587,7 +598,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           onClick={() => handlePathTabChange(pathKey, 'careers')}
                           className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                             activeTab === 'careers' 
-                              ? 'border-[#FFB71B] text-[#232D35]' 
+                              ? 'border-[#1D63A1] text-[#1D63A1]' 
                               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                           }`}
                         >
@@ -598,7 +609,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           onClick={() => handlePathTabChange(pathKey, 'programs')}
                           className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                             activeTab === 'programs' 
-                              ? 'border-[#FFB71B] text-[#232D35]' 
+                              ? 'border-[#FFB71B] text-[#FFB71B]' 
                               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                           }`}
                         >
@@ -609,7 +620,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           onClick={() => handlePathTabChange(pathKey, 'description')}
                           className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                             activeTab === 'description' 
-                              ? 'border-[#FFB71B] text-[#232D35]' 
+                              ? 'border-[#232D35] text-[#232D35]' 
                               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                           }`}
                         >
@@ -634,16 +645,15 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                 initial={{ opacity: 0, y: 20 }} 
                                 animate={{ opacity: 1, y: 0 }} 
                                 transition={{ duration: 0.3, delay: careerIdx * 0.1 }}
-                                className="p-4 border border-[#232D35]/20 rounded-lg hover:border-[#232D35] transition-colors cursor-pointer"
-                                onClick={() => openCareerModal(career)}
+                                className="p-4 border border-gray-200 rounded-lg hover:border-[#1D63A1]/30 transition-colors"
                               >
                                 <div className="flex justify-between items-start mb-2">
                                   <h5 className="font-semibold text-[#232D35] text-sm">{career.careerTitle}</h5>
-                                  <span className="text-xs font-medium text-[#232D35] bg-[#1D63A1]/10 px-2 py-1 rounded ml-2">
+                                  <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded ml-2">
                                     {(career.matchPercentage || 0).toFixed(1)}%
                                   </span>
                                 </div>
-                                <p className="text-xs text-left text-gray-600 leading-relaxed line-clamp-2">{career.summary || 'This career aligns with your strengths.'}</p>
+                                <p className="text-xs text-left text-gray-600 leading-relaxed">{career.summary || 'This career aligns with your strengths.'}</p>
                               </motion.div>
                             ))}
                           </div>
@@ -680,73 +690,68 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                 initial={{ opacity: 0, y: 20 }} 
                                 animate={{ opacity: 1, y: 0 }} 
                                 transition={{ duration: 0.3, delay: programIdx * 0.1 }}
-                                className="border border-gray-200 rounded-2xl p-5 hover:shadow-md hover:border-[#FFB71B] transition-all bg-white"
+                                className="border border-gray-200 rounded-lg p-5 hover:border-[#FFB71B]/30 transition-colors"
                               >
-                                <div className="relative mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
-                                  <div className="flex-1 pr-28">
-                                    <h5 className="text-left text-lg font-bold text-[#232D35] mb-1">{program.programName}</h5>
+                                <div className="flex justify-between items-center mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
+                                  <div className="flex-1">
+                                    <h5 className="text-left font-semibold text-[#232D35] mb-1">{program.programName}</h5>
                                     <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
                                   </div>
-                                  <span className="absolute top-0 right-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#232D35] text-[#FFB71B]">
+                                  <div className="flex items-center gap-3 ml-4">
+                                    <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
                                       {(program.matchPercentage || 0).toFixed(1)}% Match
                                     </span>
-                                  <div className="absolute -bottom-1 right-0">
                                     {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                   </div>
                                 </div>
                                 <AccordionContent expanded={expanded}>
                                   <div className="pt-4 border-t border-gray-100">
-                                    <h6 className="font-semibold text-[#232D35] mb-4">Available at these schools:</h6>
+                                    <h6 className="font-medium text-[#232D35] mb-3">Available at these schools:</h6>
                                     {schools.length > 0 ? (
-                                      <div className="space-y-4 max-h-96 md:max-h-[520px] overflow-y-auto pr-2">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {schools.map((schoolObj, schoolIdx) => {
                                           const { schoolProgram, reason } = schoolObj;
                                           const school = schoolProgram?.school || schoolObj?.school;
                                           const schoolLogo = schoolLogos[school?.schoolId];
+                                          const schoolBackground = getSchoolBackground(school?.name);
                                           const programSchoolKey = schoolProgram?.schoolProgramId || `${programId}-${schoolIdx}`;
                                           const isTopChoice = reason && reason.toLowerCase().includes('best');
-                                          const rankMatch = typeof reason === 'string' ? reason.match(/Ranked\s*#\d+/i) : null;
-                                          const rankLabel = rankMatch ? rankMatch[0] : null;
+                                          
                                           return (
                                             <motion.div 
                                               key={programSchoolKey} 
-                                              initial={{ opacity: 0, y: 10 }} 
-                                              animate={{ opacity: 1, y: 0 }} 
+                                              initial={{ opacity: 0, scale: 0.95 }} 
+                                              animate={{ opacity: 1, scale: 1 }} 
                                               transition={{ duration: 0.2, delay: schoolIdx * 0.05 }}
-                                              className="relative rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
+                                              className="relative bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
                                             >
                                               {isTopChoice && (
-                                                <span className="absolute top-3 right-3 text-[11px] font-bold bg-[#FFB71B] text-white px-2.5 py-1 rounded-full shadow-sm">
+                                                <span className="absolute top-2 right-2 text-xs font-medium bg-[#FFB71B] text-white px-2 py-1 rounded">
                                                   Top Choice
                                                 </span>
                                               )}
-                                              <div className="flex items-start gap-4">
+                                              
+                                              <div className="flex items-start gap-3">
                                                 {schoolLogo ? (
-                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-12 h-12 object-cover rounded" />
+                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-10 h-10 object-cover rounded" />
                                                 ) : (
-                                                  <div className="w-12 h-12 bg-[#1D63A1]/10 rounded flex items-center justify-center">
-                                                    <School className="w-6 h-6 text-[#1D63A1]" />
+                                                  <div className="w-10 h-10 bg-[#1D63A1]/10 rounded flex items-center justify-center">
+                                                    <School className="w-5 h-5 text-[#1D63A1]" />
                                                   </div>
                                                 )}
+                                                
                                                 <div className="flex-1 min-w-0">
-                                                  <div className="flex items-start justify-between">
-                                                    <h6 className="font-semibold text-[#232D35] text-base truncate pr-2">{school?.name}</h6>
-                                                  </div>
-                                                  <div className="mt-1 flex items-center text-xs text-gray-600">
+                                                  <h6 className="font-medium text-[#232D35] text-sm truncate">{school?.name}</h6>
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
                                                     <MapPin className="w-3 h-3 mr-1" />
                                                     <span className="truncate">{school?.location || 'Location not available'}</span>
                                                   </div>
-                                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                                    <span className="inline-block px-2 py-0.5 rounded-full bg-gray-300 text-white font-semibold">{school?.type || 'School type'}</span>
-                                                    {rankLabel && (
-                                                      <span className="inline-block px-2 py-0.5 rounded-full bg-gray-300 text-white font-semibold">{rankLabel}</span>
-                                                    )}
+                                                  <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                    <Globe className="w-3 h-3 mr-1" />
+                                                    <span>{school?.type || 'School type unavailable'}</span>
                                                   </div>
                                                   {reason && (
-                                                    <div className="mt-3 flex items-start gap-2 text-xs text-green-700">
-                                                      <BadgeCheck className="w-4 h-4 text-green-600 mt-0.5" />
-                                                      <p className="leading-5">{reason}</p>
-                                                    </div>
+                                                    <p className="text-xs text-[#1D63A1] mt-2 line-clamp-2">{reason}</p>
                                                   )}
                                                 </div>
                                               </div>
@@ -811,26 +816,26 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                               initial={{ opacity: 0, y: 20 }} 
                               animate={{ opacity: 1, y: 0 }} 
                               transition={{ duration: 0.3 }}
-                              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-xl"
+                              className="bg-gradient-to-r from-[#232D35]/5 to-[#232D35]/10 rounded-lg p-6 border border-[#232D35]/20"
                             >
-                              <div className="mb-4">
-                                <h4 className="text-left font-bold text-[#232D35] text-lg">About This Career Pathway</h4>
+                              <div className="flex items-center gap-3 mb-4">
+                                <div>
+                                  <h4 className="text-left font-semibold text-[#232D35] text-lg">About This Career Pathway</h4>
+                                  <p className="text-sm text-gray-600">Detailed information about {pathData.careerPathName}</p>
+                                </div>
                               </div>
                               
                               <div className="prose prose-gray max-w-none">
-                                <p className="text-sm text-left text-gray-700 leading-7 whitespace-pre-wrap">
+                                <p className="text-sm text-left text-gray-700 leading-relaxed whitespace-pre-wrap">
                                   {descriptionData.description}
                                 </p>
                               </div>
                               
-                              <div className="mt-6 p-5 rounded-2xl bg-white border border-gray-200 shadow-xl text-center">
-                                <h5 className="font-extrabold text-[#232D35] mb-2">Why This Pathway Matches You</h5>
-                                <p className="text-sm text-gray-700">
-                                  This pathway achieved a 
-                                  <span className="ml-1 mr-1 inline-block font-extrabold text-[#232D35] bg-[#FFB71B]/30 px-2 py-0.5 rounded">
-                                    {(pathData.matchPercentage || 0).toFixed(1)}%
-                                  </span>
-                                  match with your assessment results, indicating strong alignment with your demonstrated strengths and interests.
+                              <div className="mt-6 p-4 bg-white/50 rounded-lg border border-[#232D35]/10">
+                                <h5 className="font-medium text-[#232D35] mb-2">Why This Pathway Matches You</h5>
+                                <p className="text-sm text-gray-600 text-left">
+                                  This pathway achieved a <span className="font-semibold text-[#232D35]">{(pathData.matchPercentage || 0).toFixed(1)}%</span> match 
+                                  with your assessment results, indicating strong alignment with your demonstrated strengths and interests.
                                 </p>
                               </div>
                             </motion.div>
@@ -849,8 +854,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-2xl shadow-md p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Recommended Careers</h3>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#FFB71B] bg-[#232D35] px-4 py-1.5 rounded-full shadow-sm">
-                <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                 Based on {aiRecommendations.overallScore?.toFixed(1)}% match
               </span>
             </div>
@@ -861,55 +865,24 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               {aiRecommendations.recommendations.careers
                 ?.slice(0, 5)
                 .map((career, index) => (
-                  <div 
-                    key={index} 
-                    className="group border border-gray-200 rounded-3xl p-6 bg-white shadow-sm hover:shadow-md hover:border-[#FFB71B] transition-all cursor-pointer hover:-translate-y-0.5"
-                    onClick={() => openCareerModalByTitle(career.name)}
-                  >
-                    <div className="flex flex-col h-full">
-                      <div className="flex items-start justify-between mb-4">
+                  <div key={index} className="border border-gray-200 rounded-lg p-5 hover:border-[#1D63A1]/30 transition-colors">
+                    <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-white bg-gray-600 px-2.5 py-1 rounded-full">
+                        <span className="text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 px-2 py-1 rounded">
                           #{index + 1}
                         </span>
                         {index === 0 && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#232D35] bg-[#FFB71B] px-2.5 py-1 rounded-full shadow-sm">
-                              <Award className="w-3 h-3" /> Top Pick
+                          <span className="text-xs font-medium text-[#FFB71B] bg-[#FFB71B]/10 px-2 py-1 rounded">
+                            Top Pick
                           </span>
                         )}
                       </div>
-                        <span className="text-base font-extrabold text-[#232D35] group-hover:text-[#FFB71B]">
+                      <span className="text-sm font-bold text-[#1D63A1]">
                         {career.confidenceScore?.toFixed(1)}%
                       </span>
                     </div>
-
-                      <h4 className="text-xl font-bold text-[#232D35] mb-2 group-hover:text-[#FFB71B] transition-colors">
-                        {career.name}
-                      </h4>
-
-                      {(() => {
-                        const desc = career.description || '';
-                        const splitToken = '| Pathway:';
-                        const hasPath = desc.includes(splitToken);
-                        const summary = hasPath ? desc.split(splitToken)[0].trim() : desc;
-                        const pathway = hasPath ? desc.split(splitToken)[1]?.trim() : null;
-                        return (
-                          <>
-                            <p className="text-sm text-left text-gray-600 leading-relaxed mb-4">
-                              {summary}
-                            </p>
-                            {pathway && (
-                              <div className="mt-auto pt-3 border-t border-gray-100 flex items-center gap-2 text-xs">
-                                <span className="font-semibold text-[#232D35]">Pathway</span>
-                                <span className="inline-block px-2.5 py-0.5 rounded-full bg-gray-600 text-white font-semibold">
-                                  {pathway}
-                                </span>
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
+                    <h4 className="text-lg font-semibold text-[#232D35] mb-2">{career.name}</h4>
+                    <p className="text-sm text-left text-gray-600 leading-relaxed">{career.description}</p>
                   </div>
                 ))
               }
@@ -1062,69 +1035,6 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           {tooltip.content}
         </div>
       )}
-      {/* Career Details Modal */}
-      {isCareerModalOpen && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={closeCareerModal}>
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="w-full max-w-4xl md:max-w-5xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-              <div className="relative px-6 py-5 bg-[#232D35] text-white">
-                <div className="flex items-start justify-between">
-                  <div className="pr-8">
-                    <h3 className="text-xl font-extrabold tracking-tight">{selectedCareer?.title || 'Career Details'}</h3>
-                    <p className="mt-1 text-xs text-white/80">Detailed description about this career</p>
-                  </div>
-                  <button 
-                    onClick={closeCareerModal} 
-                    aria-label="Close"
-                    className="absolute top-4 right-4 inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/15 hover:bg-white/25 text-white transition"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-              <div className="p-6">
-                {careerDetailsLoading ? (
-                  <div className="py-10 text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1D63A1] mx-auto mb-3"></div>
-                    <p className="text-sm text-gray-600">Loading career description...</p>
-                  </div>
-                ) : (
-                  <div>
-                    {careerDetailsError && (
-                      <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                        {careerDetailsError}
-                      </div>
-                    )}
-                    <div className="prose prose-sm max-w-none text-[#232D35]">
-                      <div className="text-left text-[0.95rem] leading-7 md:leading-8 whitespace-pre-wrap max-h-[70vh] overflow-y-auto pr-2">
-                        {(selectedCareer?.id && careerDetailsCache[selectedCareer.id]?.careerDescription) 
-                          || 'No description available for this career.'}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="px-6 pb-6 -mt-2">
-                <div className="flex justify-end">
-                  <Link 
-                    to="/program-career-explorer" 
-                    className="inline-flex items-center px-4 py-2 rounded-xl font-semibold bg-[#232D35] text-[#FFB71B] hover:bg-[#1b2329] hover:text-[#FFB71B] visited:text-[#FFB71B] active:text-[#FFB71B] focus:text-[#FFB71B] no-underline focus:outline-none focus:ring-2 focus:ring-[#FFB71B]"
-                    style={{ color: '#FFB71B' }}
-                  >
-                    Explore more about this career
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
     </div>
   );
 };
@@ -1138,4 +1048,3 @@ export function clearRecommendationsFromLocalStorage(userAssessmentId) {
 }
 
 export default RecommendationsTab;
-
