@@ -32,6 +32,47 @@ export const generateRecommendations = (userAssessmentId) => {
 };
 
 /**
+ * Enqueue a regeneration job (server will process asynchronously)
+ * @returns {Promise} - Returns { jobId, status }
+ */
+export const enqueueRegeneration = (userAssessmentId) => {
+  try {
+    return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`);
+  } catch (error) {
+    console.error('Error enqueueing regeneration job:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get job status by jobId
+ */
+export const getJobStatus = (jobId) => {
+  try {
+    return apiClient.get(`/recommendation/job/${jobId}`);
+  } catch (error) {
+    console.error(`Error fetching job status ${jobId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Check whether recommendations exist for a given user assessment.
+ * This endpoint is fast and intended for polling to detect when a long-running
+ * backend generation has finished and persisted results.
+ * @param {number} userAssessmentId
+ * @returns {Promise} - Axios response promise with { hasRecommendations: boolean, ... }
+ */
+export const checkRecommendationsExist = (userAssessmentId) => {
+  try {
+    return apiClient.get(`/recommendation/exists/${userAssessmentId}`);
+  } catch (error) {
+    console.error(`Error checking existence of recommendations for ${userAssessmentId}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Fetch a single recommendation by its ID
  * @param {number} recommendationId - The ID of the recommendation
  * @returns {Promise} - Axios response promise
