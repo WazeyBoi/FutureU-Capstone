@@ -581,10 +581,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </div>
             {isRegenerating ? (
               <div className="mt-4">
-                <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Recommendations</p>
+                <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Results</p>
                 <p className="text-sm text-gray-600 mb-3">
                   Currently analyzing your profile and creating personalized career path explanations. 
-                  This may take 6-10 minutes due to advanced processing...
+                  This may take 5-7- minutes of processing...
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
@@ -592,7 +592,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-600 mb-3 mt-4">Loading your personalized recommendations...</p>
+              <p className="text-sm text-gray-600 mb-3 mt-4">Loading your results...</p>
             )}
           </motion.div>
         )}
@@ -626,21 +626,25 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 const programs = Array.isArray(path.programs) ? path.programs : [];
                 const expandedProgramId = expandedPathPrograms[pathKey] ?? null;
                 return (
-                  <div key={pathKey} className="border border-gray-200 rounded-2xl p-6 hover:border-[#FFB71B] transition-colors">
+                  <div 
+                    key={pathKey} 
+                    className="border border-gray-200 rounded-3xl p-6 hover:border-[#FFB71B] transition-all"
+                    style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.10)' }}
+                  >
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <span className="text-[11px] font-bold text-white bg-[#232D35] px-2.5 py-1 rounded-full">#{idx + 1} Match</span>
-                          <span className="text-lg font-bold text-[#232D35]">{(path.matchPercentage || 0).toFixed(1)}%</span>
+                          <span className="text-xs font-bold text-white bg-[#232D35] px-3 py-1 rounded-full">#{idx + 1} Match</span>
+                          <span className="text-2xl font-extrabold text-[#FFB71B]">{(path.matchPercentage || 0).toFixed(1)}%</span>
                         </div>
-                        <h4 className="text-xl font-bold text-[#232D35] mb-2">{path.careerPathName}</h4>
+                        <h4 className="text-xl font-extrabold text-[#232D35] mb-2">{path.careerPathName}</h4>
                       </div>
                     </div>
 
                     {/* AI Summary */}
                     {path.summary && (
-                      <div className="mb-6 p-5 bg-white rounded-xl border border-gray-200 shadow-md">
+                      <div className="mb-6 p-5 bg-gradient-to-br from-[#FFFBF1] to-white rounded-2xl border border-[#FFB71B]/20">
                         <h5 className="text-left text-sm font-semibold text-[#232D35] mb-2">Why This Path Fits You</h5>
                         <p className="text-sm text-left text-gray-700 leading-relaxed">{path.summary}</p>
                       </div>
@@ -666,10 +670,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         <button
                           type="button"
                           onClick={() => handlePathTabChange(pathKey, 'careers')}
-                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                          className={`py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
                             activeTab === 'careers' 
                               ? 'border-[#FFB71B] text-[#232D35]' 
-                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                              : 'border-transparent text-gray-500 hover:text-[#232D35] hover:border-gray-300'
                           }`}
                         >
                           Related Careers
@@ -677,10 +681,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         <button
                           type="button"
                           onClick={() => handlePathTabChange(pathKey, 'programs')}
-                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                          className={`py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
                             activeTab === 'programs' 
                               ? 'border-[#FFB71B] text-[#232D35]' 
-                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                              : 'border-transparent text-gray-500 hover:text-[#232D35] hover:border-gray-300'
                           }`}
                         >
                           Study Programs
@@ -688,10 +692,10 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                         <button
                           type="button"
                           onClick={() => handlePathTabChange(pathKey, 'description')}
-                          className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                          className={`py-3 px-1 border-b-2 font-semibold text-sm transition-colors ${
                             activeTab === 'description' 
                               ? 'border-[#FFB71B] text-[#232D35]' 
-                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                              : 'border-transparent text-gray-500 hover:text-[#232D35] hover:border-gray-300'
                           }`}
                         >
                           Description
@@ -715,12 +719,13 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                 initial={{ opacity: 0, y: 20 }} 
                                 animate={{ opacity: 1, y: 0 }} 
                                 transition={{ duration: 0.3, delay: careerIdx * 0.1 }}
-                                className="group p-5 border border-gray-200 rounded-2xl bg-white shadow-sm hover:shadow-md hover:border-[#FFB71B] transition-all cursor-pointer"
+                                className="group p-5 border border-gray-200 rounded-2xl bg-white hover:border-[#FFB71B] transition-all cursor-pointer"
+                                style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
                                 onClick={() => openRelatedCareerModal(career)}
                               >
                                 <div className="flex justify-between items-start mb-2">
-                                  <h5 className="font-semibold text-[#232D35] text-sm">{career.careerTitle}</h5>
-                                  <span className="text-xs font-semibold text-[#232D35] bg-gray-100 px-2 py-1 rounded ml-2">
+                                  <h5 className="font-bold text-[#232D35] text-base group-hover:text-[#FFB71B] transition-colors">{career.careerTitle}</h5>
+                                  <span className="text-sm font-extrabold text-[#232D35] bg-[#FFB71B]/10 px-2.5 py-1 rounded-full ml-2">
                                     {(career.matchPercentage || 0).toFixed(1)}%
                                   </span>
                                 </div>
@@ -761,19 +766,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                 initial={{ opacity: 0, y: 20 }} 
                                 animate={{ opacity: 1, y: 0 }} 
                                 transition={{ duration: 0.3, delay: programIdx * 0.1 }}
-                                className="border border-gray-200 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md hover:border-[#FFB71B] transition-all"
+                                className="border border-gray-200 rounded-2xl p-5 bg-white hover:border-[#FFB71B] transition-all"
+                                style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
                               >
                                 <div className="relative mb-3 cursor-pointer" onClick={() => handleTogglePathProgram(pathKey, programId)}>
                                   <div className="flex-1 pr-28">
-                                    <h5 className="text-left text-lg font-bold text-[#232D35] mb-1">{program.programName}</h5>
+                                    <h5 className="text-left text-lg font-extrabold text-[#232D35] mb-1">{program.programName}</h5>
                                     <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
                                   </div>
-                                  {/* hidden for now */}
-                                  {/* <span className="absolute top-0 right-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#232D35] text-[#FFB71B]">
-                                    {(program.matchPercentage || 0).toFixed(1)}% Match
-                                  </span> */}
                                   <div className="absolute -bottom-1 right-0">
-                                    {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                    {expanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                                   </div>
                                 </div>
                                 <AccordionContent expanded={expanded}>
@@ -793,35 +795,36 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                               initial={{ opacity: 0, y: 10 }} 
                                               animate={{ opacity: 1, y: 0 }} 
                                               transition={{ duration: 0.2, delay: schoolIdx * 0.05 }}
-                                              className="relative rounded-2xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-all"
+                                              className="relative rounded-2xl border border-gray-200 bg-white p-4 hover:border-[#FFB71B] transition-all"
+                                              style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
                                             >
                                               {isTopChoice && (
-                                                <span className="absolute top-3 right-3 text-[11px] font-bold bg-[#FFB71B] text-white px-2.5 py-1 rounded-full shadow-sm">Top Choice</span>
+                                                <span className="absolute top-3 right-3 text-xs font-bold bg-[#FFB71B] text-white px-3 py-1 rounded-full">Top Choice</span>
                                               )}
                                               <div className="flex items-start gap-4">
                                                 {schoolLogo ? (
-                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-12 h-12 object-cover rounded" />
+                                                  <img src={schoolLogo} alt={`${school?.name} logo`} className="w-14 h-14 object-cover rounded-lg" />
                                                 ) : (
-                                                  <div className="w-12 h-12 bg-[#1D63A1]/10 rounded flex items-center justify-center">
-                                                    <School className="w-6 h-6 text-[#1D63A1]" />
+                                                  <div className="w-14 h-14 bg-[#1D63A1]/10 rounded-lg flex items-center justify-center">
+                                                    <School className="w-7 h-7 text-[#1D63A1]" />
                                                   </div>
                                                 )}
                                                 <div className="flex-1 min-w-0">
                                                   <div className="flex items-start justify-between">
-                                                    <h6 className="font-semibold text-[#232D35] text-base truncate pr-2">{school?.name}</h6>
+                                                    <h6 className="font-extrabold text-[#232D35] text-base truncate pr-2">{school?.name}</h6>
                                                   </div>
                                                   <div className="mt-1 flex items-center text-xs text-gray-600">
                                                     <MapPin className="w-3 h-3 mr-1" />
                                                     <span className="truncate">{school?.location || 'Location not available'}</span>
                                                   </div>
-                                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-200 text-[#232D35] font-semibold">
+                                                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#1D63A1]/10 text-[#1D63A1] font-semibold">
                                                       {school?.type || 'School type'}
                                                     </span>
                                                     {(() => {
                                                       const rankMatch = typeof reason === 'string' ? reason.match(/Ranked\s*#\d+/i) : null;
                                                       return rankMatch ? (
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-200 text-[#232D35] font-semibold">
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FFB71B]/10 text-[#FFB71B] font-semibold">
                                                           {rankMatch[0]}
                                                         </span>
                                                       ) : null;
@@ -829,7 +832,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                                   </div>
                                                   {reason && (
                                                     <div className="mt-3 flex items-start gap-2 text-xs text-green-700">
-                                                      <BadgeCheck className="w-4 h-4 text-green-600 mt-0.5" />
+                                                      <BadgeCheck className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
                                                       <p className="leading-5">{reason}</p>
                                                     </div>
                                                   )}
@@ -931,13 +934,14 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         )}
         {/* Career recommendations - only show if recommendations exist */}
         {aiRecommendations && aiRecommendations.recommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-2xl shadow-md p-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }} 
+            className="bg-white rounded-3xl shadow-lg p-8 border border-[#FFB71B]/10 animate-card-pop"
+          >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-[#232D35]">Recommended Careers</h3>
-              {/* <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#FFB71B] bg-[#232D35] px-4 py-1.5 rounded-full shadow-sm">
-                <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                Based on {aiRecommendations.overallScore?.toFixed(1)}% match
-              </span> */}
+              <h3 className="text-2xl font-extrabold text-[#232D35]">Your Top Career Options</h3>
             </div>
             <p className="text-left text-gray-600 mb-8">
               These specific career roles align well with your assessment results and personality profile.
@@ -948,21 +952,22 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 .map((career, index) => (
                   <div 
                     key={index}
-                    className="group border border-gray-200 rounded-3xl p-6 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer hover:-translate-y-0.5 hover:border-[#FFB71B]"
+                    className="group border border-gray-200 rounded-2xl p-6 bg-white hover:border-[#FFB71B] transition-all cursor-pointer hover:-translate-y-0.5"
+                    style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
                     onClick={() => openCareerModalByTitle(career.name)}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-white bg-[#232D35] px-2.5 py-1 rounded-full">#{index + 1}</span>
+                        <span className="text-xs font-bold text-white bg-[#232D35] px-3 py-1 rounded-full">#{index + 1}</span>
                         {index === 0 && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#232D35] bg-[#FFB71B] px-2.5 py-1 rounded-full shadow-sm">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#232D35] bg-[#FFB71B] px-3 py-1 rounded-full">
                             <Award className="w-3 h-3" /> Top Pick
                           </span>
                         )}
                       </div>
-                      <span className="text-base font-extrabold text-[#232D35] group-hover:text-[#FFB71B]">{career.confidenceScore?.toFixed(1)}%</span>
+                      <span className="text-xl font-extrabold text-[#FFB71B] group-hover:text-[#232D35]">{career.confidenceScore?.toFixed(1)}%</span>
                     </div>
-                    <h4 className="text-xl font-bold text-[#232D35] mb-2 group-hover:text-[#FFB71B] transition-colors">{career.name}</h4>
+                    <h4 className="text-xl font-extrabold text-[#232D35] mb-2 group-hover:text-[#FFB71B] transition-colors">{career.name}</h4>
                     <p className="text-sm text-left text-gray-600 leading-relaxed mb-3">{career.description}</p>
                     {(() => {
                       const desc = career.description || '';
@@ -972,7 +977,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                       return pathway ? (
                         <div className="pt-3 border-t border-gray-100 flex items-center gap-2 text-xs">
                           <span className="font-semibold text-[#232D35]">Pathway</span>
-                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#232D35] text-white font-semibold">{pathway}</span>
+                          <span className="inline-block px-2.5 py-1 rounded-full bg-[#1D63A1]/10 text-[#1D63A1] font-semibold">{pathway}</span>
                         </div>
                       ) : null;
                     })()}
@@ -981,88 +986,94 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               }
             </div>
             {aiRecommendations.recommendations.personalized && (
-              <div className="mt-8 p-5 bg-[#F8F9FA] rounded-lg border-l-4 border-[#1D63A1]">
-                <h4 className="font-semibold text-[#232D35] mb-2">Personal Insight</h4>
+              <div className="mt-8 p-6 bg-gradient-to-br from-[#FFFBF1] to-white rounded-2xl border border-[#FFB71B]/20">
+                <h4 className="font-bold text-[#232D35] mb-2">Personal Insight</h4>
                 <p className="text-sm text-gray-700">{aiRecommendations.recommendations.personalized}</p>
               </div>
             )}
           </motion.div>
         )}
+
         {/* Academic Track Recommendations - only show if recommendations exist */}
-        {aiRecommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-            <h3 className="text-xl font-bold text-[#232D35] mb-2">Track Recommendations</h3>
+        {/* {aiRecommendations && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.1 }} 
+            className="bg-white rounded-3xl shadow-lg p-8 border border-[#FFB71B]/10 animate-card-pop"
+          >
+            <h3 className="text-2xl font-extrabold text-[#232D35] mb-2">Track Options</h3>
             <p className="text-sm text-gray-600 mb-6">
               Based on your assessment performance
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {getTopRecommendations().map((rec, index) => (
-                <motion.div key={index} whileHover={{ scale: 1.02 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 flex flex-col h-full shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+                <motion.div 
+                  key={index} 
+                  whileHover={{ scale: 1.02 }} 
+                  className="bg-gradient-to-br from-[#FFFBF1] to-white rounded-2xl p-5 flex flex-col h-full border border-[#FFB71B]/20 hover:border-[#FFB71B] transition-all"
+                  style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
+                >
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-lg font-semibold text-[#232D35]">{rec.name}</h4>
-                    <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
+                    <h4 className="text-lg font-extrabold text-[#232D35]">{rec.name}</h4>
+                    <span className="px-3 py-1 bg-[#FFB71B]/20 text-[#FFB71B] rounded-full text-sm font-extrabold">
                       {rec.score.toFixed(1)}%
                     </span>
                   </div>
                   <p className="text-left text-sm text-gray-600 mb-3 flex-grow">{rec.description}</p>
-                  <span className="inline-block text-xs font-medium px-2 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded self-start mt-2">
+                  <span className="inline-block text-xs font-bold px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full self-start mt-2">
                     {index === 0 ? 'Best Match' : index === 1 ? 'Strong Match' : 'Good Match'}
                   </span>
                 </motion.div>
               ))}
             </div>
           </motion.div>
-        )}
+        )} */}
+
         {/* Next steps - only show if recommendations exist */}
         {aiRecommendations && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-white rounded-3xl shadow-xl p-6 overflow-hidden animate-card-pop">
-            <div className="flex flex-col md:flex-row gap-6">
-              {/* Image on the left side */}
-              <div className="flex items-center justify-center md:w-1/4">
-                <img 
-                  src="/src/assets/characters/excited.svg" 
-                  alt="Excited student" 
-                  className="h-40 md:h-48 lg:h-56 object-contain"
-                />
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.2 }} 
+            className="bg-white rounded-3xl shadow-lg p-8 border border-[#FFB71B]/10 animate-card-pop"
+          >
+            <h3 className="text-center text-2xl font-extrabold text-[#232D35] mb-6">Your Path Forward</h3>
+            <div className="text-left space-y-5">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
+                  <span className="text-sm font-bold">1</span>
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-[#232D35]">Explore Your Top Tracks</h4>
+                  <p className="text-sm text-gray-600">
+                    Research the curriculums and career pathways for your recommended tracks.
+                    <Link to="/academic-explorer" className="text-[#1D63A1] ml-1 hover:text-[#FFB71B] hover:underline font-semibold transition-colors">
+                      Check Academic Explorer
+                    </Link> for more information.
+                  </p>
+                </div>
               </div>
-              {/* Content on the right side */}
-              <div className="text-left space-y-5 flex-1 flex flex-col justify-center">
-                <h3 className="text-center text-xl font-bold text-[#232D35] mb-2">Your Path Forward</h3>
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
-                    <span className="text-xs font-bold">1</span>
-                  </div>
-                  <div>
-                    <h4 className="text-md font-semibold text-[#232D35]">Explore Your Top Tracks</h4>
-                    <p className="text-sm text-gray-600">
-                      Research the curriculums and career pathways for your recommended tracks.
-                      <Link to="/academic-explorer" className="text-[#1D63A1] ml-1 hover:text-[#FFB71B] hover:underline font-semibold transition-colors">
-                        Check Academic Explorer
-                      </Link> for more information.
-                    </p>
-                  </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
+                  <span className="text-sm font-bold">2</span>
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
-                    <span className="text-xs font-bold">2</span>
-                  </div>
-                  <div>
-                    <h4 className="text-md font-semibold text-[#232D35]">Connect with Advisors</h4>
-                    <p className="text-sm text-gray-600">
-                      Schedule a meeting with your school guidance counselor to discuss your assessment results.
-                    </p>
-                  </div>
+                <div>
+                  <h4 className="text-base font-bold text-[#232D35]">Connect with Advisors</h4>
+                  <p className="text-sm text-gray-600">
+                    Schedule a meeting with your school guidance counselor to discuss your assessment results.
+                  </p>
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
-                    <span className="text-xs font-bold">3</span>
-                  </div>
-                  <div>
-                    <h4 className="text-md font-semibold text-[#232D35]">Strengthen Weak Areas</h4>
-                    <p className="text-sm text-gray-600">
-                      Review sections where you scored lower and consider ways to improve those skills.
-                    </p>
-                  </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#1D63A1] text-white flex items-center justify-center">
+                  <span className="text-sm font-bold">3</span>
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-[#232D35]">Strengthen Weak Areas</h4>
+                  <p className="text-sm text-gray-600">
+                    Review sections where you scored lower and consider ways to improve those skills.
+                  </p>
                 </div>
               </div>
             </div>

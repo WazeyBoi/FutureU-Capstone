@@ -124,12 +124,9 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
 
   return (
     <div className="relative">
-      {/* Playful floating accent shapes background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
-        <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
-        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
-      </div>
+      {/* Decorative background blobs matching DreamCareerAnalysisTab */}
+      <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -139,16 +136,18 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
         {/* Top summary cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Top Cognitive Strength */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <div className="flex items-center justify-between p-5 pb-0">
-              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Top Cognitive Strength</h3>
+          <motion.div whileHover={{ scale: 1.02}} className="rounded-3xl shadow-lg bg-white border border-[#FFB71B]/10 flex flex-col h-[200px] transition-all duration-300 animate-card-pop relative overflow-hidden">
+            <div className="absolute -left-8 -top-8 w-32 h-32 bg-gradient-to-tr from-[#FFB71B]/20 to-[#FFB71B]/5 rounded-full opacity-40 pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between p-5 pb-0 relative z-10">
+              <h3 className="text-base font-extrabold text-[#232D35] mb-1">Top Cognitive Strength</h3>
               <HelpCircle 
                 className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
                 onMouseEnter={(e) => showTooltip(e, "Your strongest cognitive ability area based on aptitude test performance. This represents your natural intellectual strength.")}
                 onMouseLeave={hideTooltip}
               />
             </div>
-            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop">
+            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop relative z-10">
               {(() => {
                 // Find the highest aptitude score
                 const aptitudes = [
@@ -162,7 +161,7 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
                 return topAptitude.name;
               })()}
             </div>
-            <div className="text-xl font-semibold text-[#FFB71B] px-5 animate-pop">
+            <div className="text-xl font-semibold text-[#FFB71B] px-5 animate-pop relative z-10">
               {(() => {
                 const aptitudes = [
                   { name: 'Scientific', score: results.assessmentResult?.scientificAbilityScore || 0 },
@@ -175,9 +174,9 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
                 return `${topAptitude.score.toFixed(1)}%`;
               })()}
             </div>
-            <div className="mt-auto p-5 pt-2">
-              <p className="text-xs text-gray-600">Your highest-scoring cognitive ability area</p>
-              <p className="text-xs font-medium text-[#1D63A1] mt-1">
+            <div className="mt-auto p-5 pt-2 relative z-10">
+              <p className="text-xs text-gray-700">Your highest-scoring cognitive ability area</p>
+              <p className="text-xs font-bold text-[#1D63A1] mt-1">
                 {(() => {
                   const aptitudes = [
                     { name: 'Scientific', score: results.assessmentResult?.scientificAbilityScore || 0 },
@@ -196,19 +195,21 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
             </div>
           </motion.div>
           {/* Academic Track Fit */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <div className="flex items-center justify-between p-5 pb-0">
-              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Academic Track Fit</h3>
+          <motion.div whileHover={{ scale: 1.02}} className="rounded-3xl shadow-lg bg-white border border-[#FFB71B]/10 flex flex-col h-[200px] transition-all duration-300 animate-card-pop relative overflow-hidden">
+            <div className="absolute -left-8 -top-8 w-32 h-32 bg-gradient-to-tr from-[#1D63A1]/20 to-[#1D63A1]/5 rounded-full opacity-40 pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between p-5 pb-0 relative z-10">
+              <h3 className="text-base font-extrabold text-[#232D35] mb-1">Academic Track Fit</h3>
               <HelpCircle 
                 className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
                 onMouseEnter={(e) => showTooltip(e, "How well your abilities match academic tracks (STEM, ABM, HUMSS). Higher percentages mean better compatibility with these tracks.")}
                 onMouseLeave={hideTooltip}
               />
             </div>
-            <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop">{results.assessmentResult?.academicTrackScore?.toFixed(1)}%</div>
-            <div className="mt-auto p-5 pt-2">
-              <p className="text-xs text-gray-600">Compatibility with STEM, ABM, and HUMSS tracks</p>
-              <p className="text-xs font-medium text-[#FFB71B] mt-1">
+            <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop relative z-10">{results.assessmentResult?.academicTrackScore?.toFixed(1)}%</div>
+            <div className="mt-auto p-5 pt-2 relative z-10">
+              <p className="text-xs text-gray-700">Compatibility with STEM, ABM, and HUMSS tracks</p>
+              <p className="text-xs font-bold text-[#FFB71B] mt-1">
                 {results.assessmentResult?.academicTrackScore >= 80 ? 'Excellent academic track fit' :
                  results.assessmentResult?.academicTrackScore >= 65 ? 'Good academic track fit' :
                  results.assessmentResult?.academicTrackScore >= 50 ? 'Moderate academic track fit' :
@@ -217,19 +218,21 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
             </div>
           </motion.div>
           {/* Other Tracks Fit */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <div className="flex items-center justify-between p-5 pb-0">
-              <h3 className="text-lg font-semibold text-[#232D35] mb-1">Non-Academic Track Fit</h3>
+          <motion.div whileHover={{ scale: 1.02}} className="rounded-3xl shadow-lg bg-white border border-[#FFB71B]/10 flex flex-col h-[200px] transition-all duration-300 animate-card-pop relative overflow-hidden">
+            <div className="absolute -left-8 -top-8 w-32 h-32 bg-gradient-to-tr from-[#FFB71B]/20 to-[#FFB71B]/5 rounded-full opacity-40 pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between p-5 pb-0 relative z-10">
+              <h3 className="text-base font-extrabold text-[#232D35] mb-1">Non-Academic Track Fit</h3>
               <HelpCircle 
                 className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
                 onMouseEnter={(e) => showTooltip(e, "How well your abilities match practical tracks (TVL, Sports, Arts & Design). Higher percentages indicate better suitability for hands-on careers.")}
                 onMouseLeave={hideTooltip}
               />
             </div>
-            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop">{results.assessmentResult?.otherTrackScore?.toFixed(1)}%</div>
-            <div className="mt-auto p-5 pt-2">
-              <p className="text-xs text-gray-600">Compatibility with TVL, Sports, and Arts & Design</p>
-              <p className="text-xs font-medium text-[#1D63A1] mt-1">
+            <div className="text-3xl font-extrabold text-[#1D63A1] px-5 pt-1 animate-pop relative z-10">{results.assessmentResult?.otherTrackScore?.toFixed(1)}%</div>
+            <div className="mt-auto p-5 pt-2 relative z-10">
+              <p className="text-xs text-gray-700">Compatibility with TVL, Sports, and Arts & Design</p>
+              <p className="text-xs font-bold text-[#1D63A1] mt-1">
                 {results.assessmentResult?.otherTrackScore >= 80 ? 'Excellent practical track fit' :
                  results.assessmentResult?.otherTrackScore >= 65 ? 'Good practical track fit' :
                  results.assessmentResult?.otherTrackScore >= 50 ? 'Moderate practical track fit' :
@@ -238,42 +241,45 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
             </div>
           </motion.div>
           {/* Interest Assessment */}
-          <motion.div whileHover={{ scale: 1.04}} className="rounded-3xl shadow-xl bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 flex flex-col h-[200px] hover:shadow-2xl transition-all duration-300 animate-card-pop">
-            <div className="flex items-center justify-between p-5 pb-0">
-              <h3 className="text-lg font-semibold text-[#232D35] mb-1">your RIASEC code</h3>
+          <motion.div whileHover={{ scale: 1.02}} className="rounded-3xl shadow-lg bg-white border border-[#FFB71B]/10 flex flex-col h-[200px] transition-all duration-300 animate-card-pop relative overflow-hidden">
+            <div className="absolute -left-8 -top-8 w-32 h-32 bg-gradient-to-tr from-[#1D63A1]/20 to-[#1D63A1]/5 rounded-full opacity-40 pointer-events-none"></div>
+            
+            <div className="flex items-center justify-between p-5 pb-0 relative z-10">
+              <h3 className="text-base font-extrabold text-[#232D35] mb-1">Your RIASEC Code</h3>
               <HelpCircle 
                 className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors"
                 onMouseEnter={(e) => showTooltip(e, "Your personality type based on career interests. This shows what types of work environments and activities you prefer, not your performance.")}
                 onMouseLeave={hideTooltip}
               />
             </div>
-            <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop">{getRiasecCode()}</div>
-            <div className="mt-auto p-5 pt-2">
-              <p className="text-xs text-gray-600">Your personality type and career interests</p>
-              <p className="text-xs font-medium text-[#FFB71B] mt-1">{getRiasecFullNames(getRiasecCode())}</p>
+            <div className="text-3xl font-extrabold text-[#FFB71B] px-5 pt-1 animate-pop relative z-10">{getRiasecCode()}</div>
+            <div className="mt-auto p-5 pt-2 relative z-10">
+              <p className="text-xs text-gray-700">Your personality type and career interests</p>
+              <p className="text-xs font-bold text-[#FFB71B] mt-1">{getRiasecFullNames(getRiasecCode())}</p>
             </div>
           </motion.div>
         </div>
+        
         {/* Section Results with Tabs */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.1 }} 
-          className="bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-[#1D63A1]/10 animate-card-pop"
+          className="bg-white rounded-3xl shadow-lg overflow-hidden border border-[#FFB71B]/10 animate-card-pop"
         >
-          <div className="p-4 bg-[#F8F9FA] border-b border-[#1D63A1]/20">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-4">Section Score Results</h3>
+          <div className="p-6 md:p-8 bg-white border-b border-[#FFB71B]/20">
+            <h3 className="text-xl font-extrabold text-[#232D35] mb-4">Section Score Results</h3>
             
             {/* Tab Navigation */}
-            <div className="flex space-x-1">
+            <div className="flex gap-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                     activeTab === tab.id
-                      ? 'bg-[#1D63A1] text-white shadow-md'
-                      : 'bg-white text-[#1D63A1] hover:bg-[#1D63A1]/5 border border-[#1D63A1]/20'
+                      ? 'bg-[#232D35] text-white'
+                      : 'bg-[#1D63A1]/10 text-[#1D63A1] hover:bg-[#1D63A1]/20'
                   }`}
                 >
                   {tab.label}
@@ -296,9 +302,9 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
                 <table className="min-w-full divide-y divide-gray-200 table-fixed">
                   <thead className="bg-[#F8F9FA]">
                     <tr>
-                      <th scope="col" className="w-1/2 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Section</th>
-                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Score</th>
-                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-bold text-[#1D63A1] uppercase tracking-wider">Performance</th>
+                      <th scope="col" className="w-1/2 px-6 py-3 text-left text-xs font-extrabold text-[#1D63A1] uppercase tracking-wider">Section</th>
+                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-extrabold text-[#1D63A1] uppercase tracking-wider">Score</th>
+                      <th scope="col" className="w-1/4 px-6 py-3 text-left text-xs font-extrabold text-[#1D63A1] uppercase tracking-wider">Performance</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -313,14 +319,14 @@ const OverviewTab = ({ results, getScoreColor, getScoreBgColor }) => {
                         >
                           <td className="w-1/2 text-left px-6 py-4 whitespace-nowrap">
                             <div>
-                              <div className="text-sm font-semibold text-[#232D35] truncate">{section.sectionName}</div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-sm font-bold text-[#232D35] truncate">{section.sectionName}</div>
+                              <div className="text-xs text-gray-600 font-semibold">
                                 {section.correctAnswers}/{section.totalQuestions} correct
                               </div>
                             </div>
                           </td>
                           <td className="w-1/4 text-left px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-[#232D35]">
+                            <div className="text-sm font-extrabold text-[#232D35]">
                               {section.percentageScore?.toFixed(1)}%
                             </div>
                           </td>
