@@ -211,22 +211,20 @@ public class CareerRecommendationController {
                        assessmentResult.getResultId(), assessmentResult.getOverallScore());
             
             // Check if recommendations already exist
-            AdvancedRecommendationResponse structured;
-            if (recommendationPersistenceService.hasPersistedRecommendations(assessmentResult)) {
-                logger.info("Loading existing recommendations for assessment result: {}", assessmentResult.getResultId());
-                structured = recommendationPersistenceService.getPersistedRecommendations(assessmentResult);
-                logger.info("Loaded existing recommendations. Career paths count: {}", 
-                           structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
-            } else {
-                // Generate new recommendations only if they don't exist
-                logger.info("No existing recommendations found. Generating new recommendations for assessment result: {}", 
-                           assessmentResult.getResultId());
-                logger.debug("Generating structured recommendations...");
-                structured = structuredRecommendationService.generate(userAssessment);
-                
-                logger.info("Structured recommendations generated successfully. Career paths count: {}", 
-                           structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
+            // This endpoint should ONLY return existing recommendations, not generate new ones
+            if (!recommendationPersistenceService.hasPersistedRecommendations(assessmentResult)) {
+                logger.info("No existing recommendations found for assessment result: {}", assessmentResult.getResultId());
+                return new ResponseEntity<>(
+                    Map.of("error", "No recommendations found. Please generate recommendations first.", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
             }
+            
+            logger.info("Loading existing recommendations for assessment result: {}", assessmentResult.getResultId());
+            AdvancedRecommendationResponse structured = recommendationPersistenceService.getPersistedRecommendations(assessmentResult);
+            logger.info("Loaded existing recommendations. Career paths count: {}", 
+                       structured != null && structured.getCareerPaths() != null ? structured.getCareerPaths().size() : 0);
             
             if (structured != null && structured.getCareerPaths() != null) {
                 logger.debug("Career paths details:");

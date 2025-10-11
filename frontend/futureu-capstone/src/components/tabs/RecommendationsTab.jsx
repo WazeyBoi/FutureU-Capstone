@@ -211,6 +211,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
     setLoading(true);
     try {
+      // Only CHECK if recommendations exist, don't trigger generation
       const response = await recommendationService.fetchRecommendations(userAssessmentId);
       const payload = response.data;
       setRecommendationPacket(payload);
@@ -222,7 +223,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
       let message = 'Failed to load recommendations.';
       if (status === 404) {
-        message = 'No recommendations found yet. Generate new recommendations to get started.';
+        // 404 means no recommendations exist yet - this is expected for new users
+        // Don't show this as an error, just set state to show "See My Results" button
+        message = null; // Clear error so button shows
       } else if (status === 400) {
         message = backendMessage || 'Complete your assessment to unlock recommendations.';
       } else if (backendMessage) {
@@ -275,88 +278,61 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     setIsRegenerating(true);
     setError(null);
     try {
-      console.log('Requesting regeneration job enqueue...');
-      try {
-        const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
-        const jobId = enqueueResp.data?.jobId;
-        if (!jobId) throw new Error('No jobId returned from enqueue');
-
-        console.log('Enqueued job, id=', jobId, ' - polling for status...');
-        const POLL_INTERVAL_MS = 5000; // 5s
-        const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
-        let elapsed = 0;
-        let done = false;
-        while (elapsed < MAX_POLL_MS) {
-          try {
-            const statusResp = await recommendationService.getJobStatus(jobId);
-            const status = statusResp.data?.status;
-            if (status === 'SUCCEEDED') {
-              done = true;
-              break;
-            } else if (status === 'FAILED') {
-              // stop polling on failure and show message
-              const msg = statusResp.data?.message || 'Job failed on server';
-              setError(`Generation failed: ${msg}`);
-              done = false;
-              break;
-            }
-          } catch (pollErr) {
-            console.warn('Job status poll error:', pollErr?.message);
-          }
-          await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-          elapsed += POLL_INTERVAL_MS;
-        }
-
-        if (done) {
-          console.log('Job completed, fetching results...');
-          localStorage.removeItem(storageKey);
-          await fetchComprehensiveRecommendations({ forceRefresh: true });
-        } else if (!error) {
-          setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
-        }
-      } catch (enqueueErr) {
-        console.warn('Enqueue failed, falling back to direct POST:', enqueueErr?.message);
-        // Fallback to previous behavior: try direct POST then exists polling
-        try {
-          await recommendationService.generateRecommendations(userAssessmentId);
-          localStorage.removeItem(storageKey);
-          await fetchComprehensiveRecommendations({ forceRefresh: true });
-        } catch (postErr) {
-          console.warn('Fallback POST failed, starting exists polling:', postErr?.message);
-          // Start short polling on exists
-          const POLL_INTERVAL_MS = 5000;
-          const MAX_POLL_MS = 10 * 60 * 1000;
-          let elapsed = 0;
-          let found = false;
-          while (elapsed < MAX_POLL_MS) {
-            try {
-              const existResp = await recommendationService.checkRecommendationsExist(userAssessmentId);
-              const data = existResp.data;
-              if (data && data.hasRecommendations) {
-                found = true;
-                break;
-              }
-            } catch (pollErr) {
-              console.warn('Poll error while checking recommendations exist:', pollErr?.message);
-            }
-            await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-            elapsed += POLL_INTERVAL_MS;
-          }
-          if (found) {
-            localStorage.removeItem(storageKey);
-            await fetchComprehensiveRecommendations({ forceRefresh: true });
-          } else {
-            setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
-          }
-        }
+      console.log('Requesting recommendation generation job enqueue...');
+      
+      // Always use the job-based approach for both initial generation and regeneration
+      const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
+      const jobId = enqueueResp.data?.jobId;
+      
+      if (!jobId) {
+        throw new Error('No jobId returned from enqueue - job tracking failed');
       }
+
+      console.log('Enqueued job, id=', jobId, ' - polling for status...');
+      const POLL_INTERVAL_MS = 5000; // 5s
+      const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
+      let elapsed = 0;
+      let done = false;
+      
+      while (elapsed < MAX_POLL_MS) {
+        try {
+          const statusResp = await recommendationService.getJobStatus(jobId);
+          const status = statusResp.data?.status;
+          
+          if (status === 'SUCCEEDED') {
+            done = true;
+            break;
+          } else if (status === 'FAILED') {
+            // stop polling on failure and show message
+            const msg = statusResp.data?.message || 'Job failed on server';
+            setError(`Generation failed: ${msg}`);
+            done = false;
+            break;
+          }
+          // If status is PENDING or RUNNING, continue polling
+        } catch (pollErr) {
+          console.warn('Job status poll error:', pollErr?.message);
+        }
+        
+        await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
+        elapsed += POLL_INTERVAL_MS;
+      }
+
+      if (done) {
+        console.log('Job completed successfully, fetching results...');
+        localStorage.removeItem(storageKey);
+        await fetchComprehensiveRecommendations({ forceRefresh: true });
+      } else if (!error) {
+        setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
+      }
+      
     } catch (err) {
-      console.error('Regeneration failed:', err);
+      console.error('Recommendation generation failed:', err);
       let errorMessage = 'Failed to generate recommendations. Please try again later.';
       
       // Check if it's a timeout error
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        errorMessage = 'The AI generation request timed out locally. The backend may still be processing; we started a background check and will fetch results when available. Please wait a moment and try refreshing the page.';
+        errorMessage = 'The AI generation request timed out locally. The backend may still be processing; please wait a moment and try refreshing the page.';
       } else {
         const backendMessage = err?.response?.data?.error || err?.response?.data?.message;
         errorMessage = backendMessage || errorMessage;
