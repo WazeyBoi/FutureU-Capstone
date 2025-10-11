@@ -59,6 +59,10 @@ public class UserAssessmentEntity {
     // Store serialized questions list - ensure it's defined as a TEXT/LONGTEXT column
     @Column(columnDefinition = "LONGTEXT")
     private String savedSections;
+    
+    // Track how many times recommendations have been regenerated (limit: 2)
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer regenerationCount = 0;
 
     @JsonBackReference
     @OneToMany(mappedBy = "userAssessment", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -193,5 +197,17 @@ public class UserAssessmentEntity {
 
     public void setAssessmentStartTime(LocalDateTime assessmentStartTime) {
         this.assessmentStartTime = assessmentStartTime;
+    }
+    
+    public Integer getRegenerationCount() {
+        return regenerationCount != null ? regenerationCount : 0;
+    }
+    
+    public void setRegenerationCount(Integer regenerationCount) {
+        this.regenerationCount = regenerationCount;
+    }
+    
+    public void incrementRegenerationCount() {
+        this.regenerationCount = getRegenerationCount() + 1;
     }
 }

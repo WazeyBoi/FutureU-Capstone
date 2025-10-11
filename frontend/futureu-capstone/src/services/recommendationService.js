@@ -188,3 +188,17 @@ export const fetchCareerPathDetails = (careerPathId) => {
     throw error;
   }
 };
+
+/**
+ * Get regeneration information for a user assessment
+ * @param {number} userAssessmentId - The ID of the user assessment
+ * @returns {Promise} - Axios response promise with regeneration count and limits
+ */
+export const getRegenerationInfo = (userAssessmentId) => {
+  try {
+    return apiClient.get(`/recommendation/regeneration-info/${userAssessmentId}`);
+  } catch (error) {
+    console.error(`Error fetching regeneration info for ${userAssessmentId}:`, error);
+    throw error;
+  }
+};

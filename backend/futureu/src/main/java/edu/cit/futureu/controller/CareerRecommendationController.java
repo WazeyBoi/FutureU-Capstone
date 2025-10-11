@@ -265,17 +265,63 @@ public class CareerRecommendationController {
 
     /**
      * Force regenerate recommendations (clear existing and generate new ones)
+     * Limited to 2 regenerations per assessment to protect API quota
      */
     @PostMapping("/regenerate/{userAssessmentId}")
     public ResponseEntity<?> regenerateRecommendations(@PathVariable int userAssessmentId) {
         logger.info("Enqueueing regeneration job for userAssessmentId: {}", userAssessmentId);
         try {
+            // Check regeneration limit before enqueuing
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                logger.warn("User assessment not found for ID: {}", userAssessmentId);
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found", 
+                           "code", "NOT_FOUND"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            int currentCount = userAssessment.getRegenerationCount();
+            final int MAX_REGENERATIONS = 2;
+            
+            if (currentCount >= MAX_REGENERATIONS) {
+                logger.warn("Regeneration limit reached for userAssessmentId: {}. Count: {}", 
+                           userAssessmentId, currentCount);
+                return new ResponseEntity<>(
+                    Map.of("error", "Regeneration limit reached", 
+                           "message", "You have reached the maximum number of regenerations (2) for this assessment.",
+                           "regenerationCount", currentCount,
+                           "maxRegenerations", MAX_REGENERATIONS,
+                           "code", "LIMIT_REACHED"),
+                    HttpStatus.TOO_MANY_REQUESTS
+                );
+            }
+            
+            // Increment regeneration count
+            userAssessment.incrementRegenerationCount();
+            userAssessmentService.updateUserAssessment(userAssessment);
+            logger.info("Incremented regeneration count to {} for userAssessmentId: {}", 
+                       userAssessment.getRegenerationCount(), userAssessmentId);
+            
+            // Enqueue the job
             RecommendationJobEntity job = recommendationJobService.enqueueJob(userAssessmentId);
-            Map<String, Object> resp = Map.of("jobId", job.getId(), "status", job.getStatus());
+            
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("jobId", job.getId());
+            resp.put("status", job.getStatus());
+            resp.put("regenerationCount", userAssessment.getRegenerationCount());
+            resp.put("remainingRegenerations", MAX_REGENERATIONS - userAssessment.getRegenerationCount());
+            
             return ResponseEntity.accepted().body(resp);
         } catch (Exception e) {
             logger.error("Failed to enqueue regeneration job for {}: {}", userAssessmentId, e.getMessage(), e);
-            return new ResponseEntity<>(Map.of("error", "Failed to enqueue regeneration job", "message", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to enqueue regeneration job", 
+                       "message", e.getMessage()), 
+                HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -298,6 +344,40 @@ public class CareerRecommendationController {
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             return new ResponseEntity<>(Map.of("error", "Failed to get job status", "message", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    /**
+     * Get regeneration information for a user assessment
+     */
+    @GetMapping("/regeneration-info/{userAssessmentId}")
+    public ResponseEntity<?> getRegenerationInfo(@PathVariable int userAssessmentId) {
+        try {
+            Optional<UserAssessmentEntity> userAssessmentOpt = userAssessmentService.getUserAssessmentById(userAssessmentId);
+            
+            if (!userAssessmentOpt.isPresent()) {
+                return new ResponseEntity<>(
+                    Map.of("error", "User assessment not found"),
+                    HttpStatus.NOT_FOUND
+                );
+            }
+            
+            UserAssessmentEntity userAssessment = userAssessmentOpt.get();
+            final int MAX_REGENERATIONS = 2;
+            int currentCount = userAssessment.getRegenerationCount();
+            
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("regenerationCount", currentCount);
+            resp.put("maxRegenerations", MAX_REGENERATIONS);
+            resp.put("remainingRegenerations", MAX_REGENERATIONS - currentCount);
+            resp.put("canRegenerate", currentCount < MAX_REGENERATIONS);
+            
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            logger.error("Failed to get regeneration info for {}: {}", userAssessmentId, e.getMessage(), e);
+            return new ResponseEntity<>(
+                Map.of("error", "Failed to get regeneration info", "message", e.getMessage()),
+                HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

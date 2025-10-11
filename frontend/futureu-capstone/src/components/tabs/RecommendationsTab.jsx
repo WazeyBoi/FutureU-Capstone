@@ -107,6 +107,14 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [checkedExisting, setCheckedExisting] = useState(false);
   const [tooltip, setTooltip] = useState({ visible: false, content: '', x: 0, y: 0, width: 0, arrowX: 0 });
   const tooltipRef = useRef(null);
+  
+  // Regeneration limit tracking
+  const [regenerationInfo, setRegenerationInfo] = useState({
+    regenerationCount: 0,
+    maxRegenerations: 2,
+    remainingRegenerations: 2,
+    canRegenerate: true
+  });
 
   // Career details modal state (recommended careers -> DB details)
   const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
@@ -268,9 +276,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   };
   const hideTooltip = () => setTooltip(t => ({ ...t, visible: false }));
 
+  // Fetch regeneration info
+  const fetchRegenerationInfo = useCallback(async () => {
+    try {
+      const response = await recommendationService.getRegenerationInfo(userAssessmentId);
+      setRegenerationInfo(response.data);
+    } catch (err) {
+      console.error('Failed to fetch regeneration info:', err);
+      // Don't show error to user, just use defaults
+    }
+  }, [userAssessmentId]);
+
   useEffect(() => {
     fetchComprehensiveRecommendations();
-  }, [fetchComprehensiveRecommendations]);
+    fetchRegenerationInfo();
+  }, [fetchComprehensiveRecommendations, fetchRegenerationInfo]);
 
   const handleGenerateRecommendations = async () => {
     const storageKey = `futureu_comprehensive_recommendations_${userAssessmentId}`;
@@ -283,6 +303,16 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       // Always use the job-based approach for both initial generation and regeneration
       const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
       const jobId = enqueueResp.data?.jobId;
+      
+      // Update regeneration info from response if available
+      if (enqueueResp.data?.regenerationCount !== undefined) {
+        setRegenerationInfo(prev => ({
+          ...prev,
+          regenerationCount: enqueueResp.data.regenerationCount,
+          remainingRegenerations: enqueueResp.data.remainingRegenerations,
+          canRegenerate: enqueueResp.data.remainingRegenerations > 0
+        }));
+      }
       
       if (!jobId) {
         throw new Error('No jobId returned from enqueue - job tracking failed');
@@ -322,12 +352,31 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         console.log('Job completed successfully, fetching results...');
         localStorage.removeItem(storageKey);
         await fetchComprehensiveRecommendations({ forceRefresh: true });
+        // Refresh regeneration info after successful generation
+        await fetchRegenerationInfo();
       } else if (!error) {
         setError('The AI generation process is taking longer than expected. The system may still be processing in the background. Please try refreshing again in a few minutes.');
       }
       
     } catch (err) {
       console.error('Recommendation generation failed:', err);
+      
+      // Check if it's a rate limit error (429)
+      if (err?.response?.status === 429) {
+        const backendData = err?.response?.data;
+        setError(backendData?.message || 'You have reached the maximum number of regenerations (2) for this assessment.');
+        // Update regeneration info to reflect limit reached
+        if (backendData?.regenerationCount !== undefined) {
+          setRegenerationInfo({
+            regenerationCount: backendData.regenerationCount,
+            maxRegenerations: backendData.maxRegenerations || 2,
+            remainingRegenerations: 0,
+            canRegenerate: false
+          });
+        }
+        return;
+      }
+      
       let errorMessage = 'Failed to generate recommendations. Please try again later.';
       
       // Check if it's a timeout error
@@ -499,12 +548,13 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 </button>
                 <button
                   onClick={handleGenerateRecommendations}
-                  disabled={isRegenerating}
+                  disabled={isRegenerating || !regenerationInfo.canRegenerate}
                   className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
-                    isRegenerating
+                    isRegenerating || !regenerationInfo.canRegenerate
                       ? 'text-gray-400 bg-gray-300 cursor-not-allowed'
                       : 'text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#232D35] hover:to-[#232D35]'
                   }`}
+                  title={!regenerationInfo.canRegenerate ? 'Regeneration limit reached' : ''}
                 >
                   {isRegenerating ? (
                     <div className="flex items-center space-x-2">
@@ -514,9 +564,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                   ) : (
                     'Regenerate Matches'
                   )}
-              </button>
-            </div>
-          )}
+                </button>
+                {regenerationInfo.maxRegenerations > 0 && (
+                  <span className="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
+                    {regenerationInfo.canRegenerate ? (
+                      <>
+                        <span className="font-semibold text-[#1D63A1]">{regenerationInfo.remainingRegenerations}</span>
+                        {' '}regeneration{regenerationInfo.remainingRegenerations !== 1 ? 's' : ''} remaining
+                      </>
+                    ) : (
+                      <span className="text-red-600 font-semibold">No regenerations left</span>
+                    )}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="ml-auto flex items-center">
