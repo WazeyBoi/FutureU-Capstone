@@ -233,169 +233,184 @@ const AptitudeTab = ({ results, getScoreColor, getScoreBgColor }) => {
   const recommendations = getRecommendations();
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      transition={{ duration: 0.5 }}
-      className="space-y-8"
-    >
+    <div className="relative">
+      {/* Decorative background blobs matching DreamCareerAnalysisTab */}
+      <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
+      
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        transition={{ duration: 0.5 }}
+        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+      >
+        {/* Visual + Recommendations: side-by-side on large screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 h-full relative overflow-hidden"
+            >
+              <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
+              
+              <h3 className="text-2xl font-extrabold text-[#232D35] mb-6 text-center relative z-10">Visual Analysis</h3>
+              <div className="w-full h-80 relative z-10">
+                <Bar data={chartData} options={chartOptions} />
+              </div>
+            </motion.div>
+          </div>
 
-                {/* Visual + Recommendations: side-by-side on large screens */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+          <div className="lg:col-span-1">
+            {recommendations.length > 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }} 
                 animate={{ opacity: 1, y: 0 }} 
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg p-8 border border-gray-100 h-full"
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="rounded-3xl p-6 md:p-8 border border-[#FFB71B]/10 h-full"
               >
-                <h3 className="text-3xl font-bold text-[#232D35] mb-8 text-center">Visual Analysis</h3>
-                <div className="w-full h-80 relative">
-                  <Bar data={chartData} options={chartOptions} />
+                <h3 className="text-2xl font-extrabold text-[#232D35] mb-6 text-center">Recommendations</h3>
+                <div className="space-y-4">
+                  {recommendations.map((rec, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                      className={`p-4 rounded-2xl transition-transform transform hover:-translate-y-0.5 ${
+                        rec.type === 'strength' ? 'bg-white' :
+                        rec.type === 'improvement' ? 'bg-white' :
+                        rec.type === 'career' ? 'bg-white' :
+                        'bg-white'
+                      }`}
+                      style={{ 
+                        boxShadow: rec.type === 'strength' ? '0 10px 26px rgba(22,163,74,0.15)' :
+                                  rec.type === 'improvement' ? '0 10px 26px rgba(249,115,22,0.15)' :
+                                  rec.type === 'career' ? '0 10px 26px rgba(124,58,237,0.15)' :
+                                  '0 10px 26px rgba(29,99,161,0.15)'
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-1 h-12 rounded-full ${
+                          rec.type === 'strength' ? 'bg-green-500' :
+                          rec.type === 'improvement' ? 'bg-orange-500' :
+                          rec.type === 'career' ? 'bg-purple-500' :
+                          'bg-blue-500'
+                        }`} />
+                        <div>
+                          <h4 className="text-left font-bold text-[#232D35] mb-1">{rec.title}</h4>
+                          <p className="text-left text-xs text-gray-700 leading-relaxed">{rec.content}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
               </motion.div>
-            </div>
+            )}
+          </div>
+        </div>
 
-            <div className="lg:col-span-1">
-              {recommendations.length > 0 && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }} 
-                  animate={{ opacity: 1, y: 0 }} 
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="bg-gradient-to-br rounded-3xl  p-8 border border-gray-100 h-full justify-center"
+        {/* Aptitude Cards */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10"
+        >
+          <h3 className="text-2xl font-extrabold text-[#232D35] mb-6 text-center">Aptitude Breakdown</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+            {sortedAptitudes.map((aptitude, index) => {
+              const performance = getPerformanceLevel(aptitude.score);
+              
+              return (
+                <motion.div
+                  key={aptitude.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                  className={`relative bg-white rounded-2xl transition-transform transform hover:-translate-y-0.5 hover:z-10 ${
+                    index === 0 ? 'ring-2 ring-[#1D63A1]/30' :
+                    index === 1 ? 'ring-2 ring-[#FFB71B]/30' :
+                    'ring-1 ring-gray-200'
+                  }`}
+                  style={{ 
+                    boxShadow: index === 0 ? '0 10px 26px rgba(29,99,161,0.15)' :
+                              index === 1 ? '0 10px 26px rgba(255,183,27,0.15)' :
+                              '0 8px 20px rgba(15,23,42,0.04)'
+                  }}
                 >
-                  <h3 className="text-left text-3xl font-bold text-[#232D35] mb-6 text-center">Recommendations</h3>
-                  <div className="space-y-4">
-                    {recommendations.map((rec, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                        className={`p-4 rounded-lg shadow-lg ${
-                          rec.type === 'strength' ? 'border-green-500 bg-green-50' :
-                          rec.type === 'improvement' ? 'border-orange-500 bg-orange-50' :
-                          rec.type === 'career' ? 'border-purple-500 bg-purple-50' :
-                          'border-blue-500 bg-blue-50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-1 h-12 rounded-full ${
-                            rec.type === 'strength' ? 'bg-green-500' :
-                            rec.type === 'improvement' ? 'bg-orange-500' :
-                            rec.type === 'career' ? 'bg-purple-500' :
-                            'bg-blue-500'
-                          }`} />
-                          <div>
-                            <h4 className="text-left font-semibold text-[#232D35] mb-1">{rec.title}</h4>
-                            <p className="text-left text-sm text-gray-700">{rec.content}</p>
+                  {/* Gradient Background */}
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-5 transition-opacity duration-300"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${aptitude.color}20 0%, ${aptitude.color}10 100%)` 
+                    }}
+                  />
+                  
+                  <div className="relative p-6 pb-12">
+                    {/* Special Badge for Top 2 */}
+                    {index < 2 && (
+                      <div className="absolute -top-3 -right-3">
+                        <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white font-bold text-sm shadow-lg ${
+                          index === 0 ? 'bg-[#1D63A1]' : 'bg-[#FFB71B]'
+                        }`}>
+                          #{index + 1}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Header with Score and Rank */}
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex-1">
+                        <div className="flex items-start gap-3 mb-1">
+                          <div className="flex flex-col">
+                            <h4 className="text-left font-extrabold text-lg text-[#232D35]">
+                              {aptitude.name}
+                            </h4>
+                            {index >= 2 && (
+                              <span className="inline-flex items-center justify-center w-16 h-6 text-xs font-bold text-[#1D63A1] bg-[#1D63A1]/10 rounded-full mt-1">
+                                Rank #{index + 1}
+                              </span>
+                            )}
+                          </div>
+                          <div className="relative group/tooltip">
+                            <svg className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none w-72 z-50 shadow-lg">
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                              {aptitude.description}
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-extrabold mb-1 ${index < 2 ? 'text-4xl' : 'text-3xl'}`} style={{ color: aptitude.color }}>
+                          {aptitude.score.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Insights */}
+                    <p className="text-left text-sm text-gray-700 leading-relaxed mb-4">{aptitude.insights}</p>
+                  </div>
+                  
+                  {/* Performance Level - positioned at the card's bottom-right */}
+                  <div className="absolute bottom-4 right-4">
+                    <div className={`px-3 py-1 rounded-lg ${performance.bgColor}`}>
+                      <span className={`text-xs font-bold ${performance.color}`}>
+                        {performance.level}
+                      </span>
+                    </div>
                   </div>
                 </motion.div>
-              )}
-            </div>
+              );
+            })}
           </div>
-
-      {/* Aptitude Cards */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="bg-gradient-to-br from-white to-gray-50 rounded-3xl shadow-lg p-8 border border-gray-100"
-      >
-        <h3 className="text-3xl font-bold text-[#232D35] mb-8 text-center">Aptitude Breakdown</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
-          {sortedAptitudes.map((aptitude, index) => {
-            const performance = getPerformanceLevel(aptitude.score);
-            
-            return (
-              <motion.div
-                key={aptitude.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
-                className={`relative bg-gradient-to-br shadow lg transition-all duration-300 hover:shadow-xl group rounded-2xl hover:z-10 ${
-                  index === 0 ? 'from-[#1D63A1]/10 to-[#1D63A1]/5 border-[#1D63A1]/30 shadow-lg' :
-                  index === 1 ? 'from-[#FFB71B]/10 to-[#FFB71B]/5 border-[#FFB71B]/30 shadow-lg' :
-                  'from-white to-gray-50 border-gray-100 hover:border-[#1D63A1]/20'
-                }`}
-              >
-                {/* Gradient Background */}
-                <div 
-                  className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity duration-300"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${aptitude.color}20 0%, ${aptitude.color}10 100%)` 
-                  }}
-                />
-                
-                <div className="relative p-6 pb-12">
-                  {/* Special Badge for Top 2 */}
-                  {index < 2 && (
-                    <div className="absolute -top-3 -right-3">
-                      <div className={`inline-flex items-center justify-center w-10 h-10 rounded-full text-white font-bold text-sm shadow-lg ${
-                        index === 0 ? 'bg-[#1D63A1]' : 'bg-[#FFB71B]'
-                      }`}>
-                        #{index + 1}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Header with Score and Rank */}
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3 mb-1">
-                        <div className="flex flex-col">
-                          <h4 className={`text-left font-bold text-lg ${index < 2 ? 'text-[#232D35]' : 'text-[#232D35]'}`}>
-                            {aptitude.name}
-                          </h4>
-                          {index >= 2 && (
-                            <span className="inline-flex items-center justify-center w-16 h-6 text-xs font-medium text-[#1D63A1] bg-[#1D63A1]/10 rounded-l mt-1">
-                              Rank #{index + 1}
-                            </span>
-                          )}
-                        </div>
-                        <div className="relative group/tooltip">
-                          <svg className="w-4 h-4 text-gray-400 hover:text-[#1D63A1] cursor-help transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none w-72 z-50 shadow-lg">
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                            {aptitude.description}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`font-bold mb-1 ${index < 2 ? 'text-4xl' : 'text-3xl'}`} style={{ color: aptitude.color }}>
-                        {aptitude.score.toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Insights */}
-                  <p className="text-left text-sm text-gray-600 leading-relaxed mb-4">{aptitude.insights}</p>
-                  
-                  {/* performance badge moved to outer card container to ensure consistent bottom-right placement */}
-                </div>
-                
-                {/* Performance Level - positioned at the card's bottom-right (anchored to the outer card) */}
-                <div className="absolute bottom-4 right-4">
-                  <div className="p-2 rounded-lg shadow-md">
-                    <span className={`text-xs font-semibold ${performance.color}`}>
-                      {performance.level}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 

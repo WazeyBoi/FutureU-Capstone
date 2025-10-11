@@ -46,134 +46,164 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
   
   return (
     <div className="relative">
-      {/* Playful floating accent shapes background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
-        <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
-        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
-      </div>
+      {/* Decorative background blobs matching DreamCareerAnalysisTab */}
+      <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-          <h3 className="text-xl font-bold text-[#232D35] mb-3">What is RIASEC</h3>
-          <p className="text-left text-sm text-gray-600 mb-3">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop relative overflow-hidden">
+          <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
+          
+          <h3 className="text-2xl font-extrabold text-[#232D35] mb-4 relative z-10">What is RIASEC</h3>
+          <p className="text-left text-sm text-gray-700 leading-relaxed mb-3 relative z-10">
             The RIASEC model, developed by psychologist John Holland, categorizes people and work environments into six types: 
             Realistic, Investigative, Artistic, Social, Enterprising, and Conventional. Your results indicate which types align most 
             closely with your interests and preferences, which can help guide career and educational choices.
           </p>
-          <p className="text-left text-xs text-gray-500">
+          <p className="text-left text-xs text-gray-600 relative z-10">
             <strong>Scoring:</strong> The numbers shown represent how many interest statements you agreed with in each category, 
             out of 60 total interest questions distributed across all six RIASEC types.
           </p>
         </motion.div>
+        
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
-          <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-3xl shadow-xl p-5 flex flex-col items-center justify-center animate-card-pop">
+          <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 flex flex-col items-center justify-center animate-card-pop">
             <div className='flex justify-center items-center'>
               <div className="w-[320px] h-[320px] md:w-[400px] md:h-[400px]">
                 {generateRiasecRadarData() && <Radar data={generateRiasecRadarData()} options={{ responsive: true, maintainAspectRatio: true }} />}
               </div>
             </div>
           </motion.div>
-          <motion.div className="bg-gradient-to-br from-[#F8F9FA] to-[#FFB71B]/10 rounded-3xl shadow-xl p-5 animate-card-pop">
-            <h3 className="text-lg font-semibold text-[#232D35] mb-4">Your Dominant Interest Types</h3>
+          <motion.div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop">
+            <h3 className="text-xl font-extrabold text-[#232D35] mb-4">Your Dominant Interest Types</h3>
             {displayDescriptions.map((type, index) => (
-              <motion.div key={index} whileHover={{ scale: 1.03 }} className="mb-4 p-4 bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl shadow-md transition-all">
+              <motion.div 
+                key={index} 
+                whileHover={{ scale: 1.02 }} 
+                className="mb-4 p-4 bg-white rounded-2xl transition-transform transform hover:-translate-y-0.5"
+                style={{ boxShadow: '0 8px 20px rgba(15,23,42,0.04)' }}
+              >
                 <div className="flex justify-between items-center mb-2">
-                  <h4 className="font-bold text-[#232D35]">{type.name} ({type.code || type.type})</h4>
-                  <span className="text-sm font-semibold text-[#FFB71B]">{((type.score / 40) * 100).toFixed(1)}%</span>
+                  <h4 className="font-extrabold text-[#232D35]">{type.name} ({type.code || type.type})</h4>
+                  <span className="text-sm font-bold text-[#FFB71B]">{((type.score / 40) * 100).toFixed(1)}%</span>
                 </div>
-                <p className="text-left text-sm text-gray-600">{type.description || getRiasecTypeDescription(type.type || type.code)}</p>
+                <p className="text-left text-sm text-gray-700 leading-relaxed">{type.description || getRiasecTypeDescription(type.type || type.code)}</p>
               </motion.div>
             ))}
           </motion.div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-3xl shadow-xl p-5 animate-card-pop">
-          <h3 className="text-lg font-semibold text-[#232D35] mb-4">RIASEC Type Breakdown</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop">
+          <h3 className="text-xl font-extrabold text-[#232D35] mb-6">RIASEC Type Breakdown</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Realistic */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Realistic</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Realistic</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.realisticScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.realisticScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#1D63A1]">{((results.assessmentResult?.realisticScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.realisticScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "doers" who enjoy working with tools, machines, and objects. They typically prefer practical, hands-on problems and solutions.
               </p>
             </motion.div>
             {/* Investigative */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Investigative</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Investigative</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.investigativeScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.investigativeScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#FFB71B]">{((results.assessmentResult?.investigativeScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.investigativeScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "thinkers" who enjoy analytical, intellectual, and scientific activities. They tend to be curious and precise.
               </p>
             </motion.div>
             {/* Artistic */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Artistic</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Artistic</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.artisticScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.artisticScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#1D63A1]">{((results.assessmentResult?.artisticScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.artisticScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "creators" who value self-expression, aesthetics, and independence. They tend to be creative, original, and unconventional.
               </p>
             </motion.div>
             {/* Social */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Social</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Social</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.socialScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.socialScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#FFB71B]">{((results.assessmentResult?.socialScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.socialScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "helpers" who enjoy working with people and helping others. They tend to be friendly, cooperative, and supportive.
               </p>
             </motion.div>
             {/* Enterprising */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Enterprising</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Enterprising</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#1D63A1]">{((results.assessmentResult?.enterprisingScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.enterprisingScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#1D63A1]">{((results.assessmentResult?.enterprisingScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.enterprisingScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "persuaders" who enjoy leading, selling, and influencing others. They tend to be assertive, ambitious, and energetic.
               </p>
             </motion.div>
             {/* Conventional */}
-            <motion.div whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-xl p-4 shadow-md transition-all">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-[#232D35]">Conventional</h4>
+            <motion.div 
+              whileHover={{ scale: 1.02 }} 
+              className="bg-white rounded-2xl p-5 transition-transform transform hover:-translate-y-0.5"
+              style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-extrabold text-[#232D35]">Conventional</h4>
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#FFB71B]">{((results.assessmentResult?.conventionalScore / 40) * 100).toFixed(1)}%</span>
-                  <div className="text-xs text-gray-500">{results.assessmentResult?.conventionalScore}/40</div>
+                  <span className="text-lg font-extrabold text-[#FFB71B]">{((results.assessmentResult?.conventionalScore / 40) * 100).toFixed(1)}%</span>
+                  <div className="text-xs text-gray-600 font-semibold">{results.assessmentResult?.conventionalScore}/40</div>
                 </div>
               </div>
-              <p className="text-left text-xs text-gray-600">
+              <p className="text-left text-sm text-gray-700 leading-relaxed">
                 These are "organizers" who enjoy working with data, numbers, and details. They tend to be orderly, careful, and efficient.
               </p>
             </motion.div>

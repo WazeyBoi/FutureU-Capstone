@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,12 +31,17 @@ import edu.cit.futureu.entity.CareerEntity;
 import edu.cit.futureu.entity.ProgramEntity;
 import edu.cit.futureu.entity.SchoolProgramEntity;
 import edu.cit.futureu.entity.UserAssessmentSectionResultEntity;
+import edu.cit.futureu.recommendation.CareerPathRecommendation;
 
 @Service
 public class GeminiAIService {
     
-    private final String apiKey = "AIzaSyD6eaRsrdObk8XHYIEgu7NucuV5er_-Qw4";
-    private final String geminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    @Value("${gemini.api.key}")
+    private String apiKey;
+    
+    @Value("${gemini.api.endpoint}")
+    private String geminiEndpoint;
+    
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
@@ -43,10 +49,12 @@ public class GeminiAIService {
     private static final long RATE_LIMIT_DELAY_MS = 2000; // 2 seconds between API calls (Gemini allows 60 requests/minute)
     private static final long CIRCUIT_BREAKER_TIMEOUT_MS = 60000; // 1 minute circuit breaker (faster recovery)
     private static final int MAX_CONSECUTIVE_FAILURES = 3; // Open after 3 failures (more tolerant)
+    private static final int MAX_BATCH_SIZE = 15; // Maximum items per batch to avoid token limits
     
     private final AtomicLong lastApiCall = new AtomicLong(0);
     private final AtomicLong circuitBreakerUntil = new AtomicLong(0);
     private final AtomicLong consecutiveFailures = new AtomicLong(0);
+    private final AtomicLong totalApiCalls = new AtomicLong(0); // Counter for telemetry
     
     // Simple cache for AI responses (in production, use Redis or similar)
     private final Map<String, String> responseCache = new ConcurrentHashMap<>();
@@ -1264,6 +1272,10 @@ public class GeminiAIService {
      * Make the actual AI request with consistent error handling
      */
     private String makeAIRequestInternal(String prompt) throws Exception {
+        // Increment telemetry counter
+        long callNumber = totalApiCalls.incrementAndGet();
+        System.out.println("📞 Gemini API Call #" + callNumber);
+        
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
@@ -1749,5 +1761,483 @@ public class GeminiAIService {
         }
         
         return result;
+    }
+
+    /**
+     * Get total API calls made (for telemetry/monitoring)
+     */
+    public long getTotalApiCalls() {
+        return totalApiCalls.get();
+    }
+
+    /**
+     * Reset API call counter (for testing/monitoring)
+     */
+    public void resetApiCallCounter() {
+        totalApiCalls.set(0);
+        System.out.println("🔄 API call counter reset to 0");
+    }
+
+    // ==================== BATCHED AI METHODS ====================
+    
+    /**
+     * BATCHED: Generate career path summaries for multiple paths in one API call
+     * Returns Map<pathId, summary>
+     */
+    public Map<Integer, String> generateCareerPathSummariesBatch(
+            List<CareerPathRecommendation> paths,
+            Map<String, Object> studentProfile) {
+        
+        Map<Integer, String> results = new HashMap<>();
+        
+        if (paths == null || paths.isEmpty()) {
+            return results;
+        }
+        
+        System.out.println("🎯 BATCHED Career Path Summaries: Processing " + paths.size() + " paths in 1 API call");
+        
+        // Check circuit breaker
+        if (isCircuitBreakerOpen()) {
+            System.out.println("🚫 Circuit breaker open, using fallbacks");
+            paths.forEach(p -> results.put(p.getCareerPathId(), 
+                getFallbackCareerPathSummary(p.getCareerPathName(), p.getMatchPercentage(), p.getComponentBreakdown())));
+            return results;
+        }
+        
+        // Chunk if needed
+        if (paths.size() > MAX_BATCH_SIZE) {
+            System.out.println("⚠️ Batch size (" + paths.size() + ") exceeds limit, chunking into " + 
+                ((paths.size() + MAX_BATCH_SIZE - 1) / MAX_BATCH_SIZE) + " batches");
+            
+            for (int i = 0; i < paths.size(); i += MAX_BATCH_SIZE) {
+                List<CareerPathRecommendation> chunk = paths.subList(i, Math.min(i + MAX_BATCH_SIZE, paths.size()));
+                results.putAll(generateCareerPathSummariesBatch(chunk, studentProfile));
+            }
+            return results;
+        }
+        
+        try {
+            String cacheKey = generateBatchCacheKey("career_paths", 
+                paths.stream().map(CareerPathRecommendation::getCareerPathId).collect(Collectors.toList()), 
+                studentProfile);
+            
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                System.out.println("💾 Using cached batch response");
+                return parseBatchedCareerPathSummaries(cachedResponse, paths);
+            }
+            
+            String prompt = buildBatchedCareerPathSummariesPrompt(paths, studentProfile);
+            
+            waitForRateLimit();
+            String response = makeAIRequestInternal(prompt);
+            
+            cacheResponse(cacheKey, response);
+            consecutiveFailures.set(0);
+            
+            return parseBatchedCareerPathSummaries(response, paths);
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Batched career path summaries failed: " + e.getMessage());
+            // Fallback: use deterministic summaries
+            paths.forEach(p -> results.put(p.getCareerPathId(), 
+                getFallbackCareerPathSummary(p.getCareerPathName(), p.getMatchPercentage(), p.getComponentBreakdown())));
+            return results;
+        }
+    }
+
+    private String buildBatchedCareerPathSummariesPrompt(
+            List<CareerPathRecommendation> paths,
+            Map<String, Object> studentProfile) {
+        
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("You are an expert career counselor. Generate personalized summaries for multiple career paths.\n\n");
+        
+        // Add student context once
+        prompt.append("STUDENT PROFILE:\n");
+        if (studentProfile != null) {
+            if (studentProfile.containsKey("personalityType")) {
+                prompt.append("RIASEC: ").append(studentProfile.get("personalityType")).append("\n");
+            }
+            if (studentProfile.containsKey("academicTracks")) {
+                prompt.append("Academic Tracks: ").append(studentProfile.get("academicTracks")).append("\n");
+            }
+        }
+        prompt.append("\n");
+        
+        prompt.append("CAREER PATHS TO SUMMARIZE:\n");
+        for (int i = 0; i < paths.size(); i++) {
+            CareerPathRecommendation path = paths.get(i);
+            prompt.append("Path #").append(i + 1).append(":\n");
+            prompt.append("  pathId: ").append(path.getCareerPathId()).append("\n");
+            prompt.append("  name: ").append(path.getCareerPathName()).append("\n");
+            prompt.append("  matchPercentage: ").append(String.format("%.1f", path.getMatchPercentage())).append("%\n");
+            if (path.getComponentBreakdown() != null) {
+                prompt.append("  strengths: ").append(path.getComponentBreakdown()).append("\n");
+            }
+            prompt.append("\n");
+        }
+        
+        prompt.append("CRITICAL INSTRUCTIONS:\n");
+        prompt.append("1. Return ONLY a JSON array, no markdown, no explanations\n");
+        prompt.append("2. Each object must have: pathId (integer), summary (string)\n");
+        prompt.append("3. Summary should be personalized, engaging, 80-120 words\n");
+        prompt.append("4. Use student-centered language like 'You excel at...', 'Your strengths in...'\n");
+        prompt.append("5. Connect the path to their specific assessment results\n\n");
+        prompt.append("Example format:\n");
+        prompt.append("[{\"pathId\": 1, \"summary\": \"Your strong analytical skills...\"}, {\"pathId\": 2, \"summary\": \"...\"}]\n\n");
+        prompt.append("Return the JSON array now:");
+        
+        return prompt.toString();
+    }
+
+    private Map<Integer, String> parseBatchedCareerPathSummaries(String response, List<CareerPathRecommendation> paths) {
+        Map<Integer, String> results = new HashMap<>();
+        
+        try {
+            // Extract JSON if wrapped in markdown
+            String json = extractJson(response);
+            JsonNode root = objectMapper.readTree(json);
+            
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    int pathId = node.has("pathId") ? node.get("pathId").asInt() : -1;
+                    String summary = node.has("summary") ? node.get("summary").asText() : "";
+                    
+                    if (pathId > 0 && !summary.isEmpty()) {
+                        results.put(pathId, summary);
+                    }
+                }
+                System.out.println("✅ Parsed " + results.size() + " career path summaries from batch");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to parse batched response: " + e.getMessage());
+        }
+        
+        // Fill missing with fallbacks
+        for (CareerPathRecommendation path : paths) {
+            if (!results.containsKey(path.getCareerPathId())) {
+                results.put(path.getCareerPathId(), 
+                    getFallbackCareerPathSummary(path.getCareerPathName(), path.getMatchPercentage(), path.getComponentBreakdown()));
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * BATCHED: Generate personalized career summaries for multiple careers in one API call
+     * Returns Map<careerId, summary>
+     */
+    public Map<Integer, String> generatePersonalizedCareerSummariesBatch(
+            List<CareerEntity> careers,
+            List<Double> matchPercentages,
+            Map<String, Object> studentProfile) {
+        
+        Map<Integer, String> results = new HashMap<>();
+        
+        if (careers == null || careers.isEmpty()) {
+            return results;
+        }
+        
+        System.out.println("🎯 BATCHED Career Summaries: Processing " + careers.size() + " careers in 1 API call");
+        
+        if (isCircuitBreakerOpen()) {
+            System.out.println("🚫 Circuit breaker open, using fallbacks");
+            for (int i = 0; i < careers.size(); i++) {
+                results.put(careers.get(i).getCareerId(), 
+                    getFallbackCareerSummary(careers.get(i), matchPercentages.get(i)));
+            }
+            return results;
+        }
+        
+        // Chunk if needed
+        if (careers.size() > MAX_BATCH_SIZE) {
+            for (int i = 0; i < careers.size(); i += MAX_BATCH_SIZE) {
+                int end = Math.min(i + MAX_BATCH_SIZE, careers.size());
+                List<CareerEntity> chunk = careers.subList(i, end);
+                List<Double> matchChunk = matchPercentages.subList(i, end);
+                results.putAll(generatePersonalizedCareerSummariesBatch(chunk, matchChunk, studentProfile));
+            }
+            return results;
+        }
+        
+        try {
+            String cacheKey = generateBatchCacheKey("careers", 
+                careers.stream().map(CareerEntity::getCareerId).collect(Collectors.toList()), 
+                studentProfile);
+            
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                return parseBatchedCareerSummaries(cachedResponse, careers, matchPercentages);
+            }
+            
+            String prompt = buildBatchedCareerSummariesPrompt(careers, matchPercentages, studentProfile);
+            
+            waitForRateLimit();
+            String response = makeAIRequestInternal(prompt);
+            
+            cacheResponse(cacheKey, response);
+            consecutiveFailures.set(0);
+            
+            return parseBatchedCareerSummaries(response, careers, matchPercentages);
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Batched career summaries failed: " + e.getMessage());
+            for (int i = 0; i < careers.size(); i++) {
+                results.put(careers.get(i).getCareerId(), 
+                    getFallbackCareerSummary(careers.get(i), matchPercentages.get(i)));
+            }
+            return results;
+        }
+    }
+
+    private String buildBatchedCareerSummariesPrompt(
+            List<CareerEntity> careers,
+            List<Double> matchPercentages,
+            Map<String, Object> studentProfile) {
+        
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Generate personalized, engaging career summaries for a student.\n\n");
+        
+        prompt.append("STUDENT PROFILE:\n");
+        if (studentProfile != null) {
+            studentProfile.forEach((k, v) -> {
+                if (v != null) prompt.append(k).append(": ").append(v).append("\n");
+            });
+        }
+        prompt.append("\n");
+        
+        prompt.append("CAREERS TO SUMMARIZE:\n");
+        for (int i = 0; i < careers.size(); i++) {
+            CareerEntity career = careers.get(i);
+            prompt.append("Career #").append(i + 1).append(":\n");
+            prompt.append("  careerId: ").append(career.getCareerId()).append("\n");
+            prompt.append("  title: ").append(career.getCareerTitle()).append("\n");
+            if (career.getCareerDescription() != null) {
+                prompt.append("  description: ").append(career.getCareerDescription().substring(0, Math.min(150, career.getCareerDescription().length()))).append("...\n");
+            }
+            prompt.append("  matchPercentage: ").append(String.format("%.1f", matchPercentages.get(i))).append("%\n\n");
+        }
+        
+        prompt.append("Return ONLY a JSON array: [{\"careerId\": 1, \"summary\": \"Personalized 80-100 word summary using 'you' and 'your'...\"}, ...]\n");
+        prompt.append("Each summary should connect the career to the student's specific strengths and interests.\n");
+        
+        return prompt.toString();
+    }
+
+    private Map<Integer, String> parseBatchedCareerSummaries(String response, List<CareerEntity> careers, List<Double> matchPercentages) {
+        Map<Integer, String> results = new HashMap<>();
+        
+        try {
+            String json = extractJson(response);
+            JsonNode root = objectMapper.readTree(json);
+            
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    int careerId = node.has("careerId") ? node.get("careerId").asInt() : -1;
+                    String summary = node.has("summary") ? node.get("summary").asText() : "";
+                    
+                    if (careerId > 0 && !summary.isEmpty()) {
+                        results.put(careerId, summary);
+                    }
+                }
+                System.out.println("✅ Parsed " + results.size() + " career summaries from batch");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to parse batched career summaries: " + e.getMessage());
+        }
+        
+        // Fill missing with fallbacks
+        for (int i = 0; i < careers.size(); i++) {
+            if (!results.containsKey(careers.get(i).getCareerId())) {
+                results.put(careers.get(i).getCareerId(), 
+                    getFallbackCareerSummary(careers.get(i), matchPercentages.get(i)));
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * BATCHED: Generate program summaries for multiple programs in one API call
+     * Returns Map<programId, summary>
+     */
+    public Map<Integer, String> generateProgramSummariesBatch(
+            List<ProgramEntity> programs,
+            List<Double> matchPercentages,
+            Map<String, Object> studentProfile) {
+        
+        Map<Integer, String> results = new HashMap<>();
+        
+        if (programs == null || programs.isEmpty()) {
+            return results;
+        }
+        
+        System.out.println("🎯 BATCHED Program Summaries: Processing " + programs.size() + " programs in 1 API call");
+        
+        if (isCircuitBreakerOpen()) {
+            for (int i = 0; i < programs.size(); i++) {
+                results.put(programs.get(i).getProgramId(), 
+                    getFallbackProgramSummary(programs.get(i), matchPercentages.get(i)));
+            }
+            return results;
+        }
+        
+        // Chunk if needed
+        if (programs.size() > MAX_BATCH_SIZE) {
+            for (int i = 0; i < programs.size(); i += MAX_BATCH_SIZE) {
+                int end = Math.min(i + MAX_BATCH_SIZE, programs.size());
+                List<ProgramEntity> chunk = programs.subList(i, end);
+                List<Double> matchChunk = matchPercentages.subList(i, end);
+                results.putAll(generateProgramSummariesBatch(chunk, matchChunk, studentProfile));
+            }
+            return results;
+        }
+        
+        try {
+            String cacheKey = generateBatchCacheKey("programs", 
+                programs.stream().map(ProgramEntity::getProgramId).collect(Collectors.toList()), 
+                studentProfile);
+            
+            String cachedResponse = getCachedResponse(cacheKey);
+            if (cachedResponse != null) {
+                return parseBatchedProgramSummaries(cachedResponse, programs, matchPercentages);
+            }
+            
+            String prompt = buildBatchedProgramSummariesPrompt(programs, matchPercentages, studentProfile);
+            
+            waitForRateLimit();
+            String response = makeAIRequestInternal(prompt);
+            
+            cacheResponse(cacheKey, response);
+            consecutiveFailures.set(0);
+            
+            return parseBatchedProgramSummaries(response, programs, matchPercentages);
+            
+        } catch (Exception e) {
+            handleApiFailure(e);
+            System.err.println("❌ Batched program summaries failed: " + e.getMessage());
+            for (int i = 0; i < programs.size(); i++) {
+                results.put(programs.get(i).getProgramId(), 
+                    getFallbackProgramSummary(programs.get(i), matchPercentages.get(i)));
+            }
+            return results;
+        }
+    }
+
+    private String buildBatchedProgramSummariesPrompt(
+            List<ProgramEntity> programs,
+            List<Double> matchPercentages,
+            Map<String, Object> studentProfile) {
+        
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Generate personalized academic program summaries for a student.\n\n");
+        
+        prompt.append("STUDENT PROFILE:\n");
+        if (studentProfile != null) {
+            studentProfile.forEach((k, v) -> {
+                if (v != null) prompt.append(k).append(": ").append(v).append("\n");
+            });
+        }
+        prompt.append("\n");
+        
+        prompt.append("PROGRAMS TO SUMMARIZE:\n");
+        for (int i = 0; i < programs.size(); i++) {
+            ProgramEntity program = programs.get(i);
+            prompt.append("Program #").append(i + 1).append(":\n");
+            prompt.append("  programId: ").append(program.getProgramId()).append("\n");
+            prompt.append("  name: ").append(program.getProgramName()).append("\n");
+            if (program.getDescription() != null) {
+                prompt.append("  description: ").append(program.getDescription().substring(0, Math.min(150, program.getDescription().length()))).append("...\n");
+            }
+            prompt.append("  matchPercentage: ").append(String.format("%.1f", matchPercentages.get(i))).append("%\n\n");
+        }
+        
+        prompt.append("Return ONLY a JSON array: [{\"programId\": 1, \"summary\": \"Personalized 80-100 word summary...\"}, ...]\n");
+        prompt.append("Focus on learning opportunities and how the program builds on their strengths.\n");
+        
+        return prompt.toString();
+    }
+
+    private Map<Integer, String> parseBatchedProgramSummaries(String response, List<ProgramEntity> programs, List<Double> matchPercentages) {
+        Map<Integer, String> results = new HashMap<>();
+        
+        try {
+            String json = extractJson(response);
+            JsonNode root = objectMapper.readTree(json);
+            
+            if (root.isArray()) {
+                for (JsonNode node : root) {
+                    int programId = node.has("programId") ? node.get("programId").asInt() : -1;
+                    String summary = node.has("summary") ? node.get("summary").asText() : "";
+                    
+                    if (programId > 0 && !summary.isEmpty()) {
+                        results.put(programId, summary);
+                    }
+                }
+                System.out.println("✅ Parsed " + results.size() + " program summaries from batch");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Failed to parse batched program summaries: " + e.getMessage());
+        }
+        
+        // Fill missing with fallbacks
+        for (int i = 0; i < programs.size(); i++) {
+            if (!results.containsKey(programs.get(i).getProgramId())) {
+                results.put(programs.get(i).getProgramId(), 
+                    getFallbackProgramSummary(programs.get(i), matchPercentages.get(i)));
+            }
+        }
+        
+        return results;
+    }
+
+    /**
+     * Helper: Extract JSON from response that might be wrapped in markdown code blocks
+     */
+    private String extractJson(String response) {
+        if (response.contains("```json")) {
+            int start = response.indexOf("```json") + 7;
+            int end = response.lastIndexOf("```");
+            if (end > start) {
+                return response.substring(start, end).trim();
+            }
+        } else if (response.contains("```")) {
+            int start = response.indexOf("```") + 3;
+            int end = response.lastIndexOf("```");
+            if (end > start) {
+                return response.substring(start, end).trim();
+            }
+        }
+        
+        // Try to find JSON array
+        int arrayStart = response.indexOf("[");
+        int arrayEnd = response.lastIndexOf("]");
+        if (arrayStart >= 0 && arrayEnd > arrayStart) {
+            return response.substring(arrayStart, arrayEnd + 1);
+        }
+        
+        return response.trim();
+    }
+
+    /**
+     * Helper: Generate cache key for batched requests
+     */
+    private String generateBatchCacheKey(String type, List<Integer> ids, Map<String, Object> studentProfile) {
+        StringBuilder key = new StringBuilder();
+        key.append(type).append("_batch_");
+        
+        // Add sorted IDs
+        ids.stream().sorted().forEach(id -> key.append(id).append("_"));
+        
+        // Add student profile hash
+        if (studentProfile != null && studentProfile.containsKey("personalityType")) {
+            key.append("_riasec_").append(studentProfile.get("personalityType").hashCode());
+        }
+        
+        return key.toString().replaceAll("[^a-zA-Z0-9_]", "");
     }
 }

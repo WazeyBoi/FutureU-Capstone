@@ -337,7 +337,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
             </div>
 
             {/* Alignment card with action chips to its right (stack on small screens, row on lg+) */}
-            <div className="mt-10 flex flex-col lg:flex-row items-start lg:items-start gap-3">
+            <div className="text-left mt-10 flex flex-col lg:flex-row items-start lg:items-start gap-3">
               <div className="flex-1">
                 <div className="p-6 bg-gradient-to-br from-[#FFFBF1] to-white rounded-3xl text-left border border-[#FFB71B]/20 transition-shadow w-full"
                      style={{ boxShadow: '0 12px 30px rgba(255,183,27,0.12)' }}>

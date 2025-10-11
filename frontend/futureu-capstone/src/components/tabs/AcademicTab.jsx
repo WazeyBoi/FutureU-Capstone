@@ -107,28 +107,30 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
   
   return (
     <div className="relative">
-      {/* Playful floating accent shapes background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
-        <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
-        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
-      </div>
+      {/* Decorative background blobs matching DreamCareerAnalysisTab */}
+      <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
+      
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 border-2 border-[#1D63A1]/10 animate-card-pop">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <h3 className="text-xl font-bold text-[#232D35]">Tracks Comparison</h3>
-            <div className="inline-flex rounded-md" role="group">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop relative overflow-hidden">
+          <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 relative z-10">
+            <div>
+              <h3 className="text-2xl font-extrabold text-[#232D35]">Track Comparison</h3>
+              <p className="text-sm text-gray-500">See how you match different academic and vocational paths</p>
+            </div>
+            <div className="flex gap-2" role="group">
               <button
                 type="button"
-                className={`mr-2 px-4 py-2 text-sm font-medium rounded-l-lg border-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm animate-bounce-short ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all focus:outline-none ${
                   activeFilter === 'all' 
-                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white border-[#FFB71B] shadow-md' 
-                    : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
+                    ? 'bg-[#232D35] text-white' 
+                    : 'bg-[#1D63A1]/10 text-[#1D63A1] hover:bg-[#1D63A1]/20'
                 }`}
                 onClick={() => setActiveFilter('all')}
               >
@@ -136,10 +138,10 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               </button>
               <button
                 type="button"
-                className={`mr-2 px-4 py-2 text-sm font-medium border-t-2 border-b-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm animate-bounce-short ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all focus:outline-none ${
                   activeFilter === 'academic' 
-                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white border-[#1D63A1]' 
-                    : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
+                    ? 'bg-[#232D35] text-white' 
+                    : 'bg-[#1D63A1]/10 text-[#1D63A1] hover:bg-[#1D63A1]/20'
                 }`}
                 onClick={() => setActiveFilter('academic')}
               >
@@ -147,10 +149,10 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               </button>
               <button
                 type="button"
-                className={`mr-2 px-4 py-2 text-sm font-medium rounded-r-lg border-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] shadow-sm animate-bounce-short ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all focus:outline-none ${
                   activeFilter === 'other' 
-                    ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white border-[#FFB71B]' 
-                    : 'bg-white text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#FFB71B]/10 hover:text-[#232D35]'
+                    ? 'bg-[#232D35] text-white' 
+                    : 'bg-[#1D63A1]/10 text-[#1D63A1] hover:bg-[#1D63A1]/20'
                 }`}
                 onClick={() => setActiveFilter('other')}
               >
@@ -198,45 +200,62 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
             />}
           </div>
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5, delay: 0.1 }} 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        >
           {/* Left column - Academic Tracks */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-[#232D35] pb-2 border-b-2 border-[#1D63A1]/20">Academic Tracks</h3>
+            <h3 className="text-xl font-extrabold text-[#232D35] pb-2 border-b-2 border-[#1D63A1]/20">Academic Tracks</h3>
             {academicTracks.map(track => (
-              <motion.div key={track.id} whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+              <motion.div 
+                key={track.id} 
+                whileHover={{ scale: 1.02 }} 
+                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5"
+                style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}
+              >
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-lg font-semibold text-[#232D35]">{track.name}</h4>
-                  <span className="px-3 py-1 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full text-sm font-bold">
+                  <h4 className="text-lg font-extrabold text-[#232D35]">{track.name}</h4>
+                  <span className="px-3 py-1.5 bg-[#1D63A1]/10 text-[#1D63A1] rounded-full text-sm font-bold">
                     {track.score.toFixed(1)}%
                   </span>
                 </div>
-                <p className="text-left text-sm text-gray-600 mb-4">
+                <p className="text-left text-sm text-gray-700 leading-relaxed mb-4">
                   {track.description}
                 </p>
-                <div className="text-left text-xs text-gray-500">
-                  <p className="mb-1"><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
-                  <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
+                <div className="text-left text-xs text-gray-600 space-y-1">
+                  <p><span className="font-bold text-[#1D63A1]">Strengths needed:</span> {track.strengths}</p>
+                  <p><span className="font-bold text-[#1D63A1]">Career paths:</span> {track.careers}</p>
                 </div>
               </motion.div>
             ))}
           </div>
+          
           {/* Right column - Non-Academic Tracks */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-[#232D35] pb-2 border-b-2 border-[#1D63A1]/20">Non-Academic Tracks</h3>
+            <h3 className="text-xl font-extrabold text-[#232D35] pb-2 border-b-2 border-[#FFB71B]/20">Non-Academic Tracks</h3>
             {otherTracks.map(track => (
-              <motion.div key={track.id} whileHover={{ scale: 1.03 }} className="bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all animate-card-pop">
+              <motion.div 
+                key={track.id} 
+                whileHover={{ scale: 1.02 }} 
+                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5"
+                style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}
+              >
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-lg font-semibold text-[#232D35]">{track.name}</h4>
-                  <span className="px-3 py-1 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
+                  <h4 className="text-lg font-extrabold text-[#232D35]">{track.name}</h4>
+                  <span className="px-3 py-1.5 bg-[#FFB71B]/10 text-[#FFB71B] rounded-full text-sm font-bold">
                     {track.score.toFixed(1)}%
                   </span>
                 </div>
-                <p className="text-left text-sm text-gray-600 mb-4">
+                <p className="text-left text-sm text-gray-700 leading-relaxed mb-4">
                   {track.description}
                 </p>
-                <div className="text-left text-xs text-gray-500">
-                  <p className="mb-1"><span className="font-semibold">Strengths needed:</span> {track.strengths}</p>
-                  <p><span className="font-semibold">Career paths:</span> {track.careers}</p>
+                <div className="text-left text-xs text-gray-600 space-y-1">
+                  <p><span className="font-bold text-[#FFB71B]">Strengths needed:</span> {track.strengths}</p>
+                  <p><span className="font-bold text-[#FFB71B]">Career paths:</span> {track.careers}</p>
                 </div>
               </motion.div>
             ))}
