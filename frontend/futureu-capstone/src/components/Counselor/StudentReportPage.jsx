@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import userAssessmentService from "../../services/userAssessmentService";
 import * as recommendationService from "../../services/recommendationService";
-import programRecommendationService from '../../services/programRecommendationService';
 import { Radar, Bar } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import CounselorTabs from "./CounselorTabs";
@@ -333,13 +332,32 @@ const StudentReportPage = () => {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 1 && result?.resultId) {
+    if (activeTab === 1 && result?.userAssessment?.userQuizAssessment) {
       setCareerRecsLoading(true);
       setCareerRecsError(null);
       recommendationService
-        .fetchRecommendationsByResult(result.resultId)
+        .fetchRecommendations(result.userAssessment.userQuizAssessment)
         .then((res) => {
-          setCareerRecs(res.data ? (Array.isArray(res.data) ? res.data : [res.data]) : []);
+          const payload = res.data;
+          if (payload && payload.recommendations && payload.recommendations.careerPaths) {
+            // Extract careers from all career paths
+            const allCareers = [];
+            payload.recommendations.careerPaths.forEach((path) => {
+              if (Array.isArray(path.careers)) {
+                path.careers.forEach((career) => {
+                  allCareers.push({
+                    ...career,
+                    pathName: path.careerPathName,
+                  });
+                });
+              }
+            });
+            // Sort by match percentage and take top 5
+            allCareers.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+            setCareerRecs(allCareers.slice(0, 5));
+          } else {
+            setCareerRecs([]);
+          }
           setCareerRecsLoading(false);
         })
         .catch((err) => {
@@ -347,16 +365,35 @@ const StudentReportPage = () => {
           setCareerRecsLoading(false);
         });
     }
-  }, [activeTab, result?.resultId]);
+  }, [activeTab, result?.userAssessment?.userQuizAssessment]);
 
   useEffect(() => {
-    if (activeTab === 2 && result?.resultId) {
+    if (activeTab === 2 && result?.userAssessment?.userQuizAssessment) {
       setProgramRecsLoading(true);
       setProgramRecsError(null);
-      programRecommendationService
-        .fetchProgramRecommendationsByResult(result.resultId)
+      recommendationService
+        .fetchRecommendations(result.userAssessment.userQuizAssessment)
         .then((res) => {
-          setProgramRecs(res.data ? (Array.isArray(res.data) ? res.data : [res.data]) : []);
+          const payload = res.data;
+          if (payload && payload.recommendations && payload.recommendations.careerPaths) {
+            // Extract programs from all career paths
+            const allPrograms = [];
+            payload.recommendations.careerPaths.forEach((path) => {
+              if (Array.isArray(path.programs)) {
+                path.programs.forEach((program) => {
+                  allPrograms.push({
+                    ...program,
+                    pathName: path.careerPathName,
+                  });
+                });
+              }
+            });
+            // Sort by match percentage and take top 5
+            allPrograms.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+            setProgramRecs(allPrograms.slice(0, 5));
+          } else {
+            setProgramRecs([]);
+          }
           setProgramRecsLoading(false);
         })
         .catch((err) => {
@@ -364,7 +401,7 @@ const StudentReportPage = () => {
           setProgramRecsLoading(false);
         });
     }
-  }, [activeTab, result?.resultId]);
+  }, [activeTab, result?.userAssessment?.userQuizAssessment]);
 
   // Helper: Generate GSA Bar Chart Data
   function getGsaBarData(result) {
@@ -729,7 +766,7 @@ const StudentReportPage = () => {
                             </div>
                             <div className="text-right ml-3">
                               <div className="text-lg font-bold text-[#1D63A1]">
-                                {insight.score}%
+                                {insight.score/40*100}%
                               </div>
                               <div className="text-xs text-gray-500">
                                 Strength
@@ -857,7 +894,9 @@ const StudentReportPage = () => {
                                   #{track.relativePerformance.rank} of 6
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {track.score}/100
+                                  {typeof track.score === 'number'
+                                    ? (Number.isInteger(track.score) ? track.score : track.score.toFixed(2))
+                                    : track.score}/100
                                 </div>
                               </div>
                             </div>
@@ -891,7 +930,7 @@ const StudentReportPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#FFB71B] text-2xl">Career Options</h3>
+                    <h3 className="text-left font-bold text-[#FFB71B] text-2xl">Career Options</h3>
                     <p className="text-gray-600 text-sm">Career paths that match your strengths and interests</p>
                   </div>
                 </div>
@@ -926,11 +965,11 @@ const StudentReportPage = () => {
                             </div>
                             <div className="text-left flex-1 min-w-0">
                               <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-[#FFB71B] transition-colors">
-                                {rec.careerPath?.careerTitle || rec.careerTitle || rec.name || "Career Match"}
+                                {rec.careerTitle || rec.name || "Career Match"}
                               </h4>
-                              {rec.careerPath?.industry && (
+                              {rec.pathName && (
                                 <div className="text-sm text-gray-500 font-medium">
-                                  {rec.careerPath.industry}
+                                  Pathway: {rec.pathName}
                                 </div>
                               )}
                             </div>
@@ -939,7 +978,7 @@ const StudentReportPage = () => {
                           {/* Career Description */}
                           <div className="mb-4">
                             <p className="text-left text-gray-700 text-sm leading-relaxed">
-                              {rec.careerPath?.careerDescription || rec.description || rec.matchExplanation || "A career path that matches your profile."}
+                              {rec.summary || rec.description || rec.matchExplanation || "A career path that matches your profile."}
                             </p>
                           </div>
 
@@ -983,7 +1022,7 @@ const StudentReportPage = () => {
                           </div>
 
                           {/* Match Score */}
-                          {rec.confidenceScore && (
+                          {rec.matchPercentage && (
                             <div className="mt-4 pt-4 border-t border-gray-100">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600">Match Score</span>
@@ -991,10 +1030,10 @@ const StudentReportPage = () => {
                                   <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-gradient-to-r from-[#FFB71B] to-orange-500 rounded-full transition-all duration-1000"
-                                      style={{ width: `${rec.confidenceScore}%` }}
+                                      style={{ width: `${rec.matchPercentage}%` }}
                                     ></div>
                                   </div>
-                                  <span className="font-bold text-[#FFB71B] text-sm">{rec.confidenceScore.toFixed(0)}%</span>
+                                  <span className="font-bold text-[#FFB71B] text-sm">{rec.matchPercentage.toFixed(0)}%</span>
                                 </div>
                               </div>
                             </div>
@@ -1025,7 +1064,7 @@ const StudentReportPage = () => {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-bold text-blue-600 text-2xl">Program Options</h3>
+                    <h3 className="text-left font-bold text-blue-600 text-2xl">Program Options</h3>
                     <p className="text-gray-600 text-sm">Academic programs that align with your career goals</p>
                   </div>
                 </div>
@@ -1060,11 +1099,11 @@ const StudentReportPage = () => {
                             </div>
                             <div className="text-left flex-1 min-w-0">
                               <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-blue-600 transition-colors">
-                                {rec.program?.programName || rec.programName || "Program Match"}
+                                {rec.programName || "Program Match"}
                               </h4>
-                              {rec.program?.level && (
+                              {rec.pathName && (
                                 <div className="text-sm text-gray-500 font-medium">
-                                  {rec.program.level} Level Program
+                                  Pathway: {rec.pathName}
                                 </div>
                               )}
                             </div>
@@ -1073,7 +1112,7 @@ const StudentReportPage = () => {
                           {/* Program Description */}
                           <div className="text-left mb-4">
                             <p className="text-gray-700 text-sm leading-relaxed">
-                              {rec.program?.description || rec.description || rec.matchExplanation || "An academic program that matches your profile."}
+                              {rec.summary || rec.description || rec.matchExplanation || "An academic program that matches your profile."}
                             </p>
                           </div>
 
@@ -1128,7 +1167,7 @@ const StudentReportPage = () => {
                           </div>
 
                           {/* Match Score */}
-                          {rec.confidenceScore && (
+                          {rec.matchPercentage && (
                             <div className="pt-4 border-t border-gray-100">
                               <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600">Match Score</span>
@@ -1136,10 +1175,10 @@ const StudentReportPage = () => {
                                   <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000"
-                                      style={{ width: `${rec.confidenceScore}%` }}
+                                      style={{ width: `${rec.matchPercentage}%` }}
                                     ></div>
                                   </div>
-                                  <span className="font-bold text-blue-600 text-sm">{rec.confidenceScore.toFixed(0)}%</span>
+                                  <span className="font-bold text-blue-600 text-sm">{rec.matchPercentage.toFixed(0)}%</span>
                                 </div>
                               </div>
                             </div>

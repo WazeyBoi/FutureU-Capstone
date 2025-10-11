@@ -606,7 +606,10 @@ const StudentHomepage = () => {
                                     />
                                     <h5 className="font-semibold text-[#2B3E4E] text-sm mb-1">{type.name}</h5>
                                     <div className="text-sm text-[#FFB71B] font-bold">
-                                      {type.score ? `${type.score.toFixed(1)}%` : 'N/A'}
+                                      {typeof type.score === 'number' && !Number.isNaN(type.score)
+                                        ? `${((type.score / 40) * 100).toFixed(1)}%`
+                                        : 'N/A'
+                                      }
                                     </div>
                                   </div>
                                 </div>

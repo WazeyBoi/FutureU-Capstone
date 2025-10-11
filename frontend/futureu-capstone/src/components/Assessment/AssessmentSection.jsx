@@ -2,6 +2,118 @@ import React, { useState, useRef, useEffect, useImperativeHandle, forwardRef } f
 import { motion } from 'framer-motion';
 import QuestionItem from './QuestionItem';
 
+// Tooltip component for assessment information
+const AssessmentTooltip = ({ sectionType }) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const getTooltipContent = () => {
+    if (sectionType === 'riasec') {
+      return {
+        title: "Assessment Source",
+        content: (
+          <>
+            <p className="font-normal text-gray-700 mb-2">
+              Questions in this section are based on the <strong>O*NET® Interest Profiler™</strong> from the O*NET Resource Center.
+            </p>
+            <div className="font-normal text-xs text-gray-600 bg-gray-50 p-2 rounded border">
+              <p className="mb-1">
+                <strong>Source:</strong> O*NET Interest Profiler Short Form Psychometric Characteristics
+              </p>
+              <p>
+                <strong>Reference:</strong> 
+                <a 
+                  href="https://www.onetcenter.org/dl_files/IPSF_Psychometric.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline ml-1"
+                >
+                  ONET Resource Center
+                </a>
+              </p>
+            </div>
+          </>
+        ),
+        ariaLabel: "Information about RIASEC assessment source"
+      };
+    } else {
+      return {
+        title: "Assessment Basis",
+        content: (
+          <>
+            <p className="font-normal text-gray-700 mb-2">
+              Questions in this section are based heavily on <strong>Grade 9 curriculum</strong> standards and learning competencies.
+            </p>
+            <div className="font-normal text-xs text-gray-600 bg-gray-50 p-2 rounded border">
+              <p className="mb-1">
+                <strong>Curriculum Level:</strong> Grade 9 (Junior High School)
+              </p>
+              <p>
+                <strong>Basis:</strong> Department of Education (DepEd) K-12 Curriculum Standards
+              </p>
+            </div>
+          </>
+        ),
+        ariaLabel: "Information about curriculum-based assessment"
+      };
+    }
+  };
+
+  const tooltipData = getTooltipContent();
+
+  return (
+    <div className="relative inline-block">
+      <button
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        className="ml-2 p-1 rounded-full hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        aria-label={tooltipData.ariaLabel}
+      >
+        <svg 
+          className="w-4 h-4 text-blue-600 hover:text-blue-700" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+          />
+        </svg>
+      </button>
+      
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
+          className="absolute z-50 w-80 p-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+          style={{ left: '50%', transform: 'translateX(-50%)' }}
+        >
+          <div className="text-left text-sm">
+            <div className="flex items-start mb-2">
+              <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <h4 className="text-center font-semibold text-gray-900 mb-1">{tooltipData.title}</h4>
+                {tooltipData.content}
+              </div>
+            </div>
+          </div>
+          
+          {/* Tooltip arrow */}
+          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-gray-200 rotate-45"></div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
 const AssessmentSection = forwardRef(({
   title, 
   description, 
@@ -199,6 +311,7 @@ const AssessmentSection = forwardRef(({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
           <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
             <span className="line-clamp-1">{title}</span>
+            <AssessmentTooltip sectionType={isRiasecSection ? 'riasec' : 'curriculum'} />
           </h2>
           {remainingTime && (
             <div className="flex items-center bg-red-50 px-3 py-1 rounded-full self-start sm:self-auto">
