@@ -275,18 +275,19 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
       initial={{ opacity: 0, y: 20 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: 0.5 }} 
-      className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10 overflow-hidden"
+      className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
     >
       {/* Decorative playful background blobs (no icons) */}
-      <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
       <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
       {/* Dream Career Analysis Section */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 0.5, delay: 0.1 }} 
-        className="rounded-3xl shadow-lg p-6 animate-card-pop relative z-20"
+        className="rounded-3xl shadow-lg p-6 animate-card-pop relative z-20  overflow-hidden bg-white border border-[#FFB71B]/10"
       >
+        <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
+
         <div className="flex flex-col lg:flex-row gap-6 items-start">
           {/* Left: Header + Description + Alignment card below */}
           <div className="flex-1">
@@ -379,7 +380,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45 }}
-        className="rounded-3xl shadow-lg mt-6 animate-card-pop"
+        className="rounded-3xl animate-card-pop overflow-visible"
       >
           {/* Comprehensive AI Analysis Sections */}
           {(dreamInsight.fieldAlignment || dreamInsight.strengthsAlignment || dreamInsight.misalignmentInsights || dreamInsight.personalizedFocusAreas) && (
@@ -389,7 +390,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
        <div className="p-6 bg-white rounded-2xl border-[#1D63A1] transition-transform transform hover:-translate-y-0.5"
          style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="inline-block text-xl font-semibold text-[#1D63A1] px-3 py-1 rounded-full">Field Alignment</span>
+                    <span className="inline-block text-xl font-semibold text-[#1D63A1] rounded-full">Field Alignment</span>
                     <span className="text-xs text-gray-400">What this means</span>
                   </div>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.fieldAlignment}</p>
@@ -401,7 +402,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
        <div className="p-6 bg-white rounded-2xl border-green-400 transition-transform transform hover:-translate-y-0.5"
          style={{ boxShadow: '0 10px 26px rgba(22,163,74,0.15)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="inline-block text-xl font-semibold text-green-700 px-3 py-1 rounded-full">Strengths Alignment</span>
+                    <span className="inline-block text-xl font-semibold text-green-700 rounded-full">Strengths Alignment</span>
                     <span className="text-xs text-gray-400">How your skills help</span>
                   </div>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.strengthsAlignment}</p>
@@ -413,7 +414,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
        <div className="p-6 bg-white rounded-2xl border-orange-400 transition-transform transform hover:-translate-y-0.5"
          style={{ boxShadow: '0 10px 26px rgba(249,115,22,0.15)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="inline-block text-xl font-semibold text-orange-700 px-3 py-1 rounded-full">Growth Opportunities</span>
+                    <span className="inline-block text-xl font-semibold text-orange-700 rounded-full">Growth Opportunities</span>
                     <span className="text-xs text-gray-400">Steps to improve</span>
                   </div>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.misalignmentInsights}</p>
@@ -425,7 +426,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
        <div className="p-6 bg-white rounded-2xl border-purple-500 transition-transform transform hover:-translate-y-0.5"
          style={{ boxShadow: '0 10px 26px rgba(124,58,237,0.15)' }}>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="inline-block text-xl font-semibold text-purple-700 px-3 py-1 rounded-full">Focus Areas</span>
+                    <span className="inline-block text-xl font-semibold text-purple-700 rounded-full">Focus Areas</span>
                     <span className="text-xs text-gray-400">Priority actions</span>
                   </div>
                   <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.personalizedFocusAreas}</p>
@@ -439,7 +440,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
             <div className="mt-7 p-6 bg-white rounded-2xl border-[#FFB71B] transition-transform transform hover:-translate-y-0.5"
                  style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="inline-block text-xl font-semibold text-[#FFB71B] px-3 py-1 rounded-full">Personalized Encouragement</span>
+                <span className="inline-block text-xl font-semibold text-[#FFB71B] rounded-full">Personalized Encouragement</span>
                 <span className="text-xs text-gray-400">You're making progress</span>
               </div>
               <p className="text-left text-sm text-gray-700 leading-relaxed">{dreamInsight.encouragement}</p>

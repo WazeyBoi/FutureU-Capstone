@@ -266,7 +266,7 @@ const AssessmentResults = () => {
         <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
         <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
       </div>
-      <div className="relative z-10">
+      <div className="relative z-10 overflow-x-visible">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -359,7 +359,7 @@ const AssessmentResults = () => {
         
         {/* Tab Content Container */}
         {results ? (
-          <div className="min-h-[600px] overflow-hidden">
+          <div className="min-h-[600px] overflow-visible">
             <div className="relative">
               {activeTab === 'overview' && (
                 <div className="animate-fade-in">

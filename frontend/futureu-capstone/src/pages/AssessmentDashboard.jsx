@@ -530,7 +530,7 @@ const AssessmentDashboard = () => {
         </div>
 
         {/* In Progress Assessments */}
-        <div className="mb-14">
+        {/* <div className="mb-14">
           <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
             <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFB71B]/30 text-[#1D63A1] mr-1">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
@@ -548,7 +548,7 @@ const AssessmentDashboard = () => {
                   <div className="absolute -top-4 -right-4 bg-gradient-to-br from-[#FFB71B] to-[#1D63A1] w-12 h-12 rounded-full opacity-20 group-hover:opacity-40 transition" />
                   <div className="p-6 border-b border-[#FFB71B]/20 bg-gradient-to-r from-[#FFB71B]/10 to-[#FFB71B]/5">
                     <h3 className="text-left text-lg font-bold text-[#232D35] flex items-center gap-2">
-                      {/* <svg className="w-5 h-5 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg> */}
+                      <svg className="w-5 h-5 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                       {assessment.assessment.title}
                     </h3>
                     <p className="text-left text-sm text-[#232D35]/70 mt-1">{assessment.assessment.description}</p>
@@ -587,7 +587,7 @@ const AssessmentDashboard = () => {
               <p className="mt-1 text-sm text-[#232D35]/60">Start a new assessment to begin your journey!</p>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Available Assessments */}
         <div className="mb-14">
@@ -633,7 +633,7 @@ const AssessmentDashboard = () => {
         </div>
 
         {/* Performance Summary Dashboard - MOVED BEFORE ASSESSMENT HISTORY */}
-        {Object.keys(completedByAssessment).length > 0 && (
+        {/* {Object.keys(completedByAssessment).length > 0 && (
           <div className="mb-14">
             <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#1D63A1]/20 text-[#FFB71B] mr-1">
@@ -642,7 +642,6 @@ const AssessmentDashboard = () => {
               Performance Summary
             </h2>
             
-            {/* Key metrics */}
             <div className="bg-white rounded-3xl shadow-xl p-7 mb-8 animate-card-pop">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
                 <div className="bg-[#1D63A1]/10 rounded-xl p-5 border border-[#1D63A1]/30 flex flex-col items-center">
@@ -673,16 +672,14 @@ const AssessmentDashboard = () => {
               </div>
             </div>
             
-            {/* Charts section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Performance by Assessment - Radar Chart with Multiple Datasets */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white rounded-3xl shadow-xl p-5 animate-card-pop border-2 border-[#1D63A1]/10"
               >
                 <h3 className="text-lg font-semibold text-[#232D35] mb-4 text-center">Performance by Assessment</h3>
-                <div className="h-[450px]">  {/* Increased from 300px to 450px */}
+                <div className="h-[450px]">
                   {Object.keys(assessmentStats).length > 0 && (
                     <Radar
                       data={generateScoreTrendData(assessmentStats)}
@@ -704,7 +701,7 @@ const AssessmentDashboard = () => {
                             pointLabels: {
                               font: {
                                 weight: 'bold',
-                                size: 12  // Added slightly larger font for better visibility
+                                size: 12 
                               }
                             },
                             ticks: {
@@ -736,7 +733,6 @@ const AssessmentDashboard = () => {
                 </div>
               </motion.div>
               
-              {/* Score Improvement Chart */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -786,7 +782,6 @@ const AssessmentDashboard = () => {
                 </div>
               </motion.div>
               
-              {/* Section Performance Radar Chart */}
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -794,7 +789,7 @@ const AssessmentDashboard = () => {
                 className="bg-white rounded-3xl shadow-xl p-5 animate-card-pop border-2 border-[#1D63A1]/10 lg:col-span-2"
               >
                 <h3 className="text-lg font-semibold text-[#232D35] mb-4 text-center">Performance by Section Type</h3>
-                <div className="h-[500px]">  {/* Increased from 350px to 500px */}
+                <div className="h-[500px]">
                   {completedAssessments.some(a => {
                     const hasResults = a.result?.sectionResults?.length > 0;
                     const hasSectionResults = a.sectionResults && a.sectionResults.length > 0;
@@ -820,7 +815,7 @@ const AssessmentDashboard = () => {
                             pointLabels: {
                               font: {
                                 weight: 'bold',
-                                size: 12  // Added slightly larger font for better visibility
+                                size: 12
                               }
                             },
                             ticks: {
@@ -860,7 +855,7 @@ const AssessmentDashboard = () => {
               </motion.div>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Your Assessment History - MOVED AFTER PERFORMANCE SUMMARY */}
         {Object.keys(completedByAssessment).length > 0 ? (

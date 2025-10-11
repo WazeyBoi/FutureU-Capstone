@@ -44,14 +44,7 @@ const schoolLogos = {
   9: usjr_school_logo,
   10: up_school_logo,
   11: uv_school_logo,
-};
-const schoolBackgroundMap = {
-  "Cebu Institute of Technology": citu_school_image,
-  "Cebu Doctors' University": cdu_school_image,
-  "Cebu Normal University": cnu_school_image,
-  "Cebu Technological University": ctu_school_image,
-  "Southwestern University": swu_school_image,
-  "University of San Carlos": usc_school_image,
+          
   "University of San Jose-Recoletos": usjr_school_image,
   "University of the Philippines Cebu": up_school_image,
   "University of Cebu": uc_school_image,
@@ -487,7 +480,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   }, []);
 
   return (
-    <div className="relative">
+    <div className="relative overflow-visible">
       {/* Playful floating accent shapes background */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
@@ -498,74 +491,83 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10 overflow-visible"
       >
         {/* Header section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop">
-          <h3 className="text-xl font-bold text-[#232D35] mb-3">Personalized Career Path Options</h3>
-          <p className="text-sm text-gray-600">
-            Based on your assessment results, we've identified careers and academic paths that align with your skills, 
-            interests, and strengths. Explore these options to find the best fit for your future.
-          </p>
-          {recommendationPacket?.dateCompleted && (
-            <p className="text-xs text-gray-500 mt-3">
-              Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
-            </p>
-          )}
-          {checkedExisting && !loading && !error && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                onClick={handleRefreshRecommendations}
-                disabled={isRegenerating}
-                className={`px-4 py-2 text-sm font-semibold border rounded-xl transition-colors ${
-                  isRegenerating 
-                    ? 'text-gray-400 border-gray-300 cursor-not-allowed' 
-                    : 'text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#1D63A1]/10'
-                }`}
-              >
-                Refresh Outputs
-              </button>
-              <button
-                onClick={handleGenerateRecommendations}
-                disabled={isRegenerating}
-                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
-                  isRegenerating
-                    ? 'text-gray-400 bg-gray-300 cursor-not-allowed'
-                    : 'text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#232D35] hover:to-[#232D35]'
-                }`}
-              >
-                {isRegenerating ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                    <span>Generating...</span>
-                  </div>
-                ) : (
-                  'Regenerate Matches'
-                )}
+  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 animate-card-pop flex relative overflow-visible">
+          <div>
+            <h3 className="text-left text-xl font-bold text-[#232D35] mb-3">Personalized Career Path Options</h3>
+            <div className="w-150">
+              <p className="text-left text-sm text-gray-600">
+                Based on your assessment results, we've identified careers and academic paths that align with your skills, 
+                interests, and strengths. Explore these options to find the best fit for your future.
+              </p>
+            </div>
+            {recommendationPacket?.dateCompleted && (
+              <p className="text-left text-xs text-gray-500 mt-3">
+                Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
+              </p>
+            )}
+            {checkedExisting && !loading && !error && (
+              <div className="mt-4 flex flex-wrap gap-3 items-center">
+                <button
+                  onClick={handleRefreshRecommendations}
+                  disabled={isRegenerating}
+                  className={`px-4 py-2 text-sm font-semibold border rounded-xl transition-colors ${
+                    isRegenerating 
+                      ? 'text-gray-400 border-gray-300 cursor-not-allowed' 
+                      : 'text-[#1D63A1] border-[#1D63A1]/40 hover:bg-[#1D63A1]/10'
+                  }`}
+                >
+                  Refresh Outputs
+                </button>
+                <button
+                  onClick={handleGenerateRecommendations}
+                  disabled={isRegenerating}
+                  className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
+                    isRegenerating
+                      ? 'text-gray-400 bg-gray-300 cursor-not-allowed'
+                      : 'text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#232D35] hover:to-[#232D35]'
+                  }`}
+                >
+                  {isRegenerating ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                      <span>Generating...</span>
+                    </div>
+                  ) : (
+                    'Regenerate Matches'
+                  )}
               </button>
             </div>
           )}
+          </div>
+
+          <div className="ml-auto flex items-center">
+            {/* Compact Dream Career pill (small, moveable). Placed under header by default; consider moving next to action buttons for higher visibility. */}
+            {checkedExisting && !loading && !error && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+                className="mr-35 flex text-left items-center gap-3 px-4 py-2 rounded-xl bg-white border border-[#1D63A1]/10 text-sm text-[#232D35] shadow-[0_12px_30px_rgba(255,183,27,0.18)] w-72"
+              >
+                <div className="leading-tight">
+                  <div className="text-sm font-semibold">Dream Career Analysis</div>
+                  <div className="text-[12px] text-gray-600">AI insights available in the dedicated "Dream Career Analysis" tab</div>
+                </div>
+              </motion.div>
+            )}
+          </div>
         </motion.div>
 
-        {/* Dream Career Analysis Notice */}
-        {checkedExisting && !loading && !error && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }} className="bg-gradient-to-r from-[#1D63A1]/5 to-[#FFB71B]/5 rounded-2xl p-4 border border-[#1D63A1]/20 animate-card-pop">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-[#1D63A1]/10 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h4 className="text-left text-sm font-semibold text-[#232D35] mb-1">Dream Career AI Analysis Available!</h4>
-                <p className="text-left text-xs text-gray-600">
-                  Get comprehensive AI-driven insights about your dream career alignment in the dedicated 
-                  <span className="font-medium text-[#1D63A1]"> "Dream Career Analysis" </span>tab.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Decorative raise-hand graphic placed outside of card to avoid clipping */}
+        <img
+          src="/src/assets/characters/raiseHand.svg"
+          alt="raise hand"
+          className="hidden md:block absolute top-2 -right-20 h-[180px] w-auto z-50 drop-shadow-xl animate-float pointer-events-none"
+          style={{ maxWidth: '28vw', minWidth: '100px' }}
+        />
 
         {/* Loading state */}
         {loading && (
@@ -645,9 +647,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                     )}
 
                     {/* Component Breakdown */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    {/* hide lang sa */}
+                    {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                       {Object.entries(breakdown).map(([key, value]) => {
-                        // Use friendly frontend-only labels where available
                         const rawLabel = COMPONENT_LABELS[key] || key.replace(/_/g, ' ');
                         return (
                           <div key={key} className="text-center p-3 bg-white border border-gray-200 rounded-lg">
@@ -656,7 +658,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                           </div>
                         );
                       })}
-                    </div>
+                    </div> */}
 
                     {/* Tab Navigation */}
                     <div className="border-b border-gray-200 mb-6">
@@ -722,7 +724,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                     {(career.matchPercentage || 0).toFixed(1)}%
                                   </span>
                                 </div>
-                                <p className="text-xs text-left text-gray-600 leading-relaxed line-clamp-2">{career.summary || 'This career aligns with your strengths.'}</p>
+                                <p className="text-xs text-left text-gray-600 leading-relaxed">{career.summary || 'This career aligns with your strengths.'}</p>
                               </motion.div>
                             ))}
                           </div>
@@ -766,16 +768,17 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                     <h5 className="text-left text-lg font-bold text-[#232D35] mb-1">{program.programName}</h5>
                                     <p className="text-sm text-left text-gray-600">{program.summary || 'This program supports your career goals.'}</p>
                                   </div>
-                                  <span className="absolute top-0 right-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#232D35] text-[#FFB71B]">
+                                  {/* hidden for now */}
+                                  {/* <span className="absolute top-0 right-0 inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#232D35] text-[#FFB71B]">
                                     {(program.matchPercentage || 0).toFixed(1)}% Match
-                                  </span>
+                                  </span> */}
                                   <div className="absolute -bottom-1 right-0">
                                     {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                   </div>
                                 </div>
                                 <AccordionContent expanded={expanded}>
                                   <div className="pt-4 border-t border-gray-100">
-                                    <h6 className="font-semibold text-[#232D35] mb-4">Available at these schools:</h6>
+                                    <h6 className="font-semibold text-[#232D35] mb-4">Available at these school/s:</h6>
                                     {schools.length > 0 ? (
                                       <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
                                         {schools.map((schoolObj, schoolIdx) => {
@@ -905,7 +908,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                                 </p>
                               </div>
 
-                              <div className="mt-8 p-6 rounded-2xl bg-white border-2 border-gray-200 shadow-xl text-center">
+                              <div className="text-left mt-8 p-6 rounded-2xl bg-white border-2 border-gray-200 shadow-xl text-center">
                                 <h5 className="font-extrabold text-[#232D35] mb-3">Why This Pathway Matches You</h5>
                                 <p className="text-sm text-gray-700">
                                   This pathway achieved a 
@@ -931,12 +934,12 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-2xl shadow-md p-8">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Recommended Careers</h3>
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#FFB71B] bg-[#232D35] px-4 py-1.5 rounded-full shadow-sm">
+              {/* <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#FFB71B] bg-[#232D35] px-4 py-1.5 rounded-full shadow-sm">
                 <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                 Based on {aiRecommendations.overallScore?.toFixed(1)}% match
-              </span>
+              </span> */}
             </div>
-            <p className="text-gray-600 mb-8">
+            <p className="text-left text-gray-600 mb-8">
               These specific career roles align well with your assessment results and personality profile.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1135,7 +1138,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             className="w-full max-w-4xl md:max-w-5xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="text-left bg-white rounded-2xl shadow-2xl overflow-hidden">
               <div className="relative px-6 py-5 bg-[#232D35] text-white">
                 <div className="flex items-start justify-between">
                   <div className="pr-8">
