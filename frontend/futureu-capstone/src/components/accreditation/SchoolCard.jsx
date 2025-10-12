@@ -86,7 +86,7 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
   // Get the data source information for the school
   const getSchoolDataSource = (school) => {
     // Debug: Log the school name to see what we're getting
-    console.log('School name:', school.name);
+    // console.log('School name:', school.name);
     
     // Mapping of schools to their actual data sources
     const schoolDataSources = {
@@ -144,7 +144,7 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
 
     // Check for exact match first
     if (schoolDataSources[school.name]) {
-      console.log('Found mapping for:', school.name, '->', schoolDataSources[school.name]);
+      // console.log('Found mapping for:', school.name, '->', schoolDataSources[school.name]);
       return schoolDataSources[school.name];
     }
 
