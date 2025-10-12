@@ -160,16 +160,16 @@ const ProfileSidebar = ({
           <>
             <button
               onClick={onEdit}
-              className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center group"
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center group cursor-pointer"
             >
               <Lock className="w-4 h-4 mr-2" />
               Edit Profile
             </button>
             <button
               onClick={onChangePassword}
-              className="w-full bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center group"
+              className="w-full bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center group cursor-pointer"
             >
-              <Lock className="w-4 h-4 mr-2" />
+              <Lock className="w-4 h-4 mr-2 cursor-pointer" />
               Change Password
             </button>
           </>
@@ -178,7 +178,7 @@ const ProfileSidebar = ({
             <button
               onClick={onSave}
               disabled={saving}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 flex items-center justify-center"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 flex items-center justify-center cursor-pointer"
             >
               {saving ? (
                 <>
@@ -194,7 +194,7 @@ const ProfileSidebar = ({
             </button>
             <button
               onClick={onCancel}
-              className="flex-1 bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center"
+              className="flex-1 bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center cursor-pointer"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel

@@ -46,7 +46,7 @@ const CareerInterestProfileSection = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onEditProfile}
-            className="bg-[#232D35] hover:bg-[#1D63A1] text-white px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-lg flex items-center shadow-md"
+            className="bg-[#232D35] hover:bg-[#1D63A1] text-white px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-lg flex items-center shadow-md cursor-pointer"
           >
             <Edit className="w-5 h-5 mr-3" />
             <span>Update Interest Profile </span>
@@ -284,7 +284,7 @@ const CareerInterestProfileSection = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onSetupProfile}
-                  className="w-full md:w-auto bg-gradient-to-r from-[#1D63A1] via-[#2B3E4E] to-[#1D63A1] hover:from-[#FFB71B] hover:via-[#FF9800] hover:to-[#FFB71B] text-white hover:text-[#232D35] px-10 py-4 rounded-2xl font-bold hover:shadow-2xl transform transition-all duration-500 flex items-center justify-center shadow-xl border-2 border-white/20"
+                  className="w-full md:w-auto bg-gradient-to-r from-[#1D63A1] via-[#2B3E4E] to-[#1D63A1] hover:from-[#FFB71B] hover:via-[#FF9800] hover:to-[#FFB71B] text-white hover:text-[#232D35] px-10 py-4 rounded-2xl font-bold hover:shadow-2xl transform transition-all duration-500 flex items-center justify-center shadow-xl border-2 border-white/20 cursor-pointer"
                 >
                   <Sparkles className="w-6 h-6 mr-3" />
                   <span className="text-lg">Set Up Profile Now</span>

@@ -300,7 +300,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handlePrevious}
-                  className="flex items-center px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-xl sm:rounded-2xl text-gray-700 hover:bg-white hover:border-gray-400 transition-all duration-200 font-medium shadow-sm text-sm sm:text-base"
+                  className="flex items-center px-4 sm:px-6 py-2 sm:py-3 border-2 border-gray-300 rounded-xl sm:rounded-2xl text-gray-700 hover:bg-white hover:border-gray-400 transition-all duration-200 font-medium shadow-sm text-sm sm:text-base cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
                   Previous
@@ -309,7 +309,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
               
               <button
                 onClick={onSkip}
-                className="px-4 sm:px-6 py-2 sm:py-3 text-gray-500 hover:text-gray-700 transition-colors font-medium text-sm sm:text-base"
+                className="px-4 sm:px-6 py-2 sm:py-3 text-gray-500 hover:text-gray-700 transition-colors font-medium text-sm sm:text-base cursor-pointer"
               >
                 Skip for now
               </button>
@@ -322,7 +322,7 @@ const CareerInterestProfileWizard = ({ onComplete, onSkip }) => {
                   whileTap={{ scale: isCurrentStepAnswered() ? 0.95 : 1 }}
                   onClick={handleNext}
                   disabled={!isCurrentStepAnswered()}
-                  className={`flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 shadow-lg text-sm sm:text-base ${
+                  className={`flex items-center px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 shadow-lg text-sm sm:text-base cursor-pointer ${
                     isCurrentStepAnswered()
                       ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 text-[#2B3E4E] hover:shadow-xl transform hover:-translate-y-0.5'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'

@@ -95,7 +95,7 @@ const ProfilePrompt = ({ onSetupNow, onSetupLater }) => {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={onSetupNow}
-            className="flex-1 bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center group"
+            className="flex-1 bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center group cursor-pointer"
           >
             <span>Set Up Now</span>
             <ChevronRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
@@ -103,7 +103,7 @@ const ProfilePrompt = ({ onSetupNow, onSetupLater }) => {
           
           <button
             onClick={onSetupLater}
-            className="flex-1 sm:flex-none bg-white border-2 border-gray-200 text-[#232D35] px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-[#FFB71B] transition-all duration-300 flex items-center justify-center group"
+            className="flex-1 sm:flex-none bg-white border-2 border-gray-200 text-[#232D35] px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 hover:border-[#FFB71B] transition-all duration-300 flex items-center justify-center group cursor-pointer"
           >
             <Clock className="w-5 h-5 mr-2 text-gray-500 group-hover:text-[#FFB71B] transition-colors duration-300" />
             <span>Setup Later</span>
