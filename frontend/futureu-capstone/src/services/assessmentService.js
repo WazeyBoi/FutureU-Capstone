@@ -146,7 +146,7 @@ class AssessmentService {
    * @param {string} context - Context where the error occurred
    */
   handleError(error, context = '') {
-    console.error(`Assessment service error${context ? ' - ' + context : ''}:`, error);
+    // console.error(`Assessment service error${context ? ' - ' + context : ''}:`, error);
     // You could add additional error handling here (e.g., notifications, logging)
   }
 }

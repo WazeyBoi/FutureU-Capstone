@@ -87,17 +87,17 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
       }
       setError(null);
 
-      console.log('Fetching dream career insight...');
+      // console.log('Fetching dream career insight...');
       const response = await recommendationService.fetchRecommendations(userAssessmentId);
 
       if (response?.data?.recommendations) {
         setDreamInsight(response.data.recommendations.dreamCareerInsight || null);
-        console.log('Dream career insight loaded successfully');
+        // console.log('Dream career insight loaded successfully');
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      console.error('Error fetching dream career insight:', err);
+      // console.error('Error fetching dream career insight:', err);
       let errorMessage = 'Failed to load dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
@@ -118,11 +118,11 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
     setIsDreamCareerRefreshing(true);
     setDreamCareerError(null);
     try {
-      console.log('Refreshing dream career analysis...');
+      // console.log('Refreshing dream career analysis...');
       await fetchDreamCareerInsight({ forceRefresh: true });
-      console.log('Dream career analysis refreshed successfully');
+      // console.log('Dream career analysis refreshed successfully');
     } catch (err) {
-      console.error('Dream career analysis refresh failed:', err);
+      // console.error('Dream career analysis refresh failed:', err);
       let errorMessage = 'Failed to refresh dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
@@ -146,13 +146,13 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
     setDreamCareerError(null);
 
     try {
-      console.log('Regenerating dream career analysis...');
+      // console.log('Regenerating dream career analysis...');
       // Call a specific regenerate endpoint that forces new AI analysis
       const response = await recommendationService.regenerateDreamCareerAnalysis(userAssessmentId);
       
       if (response?.data?.dreamCareerInsight) {
         setDreamInsight(response.data.dreamCareerInsight);
-        console.log('Dream career analysis regenerated successfully');
+        // console.log('Dream career analysis regenerated successfully');
         
         // Clear any existing error and show success feedback
         setDreamCareerError(null);
@@ -162,12 +162,12 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
         setDreamCareerError(null); // Make sure no error is shown
         
         // You could add a success toast here if you have a toast system
-        console.log(successMessage);
+        // console.log(successMessage);
       } else {
         throw new Error('Failed to regenerate analysis');
       }
     } catch (err) {
-      console.error('Dream career analysis regeneration failed:', err);
+      // console.error('Dream career analysis regeneration failed:', err);
       let errorMessage = 'Failed to regenerate dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {

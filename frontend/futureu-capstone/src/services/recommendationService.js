@@ -9,7 +9,7 @@ export const fetchRecommendations = (userAssessmentId) => {
   try {
     return apiClient.get(`/recommendation/comprehensive/${userAssessmentId}`);
   } catch (error) {
-    console.error('Error fetching recommendations:', error);
+    // console.error('Error fetching recommendations:', error);
     throw error;
   }
 };
@@ -26,7 +26,7 @@ export const generateRecommendations = (userAssessmentId) => {
       timeout: 180000 // 3 minutes to allow for AI generation and rate limiting
     });
   } catch (error) {
-    console.error('Error generating recommendations:', error);
+    // console.error('Error generating recommendations:', error);
     throw error;
   }
 };
@@ -39,7 +39,7 @@ export const enqueueRegeneration = (userAssessmentId) => {
   try {
     return apiClient.post(`/recommendation/regenerate/${userAssessmentId}`);
   } catch (error) {
-    console.error('Error enqueueing regeneration job:', error);
+    // console.error('Error enqueueing regeneration job:', error);
     throw error;
   }
 };
@@ -51,7 +51,7 @@ export const getJobStatus = (jobId) => {
   try {
     return apiClient.get(`/recommendation/job/${jobId}`);
   } catch (error) {
-    console.error(`Error fetching job status ${jobId}:`, error);
+    // console.error(`Error fetching job status ${jobId}:`, error);
     throw error;
   }
 };
@@ -67,7 +67,7 @@ export const checkRecommendationsExist = (userAssessmentId) => {
   try {
     return apiClient.get(`/recommendation/exists/${userAssessmentId}`);
   } catch (error) {
-    console.error(`Error checking existence of recommendations for ${userAssessmentId}:`, error);
+    // console.error(`Error checking existence of recommendations for ${userAssessmentId}:`, error);
     throw error;
   }
 };
@@ -81,7 +81,7 @@ export const fetchRecommendationById = (recommendationId) => {
   try {
     return apiClient.get(`/recommendation/getRecommendation/${recommendationId}`);
   } catch (error) {
-    console.error(`Error fetching recommendation ${recommendationId}:`, error);
+    // console.error(`Error fetching recommendation ${recommendationId}:`, error);
     throw error;
   }
 };
@@ -95,7 +95,7 @@ export const fetchRecommendationsByResult = (resultId) => {
   try {
     return apiClient.get(`/recommendation/getRecommendationByResult/${resultId}`);
   } catch (error) {
-    console.error(`Error fetching recommendations for result ${resultId}:`, error);
+    // console.error(`Error fetching recommendations for result ${resultId}:`, error);
     throw error;
   }
 };
@@ -109,7 +109,7 @@ export const createRecommendation = (recommendation) => {
   try {
     return apiClient.post('/recommendation/postRecommendation', recommendation);
   } catch (error) {
-    console.error('Error creating recommendation:', error);
+    // console.error('Error creating recommendation:', error);
     throw error;
   }
 };
@@ -126,7 +126,7 @@ export const updateRecommendation = (recommendationId, recommendationData) => {
       params: { recommendationId }
     });
   } catch (error) {
-    console.error(`Error updating recommendation ${recommendationId}:`, error);
+    // console.error(`Error updating recommendation ${recommendationId}:`, error);
     throw error;
   }
 };
@@ -140,7 +140,7 @@ export const deleteRecommendation = (recommendationId) => {
   try {
     return apiClient.delete(`/recommendation/deleteRecommendation/${recommendationId}`);
   } catch (error) {
-    console.error(`Error deleting recommendation ${recommendationId}:`, error);
+    // console.error(`Error deleting recommendation ${recommendationId}:`, error);
     throw error;
   }
 };
@@ -153,7 +153,7 @@ export const fetchAllCareerRecommendations = () => {
   try {
     return apiClient.get('/recommendation/getAllCareerRecommendations');
   } catch (error) {
-    console.error('Error fetching all career recommendations:', error);
+    // console.error('Error fetching all career recommendations:', error);
     throw error;
   }
 };
@@ -170,7 +170,7 @@ export const regenerateDreamCareerAnalysis = (userAssessmentId) => {
       timeout: 120000 // 2 minutes for AI regeneration
     });
   } catch (error) {
-    console.error('Error regenerating dream career analysis:', error);
+    // console.error('Error regenerating dream career analysis:', error);
     throw error;
   }
 };
@@ -184,7 +184,7 @@ export const fetchCareerPathDetails = (careerPathId) => {
   try {
     return apiClient.get(`/careerpath/get/${careerPathId}`);
   } catch (error) {
-    console.error(`Error fetching career path details for ID ${careerPathId}:`, error);
+    // console.error(`Error fetching career path details for ID ${careerPathId}:`, error);
     throw error;
   }
 };
@@ -198,7 +198,7 @@ export const getRegenerationInfo = (userAssessmentId) => {
   try {
     return apiClient.get(`/recommendation/regeneration-info/${userAssessmentId}`);
   } catch (error) {
-    console.error(`Error fetching regeneration info for ${userAssessmentId}:`, error);
+    // console.error(`Error fetching regeneration info for ${userAssessmentId}:`, error);
     throw error;
   }
 };

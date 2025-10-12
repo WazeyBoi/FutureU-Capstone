@@ -116,7 +116,7 @@ class AssessmentSubCategoryService {
    * @param {string} context - Context where the error occurred
    */
   handleError(error, context = '') {
-    console.error(`Assessment sub-category service error${context ? ' - ' + context : ''}:`, error);
+    // console.error(`Assessment sub-category service error${context ? ' - ' + context : ''}:`, error);
   }
 }
 

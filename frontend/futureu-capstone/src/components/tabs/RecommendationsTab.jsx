@@ -285,7 +285,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       const response = await recommendationService.getRegenerationInfo(userAssessmentId);
       setRegenerationInfo(response.data);
     } catch (err) {
-      console.error('Failed to fetch regeneration info:', err);
+      // console.error('Failed to fetch regeneration info:', err);
       // Don't show error to user, just use defaults
     }
   }, [userAssessmentId]);
@@ -301,7 +301,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
     setIsRegenerating(true);
     setError(null);
     try {
-      console.log('Requesting recommendation generation job enqueue...');
+      // console.log('Requesting recommendation generation job enqueue...');
       
       // Always use the job-based approach for both initial generation and regeneration
       const enqueueResp = await recommendationService.enqueueRegeneration(userAssessmentId);
@@ -321,7 +321,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         throw new Error('No jobId returned from enqueue - job tracking failed');
       }
 
-      console.log('Enqueued job, id=', jobId, ' - polling for status...');
+      // console.log('Enqueued job, id=', jobId, ' - polling for status...');
       const POLL_INTERVAL_MS = 5000; // 5s
       const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes
       let elapsed = 0;
@@ -344,7 +344,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           }
           // If status is PENDING or RUNNING, continue polling
         } catch (pollErr) {
-          console.warn('Job status poll error:', pollErr?.message);
+          // console.warn('Job status poll error:', pollErr?.message);
         }
         
         await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
@@ -352,7 +352,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       }
 
       if (done) {
-        console.log('Job completed successfully, fetching results...');
+        // console.log('Job completed successfully, fetching results...');
         localStorage.removeItem(storageKey);
         await fetchComprehensiveRecommendations({ forceRefresh: true });
         // Refresh regeneration info after successful generation
@@ -362,7 +362,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       }
       
     } catch (err) {
-      console.error('Recommendation generation failed:', err);
+      // console.error('Recommendation generation failed:', err);
       
       // Check if it's a rate limit error (429)
       if (err?.response?.status === 429) {
@@ -489,7 +489,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         }
       }));
     } catch (error) {
-      console.error(`Failed to fetch career path description for ID ${careerPathId}:`, error);
+      // console.error(`Failed to fetch career path description for ID ${careerPathId}:`, error);
       setCareerPathDescriptions(prev => ({
         ...prev,
         [careerPathId]: {
