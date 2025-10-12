@@ -95,7 +95,8 @@ class AuthService {
         'admin_dashboard_data',
         'futureu_pending_deletion',
         'futureu_refresh_testimonials',
-        'academicExplorerWelcomeSeen'
+        'academicExplorerWelcomeSeen',
+        'mapbox.eventData.uuid:'
       ];
 
       // Clear exact keys if present
