@@ -20,7 +20,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Debug: Log the full URL being called
-    console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url);
+    // console.log('API Request:', config.method?.toUpperCase(), config.baseURL + config.url);
     return config;
   },
   (error) => {
