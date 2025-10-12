@@ -1496,36 +1496,59 @@ public class GeminiAIService {
                                                Map<String, Object> studentProfile) {
         StringBuilder prompt = new StringBuilder();
         
-        prompt.append("You are a career counselor explaining why a specific career path fits a student. ");
-        prompt.append("Create a comprehensive yet engaging explanation in 3-4 sentences. ");
-        prompt.append("Explain what the component scores mean and why this path is a good fit.\n\n");
+        prompt.append("You are an inspiring career counselor. Write an engaging, story-like summary that makes the student excited about their future possibilities. ");
+        prompt.append("Use vivid, personal language as if talking to a friend about their amazing potential.\n\n");
         
         prompt.append("Career Path: ").append(careerPathName).append("\n");
         prompt.append("Overall Match: ").append(String.format("%.1f", matchPercentage)).append("%\n\n");
         
-        prompt.append("Component Breakdown Scores:\n");
-        if (componentBreakdown != null) {
-            componentBreakdown.forEach((component, score) -> {
-                prompt.append("- ").append(component.toUpperCase()).append(": ")
-                      .append(String.format("%.1f", score)).append("%\n");
-            });
+        if (componentBreakdown != null && !componentBreakdown.isEmpty()) {
+            prompt.append("Component Strengths:\n");
+            if (componentBreakdown.containsKey("riasec")) {
+                prompt.append("- Personality alignment: ").append(String.format("%.1f", componentBreakdown.get("riasec"))).append("%\n");
+            }
+            if (componentBreakdown.containsKey("aptitude")) {
+                prompt.append("- Natural abilities: ").append(String.format("%.1f", componentBreakdown.get("aptitude"))).append("%\n");
+            }
+            if (componentBreakdown.containsKey("skills")) {
+                prompt.append("- Skills match: ").append(String.format("%.1f", componentBreakdown.get("skills"))).append("%\n");
+            }
+            if (componentBreakdown.containsKey("context")) {
+                prompt.append("- Market demand: ").append(String.format("%.1f", componentBreakdown.get("context"))).append("%\n");
+            }
         }
         
         if (studentProfile != null && !studentProfile.isEmpty()) {
             prompt.append("\nStudent Profile:\n");
+            if (studentProfile.containsKey("academicTracks")) {
+                prompt.append("Academic Track Scores: ").append(studentProfile.get("academicTracks")).append("\n");
+                prompt.append("(NOTE: Scores below 30% = areas for growth, 30-60% = moderate, 60%+ = strengths)\n");
+            }
             studentProfile.forEach((key, value) -> {
-                if (value != null && !value.toString().isEmpty()) {
+                if (value != null && !value.toString().isEmpty() && !key.equals("academicTracks")) {
                     prompt.append("- ").append(key).append(": ").append(value).append("\n");
                 }
             });
         }
         
-        prompt.append("\nWrite an explanatory summary that:\n");
-        prompt.append("1. Explains what this career path represents and its key characteristics\n");
-        prompt.append("2. Breaks down what the component scores (RIASEC, APTITUDE, SKILLS, CONTEXT) mean for this path\n");
-        prompt.append("3. Connects the student's profile to why this path is a good match\n");
-        prompt.append("4. Uses encouraging and motivational language\n");
-        prompt.append("5. Keeps it under 150 words\n\n");
+        prompt.append("\nWrite an engaging, personal summary that:\n");
+        prompt.append("1. Grabs attention with a vivid opening - paint a picture of what they could do\n");
+        prompt.append("2. Uses 'You' and 'Your' - make it conversational and direct\n");
+        prompt.append("3. CRITICAL - Start by explaining WHY this is a top match for them:\n");
+        prompt.append("   - Look at component breakdown: What scored HIGH?\n");
+        prompt.append("   - If personality alignment (RIASEC) is high: Emphasize 'Your personality is perfectly suited...'\n");
+        prompt.append("   - If market demand is high: Emphasize 'This booming field needs people like you...'\n");
+        prompt.append("   - If skills match is high: Emphasize 'Your natural abilities in...'\n");
+        prompt.append("   - Lead with their STRONGEST component to explain the top ranking\n");
+        prompt.append("4. BE HONEST - If aptitude/track scores are LOW (under 30%), DON'T claim 'strong foundation'\n");
+        prompt.append("   Instead say 'you'll BUILD these skills' or 'you'll DEVELOP expertise'\n");
+        prompt.append("5. Focus on PERSONALITY FIT and GROWTH POTENTIAL rather than weak academic scores\n");
+        prompt.append("6. Explains why this path ranked high based on who they are (personality, talents, potential)\n");
+        prompt.append("7. Mentions real-world opportunities and market demand naturally (don't say 'context score')\n");
+        prompt.append("8. Focuses on possibilities, impact, and what they'll achieve - not just scores\n");
+        prompt.append("9. DO NOT explicitly mention numerical percentages or scores in the summary text\n");
+        prompt.append("10. Uses warm, inspiring language that builds confidence and emphasizes growth mindset\n");
+        prompt.append("11. Keeps it 90-130 words\n\n");
         prompt.append("Response format: Just the summary text, no headers or labels.");
         
         return prompt.toString();
@@ -1852,16 +1875,18 @@ public class GeminiAIService {
             Map<String, Object> studentProfile) {
         
         StringBuilder prompt = new StringBuilder();
-        prompt.append("You are an expert career counselor. Generate personalized summaries for multiple career paths.\n\n");
+        prompt.append("You are an inspiring career counselor writing engaging, story-like summaries that make students excited about their future possibilities.\n\n");
         
         // Add student context once
         prompt.append("STUDENT PROFILE:\n");
         if (studentProfile != null) {
             if (studentProfile.containsKey("personalityType")) {
-                prompt.append("RIASEC: ").append(studentProfile.get("personalityType")).append("\n");
+                prompt.append("Personality Type (RIASEC): ").append(studentProfile.get("personalityType")).append("\n");
             }
             if (studentProfile.containsKey("academicTracks")) {
-                prompt.append("Academic Tracks: ").append(studentProfile.get("academicTracks")).append("\n");
+                prompt.append("Academic Track Scores: ").append(studentProfile.get("academicTracks")).append("\n");
+                prompt.append("NOTE: Track scores below 30% indicate areas for GROWTH/DEVELOPMENT, not strengths.\n");
+                prompt.append("      Scores 30-60% are MODERATE abilities. Scores above 60% are TRUE STRENGTHS.\n");
             }
         }
         prompt.append("\n");
@@ -1874,20 +1899,61 @@ public class GeminiAIService {
             prompt.append("  name: ").append(path.getCareerPathName()).append("\n");
             prompt.append("  matchPercentage: ").append(String.format("%.1f", path.getMatchPercentage())).append("%\n");
             if (path.getComponentBreakdown() != null) {
-                prompt.append("  strengths: ").append(path.getComponentBreakdown()).append("\n");
+                Map<String, Double> breakdown = path.getComponentBreakdown();
+                prompt.append("  component strengths:\n");
+                if (breakdown.containsKey("riasec")) {
+                    prompt.append("    - Personality alignment: ").append(String.format("%.1f", breakdown.get("riasec"))).append("%\n");
+                }
+                if (breakdown.containsKey("aptitude")) {
+                    prompt.append("    - Natural abilities: ").append(String.format("%.1f", breakdown.get("aptitude"))).append("%\n");
+                }
+                if (breakdown.containsKey("skills")) {
+                    prompt.append("    - Skills match: ").append(String.format("%.1f", breakdown.get("skills"))).append("%\n");
+                }
+                if (breakdown.containsKey("context")) {
+                    prompt.append("    - Market demand: ").append(String.format("%.1f", breakdown.get("context"))).append("%\n");
+                }
             }
             prompt.append("\n");
         }
         
         prompt.append("CRITICAL INSTRUCTIONS:\n");
-        prompt.append("1. Return ONLY a JSON array, no markdown, no explanations\n");
-        prompt.append("2. Each object must have: pathId (integer), summary (string)\n");
-        prompt.append("3. Summary should be personalized, engaging, 80-120 words\n");
-        prompt.append("4. Use student-centered language like 'You excel at...', 'Your strengths in...'\n");
-        prompt.append("5. Connect the path to their specific assessment results\n\n");
-        prompt.append("Example format:\n");
-        prompt.append("[{\"pathId\": 1, \"summary\": \"Your strong analytical skills...\"}, {\"pathId\": 2, \"summary\": \"...\"}]\n\n");
-        prompt.append("Return the JSON array now:");
+        prompt.append("1. Return ONLY a JSON array, no markdown code blocks, no extra text\n");
+        prompt.append("2. Each object MUST have exactly: pathId (integer), summary (string)\n");
+        prompt.append("3. Write summaries that are:\n");
+        prompt.append("   - ENGAGING: Use vivid, exciting language that paints a picture of their future\n");
+        prompt.append("   - PERSONAL: Address the student directly ('You', 'Your') as if having a conversation\n");
+        prompt.append("   - INSPIRING: Focus on possibilities, opportunities, and what they could achieve\n");
+        prompt.append("   - STORY-DRIVEN: Paint a narrative about who they are and where they could go\n");
+        prompt.append("   - CONVERSATIONAL: Natural, warm tone - like a mentor talking to a friend\n");
+        prompt.append("4. DO NOT explicitly mention numerical scores or percentages in the summary\n");
+        prompt.append("5. CRITICAL - ALWAYS explain WHY this is a TOP match despite mixed scores:\n");
+        prompt.append("   - Look at component breakdown: What scored HIGH? (riasec/personality, skills, or market demand?)\n");
+        prompt.append("   - Lead with the STRONGEST component that made this path rank high\n");
+        prompt.append("   - Example: If personality alignment is 85% but aptitude is 20%, emphasize: 'Your personality is perfectly suited...'\n");
+        prompt.append("   - Example: If market demand is 90%, emphasize: 'This booming field needs people like you...'\n");
+        prompt.append("6. IMPORTANT - Be HONEST about academic track scores:\n");
+        prompt.append("   - If academic track scores are LOW (under 30%), DON'T claim they have 'strong foundation' in that area\n");
+        prompt.append("   - Instead, frame it as: 'This path will help you BUILD those skills' or 'You'll DEVELOP expertise'\n");
+        prompt.append("   - Focus on their PERSONALITY FIT and POTENTIAL, not weak academic scores\n");
+        prompt.append("   - Emphasize GROWTH MINDSET - they can learn and grow into this path\n");
+        prompt.append("7. Explain clearly what made this path rank high:\n");
+        prompt.append("   - What their personality type means for this path (from RIASEC scores)\n");
+        prompt.append("   - Their POTENTIAL and what they can DEVELOP (especially if aptitude is low)\n");
+        prompt.append("   - What skills they'll LEARN and BUILD (from skills match)\n");
+        prompt.append("   - Why this field is in-demand and full of opportunities (from market demand/context)\n");
+        prompt.append("8. Make each summary 90-130 words - long enough to be meaningful, short enough to stay engaging\n");
+        prompt.append("9. Start with a hook that grabs attention, not generic statements\n");
+        prompt.append("10. Focus on real-world impact: What will they DO? Who will they help? What problems will they solve?\n\n");
+        prompt.append("BAD Example (dishonest about low scores, doesn't explain WHY it's top):\n");
+        prompt.append("\"Your strong foundation in business principles and accounting skills make you perfect for auditing.\"\n");
+        prompt.append("(This is BAD when their ABM score is only 15% - they DON'T have a strong foundation! And it doesn't explain why this ranked high.)\n\n");
+        prompt.append("GOOD Example (honest, explains WHY it's a top match):\n");
+        prompt.append("\"This path topped your matches because your personality is a PERFECT fit for auditing work. You're naturally detail-oriented and have that rare ability to spot patterns others miss - exactly what makes great auditors. Imagine being the trusted guardian of a company's financial integrity, where your love for ensuring things are fair and accurate becomes your superpower. While you'll build your business knowledge through your studies, what truly matters is already in you: that analytical mindset and integrity. With compliance becoming crucial worldwide, you'll develop powerful skills that open doors to influential roles in any industry.\"\n");
+        prompt.append("(This explains: High personality match + will develop skills + market demand = Top recommendation)\n\n");
+        prompt.append("JSON Format:\n");
+        prompt.append("[{\"pathId\": 1, \"summary\": \"...\"}, {\"pathId\": 2, \"summary\": \"...\"}]\n\n");
+        prompt.append("Generate the JSON array now:");
         
         return prompt.toString();
     }
