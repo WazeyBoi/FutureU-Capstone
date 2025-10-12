@@ -27,6 +27,53 @@ import programCareerPathService from '../../services/programCareerPathService';
 import CareerPathCard from './CareerPathCard';
 import { schoolLogos } from '../AcademicExplorer/constants';
 
+// Helper function to format salary with peso signs
+const formatSalary = (salary) => {
+  if (!salary) return 'Not specified';
+  
+  console.log('formatSalary input:', salary); // Debug log
+  
+  // Handle salary ranges - check for different "to" patterns
+  const toPatterns = [' to ', 'to', ' to', 'to '];
+  let foundPattern = null;
+  
+  for (const pattern of toPatterns) {
+    if (salary.includes(pattern)) {
+      foundPattern = pattern;
+      break;
+    }
+  }
+  
+  if (foundPattern) {
+    console.log('Found pattern:', foundPattern); // Debug log
+    // Split the range
+    const parts = salary.split(foundPattern);
+    if (parts.length === 2) {
+      let lowerBound = parts[0].trim();
+      let upperBound = parts[1].trim();
+      
+      console.log('Lower bound before clean:', lowerBound); // Debug log
+      console.log('Upper bound before clean:', upperBound); // Debug log
+      
+      // Remove existing P or ₱ signs to clean them up
+      lowerBound = lowerBound.replace(/^[P₱]\s*/, '');
+      upperBound = upperBound.replace(/^[P₱]\s*/, '');
+      
+      console.log('Lower bound after clean:', lowerBound); // Debug log
+      console.log('Upper bound after clean:', upperBound); // Debug log
+      
+      // Add ₱ to both bounds
+      const result = `₱ ${lowerBound} - ₱ ${upperBound}`;
+      console.log('Final result:', result); // Debug log
+      return result;
+    }
+  }
+  
+  // Handle single salary value
+  let cleanSalary = salary.replace(/^[P₱]\s*/, ''); // Remove existing P or ₱
+  return `₱ ${cleanSalary}`;
+};
+
 // Add bubble animation styles
 const bubbleAnimationStyles = `
   @keyframes floatBubble1 {
@@ -1220,7 +1267,7 @@ const ProgramCareerExplorer = () => {
                                   {career.salary && (
                                     <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-md font-medium flex items-center">
                                       <TrendingUp className="w-3 h-3 mr-1" />
-                                      {career.salary}
+                                      {formatSalary(career.salary)}
                                     </span>
                                   )}
                                   {career.jobTrend && (
@@ -1602,7 +1649,7 @@ const ProgramCareerExplorer = () => {
                         {career.salary && (
                           <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium flex items-center">
                             <TrendingUp className="w-3 h-3 mr-1" />
-                            {career.salary}
+                            {formatSalary(career.salary)}
                           </span>
                         )}
                         {career.jobTrend && (
@@ -1778,8 +1825,8 @@ const ProgramCareerExplorer = () => {
                     </span>
                   </div>
                   <p className="text-gray-700 leading-relaxed text-justify">
-                    {selectedProgram.description}
-                  </p>
+                      {selectedProgram.description}
+                    </p>
                 </div>
               )}
             </div>
@@ -1827,76 +1874,76 @@ const ProgramCareerExplorer = () => {
             >
             {/* Selected Career Header - NEW LAYOUT */}
             <div className="relative mb-8">
-              {/* Hero Card with Animated Bubbles */}
+                {/* Hero Card with Animated Bubbles */}
               <div id="career-hero-section" className="relative bg-[#FFB71B] rounded-3xl p-8 shadow-2xl mb-8">
-                {/* Animated Floating Bubbles - moved outside to allow full movement */}
-                <div className="absolute inset-0 pointer-events-none overflow-visible">
-                  {/* Bubble 1 */}
-                  <div className="absolute w-4 h-4 bg-white/20 rounded-full animate-float-bubble-1" 
-                       style={{
-                         left: '10%',
-                         bottom: '0px'
-                       }}>
+                  {/* Animated Floating Bubbles - moved outside to allow full movement */}
+                  <div className="absolute inset-0 pointer-events-none overflow-visible">
+                    {/* Bubble 1 */}
+                    <div className="absolute w-4 h-4 bg-white/20 rounded-full animate-float-bubble-1" 
+                         style={{
+                           left: '10%',
+                           bottom: '0px'
+                         }}>
+                    </div>
+                    {/* Bubble 2 */}
+                    <div className="absolute w-6 h-6 bg-white/15 rounded-full animate-float-bubble-2" 
+                         style={{
+                           left: '20%',
+                           bottom: '0px'
+                         }}>
+                    </div>
+                    {/* Bubble 3 */}
+                    <div className="absolute w-3 h-3 bg-white/25 rounded-full animate-float-bubble-3" 
+                         style={{
+                           left: '80%',
+                           bottom: '0px'
+                         }}>
+                    </div>
+                    {/* Bubble 4 */}
+                    <div className="absolute w-5 h-5 bg-white/20 rounded-full animate-float-bubble-4" 
+                         style={{
+                           left: '70%',
+                           bottom: '0px'
+                         }}>
+                    </div>
+                    {/* Bubble 5 */}
+                    <div className="absolute w-2 h-2 bg-white/30 rounded-full animate-float-bubble-5" 
+                         style={{
+                           left: '45%',
+                           bottom: '0px'
+                         }}>
+                    </div>
+                    {/* Bubble 6 */}
+                    <div className="absolute w-7 h-7 bg-white/10 rounded-full animate-float-bubble-6" 
+                         style={{
+                           left: '60%',
+                           bottom: '0px'
+                         }}>
+                    </div>
                   </div>
-                  {/* Bubble 2 */}
-                  <div className="absolute w-6 h-6 bg-white/15 rounded-full animate-float-bubble-2" 
-                       style={{
-                         left: '20%',
-                         bottom: '0px'
-                       }}>
-                  </div>
-                  {/* Bubble 3 */}
-                  <div className="absolute w-3 h-3 bg-white/25 rounded-full animate-float-bubble-3" 
-                       style={{
-                         left: '80%',
-                         bottom: '0px'
-                       }}>
-                  </div>
-                  {/* Bubble 4 */}
-                  <div className="absolute w-5 h-5 bg-white/20 rounded-full animate-float-bubble-4" 
-                       style={{
-                         left: '70%',
-                         bottom: '0px'
-                       }}>
-                  </div>
-                  {/* Bubble 5 */}
-                  <div className="absolute w-2 h-2 bg-white/30 rounded-full animate-float-bubble-5" 
-                       style={{
-                         left: '45%',
-                         bottom: '0px'
-                       }}>
-                  </div>
-                  {/* Bubble 6 */}
-                  <div className="absolute w-7 h-7 bg-white/10 rounded-full animate-float-bubble-6" 
-                       style={{
-                         left: '60%',
-                         bottom: '0px'
-                       }}>
-                  </div>
-                </div>
 
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full transform -translate-x-12 translate-y-12"></div>
-                  <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white rounded-full"></div>
-                </div>
-                
-                {/* Hero Content */}
-                <div className="relative z-10">
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full transform -translate-x-12 translate-y-12"></div>
+                    <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white rounded-full"></div>
+                  </div>
+                  
+                  {/* Hero Content */}
+                  <div className="relative z-10">
                   {/* Icon - Positioned absolutely in top-left */}
                   <div className="absolute top-0 left-0 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
-                    <Briefcase className="w-8 h-8 text-white" />
-                  </div>
+                        <Briefcase className="w-8 h-8 text-white" />
+                      </div>
                   
                   {/* Centered Content */}
                   <div className="text-center">
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
-                      {selectedCareer.careerTitle}
-                    </h1>
+                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
+                          {selectedCareer.careerTitle}
+                        </h1>
                     <p className="text-white/90 text-base md:text-lg font-medium mb-8">
-                      Discover your path to this career
-                    </p>
+                          Discover your path to this career
+                        </p>
                     
                     {/* CTA Button - Centered */}
                     <div className="flex justify-center">
@@ -1911,54 +1958,54 @@ const ProgramCareerExplorer = () => {
                   </div>
                 </div>
               </div>
-
+              
               {/* Career Insights Cards - Horizontal Layout */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {selectedCareer.industry && (
+                  {selectedCareer.industry && (
                   <div className="group bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl p-6 border border-blue-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                    <div className="flex items-start">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <Building className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <h3 className="text-lg font-bold text-blue-900 mb-1">Industry</h3>
-                        <p className="text-blue-600 text-sm mb-3">Primary sector</p>
-                        <p className="text-blue-800 font-semibold text-xl">{selectedCareer.industry}</p>
+                        <div className="flex items-start">
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <Building className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="ml-4 flex-1 text-center">
+                            <h3 className="text-lg font-bold text-blue-900 mb-1">Industry</h3>
+                            <p className="text-blue-600 text-sm mb-3">Primary sector</p>
+                            <p className="text-blue-800 font-semibold text-xl">{selectedCareer.industry}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                {selectedCareer.salary && (
+                  )}
+                  
+                  {selectedCareer.salary && (
                   <div className="group bg-gradient-to-br from-emerald-50 to-green-100 rounded-3xl p-6 border border-emerald-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                    <div className="flex items-start">
-                      <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <TrendingUp className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <h3 className="text-lg font-bold text-emerald-900 mb-1">Salary Range</h3>
-                        <p className="text-emerald-600 text-sm mb-3">Expected compensation</p>
-                        <p className="text-emerald-800 font-semibold text-xl">{selectedCareer.salary}</p>
+                        <div className="flex items-start">
+                          <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <TrendingUp className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="ml-4 flex-1 text-center">
+                            <h3 className="text-lg font-bold text-emerald-900 mb-1">Salary Range</h3>
+                            <p className="text-emerald-600 text-sm mb-3">Expected compensation</p>
+                            <p className="text-emerald-800 font-semibold text-xl">{formatSalary(selectedCareer.salary)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                {selectedCareer.jobTrend && (
+                  )}
+                  
+                  {selectedCareer.jobTrend && (
                   <div className="group bg-gradient-to-br from-purple-50 to-violet-100 rounded-3xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-                    <div className="flex items-start">
-                      <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <Target className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="ml-4 flex-1">
-                        <h3 className="text-lg font-bold text-purple-900 mb-1">Job Outlook</h3>
-                        <p className="text-purple-600 text-sm mb-3">Market demand</p>
-                        <p className="text-purple-800 font-semibold text-xl">{selectedCareer.jobTrend}</p>
+                        <div className="flex items-start">
+                          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                            <Target className="w-7 h-7 text-white" />
+                          </div>
+                          <div className="ml-4 flex-1 text-center">
+                            <h3 className="text-lg font-bold text-purple-900 mb-1">Job Outlook</h3>
+                            <p className="text-purple-600 text-sm mb-3">Market demand</p>
+                            <p className="text-purple-800 font-semibold text-xl">{selectedCareer.jobTrend}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
               {/* Career Description - Full Width */}
               {selectedCareer.careerDescription && (
@@ -1969,7 +2016,7 @@ const ProgramCareerExplorer = () => {
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900">Career Overview</h2>
                         <p className="text-gray-600">What this career entails</p>
-                      </div>
+              </div>
                     </div>
                     <div className="prose prose-lg max-w-none">
                       <div className="text-gray-700 leading-relaxed text-justify whitespace-pre-line text-base">
@@ -2093,7 +2140,7 @@ const ProgramCareerExplorer = () => {
               </div>
             )}
             </div> {/* End programs-section */}
-            </motion.div>
+          </motion.div>
           </AnimatePresence>
         ) : null}
       </div>
