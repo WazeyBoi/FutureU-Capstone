@@ -1120,7 +1120,7 @@ const ProgramCareerExplorer = () => {
                             className="w-full px-4 py-4 text-left hover:bg-[#FFB71B]/10 focus:bg-[#FFB71B]/10 focus:outline-none transition-colors group border-b border-gray-100 last:border-b-0"
                           >
                             <div className="flex items-start">
-                              <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B35] to-[#F7931E] rounded-xl flex items-center justify-center mr-4 group-hover:scale-105 transition-transform shadow-sm">
+                              <div className="w-12 h-12 bg-[#FFB71B] rounded-xl flex items-center justify-center mr-4 group-hover:scale-105 transition-transform shadow-sm">
                                 <Briefcase className="w-6 h-6 text-white" />
                               </div>
                               <div className="flex-1 min-w-0">
@@ -1239,11 +1239,7 @@ const ProgramCareerExplorer = () => {
             className="bg-white rounded-2xl shadow-lg p-8"
           >
             <div className="text-center mb-8">
-              <div className={`w-16 h-16 bg-gradient-to-br rounded-2xl flex items-center justify-center mx-auto mb-4 ${
-                searchMode === 'program' 
-                  ? 'from-[#FFB71B] to-[#FF9800]' 
-                  : 'from-[#FF6B35] to-[#F7931E]'
-              }`}>
+              <div className="w-16 h-16 bg-[#FFB71B] rounded-2xl flex items-center justify-center mx-auto mb-4">
                 {searchMode === 'program' ? (
                   <BookOpen className="w-8 h-8 text-white" />
                 ) : (
@@ -1298,7 +1294,7 @@ const ProgramCareerExplorer = () => {
                       >
                         {/* Program Header */}
                         <div className="flex flex-col items-center text-center mb-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                          <div className="w-16 h-16 bg-[#232D35] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
                             <BookOpen className="w-8 h-8 text-[#FFB71B]" />
                           </div>
                           <h4 className="font-bold text-[#2B3E4E] group-hover:text-[#1D63A1] transition-colors text-lg leading-tight mb-3">
@@ -1339,7 +1335,7 @@ const ProgramCareerExplorer = () => {
                               {hasLongDescription && (
                                 <button
                                   onClick={(e) => toggleDescription(program.programId, e)}
-                                  className="mt-3 flex items-center text-xs font-semibold text-[#1D63A1] hover:text-[#FFB71B] transition-colors group/btn"
+                                  className="mt-3 flex items-center text-xs font-semibold text-[#232D35] hover:text-[#FFB71B] transition-colors group/btn"
                                 >
                                   {isExpanded ? (
                                     <>
@@ -1506,7 +1502,7 @@ const ProgramCareerExplorer = () => {
                     >
                       {/* Career Header */}
                       <div className="flex flex-col items-center text-center mb-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#FF6B35] to-[#F7931E] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
+                        <div className="w-16 h-16 bg-[#FFB71B] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg">
                           <Briefcase className="w-8 h-8 text-white" />
                         </div>
                         <h4 className="font-bold text-[#2B3E4E] group-hover:text-[#1D63A1] transition-colors text-lg leading-tight mb-3">
@@ -1675,7 +1671,7 @@ const ProgramCareerExplorer = () => {
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-2xl flex items-center justify-center mr-4">
+                  <div className="w-16 h-16 bg-[#232D35] rounded-2xl flex items-center justify-center mr-4">
                     <BookOpen className="w-8 h-8 text-[#FFB71B]" />
                   </div>
                   <div>
@@ -1691,9 +1687,9 @@ const ProgramCareerExplorer = () => {
                 </button>
               </div>
               {selectedProgram.description && (
-                <div className="mt-6 p-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200">
+                <div className="mt-6 p-6 bg-white rounded-xl border border-gray-200 shadow-lg">
                   <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-lg flex items-center justify-center mr-3">
+                    <div className="w-8 h-8 bg-[#232D35] rounded-lg flex items-center justify-center mr-3">
                       <BookOpen className="w-4 h-4 text-[#FFB71B]" />
                     </div>
                     <h3 className="text-lg font-semibold text-[#2B3E4E]">Program Description</h3>
@@ -1747,83 +1743,81 @@ const ProgramCareerExplorer = () => {
               exit={{ opacity: 0, y: -30 }}
               transition={{ delay: 0.2 }}
             >
-            {/* Selected Career Header - MODERN ASYMMETRIC DESIGN */}
-            <div className="relative mb-8 grid grid-cols-12 gap-6 min-h-[600px]">
-              {/* Left Column - Hero & Description */}
-              <div className="col-span-12 lg:col-span-7 space-y-6">
-                {/* Hero Card with Animated Bubbles */}
-                <div className="relative bg-gradient-to-br from-[#FF6B35] via-[#F7931E] to-[#FFB71B] rounded-3xl p-8 shadow-2xl">
-                  {/* Animated Floating Bubbles - moved outside to allow full movement */}
-                  <div className="absolute inset-0 pointer-events-none overflow-visible">
-                    {/* Bubble 1 */}
-                    <div className="absolute w-4 h-4 bg-white/20 rounded-full animate-float-bubble-1" 
-                         style={{
-                           left: '10%',
-                           bottom: '0px'
-                         }}>
-                    </div>
-                    {/* Bubble 2 */}
-                    <div className="absolute w-6 h-6 bg-white/15 rounded-full animate-float-bubble-2" 
-                         style={{
-                           left: '20%',
-                           bottom: '0px'
-                         }}>
-                    </div>
-                    {/* Bubble 3 */}
-                    <div className="absolute w-3 h-3 bg-white/25 rounded-full animate-float-bubble-3" 
-                         style={{
-                           left: '80%',
-                           bottom: '0px'
-                         }}>
-                    </div>
-                    {/* Bubble 4 */}
-                    <div className="absolute w-5 h-5 bg-white/20 rounded-full animate-float-bubble-4" 
-                         style={{
-                           left: '70%',
-                           bottom: '0px'
-                         }}>
-                    </div>
-                    {/* Bubble 5 */}
-                    <div className="absolute w-2 h-2 bg-white/30 rounded-full animate-float-bubble-5" 
-                         style={{
-                           left: '45%',
-                           bottom: '0px'
-                         }}>
-                    </div>
-                    {/* Bubble 6 */}
-                    <div className="absolute w-7 h-7 bg-white/10 rounded-full animate-float-bubble-6" 
-                         style={{
-                           left: '60%',
-                           bottom: '0px'
-                         }}>
-                    </div>
+            {/* Selected Career Header - NEW LAYOUT */}
+            <div className="relative mb-8">
+              {/* Hero Card with Animated Bubbles */}
+              <div className="relative bg-[#FFB71B] rounded-3xl p-8 shadow-2xl mb-8">
+                {/* Animated Floating Bubbles - moved outside to allow full movement */}
+                <div className="absolute inset-0 pointer-events-none overflow-visible">
+                  {/* Bubble 1 */}
+                  <div className="absolute w-4 h-4 bg-white/20 rounded-full animate-float-bubble-1" 
+                       style={{
+                         left: '10%',
+                         bottom: '0px'
+                       }}>
                   </div>
+                  {/* Bubble 2 */}
+                  <div className="absolute w-6 h-6 bg-white/15 rounded-full animate-float-bubble-2" 
+                       style={{
+                         left: '20%',
+                         bottom: '0px'
+                       }}>
+                  </div>
+                  {/* Bubble 3 */}
+                  <div className="absolute w-3 h-3 bg-white/25 rounded-full animate-float-bubble-3" 
+                       style={{
+                         left: '80%',
+                         bottom: '0px'
+                       }}>
+                  </div>
+                  {/* Bubble 4 */}
+                  <div className="absolute w-5 h-5 bg-white/20 rounded-full animate-float-bubble-4" 
+                       style={{
+                         left: '70%',
+                         bottom: '0px'
+                       }}>
+                  </div>
+                  {/* Bubble 5 */}
+                  <div className="absolute w-2 h-2 bg-white/30 rounded-full animate-float-bubble-5" 
+                       style={{
+                         left: '45%',
+                         bottom: '0px'
+                       }}>
+                  </div>
+                  {/* Bubble 6 */}
+                  <div className="absolute w-7 h-7 bg-white/10 rounded-full animate-float-bubble-6" 
+                       style={{
+                         left: '60%',
+                         bottom: '0px'
+                       }}>
+                  </div>
+                </div>
 
-                  {/* Background Pattern */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full transform -translate-x-12 translate-y-12"></div>
-                    <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white rounded-full"></div>
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full transform translate-x-16 -translate-y-16"></div>
+                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full transform -translate-x-12 translate-y-12"></div>
+                  <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white rounded-full"></div>
+                </div>
+                
+                {/* Hero Content */}
+                <div className="relative z-10">
+                  {/* Icon - Positioned absolutely in top-left */}
+                  <div className="absolute top-0 left-0 w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                    <Briefcase className="w-8 h-8 text-white" />
                   </div>
                   
-                  {/* Hero Content */}
-                  <div className="relative z-10">
-                    <div className="flex items-start mb-6">
-                      <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                        <Briefcase className="w-8 h-8 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
-                          {selectedCareer.careerTitle}
-                        </h1>
-                        <p className="text-white/90 text-base md:text-lg font-medium">
-                          Discover your path to this career
-                        </p>
-                      </div>
-                    </div>
+                  {/* Centered Content */}
+                  <div className="text-center">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">
+                      {selectedCareer.careerTitle}
+                    </h1>
+                    <p className="text-white/90 text-base md:text-lg font-medium mb-8">
+                      Discover your path to this career
+                    </p>
                     
-                    {/* CTA Button */}
-                    <div className="mt-8">
+                    {/* CTA Button - Centered */}
+                    <div className="flex justify-center">
                       <button 
                         onClick={scrollToProgramsSection}
                         className="inline-flex items-center bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 text-white font-semibold hover:bg-white/30 transition-all duration-200 transform hover:scale-105 cursor-pointer"
@@ -1834,90 +1828,79 @@ const ProgramCareerExplorer = () => {
                     </div>
                   </div>
                 </div>
-                
-                {/* Career Description - Modern Card */}
-                {selectedCareer.careerDescription && (
-                  <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-                    <div className="p-8">
-                      <div className="flex items-center mb-6">
-                        <div className="w-3 h-12 bg-gradient-to-b from-[#FF6B35] to-[#FFB71B] rounded-full mr-4"></div>
-                        <div>
-                          <h2 className="text-2xl font-bold text-gray-900">Career Overview</h2>
-                          <p className="text-gray-600">What this career entails</p>
-                        </div>
+              </div>
+
+              {/* Career Insights Cards - Horizontal Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {selectedCareer.industry && (
+                  <div className="group bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl p-6 border border-blue-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                    <div className="flex items-start">
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <Building className="w-7 h-7 text-white" />
                       </div>
-                      <div className="prose prose-lg max-w-none">
-                        <p className="text-gray-700 leading-relaxed text-justify whitespace-pre-line text-base">
-                          {selectedCareer.careerDescription}
-                        </p>
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-lg font-bold text-blue-900 mb-1">Industry</h3>
+                        <p className="text-blue-600 text-sm mb-3">Primary sector</p>
+                        <p className="text-blue-800 font-semibold text-xl">{selectedCareer.industry}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedCareer.salary && (
+                  <div className="group bg-gradient-to-br from-emerald-50 to-green-100 rounded-3xl p-6 border border-emerald-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                    <div className="flex items-start">
+                      <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <TrendingUp className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-lg font-bold text-emerald-900 mb-1">Salary Range</h3>
+                        <p className="text-emerald-600 text-sm mb-3">Expected compensation</p>
+                        <p className="text-emerald-800 font-semibold text-xl">{selectedCareer.salary}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {selectedCareer.jobTrend && (
+                  <div className="group bg-gradient-to-br from-purple-50 to-violet-100 rounded-3xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+                    <div className="flex items-start">
+                      <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <Target className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-lg font-bold text-purple-900 mb-1">Job Outlook</h3>
+                        <p className="text-purple-600 text-sm mb-3">Market demand</p>
+                        <p className="text-purple-800 font-semibold text-xl">{selectedCareer.jobTrend}</p>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-              
-              {/* Right Column - Career Stats */}
-              <div className="col-span-12 lg:col-span-5 space-y-6">
-                {/* Stats Header */}
-                <div className="text-center lg:text-left mb-8 lg:mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Career Insights</h3>
-                  <p className="text-gray-600">Key information about this profession</p>
+
+              {/* Career Description - Full Width */}
+              {selectedCareer.careerDescription && (
+                <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                  <div className="p-8">
+                    <div className="flex items-center mb-6">
+                      <div className="w-3 h-12 bg-[#FFB71B] rounded-full mr-4"></div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900">Career Overview</h2>
+                        <p className="text-gray-600">What this career entails</p>
+                      </div>
+                    </div>
+                    <div className="prose prose-lg max-w-none">
+                      <div className="text-gray-700 leading-relaxed text-justify whitespace-pre-line text-base">
+                        {selectedCareer.careerDescription?.split('\n\n').map((paragraph, index) => (
+                          <p key={index} className="mb-2 last:mb-0">
+                            {paragraph}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Career Stats - Staggered Layout */}
-                <div className="space-y-6">
-                  {selectedCareer.industry && (
-                    <div className="transform lg:translate-x-0 lg:translate-y-0">
-                      <div className="group bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl p-6 border border-blue-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:rotate-1">
-                        <div className="flex items-start">
-                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <Building className="w-7 h-7 text-white" />
-                          </div>
-                          <div className="ml-4 flex-1">
-                            <h3 className="text-lg font-bold text-blue-900 mb-1">Industry</h3>
-                            <p className="text-blue-600 text-sm mb-3">Primary sector</p>
-                            <p className="text-blue-800 font-semibold text-xl">{selectedCareer.industry}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedCareer.salary && (
-                    <div className="transform lg:translate-x-8">
-                      <div className="group bg-gradient-to-br from-emerald-50 to-green-100 rounded-3xl p-6 border border-emerald-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:-rotate-1">
-                        <div className="flex items-start">
-                          <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <TrendingUp className="w-7 h-7 text-white" />
-                          </div>
-                          <div className="ml-4 flex-1">
-                            <h3 className="text-lg font-bold text-emerald-900 mb-1">Salary Range</h3>
-                            <p className="text-emerald-600 text-sm mb-3">Expected compensation</p>
-                            <p className="text-emerald-800 font-semibold text-xl">{selectedCareer.salary}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {selectedCareer.jobTrend && (
-                    <div className="transform lg:translate-x-4">
-                      <div className="group bg-gradient-to-br from-purple-50 to-violet-100 rounded-3xl p-6 border border-purple-200/50 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:rotate-1">
-                        <div className="flex items-start">
-                          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                            <Target className="w-7 h-7 text-white" />
-                          </div>
-                          <div className="ml-4 flex-1">
-                            <h3 className="text-lg font-bold text-purple-900 mb-1">Job Outlook</h3>
-                            <p className="text-purple-600 text-sm mb-3">Market demand</p>
-                            <p className="text-purple-800 font-semibold text-xl">{selectedCareer.jobTrend}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Programs for Career */}
@@ -1951,14 +1934,14 @@ const ProgramCareerExplorer = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="bg-gradient-to-br from-gray-50 to-blue-50 border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer hover:border-[#FFB71B]"
+                        className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl transition-all cursor-pointer hover:border-[#FFB71B] shadow-lg"
                         onClick={() => {
                           setSearchMode('program');
                           handleProgramSelect(program);
                         }}
                       >
                         <div className="flex flex-col items-center text-center">
-                          <div className="w-16 h-16 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-xl flex items-center justify-center mb-4 hover:scale-110 transition-transform shadow-lg">
+                          <div className="w-16 h-16 bg-[#232D35] rounded-xl flex items-center justify-center mb-4 hover:scale-110 transition-transform shadow-lg">
                             <BookOpen className="w-8 h-8 text-[#FFB71B]" />
                           </div>
                           <h4 className="font-bold text-[#2B3E4E] hover:text-[#1D63A1] transition-colors text-lg leading-tight mb-3">

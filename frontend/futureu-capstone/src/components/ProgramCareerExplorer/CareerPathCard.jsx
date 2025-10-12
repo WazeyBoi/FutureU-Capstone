@@ -55,6 +55,22 @@ const CareerPathCard = ({ careerPath, index }) => {
 
   // Career Details Component - Enhanced Design
   const CareerDetails = ({ career }) => {
+    const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    const handleScroll = (e) => {
+      const currentScrollY = e.target.scrollTop;
+      
+      // Hide header when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsHeaderVisible(false);
+      } else if (currentScrollY < lastScrollY || currentScrollY <= 50) {
+        setIsHeaderVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
     if (!career) {
       return (
         <div className="flex-1 flex items-center justify-center p-6">
@@ -72,9 +88,18 @@ const CareerPathCard = ({ careerPath, index }) => {
     return (
       <>
         {/* Career Header - Enhanced */}
-        <div className="p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-br from-gray-50 to-blue-50/30">
+        <motion.div 
+          initial={{ opacity: 1, y: 0 }}
+          animate={{ 
+            opacity: isHeaderVisible ? 1 : 0, 
+            y: isHeaderVisible ? 0 : -100,
+            height: isHeaderVisible ? 'auto' : 0
+          }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-hidden"
+        >
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-16 h-16 bg-[#232D35] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Briefcase className="w-8 h-8 text-[#FFB71B]" />
             </div>
             <h3 className="text-2xl font-bold text-[#2B3E4E] mb-2">
@@ -85,11 +110,14 @@ const CareerPathCard = ({ careerPath, index }) => {
               Career Details
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Career Content - Enhanced Design */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30">
-          <div>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div 
+            className="flex-1 overflow-y-auto p-6 bg-gray-50/30"
+            onScroll={handleScroll}
+          >
             {/* Enhanced Career Stats Grid */}
             <div className="grid grid-cols-1 gap-4 mb-6">
               {/* Industry - Enhanced */}
@@ -132,7 +160,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                   
                   <div className="relative z-10">
                     <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-[#FFB71B] to-[#FF9800] rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-10 h-10 bg-[#FFB71B] rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform duration-300">
                         <DollarSign className="w-5 h-5 text-white" />
                       </div>
                       <div>
@@ -255,14 +283,15 @@ const CareerPathCard = ({ careerPath, index }) => {
                 </div>
               </motion.div>
             )}
+          </div>
 
-            {/* Enhanced Action Buttons */}
-            <div className="flex gap-3 sticky bottom-0 bg-gradient-to-t from-gray-50/90 to-transparent pt-6 pb-2">
+          {/* Enhanced Action Buttons */}
+          <div className="flex gap-3 bg-white pt-8 pb-4 border-t border-gray-200 z-20 relative flex-shrink-0">
               <button
                 onClick={() => {
                   window.location.href = `/career-pathways?career=${career.careerId}`;
                 }}
-                className="flex-1 bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02]"
+                className="flex-1 bg-[#232D35] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02]"
               >
                 <ExternalLink className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                 Explore Career
@@ -271,11 +300,10 @@ const CareerPathCard = ({ careerPath, index }) => {
                 onClick={() => {
                   console.log('View programs for career:', career.careerId);
                 }}
-                className="px-4 py-3 bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-white rounded-xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                className="px-4 py-3 bg-[#FFB71B] text-white rounded-xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
               >
                 View Programs
               </button>
-            </div>
           </div>
         </div>
       </>
@@ -305,7 +333,7 @@ const CareerPathCard = ({ careerPath, index }) => {
             className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl h-[95vh] overflow-hidden flex flex-col"
           >
             {/* Modal Header - Enhanced */}
-            <div className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] p-6 text-white flex-shrink-0 relative overflow-hidden">
+            <div className="bg-[#232D35] p-6 text-white flex-shrink-0 relative overflow-hidden">
               {/* Background Pattern */}
               <div className="absolute inset-0 bg-[url('/src/assets/pattern-bg.png')] opacity-10"></div>
               
@@ -411,7 +439,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                           }`}
                         >
                           <div className="flex items-start">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[#FFB71B] to-[#FF9800] rounded-lg flex items-center justify-center mr-3 flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
+                            <div className="w-10 h-10 bg-[#FFB71B] rounded-lg flex items-center justify-center mr-3 flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
                               <Briefcase className="w-5 h-5 text-white" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -468,10 +496,10 @@ const CareerPathCard = ({ careerPath, index }) => {
         className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300"
       >
         {/* Career Path Header */}
-        <div className="p-6 bg-gradient-to-r from-[#1D63A1]/5 to-[#2B3E4E]/5 border-b border-gray-100">
+        <div className="p-6 bg-white border-b border-gray-100 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#1D63A1] to-[#2B3E4E] rounded-xl flex items-center justify-center mr-4 shadow-lg">
+              <div className="w-14 h-14 bg-[#232D35] rounded-xl flex items-center justify-center mr-4 shadow-lg">
                 <Target className="w-7 h-7 text-[#FFB71B]" />
               </div>
               <div>
@@ -487,7 +515,7 @@ const CareerPathCard = ({ careerPath, index }) => {
             
             <button
               onClick={() => setShowCareersModal(true)}
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 transform shadow-md hover:shadow-lg"
+              className="flex items-center px-4 py-2 bg-[#FFB71B] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 transform shadow-md hover:shadow-lg"
             >
               <span className="mr-2">View Careers</span>
               <ChevronRight className="w-4 h-4" />
@@ -496,7 +524,7 @@ const CareerPathCard = ({ careerPath, index }) => {
           
           {/* Full Description Preview */}
           {careerPath.careerPathDescription && (
-            <div className="mt-4 p-4 bg-gradient-to-r from-gray-50 to-blue-50/30 rounded-xl border border-gray-100">
+            <div className="mt-4 p-4 bg-white rounded-xl border border-gray-100 shadow-lg">
               <div className="flex items-center mb-3">
                 <div className="w-6 h-6 bg-[#1D63A1]/10 rounded-lg flex items-center justify-center mr-2">
                   <Info className="w-3 h-3 text-[#1D63A1]" />
