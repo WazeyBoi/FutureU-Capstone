@@ -77,13 +77,53 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
           className="grid grid-cols-1 lg:grid-cols-2 gap-6"
         >
           <motion.div whileHover={{ scale: 1.02 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 flex flex-col items-center justify-center animate-card-pop">
-            <div className='flex justify-center items-center'>
-              <div className="w-[320px] h-[320px] md:w-[400px] md:h-[400px]">
-                {generateRiasecRadarData() && <Radar data={generateRiasecRadarData()} options={{ responsive: true, maintainAspectRatio: true }} />}
+            {/* <h4 className="font-bold text-[#232D35] text-lg mb-4 text-center">
+              RIASEC Profile
+            </h4> */}
+            <div className='flex justify-center items-center w-full h-80'>
+              <div className="w-full h-full max-w-md">
+                {generateRiasecRadarData() && (
+                  <Radar 
+                    data={generateRiasecRadarData()} 
+                    options={{ 
+                      responsive: true, 
+                      maintainAspectRatio: false,
+                      plugins: { 
+                        legend: { display: false } 
+                      },
+                      layout: { 
+                        padding: 20 
+                      },
+                      scales: {
+                        r: {
+                          min: 0,
+                          max: generateRiasecRadarData().datasets[0].data.length > 0 
+                            ? Math.max(...generateRiasecRadarData().datasets[0].data, 1) 
+                            : 40,
+                          pointLabels: { 
+                            font: { 
+                              size: 14, 
+                              weight: "bold" 
+                            } 
+                          },
+                          grid: { 
+                            color: "#E5E7EB" 
+                          },
+                          angleLines: { 
+                            color: "#D1D5DB" 
+                          },
+                          ticks: { 
+                            display: false 
+                          }
+                        },
+                      },
+                    }} 
+                  />
+                )}
               </div>
             </div>
           </motion.div>
-          <motion.div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop">
+          <motion.div className="p-6 md:p-8 animate-card-pop">
             <h3 className="text-xl font-extrabold text-[#232D35] mb-4">Your Dominant Interest Types</h3>
             {displayDescriptions.map((type, index) => (
               <motion.div 

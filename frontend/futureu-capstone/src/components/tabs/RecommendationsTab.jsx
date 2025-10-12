@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import * as recommendationService from '../../services/recommendationService';
 import { MapPin, Globe, ChevronDown, ChevronUp, School, Award, BadgeCheck } from 'lucide-react';
@@ -122,6 +122,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
   const [careerDetailsCache, setCareerDetailsCache] = useState({}); // { [careerId]: details }
   const [careerDetailsLoading, setCareerDetailsLoading] = useState(false);
   const [careerDetailsError, setCareerDetailsError] = useState(null);
+
+  // Regeneration confirmation dialog state
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
 
   const formatDate = (value) => {
     if (!value) return null;
@@ -533,7 +536,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
               </p>
             )}
-            {checkedExisting && !loading && !error && (
+            {checkedExisting && !loading && !error && aiRecommendations && (
               <div className="mt-4 flex flex-wrap gap-3 items-center">
                 <button
                   onClick={handleRefreshRecommendations}
@@ -547,7 +550,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                   Refresh Outputs
                 </button>
                 <button
-                  onClick={handleGenerateRecommendations}
+                  onClick={() => setShowRegenerateConfirm(true)}
                   disabled={isRegenerating || !regenerationInfo.canRegenerate}
                   className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                     isRegenerating || !regenerationInfo.canRegenerate
@@ -592,7 +595,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               >
                 <div className="leading-tight">
                   <div className="text-sm font-semibold">Dream Career Analysis</div>
-                  <div className="text-[12px] text-gray-600">AI insights available in the dedicated "Dream Career Analysis" tab</div>
+                  <div className="text-[12px] text-gray-600">AI insights available in the dedicated "Dream Career Analysis" tab after you get your results here</div>
                 </div>
               </motion.div>
             )}
@@ -622,7 +625,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 <p className="text-lg font-semibold text-[#1D63A1] mb-2">Generating Results</p>
                 <p className="text-sm text-gray-600 mb-3">
                   Currently analyzing your profile and creating personalized career path explanations. 
-                  This may take 5-7- minutes of processing...
+                  <br/>This may take 5-7- minutes of processing...
+                  <br/>
+                  Don't switch to other tabs
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>
@@ -646,9 +651,9 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
             </button>
           </motion.div>
         )}
-        {careerPathDetails.length > 0 && (
+        {!isRegenerating && careerPathDetails.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-end gap-10 mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#232D35] bg-white px-4 py-1.5 rounded-full border-2 border-[#FFB71B] shadow-sm">
                 <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
@@ -666,7 +671,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 return (
                   <div 
                     key={pathKey} 
-                    className="border border-gray-200 rounded-3xl p-6 hover:border-[#FFB71B] transition-all"
+                    className=" rounded-3xl p-6 transition-all"
                     style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.10)' }}
                   >
                     {/* Header */}
@@ -937,7 +942,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                               initial={{ opacity: 0, y: 20 }} 
                               animate={{ opacity: 1, y: 0 }} 
                               transition={{ duration: 0.3 }}
-                              className="bg-white rounded-3xl p-8 border border-gray-200 shadow-2xl"
+                              className=""
                             >
                               <div className="mb-5">
                                 <h4 className="text-left font-extrabold text-[#232D35] text-xl">About This Career Pathway</h4>
@@ -971,7 +976,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           </motion.div>
         )}
         {/* Career recommendations - only show if recommendations exist */}
-        {aiRecommendations && aiRecommendations.recommendations && (
+        {!isRegenerating && aiRecommendations && aiRecommendations.recommendations && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -1069,7 +1074,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         )} */}
 
         {/* Next steps - only show if recommendations exist */}
-        {aiRecommendations && (
+        {!isRegenerating && aiRecommendations && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -1145,6 +1150,101 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Regeneration Confirmation Dialog */}
+      <AnimatePresence>
+        {showRegenerateConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-[70] flex items-center justify-center pt-45"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto pt-15 pb-8  flex flex-col items-center px-8"
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src="/src/assets/characters/raiseHand.svg"
+                alt="Raise hand mascot"
+                className="absolute -top-67 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-2xl font-bold mb-5 text-[#232D35]"
+              >
+                Regenerate Career Matches?
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-2 text-center"
+              >
+                This will generate a new set of personalized career recommendations based on your assessment results.
+              </motion.p>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="text-sm text-gray-600 text-center mb-4"
+              >
+                You have <span className="font-bold text-[#FFB71B]">{regenerationInfo.remainingRegenerations}</span> regeneration
+                {regenerationInfo.remainingRegenerations !== 1 ? 's' : ''} remaining.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+                className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 w-full"
+              >
+                <p className="text-left text-xs text-amber-800 text-center">
+                  This process may take 5-7 minutes. Please don't switch tabs during generation.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
+                className="flex gap-3 justify-center w-full mt-3"
+              >
+                <button
+                  onClick={() => setShowRegenerateConfirm(false)}
+                  className="w-full px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold shadow-md transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRegenerateConfirm(false);
+                    handleGenerateRecommendations();
+                  }}
+                  className="w-full px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Yes, Regenerate
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {tooltip.visible && (
         <div
           ref={tooltipRef}
