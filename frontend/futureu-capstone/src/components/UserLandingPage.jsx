@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
-import studentsImage from '../assets/Students.png';
 import backgroundImage from '../assets/SchoolBackground.png';
+import futureuIntroVideo from '../assets/FutureU_Intro_Video/futureu_intro_video.mp4';
 import statisticsService from '../services/statisticsService';
 import {
   FaUserGraduate,
@@ -217,6 +217,32 @@ const LandingPage = () => {
   });
 
   const [statsLoaded, setStatsLoaded] = useState(false);
+  const videoRef = useRef(null);
+
+  // Video autoplay effect
+  useEffect(() => {
+    const playVideo = () => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(error => {
+          console.log('Autoplay prevented:', error);
+        });
+      }
+    };
+    
+    // Try to play immediately
+    playVideo();
+    
+    // Also try after delays to ensure it works
+    const timeout1 = setTimeout(playVideo, 500);
+    const timeout2 = setTimeout(playVideo, 1500);
+    const timeout3 = setTimeout(playVideo, 3000);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+      clearTimeout(timeout3);
+    };
+  }, []);
 
   // Fetch real statistics data
   useEffect(() => {
@@ -367,11 +393,24 @@ const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
             >
-            <img
-              src={studentsImage}
-              alt="Group of students"
-                className="w-full max-w-lg mx-auto rounded-lg shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500"
+            <div className="w-full max-w-2xl mx-auto rounded-lg shadow-2xl transform -rotate-2 hover:rotate-0 transition-transform duration-500 overflow-hidden h-[350px]">
+              <video
+                ref={videoRef}
+                src={futureuIntroVideo}
+                alt="FutureU promotional video"
+                className="w-full h-full object-cover"
+                style={{
+                  objectPosition: 'center top',
+                  width: '100%'
+                }}
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+                preload="auto"
               />
+            </div>
             </motion.div>
           </div>
         </div>
@@ -807,7 +846,7 @@ const LandingPage = () => {
                   { name: "Career Pathways", path: "/career-pathways" }
                 ].map((item, index) => (
                   <li key={index}>
-                    <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
+                    <Link to={item.path} className="!text-yellow-500 hover:!text-yellow-400 transition-colors">
                       {item.name}
                     </Link>
                   </li>
@@ -826,7 +865,7 @@ const LandingPage = () => {
                   { name: "Virtual Tours", path: "/virtual-campus-tours" }
                 ].map((item, index) => (
                   <li key={index}>
-                    <Link to={item.path} className="text-gray-400 hover:text-yellow-500 transition-colors">
+                    <Link to={item.path} className="!text-yellow-500 hover:!text-yellow-400 transition-colors">
                       {item.name}
                     </Link>
                   </li>
@@ -848,7 +887,7 @@ const LandingPage = () => {
             <p className="text-gray-500">© 2023 FutureU. All rights reserved.</p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               {["Facebook", "Twitter", "Instagram", "LinkedIn"].map((platform, index) => (
-                <a key={index} href="#" className="text-gray-400 hover:text-yellow-500 transition-colors">
+                <a key={index} href="#" className="!text-yellow-500 hover:!text-yellow-400 transition-colors">
                   {platform}
                 </a>
           ))}

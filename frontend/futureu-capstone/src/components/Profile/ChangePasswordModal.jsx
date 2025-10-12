@@ -101,9 +101,8 @@ const ChangePasswordModal = ({ onClose, onSuccess }) => {
         className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-6 text-white relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FFB71B]/10 to-transparent"></div>
-          <div className="relative z-10 flex items-center justify-between">
+        <div className="bg-[#232D35] p-6 text-white relative">
+          <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mr-4">
                 <Lock className="w-6 h-6" />
@@ -291,7 +290,7 @@ const ChangePasswordModal = ({ onClose, onSuccess }) => {
             <button
               type="submit"
               disabled={loading || !passwordData.currentPassword || !passwordData.newPassword || passwordData.newPassword !== passwordData.confirmPassword}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex-1 px-6 py-3 bg-[#232D35] hover:bg-[#1D63A1] text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>

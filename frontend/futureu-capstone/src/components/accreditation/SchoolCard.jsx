@@ -280,7 +280,7 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
               <span className="text-xs text-gray-500">Data Source:</span>
             <button
                   onClick={handleDataSourceClick}
-                  className="text-[6px] text-[#FFB71B] hover:text-[#E6A519] hover:underline transition-colors cursor-pointer flex items-center gap-1 bg-white hover:outline-none focus:outline-none border-0 shadow-none font-normal"
+                  className="text-xs text-[#FFB71B] hover:text-[#E6A519] hover:underline transition-colors cursor-pointer flex items-center gap-1 bg-white hover:outline-none focus:outline-none border-0 shadow-none font-normal"
                   style={{ 
                     outline: 'none', 
                     boxShadow: 'none', 

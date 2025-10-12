@@ -333,7 +333,7 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1D63A1]/5 via-white to-[#FFB71B]/5 pt-16 sm:pt-20 pb-6 sm:pb-10 relative overflow-hidden">
+    <div className="min-h-screen bg-white pt-16 sm:pt-20 pb-6 sm:pb-10 relative overflow-hidden">
       {/* Enhanced CSS for mascot animations */}
       <style>{`
         @keyframes mascotWiggle {
