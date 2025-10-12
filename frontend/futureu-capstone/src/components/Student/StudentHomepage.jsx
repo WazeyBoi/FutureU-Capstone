@@ -11,6 +11,8 @@ import careerService from '../../services/careerService';
 import { useCareerInterestProfile } from '../../hooks/useCareerInterestProfile';
 import CareerInterestProfileWizard from '../CareerInterestProfile/CareerInterestProfileWizard';
 import ProfilePrompt from '../CareerInterestProfile/ProfilePrompt';
+// Import mascot
+import raiseHandMascot from '../../assets/characters/raiseHand.svg';
 import {
   BookOpen, User, BarChart3, Target, Calendar, Bell, 
   TrendingUp, Award, Clock, ChevronRight, Star, 
@@ -73,6 +75,9 @@ const StudentHomepage = () => {
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
   const { hasProfile, loading: profileLoading, refreshProfile } = useCareerInterestProfile();
 
+  // Take Assessment Confirmation
+  const [showTakeAssessmentConfirmation, setShowTakeAssessmentConfirmation] = useState(false);
+
   const getCurrentUserId = () => {
     return authService.getCurrentUserId() || 1;
   };
@@ -104,6 +109,20 @@ const StudentHomepage = () => {
 
   const handleSetupLater = () => {
     setShowProfilePrompt(false);
+  };
+
+  // Take Assessment Confirmation handlers
+  const handleTakeAssessmentClick = () => {
+    setShowTakeAssessmentConfirmation(true);
+  };
+
+  const handleConfirmTakeAssessment = () => {
+    setShowTakeAssessmentConfirmation(false);
+    navigateAndScrollToTop('/take-assessment/1');
+  };
+
+  const handleCancelTakeAssessment = () => {
+    setShowTakeAssessmentConfirmation(false);
   };
 
   // Session-based profile prompt logic (same as landing page)
@@ -261,7 +280,7 @@ const StudentHomepage = () => {
       desc: "Discover the FutureU - Take our comprehensive assessment",
       icon: <BookOpen className="w-6 h-6" />,
       color: "from-blue-500 to-blue-600",
-      action: () => navigateAndScrollToTop('/take-assessment/1'),
+      action: handleTakeAssessmentClick,
       priority: !hasCompletedAssessment
     },
     {
@@ -366,7 +385,7 @@ const StudentHomepage = () => {
                           <div className="font-semibold mb-1">Ready to Discover Your Future?</div>
                           <div className="text-sm text-blue-100/90 mb-4">Take our comprehensive "Discover the FutureU" assessment to unlock your potential.</div>
                       <button 
-                        onClick={() => navigateAndScrollToTop('/take-assessment/1')}
+                        onClick={handleTakeAssessmentClick}
                             className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
                       >
                             <Play className="w-4 h-4 mr-2" />
@@ -458,7 +477,7 @@ const StudentHomepage = () => {
                     career recommendations, and academic pathways.
                   </p>
                   <button 
-                    onClick={() => navigateAndScrollToTop('/take-assessment/1')}
+                    onClick={handleTakeAssessmentClick}
                     className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center mx-auto"
                   >
                     <Play className="w-5 h-5 mr-2" />
@@ -743,6 +762,84 @@ const StudentHomepage = () => {
         </div>
         </motion.div>
       </main>
+
+      {/* Take Assessment Confirmation Modal */}
+      <AnimatePresence>
+        {showTakeAssessmentConfirmation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center pt-45"
+            onClick={handleCancelTakeAssessment}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto px-6 pb-5 py-15 flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src={raiseHandMascot}
+                alt="Raise hand mascot"
+                className="absolute -top-67 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+
+              {/* Title */}
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-lg font-medium text-gray-900 mb-3"
+              >
+                Ready to Begin?
+              </motion.h3>
+
+              {/* Message */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-4 text-center"
+              >
+                You're about to start the comprehensive <span className="font-semibold">Discover the FutureU</span> assessment. 
+                This typically takes <span className="font-semibold">60-90 minutes</span> to complete and will help 
+                identify your career path and interests.
+              </motion.p>
+
+              {/* Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="flex justify-end gap-3 w-full mt-5"
+              >
+                <button
+                  onClick={handleCancelTakeAssessment}
+                  className="w-full px-4 py-2 text-sm font-medium text-white hover:text-[#2B3E4E] bg-[#2B3E4E] rounded-md hover:bg-gray-50 focus:outline-none"
+                >
+                  Not Yet
+                </button>
+                <button
+                  onClick={handleConfirmTakeAssessment}
+                  className="w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-xl font-bold shadow-md transition-all"
+                >
+                  Yes, Start Assessment
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       </>
       )}
     </div>

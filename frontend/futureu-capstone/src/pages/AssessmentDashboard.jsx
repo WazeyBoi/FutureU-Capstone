@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
 import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
+// Import mascot
+import raiseHandMascot from '../assets/characters/raiseHand.svg';
 
 // Import Chart.js components at the top of the file
 import {
@@ -44,6 +46,10 @@ const AssessmentDashboard = () => {
   const [completedByAssessment, setCompletedByAssessment] = useState({});
   const [availableAssessments, setAvailableAssessments] = useState([]);
   const [assessmentStats, setAssessmentStats] = useState({});
+  
+  // Start Assessment Confirmation
+  const [showStartAssessmentConfirmation, setShowStartAssessmentConfirmation] = useState(false);
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -196,7 +202,20 @@ const AssessmentDashboard = () => {
   };
 
   const handleStartAssessment = (assessmentId) => {
-    navigate(`/take-assessment/${assessmentId}`);
+    setSelectedAssessmentId(assessmentId);
+    setShowStartAssessmentConfirmation(true);
+  };
+
+  const handleConfirmStartAssessment = () => {
+    setShowStartAssessmentConfirmation(false);
+    if (selectedAssessmentId) {
+      navigate(`/take-assessment/${selectedAssessmentId}`);
+    }
+  };
+
+  const handleCancelStartAssessment = () => {
+    setShowStartAssessmentConfirmation(false);
+    setSelectedAssessmentId(null);
   };
 
   const handleViewResults = (userQuizAssessmentId) => {
@@ -951,6 +970,83 @@ const AssessmentDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Start Assessment Confirmation Modal */}
+      <AnimatePresence>
+        {showStartAssessmentConfirmation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center pt-45"
+            onClick={handleCancelStartAssessment}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto px-6 pb-5 pt-15 flex flex-col items-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src={raiseHandMascot}
+                alt="Raise hand mascot"
+                className="absolute -top-67 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+
+              {/* Title */}
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-lg font-medium text-gray-900 mb-3"
+              >
+                Ready to Begin?
+              </motion.h3>
+
+              {/* Message */}
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-4 text-center"
+              >
+                You're about to start the comprehensive <span className="font-semibold">Discover the FutureU</span> assessment. 
+                This typically takes <span className="font-semibold">60-90 minutes</span> to complete and will help 
+                identify your career path and interests.
+              </motion.p>
+
+              {/* Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="flex justify-end gap-3 w-full mt-5"
+              >
+                <button
+                  onClick={handleCancelStartAssessment}
+                  className="w-full px-4 py-2 text-sm font-medium text-white hover:text-[#2B3E4E] bg-[#2B3E4E] rounded-md hover:bg-gray-50 focus:outline-none"
+                >
+                  Not Yet
+                </button>
+                <button
+                  onClick={handleConfirmStartAssessment}
+                  className="w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-xl font-bold shadow-md transition-all"
+                >
+                  Yes, Start Assessment
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
