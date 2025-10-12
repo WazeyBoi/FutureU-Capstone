@@ -110,7 +110,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                 {question.difficultyLevel}
               </span>
             )}
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1D63A1]/20 text-[#1D63A1]/90">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-[#1D63A1]/90">
               {question.questionType || (isLikert ? 'Likert Scale' : '')}
             </span>
           </div>
@@ -128,9 +128,9 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
           {question.choices.map((choice, index) => (
             <motion.div key={choice.choiceId} variants={item}>
               <label 
-                className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`ml-11 flex items-start px-5 py-2  rounded-lg cursor-pointer transition-all ${
                   answer === choice.choiceId.toString() 
-                    ? 'bg-[#1D63A1]/10 border-[#1D63A1] shadow-md' 
+                    ? 'bg-[#1D63A1]/10 shadow-md' 
                     : 'hover:bg-gray-50 border-gray-200 hover:border-[#1D63A1]/50'
                 }`}
               >

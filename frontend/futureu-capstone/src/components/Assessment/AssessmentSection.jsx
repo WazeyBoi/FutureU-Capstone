@@ -12,20 +12,20 @@ const AssessmentTooltip = ({ sectionType }) => {
         title: "Assessment Source",
         content: (
           <>
-            <p className="font-normal text-gray-700 mb-2">
-              Questions in this section are based on the <strong>O*NET® Interest Profiler™</strong> from the O*NET Resource Center.
+            <p className="mb-3 font-normal leading-relaxed">
+              Questions in this section are based on the <strong className="text-[#232D35]">O*NET® Interest Profiler™</strong> from the O*NET Resource Center.
             </p>
-            <div className="font-normal text-xs text-gray-600 bg-gray-50 p-2 rounded border">
-              <p className="mb-1">
-                <strong>Source:</strong> O*NET Interest Profiler Short Form Psychometric Characteristics
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <p className="mb-1.5">
+                <strong className="text-gray-700">Source:</strong> O*NET Interest Profiler Short Form Psychometric Characteristics
               </p>
               <p>
-                <strong>Reference:</strong> 
+                <strong className="text-gray-700">Reference:</strong> 
                 <a 
                   href="https://www.onetcenter.org/dl_files/IPSF_Psychometric.pdf" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline ml-1"
+                  className="text-[#1D63A1] hover:text-[#1D63A1]/80 underline ml-1 font-medium"
                 >
                   ONET Resource Center
                 </a>
@@ -40,15 +40,15 @@ const AssessmentTooltip = ({ sectionType }) => {
         title: "Assessment Basis",
         content: (
           <>
-            <p className="font-normal text-gray-700 mb-2">
-              Questions in this section are based heavily on <strong>Grade 9 curriculum</strong> standards and learning competencies.
+            <p className="mb-3 font-normal leading-relaxed">
+              Questions in this section are based heavily on <strong className="text-[#232D35]">Grade 9 curriculum</strong> standards and learning competencies.
             </p>
-            <div className="font-normal text-xs text-gray-600 bg-gray-50 p-2 rounded border">
-              <p className="mb-1">
-                <strong>Curriculum Level:</strong> Grade 9 (Junior High School)
+            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <p className="mb-1.5">
+                <strong className="text-gray-700">Curriculum Level:</strong> Grade 9 (Junior High School)
               </p>
               <p>
-                <strong>Basis:</strong> Department of Education (DepEd) K-12 Curriculum Standards
+                <strong className="text-gray-700">Basis:</strong> Department of Education (DepEd) K-12 Curriculum Standards
               </p>
             </div>
           </>
@@ -67,11 +67,11 @@ const AssessmentTooltip = ({ sectionType }) => {
         onMouseLeave={() => setIsVisible(false)}
         onFocus={() => setIsVisible(true)}
         onBlur={() => setIsVisible(false)}
-        className="ml-2 p-1 rounded-full hover:bg-blue-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        className="ml-2 p-1.5 rounded-full hover:bg-[#1D63A1]/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] focus:ring-opacity-50"
         aria-label={tooltipData.ariaLabel}
       >
         <svg 
-          className="w-4 h-4 text-blue-600 hover:text-blue-700" 
+          className="w-4 h-4 text-[#1D63A1] hover:text-[#1D63A1]/80" 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -91,23 +91,26 @@ const AssessmentTooltip = ({ sectionType }) => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="absolute z-50 w-80 p-4 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg"
+          className="absolute z-50 w-80 p-5 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100"
           style={{ left: '50%', transform: 'translateX(-50%)' }}
         >
-          <div className="text-left text-sm">
-            <div className="flex items-start mb-2">
-              <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <h4 className="text-center font-semibold text-gray-900 mb-1">{tooltipData.title}</h4>
-                {tooltipData.content}
+          <div className="text-left">
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 rounded-full bg-[#1D63A1]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                <svg className="w-4 h-4 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
+              <h4 className="text-base font-bold text-[#232D35]">{tooltipData.title}</h4>
+            </div>
+            
+            <div className="text-sm">
+              {tooltipData.content}
             </div>
           </div>
           
           {/* Tooltip arrow */}
-          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white border-l border-t border-gray-200 rotate-45"></div>
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-gray-100 rotate-45"></div>
         </motion.div>
       )}
     </div>
@@ -304,28 +307,30 @@ const AssessmentSection = forwardRef(({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 border border-[#1D63A1]/20 overflow-hidden flex flex-col"
+      className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 overflow-hidden flex flex-col"
     >
       {/* Section header with improved responsiveness - add ref here */}
-      <div ref={sectionHeaderRef} className="mb-4 border-b border-gray-200 pb-4">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
-            <span className="line-clamp-1">{title}</span>
-            <AssessmentTooltip sectionType={isRiasecSection ? 'riasec' : 'curriculum'} />
-          </h2>
-          {remainingTime && (
-            <div className="flex items-center bg-red-50 px-3 py-1 rounded-full self-start sm:self-auto">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="font-mono font-medium text-red-700 text-sm">{formatTime(remainingTime)}</span>
-            </div>
-          )}
+      <div ref={sectionHeaderRef} className="flex justify-between mb-4 border-b border-gray-200 pb-4">
+        <div>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+            <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
+              <span className="line-clamp-1">{title}</span>
+              <AssessmentTooltip sectionType={isRiasecSection ? 'riasec' : 'curriculum'} />
+            </h2>
+            {remainingTime && (
+              <div className="flex items-center bg-red-50 px-3 py-1 rounded-full self-start sm:self-auto">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-mono font-medium text-red-700 text-sm">{formatTime(remainingTime)}</span>
+              </div>
+            )}
+          </div>
+          <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
         </div>
-        <p className="text-start text-xs sm:text-sm text-gray-600 mt-1 line-clamp-2">{description}</p>
         
         {/* Progress indicators */}
-        <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        {/* <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div className="flex items-center">
             <span className="text-xs text-[#1D63A1] bg-[#1D63A1]/10 px-3 py-1 rounded-full">
               {questions.length} Questions • {answeredQuestionsCount} Answered
@@ -348,14 +353,14 @@ const AssessmentSection = forwardRef(({
               {sectionCompletionPercentage}%
             </span>
           </div>
-        </div>
+        </div> */}
         
         {/* Quiz timer indicator for quiz sections */}
         {isInQuizSection && quizTimeRemaining !== null && (
-          <div className={`mt-3 flex items-center px-4 py-2 rounded-lg border ${
-            quizTimeRemaining <= 300 ? 'bg-red-50 border-red-200' : 
-            quizTimeRemaining <= 900 ? 'bg-yellow-50 border-yellow-200' : 
-            'bg-blue-50 border-blue-200'
+          <div className={`flex items-center px-4 py-2 ${
+            quizTimeRemaining <= 300 ? '' : 
+            quizTimeRemaining <= 900 ? '' : 
+            ''
           }`}>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -363,21 +368,21 @@ const AssessmentSection = forwardRef(({
             <span className={`text-sm font-medium ${
               quizTimeRemaining <= 300 ? 'text-red-700' : 
               quizTimeRemaining <= 900 ? 'text-yellow-700' : 
-              'text-blue-700'
+              'text-[#232D35]'
             }`}>
-              ⏱️ Quiz sections time limit: {Math.floor(quizTimeRemaining / 60)}:{(quizTimeRemaining % 60).toString().padStart(2, '0')} remaining
+              {Math.floor(quizTimeRemaining / 60)}:{(quizTimeRemaining % 60).toString().padStart(2, '0')}
             </span>
           </div>
         )}
         
         {/* Untimed section indicator for Interest Assessment */}
         {!isInQuizSection && title === 'Interest Assessment' && (
-          <div className="mt-3 flex items-center bg-green-50 border border-green-200 px-4 py-2 rounded-lg">
+          <div className="flex items-center px-4 py-2 ">
             <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="text-sm text-green-700 font-medium">
-              ✨ This section is untimed - Take your time to reflect on your genuine interests and preferences.
+              Untimed - Take your time to reflect.
             </span>
           </div>
         )}
@@ -417,7 +422,7 @@ const AssessmentSection = forwardRef(({
             {/* Table Legend */}
             <div className="text-center mb-6">
               <p className="text-sm text-gray-600 font-medium mb-4">How much do you like each activity?</p>
-              <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+              <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 p-3 rounded-lg">
                 <span className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>0 = Strongly Dislike</span>
                 <span className="flex items-center"><span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>1 = Dislike</span>
                 <span className="flex items-center"><span className="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>2 = Unsure</span>
@@ -619,7 +624,7 @@ const AssessmentSection = forwardRef(({
       </div>
 
       {/* Pagination Controls - With Previous on left, Next on right, and counter centered */}
-      <div className="flex justify-center items-center mb-6">
+      <div className="flex justify-center items-center mb-6 mt-6">
         <nav className="w-full flex items-center justify-between" aria-label="Pagination">
           {/* Previous page button - Left aligned */}
           <button
@@ -639,7 +644,7 @@ const AssessmentSection = forwardRef(({
           
           {/* Page indicator - Center aligned */}
           <div className="flex-grow text-center">
-            <span className="text-sm text-[#1D63A1] font-medium bg-[#1D63A1]/10 px-4 py-2 rounded-md inline-block">
+            <span className="text-sm text-[#1D63A1] font-medium px-4 py-2 rounded-md inline-block">
               Page {currentPage} of {totalPages}
             </span>
           </div>
@@ -712,7 +717,7 @@ const AssessmentSection = forwardRef(({
       )}
       
       {/* Status indicator when not all questions are answered */}
-      {!allQuestionsAnswered && (
+      {/* {!allQuestionsAnswered && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <p className="text-center text-sm text-[#1D63A1]">
             Please answer all {questions.length} questions in this section to proceed.
@@ -722,7 +727,7 @@ const AssessmentSection = forwardRef(({
             </span>
           </p>
         </div>
-      )}
+      )} */}
     </motion.div>
   );
 });

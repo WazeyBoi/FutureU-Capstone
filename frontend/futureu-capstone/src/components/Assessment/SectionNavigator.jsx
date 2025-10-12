@@ -196,7 +196,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     }
 
     return (
-      <div key={section.id} className="mb-1.5">
+      <div key={section.id} className="bordermb-1.5">
         <button
           className={sectionClass}
           onClick={() => {
@@ -246,7 +246,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-lg p-2 sm:p-3 mb-4 border border-[#1D63A1]/20 flex flex-col"
+      className="bg-white rounded-xl shadow-lg p-2 sm:p-3 mb-4 flex flex-col"
     >
       <div className="mb-3 text-xs font-medium text-[#232D35] flex items-center border-b border-gray-200 pb-2">
         {/* Replaced invalid SVG with Lucide ClipboardList icon */}

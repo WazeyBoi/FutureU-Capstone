@@ -648,7 +648,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
         )}
         {careerPathDetails.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-end gap-10 mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#232D35] bg-white px-4 py-1.5 rounded-full border-2 border-[#FFB71B] shadow-sm">
                 <svg className="w-4 h-4 text-[#FFB71B]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
@@ -666,7 +666,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 return (
                   <div 
                     key={pathKey} 
-                    className="border border-gray-200 rounded-3xl p-6 hover:border-[#FFB71B] transition-all"
+                    className=" rounded-3xl p-6 transition-all"
                     style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.10)' }}
                   >
                     {/* Header */}
@@ -937,7 +937,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                               initial={{ opacity: 0, y: 20 }} 
                               animate={{ opacity: 1, y: 0 }} 
                               transition={{ duration: 0.3 }}
-                              className="bg-white rounded-3xl p-8 border border-gray-200 shadow-2xl"
+                              className=""
                             >
                               <div className="mb-5">
                                 <h4 className="text-left font-extrabold text-[#232D35] text-xl">About This Career Pathway</h4>

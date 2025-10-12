@@ -90,6 +90,9 @@ const TakeAssessment = () => {
   // Add state to store the last submitted userAssessmentId
   const [lastUserAssessmentId, setLastUserAssessmentId] = useState(null);
 
+  // Add state to control progress header visibility
+  const [showProgressHeader, setShowProgressHeader] = useState(true);
+
   // Helper function to check if a section is a quiz section (not Interest Assessment)
   const isQuizSection = (sectionId) => {
     return sectionId !== 'interest-combined' && !sectionId.includes('interest');
@@ -1251,8 +1254,41 @@ const TakeAssessment = () => {
   };
   
   return (
-    <div className="max-w-7xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen flex flex-col">
+    <div className="max-w-8xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen flex flex-col">
+      {/* Toggle button for progress header */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setShowProgressHeader(!showProgressHeader)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
+          title={showProgressHeader ? "Hide progress header" : "Show progress header"}
+        >
+          {showProgressHeader ? (
+            <>
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700">Hide Progress</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-sm font-medium text-gray-700">Show Progress</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Assessment Header - Better height utilization */}
+      <AnimatePresence>
+      {showProgressHeader && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+        >
       <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto">
         {/* Assessment Info Card - Making sure it fills available height */}
         <motion.div 
@@ -1301,23 +1337,6 @@ const TakeAssessment = () => {
                   </>
                 )}
               </button>
-              
-              {/* Quiz timer countdown (only show when in quiz sections and timer is active) */}
-              {isInQuizSection && quizTimeRemaining !== null && (
-                <div className={`mt-2 sm:mt-0 px-4 py-2 rounded-lg flex shadow-sm ${
-                  quizTimeRemaining <= 300 ? 'bg-red-100 text-red-700' : 
-                  quizTimeRemaining <= 900 ? 'bg-yellow-100 text-yellow-700' : 
-                  'bg-[#232D35] text-[#FFB71B]'
-                }`}>
-                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">
-                    Quiz time: {formatQuizTime(quizTimeRemaining)}
-                    {!quizTimerActive && ' (paused)'}
-                  </span>
-                </div>
-              )}
               
               {/* Overall assessment time limit (if applicable) */}
               {timeRemaining && (
@@ -1368,26 +1387,44 @@ const TakeAssessment = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
         >
-          <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
-            <BarChart2 className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" />
-            <span className="truncate">Your Assessment Progress</span>
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-[#232D35] text-sm flex items-center">
+              <BarChart2 className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" />
+              <span className="truncate">Your Assessment Progress</span>
+            </h4>
+            {/* Quiz timer countdown beside the heading */}
+            {isInQuizSection && quizTimeRemaining !== null && (
+              <div className={`px-3 py-1 rounded-lg flex items-center ${
+                quizTimeRemaining <= 300 ? 'text-red-700' : 
+                quizTimeRemaining <= 900 ? 'text-yellow-700' : 
+                'text-[#232D35]'
+              }`}>
+                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-bold">
+                  {formatQuizTime(quizTimeRemaining)}
+                  {!quizTimerActive && ' (paused)'}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-grow">
-            <div className="bg-[#1D63A1]/10 p-3 rounded-lg border-2 border-[#1D63A1]/20 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(29,99,161,0.25)]">
               <div className="text-2xl font-bold text-[#1D63A1]">{totalQuestions.completed}</div>
               <div className="text-xs text-[#1D63A1]/80">Questions Answered</div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg border-2 border-gray-100 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(107,114,128,0.2)]">
               <div className="text-2xl font-bold text-[#232D35]">{totalQuestions.total - totalQuestions.completed}</div>
               <div className="text-xs text-[#232D35]/80">Questions Remaining</div>
             </div>
-            <div className="bg-[#FFB71B]/10 p-3 rounded-lg border-2 border-[#FFB71B]/20 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(255,183,27,0.25)]">
               <div className="text-2xl font-bold text-[#FFB71B]">
                 {Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
               <div className="text-xs text-[#FFB71B]/80">Sections Completed</div>
             </div>
-            <div className="bg-[#FFB71B]/5 p-3 rounded-lg border-2 border-[#FFB71B]/10 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(255,183,27,0.15)]">
               <div className="text-2xl font-bold text-[#232D35]">
                 {sectionList.length - Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
@@ -1396,6 +1433,9 @@ const TakeAssessment = () => {
           </div>
         </motion.div>
       </div>
+        </motion.div>
+      )}
+      </AnimatePresence>
       
       {/* Updated lower section with better height utilization */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-grow">
