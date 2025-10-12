@@ -9,14 +9,8 @@ const ProfilePrompt = ({ onSetupNow, onSetupLater }) => {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 max-w-2xl mx-auto"
     >
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-8 text-white relative">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-[#FFB71B] rounded-full translate-y-1/2 -translate-x-1/2"></div>
-        </div>
-
+      {/* Header with navy blue background */}
+      <div className="bg-[#2B3E4E] p-8 text-white relative">
         <div className="relative z-10 text-center">
           <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl w-fit mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-[#FFB71B]" />
@@ -95,7 +89,7 @@ const ProfilePrompt = ({ onSetupNow, onSetupLater }) => {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={onSetupNow}
-            className="flex-1 bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center group cursor-pointer"
+            className="flex-1 bg-[#2B3E4E] hover:bg-[#FFB71B] text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center group cursor-pointer"
           >
             <span>Set Up Now</span>
             <ChevronRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />

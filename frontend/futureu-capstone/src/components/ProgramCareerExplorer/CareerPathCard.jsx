@@ -53,7 +53,48 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
 
   const formatSalary = (salary) => {
     if (!salary) return 'Not specified';
-    return salary.includes('₱') ? salary : `₱${salary}`;
+    
+    console.log('CareerPathCard formatSalary input:', salary); // Debug log
+    
+    // Handle salary ranges - check for different "to" patterns
+    const toPatterns = [' to ', 'to', ' to', 'to '];
+    let foundPattern = null;
+    
+    for (const pattern of toPatterns) {
+      if (salary.includes(pattern)) {
+        foundPattern = pattern;
+        break;
+      }
+    }
+    
+    if (foundPattern) {
+      console.log('CareerPathCard found pattern:', foundPattern); // Debug log
+      // Split the range
+      const parts = salary.split(foundPattern);
+      if (parts.length === 2) {
+        let lowerBound = parts[0].trim();
+        let upperBound = parts[1].trim();
+        
+        console.log('CareerPathCard lower bound before clean:', lowerBound); // Debug log
+        console.log('CareerPathCard upper bound before clean:', upperBound); // Debug log
+        
+        // Remove existing P or ₱ signs to clean them up
+        lowerBound = lowerBound.replace(/^[P₱]\s*/, '');
+        upperBound = upperBound.replace(/^[P₱]\s*/, '');
+        
+        console.log('CareerPathCard lower bound after clean:', lowerBound); // Debug log
+        console.log('CareerPathCard upper bound after clean:', upperBound); // Debug log
+        
+        // Add ₱ to both bounds
+        const result = `₱ ${lowerBound} - ₱ ${upperBound}`;
+        console.log('CareerPathCard final result:', result); // Debug log
+        return result;
+      }
+    }
+    
+    // Handle single salary value
+    let cleanSalary = salary.replace(/^[P₱]\s*/, ''); // Remove existing P or ₱
+    return `₱ ${cleanSalary}`;
   };
 
   const getSchoolLogo = (schoolId) => {
@@ -149,9 +190,11 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                         </div>
                       </div>
                     </div>
-                    <p className="text-xl font-bold text-[#2B3E4E] group-hover:text-[#1D63A1] transition-colors duration-300">
-                      {career.industry}
-                    </p>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-[#2B3E4E] group-hover:text-[#1D63A1] transition-colors duration-300">
+                        {career.industry}
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -168,7 +211,7 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                   <div className="relative z-10">
                     <div className="flex items-center mb-3">
                       <div className="w-10 h-10 bg-[#FFB71B] rounded-xl flex items-center justify-center mr-3 shadow-md group-hover:scale-110 transition-transform duration-300">
-                        <DollarSign className="w-5 h-5 text-white" />
+                        <TrendingUp className="w-5 h-5 text-white" />
                       </div>
                       <div>
                         <span className="text-xs font-bold text-[#FFB71B] uppercase tracking-wider block">Salary Range</span>
@@ -178,9 +221,11 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                         </div>
                       </div>
                     </div>
-                    <p className="text-xl font-bold text-[#FFB71B] group-hover:text-[#FF9800] transition-colors duration-300">
-                      {formatSalary(career.salary)}
-                    </p>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-[#FFB71B] group-hover:text-[#FF9800] transition-colors duration-300">
+                        {formatSalary(career.salary)}
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -243,8 +288,8 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center">
-                      <p className={`text-xl font-bold mr-2 transition-colors duration-300 ${
+                    <div className="text-center">
+                      <p className={`text-xl font-bold mb-2 transition-colors duration-300 ${
                         career.jobTrend.toLowerCase().includes('growing') 
                           ? 'text-green-600 group-hover:text-green-700' 
                           : career.jobTrend.toLowerCase().includes('declining') 
@@ -293,7 +338,7 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
           </div>
 
           {/* Enhanced Action Buttons */}
-          <div className="flex gap-3 bg-white pt-8 pb-4 border-t border-gray-200 z-20 relative flex-shrink-0">
+          <div className="flex gap-4 bg-white pt-8 pb-4 border-t border-gray-200 z-20 relative flex-shrink-0 justify-end px-6">
             <button
               onClick={() => {
                 console.log('Explore Career clicked for:', career.careerTitle);
@@ -313,7 +358,7 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                   }));
                 }
               }}
-              className="flex-1 bg-[#232D35] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer"
+              className="bg-[#232D35] text-white px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer min-w-[160px]"
             >
               <ExternalLink className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               Explore Career
@@ -337,7 +382,7 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                   }));
                 }
               }}
-              className="flex-1 bg-[#FFB71B] text-[#2B3E4E] px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer"
+              className="bg-[#FFB71B] text-[#2B3E4E] px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer min-w-[180px]"
             >
               <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
               View Related Programs
@@ -500,7 +545,6 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
                               </div>
                               {career.salary && (
                                 <div className="flex items-center text-sm text-[#FFB71B] font-medium">
-                                  <DollarSign className="w-3 h-3 mr-1" />
                                   <span>{formatSalary(career.salary)}</span>
                                 </div>
                               )}
