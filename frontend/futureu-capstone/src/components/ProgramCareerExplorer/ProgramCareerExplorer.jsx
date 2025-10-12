@@ -20,6 +20,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import apiClient from '../../services/api';
 import dataCacheService from '../../services/dataCache';
 import programCareerPathService from '../../services/programCareerPathService';
@@ -229,6 +230,7 @@ const getSchoolLogo = (schoolId) => {
 };
 
 const ProgramCareerExplorer = () => {
+  const location = useLocation();
   const [programs, setPrograms] = useState([]);
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [careerPathsData, setCareerPathsData] = useState(null);
@@ -701,6 +703,8 @@ const ProgramCareerExplorer = () => {
         programId: program.programId,
         careerPaths: careerPathsWithCareers 
       });
+
+
     } catch (error) {
       console.error('Error fetching career paths and careers:', error);
       setCareerPathsData({ careerPaths: [] });
@@ -709,8 +713,10 @@ const ProgramCareerExplorer = () => {
     }
   };
 
-  // NEW: Handle career selection for reverse search (career → programs)
-  const handleCareerSelect = async (career) => {
+  // Update the handleCareerSelect function to handle scroll offset
+  const handleCareerSelect = useCallback(async (career, scrollTarget = 'hero') => {
+    console.log('Selecting career:', career.careerTitle, 'Scroll target:', scrollTarget);
+    
     setSelectedCareer(career);
     setSearchTerm(career.careerTitle);
     setShowDropdown(false);
@@ -722,6 +728,8 @@ const ProgramCareerExplorer = () => {
         `programsByCareer_${career.careerId}`,
         `/careerprogram/getProgramsByCareer/${career.careerId}`
       );
+
+      console.log('Programs found:', programsResponse.length);
 
       // Get additional program details and school information
       const programsWithDetails = await Promise.all(
@@ -750,13 +758,86 @@ const ProgramCareerExplorer = () => {
         careerId: career.careerId,
         programs: programsWithDetails 
       });
+
+      // UPDATED: Scroll to hero section by default
+      if (scrollTarget !== 'none') {
+        setTimeout(() => {
+          if (scrollTarget === 'hero') {
+            // Scroll to the yellow hero section (career title)
+            const heroSection = document.getElementById('career-hero-section');
+            if (heroSection) {
+              const rect = heroSection.getBoundingClientRect();
+              const offset = window.pageYOffset + rect.top - 250; // 100px offset from top
+              
+              window.scrollTo({ 
+                top: offset, 
+                behavior: 'smooth' 
+              });
+            } else {
+              // Fallback: scroll to top if hero section not found
+              window.scrollTo({ 
+                top: 0, 
+                behavior: 'smooth' 
+              });
+            }
+          } else if (scrollTarget === 'programs') {
+            // Scroll to programs section with offset for better visibility
+            const programsSection = document.getElementById('programs-section');
+            if (programsSection) {
+              const rect = programsSection.getBoundingClientRect();
+              const offset = window.pageYOffset + rect.top - 100;
+              
+              window.scrollTo({ 
+                top: offset, 
+                behavior: 'smooth' 
+              });
+            }
+          } else if (scrollTarget === 'top') {
+            // Scroll to top of page
+            window.scrollTo({ 
+              top: 0, 
+              behavior: 'smooth' 
+            });
+          }
+        }, 300);
+      }
+      // If scrollTarget is 'none', don't scroll at all - stay where user is
+
     } catch (error) {
       console.error('Error fetching programs for career:', error);
       setProgramsData({ programs: [] });
     } finally {
       setLoading(false);
     }
-  };
+  }, [getCachedData, schoolPrograms]);
+
+  // Update the handleCareerSelectFromModal function - change default to 'hero'
+  const handleCareerSelectFromModal = useCallback((career, scrollTarget = 'hero') => {
+    // Switch to career mode
+    setSearchMode('career');
+    
+    // Clear any existing program selection
+    setSelectedProgram(null);
+    setCareerPathsData(null);
+    
+    // Select the career with specified scroll behavior (default: scroll to hero)
+    handleCareerSelect(career, scrollTarget);
+  }, [handleCareerSelect]);
+
+  // REMOVE DUPLICATE EVENT LISTENERS - Keep only ONE
+  useEffect(() => {
+    const handleCareerSelectEvent = (event) => {
+      const { career, scrollTarget } = event.detail;
+      // Use the scrollTarget from the event, or default to 'hero' if not provided
+      handleCareerSelectFromModal(career, scrollTarget || 'hero');
+    };
+
+    window.addEventListener('selectCareerFromModal', handleCareerSelectEvent);
+
+    return () => {
+      window.removeEventListener('selectCareerFromModal', handleCareerSelectEvent);
+    };
+  }, [handleCareerSelectFromModal]);
 
   // Function to scroll to programs section
   const scrollToProgramsSection = () => {
@@ -1008,7 +1089,7 @@ const ProgramCareerExplorer = () => {
                   setSearchMode('program');
                   clearSelection();
                 }}
-                className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 cursor-pointer ${
                   searchMode === 'program'
                     ? 'bg-[#FFB71B] text-[#2B3E4E] shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
@@ -1022,7 +1103,7 @@ const ProgramCareerExplorer = () => {
                   setSearchMode('career');
                   clearSelection();
                 }}
-                className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 cursor-pointer ${
                   searchMode === 'career'
                     ? 'bg-[#FFB71B] text-[#2B3E4E] shadow-sm'
                     : 'text-gray-600 hover:text-gray-800'
@@ -1176,7 +1257,7 @@ const ProgramCareerExplorer = () => {
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowFilterMenu(!showFilterMenu)}
-                className="bg-white text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 transition border border-gray-200 shadow-sm hover:shadow flex items-center gap-2"
+                className="bg-white text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 transition border border-gray-200 shadow-sm hover:shadow flex items-center gap-2 cursor-pointer"
               >
                 <Filter className="w-5 h-5 text-[#FFB71B]" />
                 <span>Filters</span>
@@ -1186,10 +1267,10 @@ const ProgramCareerExplorer = () => {
             </div>
 
             {/* Clear Selection Button */}
-            {selectedProgram && (
+            {(selectedProgram || selectedCareer) && (
               <button
                 onClick={clearSelection}
-                className="px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition border border-red-200"
+                className="px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition border border-red-200 cursor-pointer"
               >
                 Clear Selection
               </button>
@@ -1688,17 +1769,17 @@ const ProgramCareerExplorer = () => {
               </div>
               {selectedProgram.description && (
                 <div className="mt-6 p-6 bg-white rounded-xl border border-gray-200 shadow-lg">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-[#232D35] rounded-lg flex items-center justify-center mr-3">
-                      <BookOpen className="w-4 h-4 text-[#FFB71B]" />
+                  <div className="flex items-center mb-3">
+                    <div className="w-4 h-4 bg-[#FFB71B]/20 rounded flex items-center justify-center mr-2">
+                      <BookOpen className="w-2 h-2 text-[#FFB71B]" />
                     </div>
-                    <h3 className="text-lg font-semibold text-[#2B3E4E]">Program Description</h3>
+                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Program Description
+                    </span>
                   </div>
-                  <div className="prose prose-gray max-w-none">
-                    <p className="text-gray-700 text-justify leading-relaxed text-base whitespace-pre-line">
-                      {selectedProgram.description}
-                    </p>
-                  </div>
+                  <p className="text-gray-700 leading-relaxed text-justify">
+                    {selectedProgram.description}
+                  </p>
                 </div>
               )}
             </div>
@@ -1728,6 +1809,7 @@ const ProgramCareerExplorer = () => {
                     key={careerPath.careerPathId}
                     careerPath={careerPath}
                     index={index}
+                    onCareerSelect={handleCareerSelectFromModal}
                   />
                 ))}
               </div>
@@ -1746,7 +1828,7 @@ const ProgramCareerExplorer = () => {
             {/* Selected Career Header - NEW LAYOUT */}
             <div className="relative mb-8">
               {/* Hero Card with Animated Bubbles */}
-              <div className="relative bg-[#FFB71B] rounded-3xl p-8 shadow-2xl mb-8">
+              <div id="career-hero-section" className="relative bg-[#FFB71B] rounded-3xl p-8 shadow-2xl mb-8">
                 {/* Animated Floating Bubbles - moved outside to allow full movement */}
                 <div className="absolute inset-0 pointer-events-none overflow-visible">
                   {/* Bubble 1 */}
@@ -2011,7 +2093,7 @@ const ProgramCareerExplorer = () => {
               </div>
             )}
             </div> {/* End programs-section */}
-          </motion.div>
+            </motion.div>
           </AnimatePresence>
         ) : null}
       </div>
