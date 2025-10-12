@@ -168,16 +168,16 @@ const ProfileSidebar = ({
           <>
             <button
               onClick={onEdit}
-              className="w-full bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#1D63A1]/90 hover:to-[#2B3E4E]/90 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center group text-sm"
+              className="w-full bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#1D63A1]/90 hover:to-[#2B3E4E]/90 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center group text-sm cursor-pointer"
             >
               <Edit className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
               Edit Profile
             </button>
             <button
               onClick={onChangePassword}
-              className="w-full bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center group hover:shadow-lg text-sm"
+              className="w-full bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center group hover:shadow-lg text-sm cursor-pointer"
             >
-              <Lock className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+              <Lock className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform cursor-pointer" />
               Change Password
             </button>
           </>
@@ -186,7 +186,7 @@ const ProfileSidebar = ({
             <button
               onClick={onSave}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm"
+              className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm cursor-pointer"
             >
               {saving ? (
                 <>
@@ -202,7 +202,7 @@ const ProfileSidebar = ({
             </button>
             <button
               onClick={onCancel}
-              className="flex-1 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center hover:shadow-lg text-sm"
+              className="flex-1 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center hover:shadow-lg text-sm cursor-pointer"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
