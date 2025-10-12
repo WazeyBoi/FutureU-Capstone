@@ -447,7 +447,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Brain className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <Brain className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h3 className="text-2xl font-bold">AI-Powered Assessments</h3>
               </motion.div>
@@ -500,7 +500,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Target className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <Target className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h3 className="text-2xl font-bold">Data-Driven Recommendations</h3>
               </motion.div>
@@ -587,7 +587,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <GraduationCap className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <GraduationCap className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">For Grade 9 Students</h3>
               </motion.div>
@@ -616,7 +616,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Heart className="w-8 h-8 text-[#2B3E4E] mr-3" />
+                <Heart className="w-8 h-8 text-[#2B3E4E] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">For Parents & Guardians</h3>
               </motion.div>
@@ -645,7 +645,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Users className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <Users className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">For Schools & Counselors</h3>
               </motion.div>
@@ -674,7 +674,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Award className="w-8 h-8 text-[#2B3E4E] mr-3" />
+                <Award className="w-8 h-8 text-[#2B3E4E] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">For Higher Education</h3>
               </motion.div>
@@ -703,7 +703,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Globe className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <Globe className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">For Government Agencies</h3>
               </motion.div>
@@ -732,7 +732,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Lightbulb className="w-8 h-8 text-[#2B3E4E] mr-3" />
+                <Lightbulb className="w-8 h-8 text-[#2B3E4E] mr-3" />
                 </motion.div>
                 <h3 className="text-xl font-semibold">Platform Features</h3>
               </motion.div>
@@ -809,7 +809,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Target className="w-8 h-8 text-[#FFB71B] mr-3" />
+                <Target className="w-8 h-8 text-[#FFB71B] mr-3" />
                 </motion.div>
                 <h2 className="text-3xl font-bold">Our Mission</h2>
               </motion.div>
@@ -837,7 +837,7 @@ const AboutUsPage = () => {
                   whileHover={{ rotate: 15 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Lightbulb className="w-8 h-8 text-[#2B3E4E] mr-3" />
+                <Lightbulb className="w-8 h-8 text-[#2B3E4E] mr-3" />
                 </motion.div>
                 <h2 className="text-3xl font-bold">Our Vision</h2>
               </motion.div>
