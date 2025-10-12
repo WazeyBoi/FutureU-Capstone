@@ -65,6 +65,19 @@ function ScrollToTop() {
   return null;
 }
 
+function ConditionalNavigation() {
+  const location = useLocation();
+  
+  // Hide navigation on TakeAssessment page
+  const hideNavigation = location.pathname.startsWith('/take-assessment/');
+  
+  if (hideNavigation) {
+    return null;
+  }
+  
+  return <Navigation />;
+}
+
 function App() {
   return (
 
@@ -72,7 +85,7 @@ function App() {
       <Router>
         <div className="App">
           <ScrollToTop />
-          <Navigation />
+          <ConditionalNavigation />
           <Routes>
             {/* Public homepage - show landing for guests; redirect authenticated users */}
             <Route path="/" element={

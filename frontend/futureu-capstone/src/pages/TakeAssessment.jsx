@@ -402,8 +402,8 @@ const TakeAssessment = () => {
           if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
             initialSections.push({
               id: 'interest-combined',
-              title: 'Interest Assessment',
-              description: 'Assess your personal interests and preferences in various activities',
+              title: 'Career Assessment',
+              description: 'How much do you like each activity?',
               questions: questionsData.interestAreas,
               questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
               isRiasecSection: true // Marker that this is a RIASEC section
@@ -648,9 +648,8 @@ const TakeAssessment = () => {
       if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
         initialSections.push({
           id: 'interest-combined',
-          title: 'Interest Assessment',
-          description: 'Assess your personal interests and preferences in various activities',
-          questions: questionsData.interestAreas,
+          title: 'Career Assessment',
+          description: 'How much do you like each activity?',
           questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
           isRiasecSection: true // Marker that this is a RIASEC section
         });
@@ -1254,27 +1253,27 @@ const TakeAssessment = () => {
   };
   
   return (
-    <div className="max-w-8xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen flex flex-col">
+    <div className="max-w-8xl mx-auto py-6 px-2 sm:px-6 lg:px-8 min-h-screen flex flex-col">
       {/* Toggle button for progress header */}
       <div className="flex justify-end mb-3">
         <button
           onClick={() => setShowProgressHeader(!showProgressHeader)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
           title={showProgressHeader ? "Hide progress header" : "Show progress header"}
         >
           {showProgressHeader ? (
             <>
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
               </svg>
-              <span className="text-sm font-medium text-gray-700">Hide Progress</span>
+              <span className="text-sm font-medium text-white">Hide Progress</span>
             </>
           ) : (
             <>
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              <span className="text-sm font-medium text-gray-700">Show Progress</span>
+              <span className="text-sm font-medium text-white">Show Progress</span>
             </>
           )}
         </button>
@@ -1289,13 +1288,13 @@ const TakeAssessment = () => {
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
         >
-      <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto">
+      <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto ">
         {/* Assessment Info Card - Making sure it fills available height */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-[#1D63A1]/20 grow h-full flex flex-col"
+          className="bg-white p-4 sm:p-6 rounded-xl shadow-xl grow h-full flex flex-col"
         >
           <div className="flex flex-col sm:flex-row justify-between items-start h-auto">
             <div className="flex-1">
@@ -1314,7 +1313,8 @@ const TakeAssessment = () => {
             
             <div className="flex flex-col gap-2">
               {/* Save & Exit button - New element */}
-              <button
+              {/* HIDDEN FOR NOW */}
+              {/* <button
                 onClick={handleSaveAndExit}
                 disabled={isSaving}
                 className="text-center mt-2 sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors"
@@ -1330,13 +1330,12 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      {/* Replaced invalid path with valid Heroicons save icon */}
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
                     </svg>
                     Save & Exit
                   </>
                 )}
-              </button>
+              </button> */}
               
               {/* Overall assessment time limit (if applicable) */}
               {timeRemaining && (
@@ -1385,7 +1384,7 @@ const TakeAssessment = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
+          className="rounded-xl p-4 sm:p-5 lg:w-1/3 flex flex-col"
         >
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-medium text-[#232D35] text-sm flex items-center">

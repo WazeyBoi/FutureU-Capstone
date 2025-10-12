@@ -12,8 +12,8 @@ const AssessmentTooltip = ({ sectionType }) => {
         title: "Assessment Source",
         content: (
           <>
-            <p className="mb-3 font-normal leading-relaxed">
-              Questions in this section are based on the <strong className="text-[#232D35]">O*NET® Interest Profiler™</strong> from the O*NET Resource Center.
+              <p className="mb-3 font-normal leading-relaxed">
+              Questions in this section are based on the <strong className="text-[#2B3E4E]">O*NET® Interest Profiler™</strong> from the O*NET Resource Center.
             </p>
             <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
               <p className="mb-1.5">
@@ -25,7 +25,7 @@ const AssessmentTooltip = ({ sectionType }) => {
                   href="https://www.onetcenter.org/dl_files/IPSF_Psychometric.pdf" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-[#1D63A1] hover:text-[#1D63A1]/80 underline ml-1 font-medium"
+                  className="text-[#FFB71B] hover:text-[#2B3E4E] underline ml-1 font-medium"
                 >
                   ONET Resource Center
                 </a>
@@ -41,7 +41,7 @@ const AssessmentTooltip = ({ sectionType }) => {
         content: (
           <>
             <p className="mb-3 font-normal leading-relaxed">
-              Questions in this section are based heavily on <strong className="text-[#232D35]">Grade 9 curriculum</strong> standards and learning competencies.
+              Questions in this section are based heavily on <strong className="text-[#2B3E4E]">Grade 9 curriculum</strong> standards and learning competencies.
             </p>
             <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-100">
               <p className="mb-1.5">
@@ -67,11 +67,11 @@ const AssessmentTooltip = ({ sectionType }) => {
         onMouseLeave={() => setIsVisible(false)}
         onFocus={() => setIsVisible(true)}
         onBlur={() => setIsVisible(false)}
-        className="ml-2 p-1.5 rounded-full hover:bg-[#1D63A1]/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1D63A1] focus:ring-opacity-50"
+        className="ml-2 p-1.5 rounded-full hover:bg-[#FFB71B]/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:ring-opacity-50"
         aria-label={tooltipData.ariaLabel}
       >
         <svg 
-          className="w-4 h-4 text-[#1D63A1] hover:text-[#1D63A1]/80" 
+          className="w-4 h-4 text-[#FFB71B] hover:text-[#2B3E4E]" 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -96,12 +96,12 @@ const AssessmentTooltip = ({ sectionType }) => {
         >
           <div className="text-left">
             <div className="flex items-center mb-3">
-              <div className="w-8 h-8 rounded-full bg-[#1D63A1]/10 flex items-center justify-center mr-3 flex-shrink-0">
-                <svg className="w-4 h-4 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 rounded-full bg-[#FFB71B]/10 flex items-center justify-center mr-3 flex-shrink-0">
+                <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h4 className="text-base font-bold text-[#232D35]">{tooltipData.title}</h4>
+              <h4 className="text-base font-bold text-[#2B3E4E]">{tooltipData.title}</h4>
             </div>
             
             <div className="text-sm">
@@ -307,13 +307,13 @@ const AssessmentSection = forwardRef(({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-md p-4 sm:p-6 mb-6 overflow-hidden flex flex-col"
+      className="bg-white rounded-xl shadow-xl p-4 sm:p-6 mb-6 overflow-hidden flex flex-col"
     >
       {/* Section header with improved responsiveness - add ref here */}
       <div ref={sectionHeaderRef} className="flex justify-between mb-4 border-b border-gray-200 pb-4">
         <div>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-            <h2 className="text-lg sm:text-xl font-bold text-[#232D35] flex items-center mb-2 sm:mb-0">
+            <h2 className="text-lg sm:text-xl font-bold text-[#2B3E4E] flex items-center mb-2 sm:mb-0">
               <span className="line-clamp-1">{title}</span>
               <AssessmentTooltip sectionType={isRiasecSection ? 'riasec' : 'curriculum'} />
             </h2>
@@ -331,24 +331,24 @@ const AssessmentSection = forwardRef(({
         
         {/* Progress indicators */}
         {/* <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div className="flex items-center">
-            <span className="text-xs text-[#1D63A1] bg-[#1D63A1]/10 px-3 py-1 rounded-full">
+          {/* <div className="flex items-center">
+            <span className="text-xs text-[#FFB71B] bg-[#FFB71B]/10 px-3 py-1 rounded-full">
               {questions.length} Questions • {answeredQuestionsCount} Answered
             </span>
             <div className="h-2 w-24 bg-gray-200 rounded-full ml-3 overflow-hidden">
               <div 
                 className={`h-full ${
                   sectionCompletionPercentage === 100 
-                    ? 'bg-green-500' // Green when section is fully completed
-                    : 'bg-[#1D63A1]' // Default brand blue otherwise
-                }`} 
+                    ? 'bg-[#FFB71B]' // Gold when section is fully completed
+                    : 'bg-[#2B3E4E]' // Dark blue for in-progress
+                }`}
                 style={{ width: `${sectionCompletionPercentage}%` }}
               ></div>
             </div>
             <span className={`text-xs font-medium ml-2 ${
               sectionCompletionPercentage === 100 
-                ? 'text-green-600' 
-                : 'text-gray-600'
+                ? 'text-[#FFB71B]' 
+                : 'text-[#2B3E4E]'
             }`}>
               {sectionCompletionPercentage}%
             </span>
@@ -367,8 +367,8 @@ const AssessmentSection = forwardRef(({
             </svg>
             <span className={`text-sm font-medium ${
               quizTimeRemaining <= 300 ? 'text-red-700' : 
-              quizTimeRemaining <= 900 ? 'text-yellow-700' : 
-              'text-[#232D35]'
+              quizTimeRemaining <= 900 ? 'text-[#FFB71B]' : 
+              'text-[#2B3E4E]'
             }`}>
               {Math.floor(quizTimeRemaining / 60)}:{(quizTimeRemaining % 60).toString().padStart(2, '0')}
             </span>
@@ -376,12 +376,12 @@ const AssessmentSection = forwardRef(({
         )}
         
         {/* Untimed section indicator for Interest Assessment */}
-        {!isInQuizSection && title === 'Interest Assessment' && (
+        {!isInQuizSection && title === 'Career Assessment' && (
           <div className="flex items-center px-4 py-2 ">
-            <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-[#FFB71B] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="text-sm text-green-700 font-medium">
+            <span className="text-sm text-[#2B3E4E] font-medium">
               Untimed - Take your time to reflect.
             </span>
           </div>
@@ -409,7 +409,7 @@ const AssessmentSection = forwardRef(({
             </>
           )}
         </div>
-        <div className="text-sm text-[#1D63A1]">
+        <div className="text-sm text-[#FFB71B]">
           Page {currentPage} of {totalPages}
         </div>
       </div> */}
@@ -418,16 +418,51 @@ const AssessmentSection = forwardRef(({
       <div ref={questionsContainerRef} className="mb-4">
         {isRiasecSection ? (
           // RIASEC Table Format - One big table for all questions
-          <div className="mt-4">
+          <div className="mt-2">
             {/* Table Legend */}
-            <div className="text-center mb-6">
-              <p className="text-sm text-gray-600 font-medium mb-4">How much do you like each activity?</p>
-              <div className="flex items-center justify-center space-x-6 text-xs text-gray-500 p-3 rounded-lg">
-                <span className="flex items-center"><span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>0 = Strongly Dislike</span>
-                <span className="flex items-center"><span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>1 = Dislike</span>
-                <span className="flex items-center"><span className="w-3 h-3 bg-gray-500 rounded-full mr-2"></span>2 = Unsure</span>
-                <span className="flex items-center"><span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>3 = Like</span>
-                <span className="flex items-center"><span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>4 = Strongly Like</span>
+            <div className="flex-1 mb-6 rounded-xl">
+              
+              {/* legend */}
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                {/* Strongly Dislike */}
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-6 h-6 bg-[#2B3E4E] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    0
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Strongly Dislike</span>
+                </div>
+                
+                {/* Dislike */}
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-6 h-6 bg-[#2B3E4E]/70 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    1
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Dislike</span>
+                </div>
+                
+                {/* Unsure */}
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    2
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Unsure</span>
+                </div>
+                
+                {/* Like */}
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-6 h-6 bg-[#FFB71B]/70 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    3
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Like</span>
+                </div>
+                
+                {/* Strongly Like */}
+                <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-6 h-6 bg-[#FFB71B] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    4
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">Strongly Like</span>
+                </div>
               </div>
             </div>
             
@@ -468,7 +503,7 @@ const AssessmentSection = forwardRef(({
                       {/* Statement Cell */}
                       <td className="border border-gray-300 px-4 py-3 text-sm text-gray-800">
                         <div className="flex items-start">
-                          <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                          <span className="w-6 h-6 rounded-full text-[#2B3E4E] text-xs font-medium flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
                             {indexOfFirstQuestion + index + 1}
                           </span>
                           <span className="leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: (() => {
@@ -520,7 +555,7 @@ const AssessmentSection = forwardRef(({
                             }
                             return t;
                           })() }} />
-                          {answers[question.questionId] && (
+                          {/* {answers[question.questionId] && (
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}
@@ -529,7 +564,7 @@ const AssessmentSection = forwardRef(({
                             >
                               ✓
                             </motion.div>
-                          )}
+                          )} */}
                         </div>
                       </td>
                       
@@ -540,8 +575,8 @@ const AssessmentSection = forwardRef(({
                             <label className="cursor-pointer flex justify-center">
                               <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
                                 answers[question.questionId] === rating.toString()
-                                  ? `border-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-500 bg-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-500`
-                                  : `border-gray-300 hover:border-${rating === 0 ? 'red' : rating === 1 ? 'orange' : rating === 2 ? 'gray' : rating === 3 ? 'blue' : 'green'}-400`
+                                  ? rating <= 1 ? 'border-[#2B3E4E] bg-[#2B3E4E]' : rating === 2 ? 'border-gray-500 bg-gray-500' : 'border-[#FFB71B] bg-[#FFB71B]'
+                                  : rating <= 1 ? 'border-gray-300 hover:border-[#2B3E4E]' : rating === 2 ? 'border-gray-300 hover:border-gray-500' : 'border-gray-300 hover:border-[#FFB71B]'
                               }`}>
                                 {answers[question.questionId] === rating.toString() && (
                                   <motion.div 
@@ -582,26 +617,28 @@ const AssessmentSection = forwardRef(({
             >
               {/* Display passage if this is the first question of a passage */}
               {question.passageData && question.passageData.isFirstQuestionOfPassage && (
-                <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h3 className="text-lg font-semibold text-[#1D63A1] mb-3">
-                    Passage {question.passageData.passageIndex + 1}: {question.passageData.passage.title}
+                <div className="mb-6 p-6 bg-[#FFB71B]/5 rounded-lg">
+                  <h3 className="text-lg font-semibold text-[#2B3E4E] mb-3">
+                    {/* Passage {question.passageData.passageIndex + 1}:  */}
+                    {question.passageData.passage.title}
                   </h3>
                   <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-line text-justify" style={{ textAlign: 'justify', textJustify: 'inter-word' }}>
                     {question.passageData.passage.passageText}
                   </div>
-                  <div className="mt-4 text-xs text-blue-600 bg-blue-100 px-3 py-1 rounded-full inline-block">
+                  <div className="mt-4 text-xs text-[#FFB71B] px-3 py-1 rounded-full inline-block">
                     Questions {(question.passageData.passageIndex * 5) + 1}-{(question.passageData.passageIndex * 5) + 5} are based on this passage
                   </div>
                 </div>
               )}
               
-              <div className="flex items-center mb-2">
+              {/* hidded for now */}
+              {/* <div className="flex items-center mb-2">
                 {answers[question.questionId] && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                    className="ml-3 bg-[#FFB71B]/20 text-[#232D35] text-xs font-medium py-1 px-2 rounded-md"
+                    className="ml-3 bg-[#FFB71B]/20 text-[#2B3E4E] text-xs font-medium py-1 px-2 rounded-md"
                   >
                     <span className="flex items-center">
                       <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -611,7 +648,7 @@ const AssessmentSection = forwardRef(({
                     </span>
                   </motion.div>
                 )}
-              </div>
+              </div> */}
               <QuestionItem
                 question={question}
                 answer={answers[question.questionId]}
@@ -633,7 +670,7 @@ const AssessmentSection = forwardRef(({
             className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${
               currentPage === 1 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white border border-gray-300 text-[#232D35] hover:bg-gray-50'
+                : 'bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E] text-white hover:from-[#FFB71B] hover:to-[#FFB71B]'
             }`}
           >
             <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -644,7 +681,7 @@ const AssessmentSection = forwardRef(({
           
           {/* Page indicator - Center aligned */}
           <div className="flex-grow text-center">
-            <span className="text-sm text-[#1D63A1] font-medium px-4 py-2 rounded-md inline-block">
+            <span className="text-sm text-[#FFB71B] font-medium px-4 py-2 rounded-md inline-block">
               Page {currentPage} of {totalPages}
             </span>
           </div>
@@ -656,7 +693,7 @@ const AssessmentSection = forwardRef(({
             className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm ${
               currentPage === totalPages 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : 'bg-white border border-gray-300 text-[#232D35] hover:bg-gray-50'
+                : 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white hover:from-[#2B3E4E] hover:to-[#2B3E4E]'
             }`}
           >
             Next
@@ -678,7 +715,7 @@ const AssessmentSection = forwardRef(({
             className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
               isFirstSection
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-gray-100 text-[#232D35] hover:bg-gray-200'
+                : 'bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E] text-white hover:from-[#FFB71B] hover:to-[#FFB71B]'
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -691,11 +728,7 @@ const AssessmentSection = forwardRef(({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleNext} // Use our new handler
-            className={`px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 ${
-              isLastSection 
-                ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 text-[#232D35] hover:from-[#FFB71B] hover:to-[#FFB71B]/70' 
-                : 'bg-gradient-to-r from-[#1D63A1] to-[#232D35] text-white hover:from-[#1D63A1]/90 hover:to-[#232D35]/90'
-            }`}
+            className="px-4 py-2 rounded-lg shadow-sm flex items-center space-x-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white hover:from-[#2B3E4E] hover:to-[#2B3E4E]"
           >
             {isLastSection ? (
               <>
@@ -719,7 +752,7 @@ const AssessmentSection = forwardRef(({
       {/* Status indicator when not all questions are answered */}
       {/* {!allQuestionsAnswered && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <p className="text-center text-sm text-[#1D63A1]">
+          <p className="text-center text-sm text-[#2B3E4E]">
             Please answer all {questions.length} questions in this section to proceed.
             <span className="block mt-1 font-medium">
               {answeredQuestionsCount} of {questions.length} answered

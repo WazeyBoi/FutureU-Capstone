@@ -29,7 +29,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
         completion: 0
       },
       interest: {
-        title: "Interest Assessment",
+        title: "Career Assessment",
         icon: <Microscope className="w-5 h-5 text-[#232D35]" />,
         sections: [],
         completion: 0
@@ -116,12 +116,10 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     const progress = numItems === 0 ? 0 : Math.round((answeredCount / numItems) * 100);
     // Determine progress bar color
     let progressBarColor = "bg-gray-300";
-    if (progress > 75) {
-      progressBarColor = "bg-green-500";
-    } else if (progress > 50) {
-      progressBarColor = "bg-blue-500";
+    if (progress === 100) {
+      progressBarColor = "bg-[#FFB71B]";
     } else if (progress > 0) {
-      progressBarColor = "bg-yellow-500";
+      progressBarColor = "bg-[#2B3E4E]";
     }
     return (
       <div className="mt-2 px-2">
@@ -142,12 +140,12 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
             return (
               <button
                 key={idx}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all relative
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all relative
                   ${isCurrent
-                    ? 'bg-[#1D63A1] text-white border-[#1D63A1]'
+                    ? 'text-white shadow-md'
                     : isAnswered
-                      ? 'bg-gradient-to-r from-green-200 to-green-200 text-green-700'
-                      : 'bg-white text-[#232D35] border-[#1D63A1]/30 hover:bg-[#1D63A1]/10'
+                      ? 'bg-[#FFB71B]/20 text-[#2B3E4E] shadow-md'
+                      : 'shadow-md'
                   }`}
                 onClick={() => {
                   if (onNavigateToQuestion) {
@@ -180,19 +178,19 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
     const isActive = sectionIndex === currentSection;
 
     // Color refinement for section states
-    let sectionClass = "w-full flex items-center justify-between px-2 py-2 rounded-lg text-sm font-medium transition-all ";
+    let sectionClass = "w-full flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all ";
     if (isActive) {
-      // Active: blue border, blue bg, white text, subtle shadow
-      sectionClass += "border-2 border-[#2563eb] bg-gradient-to-r from-[#2563eb]/60 to-[#1D63A1]/60 text-white shadow-lg";
+      // Active: dark blue background with white text
+      sectionClass += "bg-[#2B3E4E] text-white shadow-lg";
     } else if (completion === 100) {
-      // Completed: green border, green bg, dark green text
-      sectionClass += "border-2 border-green-500 bg-gradient-to-r from-green-100 to-green-200 text-green-900 shadow";
+      // Completed: subtle badge instead of bold color
+      sectionClass += "bg-gray-100 text-gray-700 hover:bg-gray-200";
     } else if (completion > 0) {
-      // In progress: yellow border, yellow bg, dark yellow text
-      sectionClass += "border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-yellow-100 text-yellow-800";
+      // In progress: light dark blue background
+      sectionClass += "bg-[#2B3E4E]/20 text-[#2B3E4E]";
     } else {
-      // Default: gray border, white bg, dark text
-      sectionClass += "border border-gray-200 bg-white text-[#232D35] hover:bg-gray-50 hover:border-[#1D63A1]/30";
+      // Default: light gray background
+      sectionClass += "bg-gray-100 text-gray-600 hover:bg-gray-200";
     }
 
     return (
@@ -210,6 +208,12 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
             <span className="text-xs leading-tight" title={section.title}>{section.title}</span>
           </div>
           <div className="flex items-center ml-auto">
+            {/* Completion badge for completed sections */}
+            {completion === 100 && (
+              <span className="mr-2 text-xs px-1.5 py-0.5 font-bold text-white bg-[#FFB71B] rounded-md">
+                ✓
+              </span>
+            )}
             {/* <span className="ml-2 text-xs">{section.questions ? section.questions.length : 0} items</span> */}
             <svg
               className={`h-4 w-4 ml-2 transition-transform duration-300 ${isSectionOpen ? 'rotate-180' : ''}`}
@@ -246,7 +250,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl shadow-lg p-2 sm:p-3 mb-4 flex flex-col"
+      className="bg-white rounded-xl shadow-xl p-2 sm:p-3 mb-4 flex flex-col"
     >
       <div className="mb-3 text-xs font-medium text-[#232D35] flex items-center border-b border-gray-200 pb-2">
         {/* Replaced invalid SVG with Lucide ClipboardList icon */}
@@ -266,25 +270,29 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
           return (
             <div key={groupKey} className={`rounded-lg overflow-hidden ${
               isCompleted 
-                ? 'border-2 border-green-400 bg-green-50/30 shadow-md' 
-                : 'border border-gray-200 shadow-sm'
+                ? 'bg-white shadow-lg' 
+                : isOpen
+                  ? 'bg-white shadow-md'
+                  : 'bg-white shadow-sm'
             } transition-all duration-300`}>
               <button 
-                className={`w-full px-3 py-2 flex items-center transition-colors duration-200 ${
+                className={`w-full px-3 py-2 flex items-center transition-all duration-200 ${
                   isOpen 
-                    ? 'bg-gradient-to-r from-[#1D63A1]/5 to-[#1D63A1]/5 text-[#232D35] shadow-md'
+                    ? 'bg-[#2B3E4E] text-white'
                     : isCompleted
-                      ? 'bg-gradient-to-r from-green-50 to-green-50 text-green-800 hover:bg-green-200'
-                      : 'bg-gradient-to-r from-[#232D35]/5 to-[#1D63A1]/10 text-gray-700 hover:bg-[#232D35]/15'
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
                 onClick={() => toggleGroup(groupKey)}
               >
                 {/* Icon and title on the left */}
                 <div className="flex items-center">
-                  <span className={`mr-2 p-1.5 rounded-full ${isOpen ? 'bg-white' : 'bg-white'}`}>
-                    {group.icon}
+                  <span className={`mr-2 p-1.5 rounded-full ${isOpen ? 'bg-white/20' : 'bg-white'}`}>
+                    <div className={isOpen ? 'brightness-0 invert' : ''}>
+                      {group.icon}
+                    </div>
                   </span>
-                  <span className="text-black text-start font-medium text-xs leading-tight">{group.title}</span>
+                  <span className={`text-start font-medium text-xs leading-tight ${isOpen ? 'text-white' : 'text-black'}`}>{group.title}</span>
                 </div>
                 
                 {/* Flex spacer to push the remaining elements to the right */}
@@ -292,7 +300,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                 
                 {/* Completion badge on the right */}
                 {isCompleted && (
-                  <span className={`mr-2 text-xs px-1.5 py-0.5 font-medium text-green-700 rounded-md bg-green-100`}>
+                  <span className="mr-2 text-xs px-2 py-0.5 font-bold text-white bg-[#FFB71B] rounded-md">
                     ✓
                   </span>
                 )}
@@ -300,21 +308,26 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                 {/* Progress indicator (if not completed) */}
                 {!isCompleted && (
                   <div className="flex items-center mr-2">
-                    <span className={`ml-1 text-xs font-bold ${
-                        group.completion > 75 ? 'text-green-500' : 
-                        group.completion > 50 ? 'text-blue-500' : 
-                        group.completion > 0 ? 'text-yellow-500' : 'text-gray-800'
-                    }`}>{group.completion}%</span>
+                    <div className={`w-12 h-1.5 rounded-full overflow-hidden mr-2 ${isOpen ? 'bg-white/20' : 'bg-gray-200'}`}>
+                      <div 
+                        className={`h-full rounded-full transition-all ${isOpen ? 'bg-white' : 'bg-[#2B3E4E]'}`}
+                        style={{ width: `${group.completion}%` }}
+                      ></div>
+                    </div>
+                    <span className={`text-xs font-bold ${isOpen ? 'text-white' : 'text-gray-700'}`}>
+                      {group.completion}%
+                    </span>
                   </div>
                 )}
                 
                 {/* Dropdown arrow */}
                 <svg 
-                  className={`h-4 w-4 transition-transform duration-300 text-black ${isOpen ? 'transform rotate-180' : ''}`} 
+                  className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'text-white' : 'text-gray-700'}`}
                   xmlns="http://www.w3.org/2000/svg" 
                   viewBox="0 0 20 20" 
                   fill="currentColor"
                   aria-hidden="true"
+                  style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                 >
                   {/* Replaced invalid path with valid Heroicons chevron-down */}
                   <path fillRule="evenodd" d="M6.293 8.293a1 1 0 011.414 0L10 10.586l2.293-2.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414z" clipRule="evenodd" />
@@ -331,7 +344,7 @@ const SectionNavigator = ({ sections, currentSection, onSectionChange, sectionCo
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden"
                   >
-                    <div className={`p-2 space-y-1 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}>
+                    <div className={`p-2 space-y-1 ${isCompleted ? 'bg-gray-50' : 'bg-white'}`}>
                       {group.sections.map((section, globalIndex) => {
                         const index = sections.findIndex(s => s.id === section.id);
                         // If group has only one section, just render the items directly without section accordion
