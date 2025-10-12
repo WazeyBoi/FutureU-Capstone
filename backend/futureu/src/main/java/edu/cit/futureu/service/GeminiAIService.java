@@ -1446,16 +1446,98 @@ public class GeminiAIService {
      * Fallback career summary when AI is unavailable
      */
     private String getFallbackCareerSummary(CareerEntity career, double matchPercentage) {
-        return String.format("%s aligns well with your strengths (%.0f%% match).", 
-            career.getCareerTitle(), matchPercentage);
+        StringBuilder summary = new StringBuilder();
+        
+        // Make it personal and match-based
+        if (matchPercentage >= 85) {
+            summary.append("You're a natural fit for ").append(career.getCareerTitle()).append("! ");
+        } else if (matchPercentage >= 75) {
+            summary.append(career.getCareerTitle()).append(" aligns really well with your profile. ");
+        } else if (matchPercentage >= 65) {
+            summary.append(career.getCareerTitle()).append(" matches several of your key strengths. ");
+        } else {
+            summary.append(career.getCareerTitle()).append(" offers an interesting path to explore. ");
+        }
+        
+        // Add career-specific context if available
+        if (career.getCareerDescription() != null && !career.getCareerDescription().isEmpty()) {
+            String desc = career.getCareerDescription().toLowerCase();
+            
+            // Try to identify key characteristics
+            if (desc.contains("creative") || desc.contains("design")) {
+                summary.append("This role values creativity and innovation, ");
+            } else if (desc.contains("analytical") || desc.contains("data") || desc.contains("research")) {
+                summary.append("This role emphasizes analytical thinking and problem-solving, ");
+            } else if (desc.contains("people") || desc.contains("team") || desc.contains("communication")) {
+                summary.append("This role focuses on working with people and communication, ");
+            } else if (desc.contains("technical") || desc.contains("engineering")) {
+                summary.append("This technical role requires specialized skills, ");
+            } else if (desc.contains("business") || desc.contains("management")) {
+                summary.append("This role involves business strategy and management, ");
+            } else {
+                summary.append("This role ");
+            }
+            
+            summary.append("which connects with your abilities and interests.");
+        } else {
+            // If no description, be more general but encouraging
+            if (matchPercentage >= 70) {
+                summary.append("Your personality and skills make you well-suited for this career path.");
+            } else {
+                summary.append("This career could help you develop new skills while leveraging your strengths.");
+            }
+        }
+        
+        return summary.toString();
     }
 
     /**
      * Fallback program summary when AI is unavailable
      */
     private String getFallbackProgramSummary(ProgramEntity program, double matchPercentage) {
-        return String.format("%s supports your target skills (%.0f%% match).", 
-            program.getProgramName(), matchPercentage);
+        StringBuilder summary = new StringBuilder();
+        
+        // Start with match-based tone
+        if (matchPercentage >= 85) {
+            summary.append("This is an excellent program match for you! ");
+        } else if (matchPercentage >= 75) {
+            summary.append(program.getProgramName()).append(" strongly aligns with your goals. ");
+        } else if (matchPercentage >= 65) {
+            summary.append(program.getProgramName()).append(" fits well with your aspirations. ");
+        } else {
+            summary.append("Consider ").append(program.getProgramName()).append(". ");
+        }
+        
+        // Add program-specific insights if available
+        if (program.getDescription() != null && !program.getDescription().isEmpty()) {
+            String desc = program.getDescription().toLowerCase();
+            
+            // Identify program characteristics
+            if (desc.contains("hands-on") || desc.contains("practical") || desc.contains("internship")) {
+                summary.append("The program's hands-on approach will help you build real-world experience ");
+            } else if (desc.contains("research") || desc.contains("theoretical")) {
+                summary.append("The program's research focus will deepen your expertise ");
+            } else if (desc.contains("industry") || desc.contains("partnership")) {
+                summary.append("The program's industry connections will open career opportunities ");
+            } else if (desc.contains("flexible") || desc.contains("customizable")) {
+                summary.append("The flexible curriculum allows you to tailor your learning ");
+            } else if (desc.contains("comprehensive") || desc.contains("holistic")) {
+                summary.append("The comprehensive curriculum provides broad preparation ");
+            } else {
+                summary.append("This program ");
+            }
+            
+            summary.append("aligned with your target career path.");
+        } else {
+            // Generic but encouraging conclusion
+            if (matchPercentage >= 70) {
+                summary.append("This program supports your skills and career interests effectively.");
+            } else {
+                summary.append("This program offers pathways to develop the skills you'll need.");
+            }
+        }
+        
+        return summary.toString();
     }
 
     /**
@@ -1464,25 +1546,57 @@ public class GeminiAIService {
     private String getFallbackCareerPathSummary(String careerPathName, double matchPercentage, 
                                                Map<String, Double> componentBreakdown) {
         StringBuilder summary = new StringBuilder();
-        summary.append(String.format("%s shows a %.0f%% match with your profile.", careerPathName, matchPercentage));
         
-        // Add component breakdown explanation
+        // Start with an engaging opening based on match percentage
+        if (matchPercentage >= 80) {
+            summary.append("This path is an excellent fit for you! ");
+        } else if (matchPercentage >= 70) {
+            summary.append("This path shows strong alignment with your profile. ");
+        } else if (matchPercentage >= 60) {
+            summary.append("This path offers good opportunities that match your strengths. ");
+        } else {
+            summary.append("This path could be a great growth opportunity for you. ");
+        }
+        
+        // Explain WHY based on component breakdown
         if (componentBreakdown != null && !componentBreakdown.isEmpty()) {
-            summary.append(" Key strengths include: ");
-            componentBreakdown.entrySet().stream()
+            // Find the strongest component
+            var topComponents = componentBreakdown.entrySet().stream()
                 .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
-                .limit(2)
-                .forEach(entry -> {
-                    String component = entry.getKey();
-                    double score = entry.getValue();
-                    summary.append(String.format("%s (%.1f%%), ", 
-                        component.toUpperCase(), score));
-                });
-            // Remove trailing comma and space
-            if (summary.toString().endsWith(", ")) {
-                summary.setLength(summary.length() - 2);
+                .limit(3)
+                .toList();
+            
+            if (!topComponents.isEmpty()) {
+                var strongest = topComponents.get(0);
+                String component = strongest.getKey().toLowerCase();
+                double score = strongest.getValue();
+                
+                // Explain based on which component is strongest
+                if (component.contains("riasec") && score >= 70) {
+                    summary.append("Your personality type is perfectly suited for ").append(careerPathName).append(". ");
+                } else if (component.contains("aptitude") && score >= 70) {
+                    summary.append("Your natural abilities align strongly with ").append(careerPathName).append(". ");
+                } else if (component.contains("context") && score >= 70) {
+                    summary.append(careerPathName).append(" offers excellent market opportunities and growing demand. ");
+                } else if (component.contains("skills") && score >= 70) {
+                    summary.append("Your skill set matches well with what ").append(careerPathName).append(" requires. ");
+                } else {
+                    summary.append(careerPathName).append(" matches your profile in several key areas. ");
+                }
+                
+                // Add a forward-looking statement
+                if (matchPercentage >= 75) {
+                    summary.append("This path will let you leverage your strengths and build a rewarding career.");
+                } else if (matchPercentage >= 60) {
+                    summary.append("This path offers room to develop new skills while using what you're already good at.");
+                } else {
+                    summary.append("This path provides opportunities to explore new areas and expand your capabilities.");
+                }
             }
-            summary.append(".");
+        } else {
+            // If no component breakdown, give generic but encouraging message
+            summary.append(String.format("With a %.0f%% match, %s aligns with your profile and offers meaningful career opportunities.", 
+                matchPercentage, careerPathName));
         }
         
         return summary.toString();
