@@ -252,7 +252,7 @@ const Navigation = () => {
                         <div className="flex items-center justify-between">
                         <button
                     onClick={handleSetupNowClick}
-                      className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E]"
+                      className="inline-flex items-center text-xs font-bold text-[#2B3E4E] bg-gradient-to-r from-[#FFB71B] to-[#FF9800] hover:to-[#1D63A1] hover:text-white px-4 py-2 rounded-lg transition-all duration-300 group shadow-md hover:shadow-lg transform hover:scale-105 border-2 border-transparent hover:border-[#2B3E4E] cursor-pointer"
                     >
                       Set up now
                       <ChevronDown className="w-3 h-3 ml-2 transform rotate-[-90deg] group-hover:translate-x-0.5 transition-transform" />
@@ -295,7 +295,7 @@ const Navigation = () => {
               <button
                 onClick={handleProfileClick}
                 onMouseDown={(e) => e.preventDefault()}
-                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#FFB71B]/10 hover:text-[#232D35] transition-colors duration-150 text-left"
+                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-[#FFB71B]/10 hover:text-[#232D35] transition-colors duration-150 text-left cursor-pointer"
                 type="button"
               >
                 <User className="w-5 h-5 mr-3 text-[#FFB71B]" />
@@ -305,7 +305,7 @@ const Navigation = () => {
               <button
                 onClick={handleLogout}
                 onMouseDown={(e) => e.preventDefault()}
-                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150 text-left"
+                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors duration-150 text-left cursor-pointer"
                 type="button"
               >
                 <LogOut className="w-5 h-5 mr-3 text-red-500" />
