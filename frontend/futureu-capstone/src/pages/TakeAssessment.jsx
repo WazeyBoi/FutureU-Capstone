@@ -13,6 +13,7 @@ import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModa
 import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
+import lazySVG from '../assets/characters/lazy.svg';
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -81,8 +82,16 @@ const TakeAssessment = () => {
   // Add state to control showing the assessment tips/instructions
   const [showAssessmentTips, setShowAssessmentTips] = useState(true);
 
+  // Add state for leave page confirmation modal
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const shouldBlockNavigation = useRef(false);
+  const isLeavingConfirmed = useRef(false);
+
   // Add state to store the last submitted userAssessmentId
   const [lastUserAssessmentId, setLastUserAssessmentId] = useState(null);
+
+  // Add state to control progress header visibility
+  const [showProgressHeader, setShowProgressHeader] = useState(true);
 
   // Helper function to check if a section is a quiz section (not Interest Assessment)
   const isQuizSection = (sectionId) => {
@@ -393,8 +402,8 @@ const TakeAssessment = () => {
           if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
             initialSections.push({
               id: 'interest-combined',
-              title: 'Interest Assessment',
-              description: 'Assess your personal interests and preferences in various activities',
+              title: 'Career Assessment',
+              description: 'How much do you like each activity?',
               questions: questionsData.interestAreas,
               questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
               isRiasecSection: true // Marker that this is a RIASEC section
@@ -639,9 +648,8 @@ const TakeAssessment = () => {
       if (questionsData.interestAreas && questionsData.interestAreas.length > 0) {
         initialSections.push({
           id: 'interest-combined',
-          title: 'Interest Assessment',
-          description: 'Assess your personal interests and preferences in various activities',
-          questions: questionsData.interestAreas,
+          title: 'Career Assessment',
+          description: 'How much do you like each activity?',
           questionsPerPage: 10, // Set to display 10 questions per page for RIASEC
           isRiasecSection: true // Marker that this is a RIASEC section
         });
@@ -987,6 +995,64 @@ const TakeAssessment = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [completed, userAnswers]);
+
+  // Handle navigation blocking for in-app navigation (back button)
+  // This approach works for Edge, Chrome, Firefox, and Safari
+  useEffect(() => {
+    // Update the ref based on current state
+    shouldBlockNavigation.current = !completed && Object.keys(userAnswers).length > 0;
+    
+    if (!shouldBlockNavigation.current) return;
+
+    let historyLength = window.history.length;
+    
+    // Push initial state
+    window.history.pushState({ page: 'assessment' }, '', window.location.href);
+
+    const handlePopState = (event) => {
+      console.log('Back button pressed, shouldBlock:', shouldBlockNavigation.current);
+      
+      if (shouldBlockNavigation.current && !isLeavingConfirmed.current) {
+        // Stop the navigation immediately
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Push state again to stay on current page
+        window.history.pushState({ page: 'assessment' }, '', window.location.href);
+        
+        // Show the confirmation modal
+        setShowLeaveConfirmation(true);
+        
+        return false;
+      }
+    };
+
+    // Use both capture and bubble phase to catch the event early
+    window.addEventListener('popstate', handlePopState, true);
+    window.addEventListener('popstate', handlePopState, false);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState, true);
+      window.removeEventListener('popstate', handlePopState, false);
+    };
+  }, [completed, userAnswers]);
+
+  // Handle leave confirmation
+  const handleConfirmLeave = () => {
+    console.log('User confirmed leave');
+    setShowLeaveConfirmation(false);
+    isLeavingConfirmed.current = true;
+    shouldBlockNavigation.current = false;
+    
+    // Navigate to student home page
+    navigate('/student-home');
+  };
+
+  const handleCancelLeave = () => {
+    console.log('User cancelled leave');
+    setShowLeaveConfirmation(false);
+    // User chose to stay, modal closes and they remain on page
+  };
   
   // Insert this modal before the main return
   if (showResumeModal) {
@@ -1089,7 +1155,7 @@ const TakeAssessment = () => {
   // Completed state
   if (completed) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-white-100 via-blue-100 to-blue-100 py-10 pt-40 overflow-hidden">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-[#2B3E4E] via-white to-[#FFB71B] py-10 pt-40 overflow-hidden">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -1134,7 +1200,7 @@ const TakeAssessment = () => {
           >
             <button
               onClick={() => navigate(`/assessment-results/${lastUserAssessmentId || ''}`)}
-              className="px-6 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-full font-semibold shadow transition-colors"
+              className="px-6 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-lg font-semibold shadow transition-colors"
               disabled={!lastUserAssessmentId}
             >
               Continue
@@ -1187,15 +1253,48 @@ const TakeAssessment = () => {
   };
   
   return (
-    <div className="max-w-7xl mx-auto py-6 px-2 sm:px-6 lg:px-8 bg-gradient-to-b from-[#232D35]/10 to-white min-h-screen flex flex-col">
+    <div className="max-w-8xl mx-auto py-6 px-2 sm:px-6 lg:px-8 min-h-screen flex flex-col">
+      {/* Toggle button for progress header */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={() => setShowProgressHeader(!showProgressHeader)}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
+          title={showProgressHeader ? "Hide progress header" : "Show progress header"}
+        >
+          {showProgressHeader ? (
+            <>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+              </svg>
+              <span className="text-sm font-medium text-white">Hide Progress</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+              <span className="text-sm font-medium text-white">Show Progress</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Assessment Header - Better height utilization */}
-      <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto">
+      <AnimatePresence>
+      {showProgressHeader && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+      <div className="flex flex-col lg:flex-row gap-5 mb-5 h-auto ">
         {/* Assessment Info Card - Making sure it fills available height */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white p-4 sm:p-6 rounded-xl shadow-md border border-[#1D63A1]/20 grow h-full flex flex-col"
+          className="bg-white p-4 sm:p-6 rounded-xl shadow-xl grow h-full flex flex-col"
         >
           <div className="flex flex-col sm:flex-row justify-between items-start h-auto">
             <div className="flex-1">
@@ -1214,7 +1313,8 @@ const TakeAssessment = () => {
             
             <div className="flex flex-col gap-2">
               {/* Save & Exit button - New element */}
-              <button
+              {/* HIDDEN FOR NOW */}
+              {/* <button
                 onClick={handleSaveAndExit}
                 disabled={isSaving}
                 className="text-center mt-2 sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors"
@@ -1230,30 +1330,12 @@ const TakeAssessment = () => {
                 ) : (
                   <>
                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      {/* Replaced invalid path with valid Heroicons save icon */}
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
                     </svg>
                     Save & Exit
                   </>
                 )}
-              </button>
-              
-              {/* Quiz timer countdown (only show when in quiz sections and timer is active) */}
-              {isInQuizSection && quizTimeRemaining !== null && (
-                <div className={`mt-2 sm:mt-0 px-4 py-2 rounded-lg flex shadow-sm ${
-                  quizTimeRemaining <= 300 ? 'bg-red-100 text-red-700' : 
-                  quizTimeRemaining <= 900 ? 'bg-yellow-100 text-yellow-700' : 
-                  'bg-[#232D35] text-[#FFB71B]'
-                }`}>
-                  <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm font-medium">
-                    Quiz time: {formatQuizTime(quizTimeRemaining)}
-                    {!quizTimerActive && ' (paused)'}
-                  </span>
-                </div>
-              )}
+              </button> */}
               
               {/* Overall assessment time limit (if applicable) */}
               {timeRemaining && (
@@ -1302,28 +1384,46 @@ const TakeAssessment = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-white rounded-xl shadow-md p-4 sm:p-5 border border-[#1D63A1]/20 lg:w-1/3 flex flex-col"
+          className="rounded-xl p-4 sm:p-5 lg:w-1/3 flex flex-col"
         >
-          <h4 className="font-medium text-[#232D35] mb-3 text-sm flex items-center">
-            <BarChart2 className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" />
-            <span className="truncate">Your Assessment Progress</span>
-          </h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-[#232D35] text-sm flex items-center">
+              <BarChart2 className="w-5 h-5 mr-1 text-[#1D63A1] flex-shrink-0" />
+              <span className="truncate">Your Assessment Progress</span>
+            </h4>
+            {/* Quiz timer countdown beside the heading */}
+            {isInQuizSection && quizTimeRemaining !== null && (
+              <div className={`px-3 py-1 rounded-lg flex items-center ${
+                quizTimeRemaining <= 300 ? 'text-red-700' : 
+                quizTimeRemaining <= 900 ? 'text-yellow-700' : 
+                'text-[#232D35]'
+              }`}>
+                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-bold">
+                  {formatQuizTime(quizTimeRemaining)}
+                  {!quizTimerActive && ' (paused)'}
+                </span>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-grow">
-            <div className="bg-[#1D63A1]/10 p-3 rounded-lg border-2 border-[#1D63A1]/20 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(29,99,161,0.25)]">
               <div className="text-2xl font-bold text-[#1D63A1]">{totalQuestions.completed}</div>
               <div className="text-xs text-[#1D63A1]/80">Questions Answered</div>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg border-2 border-gray-100 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(107,114,128,0.2)]">
               <div className="text-2xl font-bold text-[#232D35]">{totalQuestions.total - totalQuestions.completed}</div>
               <div className="text-xs text-[#232D35]/80">Questions Remaining</div>
             </div>
-            <div className="bg-[#FFB71B]/10 p-3 rounded-lg border-2 border-[#FFB71B]/20 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(255,183,27,0.25)]">
               <div className="text-2xl font-bold text-[#FFB71B]">
                 {Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
               <div className="text-xs text-[#FFB71B]/80">Sections Completed</div>
             </div>
-            <div className="bg-[#FFB71B]/5 p-3 rounded-lg border-2 border-[#FFB71B]/10 flex flex-col justify-center">
+            <div className="bg-white p-3 rounded-lg flex flex-col justify-center shadow-[0_4px_12px_rgba(255,183,27,0.15)]">
               <div className="text-2xl font-bold text-[#232D35]">
                 {sectionList.length - Object.keys(sectionCompletion).filter(id => sectionCompletion[id] === 100).length}
               </div>
@@ -1332,6 +1432,9 @@ const TakeAssessment = () => {
           </div>
         </motion.div>
       </div>
+        </motion.div>
+      )}
+      </AnimatePresence>
       
       {/* Updated lower section with better height utilization */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 flex-grow">
@@ -1453,6 +1556,76 @@ const TakeAssessment = () => {
           onGoToDashboard={() => navigate('/assessment-dashboard')}
         />
       )}
+
+      {/* Leave Page Confirmation Dialog */}
+      <AnimatePresence>
+        {showLeaveConfirmation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-[70] flex items-center justify-center pt-45"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto py-15 flex flex-col items-center"
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src={lazySVG}
+                alt="Lazy mascot"
+                className="absolute -top-75 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+              
+              <motion.h3 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-2xl font-bold mb-3"
+              >
+                Leave Assessment?
+              </motion.h3>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-4 text-center"
+              >
+                You're about to leave this page. Your progress will be <span className="font-semibold text-red-600">lost</span> unless you save it first.
+              </motion.p>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="flex gap-3 justify-center w-full mt-5"
+              >
+                <button
+                  onClick={handleCancelLeave}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Stay & Continue
+                </button>
+                <button
+                  onClick={handleConfirmLeave}
+                  className="px-6 py-2.5 bg-[#2B3E4E] hover:bg-red-700 text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Leave Anyway
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

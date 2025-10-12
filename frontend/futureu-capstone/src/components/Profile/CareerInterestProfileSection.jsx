@@ -16,16 +16,10 @@ const CareerInterestProfileSection = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20 relative overflow-hidden mb-8 col-span-full"
+        className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 relative mb-8 col-span-full"
       >
-        {/* Enhanced Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1D63A1]/5 via-white/50 to-[#FFB71B]/5 rounded-3xl"></div>
-        <div className="absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/20 to-[#FF9800]/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-4 -left-4 w-28 h-28 bg-gradient-to-br from-[#1D63A1]/20 to-[#2B3E4E]/10 rounded-full blur-2xl animate-pulse"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-gradient-to-r from-[#FFB71B]/5 to-[#1D63A1]/5 rounded-full blur-3xl"></div>
-
         {/* Header Section */}
-        <div className="flex items-center justify-between mb-10 relative z-10">
+        <div className="flex items-center justify-between mb-10">
           <div className="flex items-center">
             <div className="relative">
               <div className="w-20 h-20 bg-gradient-to-br from-[#FFB71B] to-[#FF9800] rounded-3xl flex items-center justify-center shadow-2xl border-4 border-white">
@@ -37,7 +31,7 @@ const CareerInterestProfileSection = ({
             </div>
             <div className="ml-6">
               <div className="flex items-center mb-2">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-[#1D63A1] via-[#2B3E4E] to-[#FFB71B] bg-clip-text text-transparent">
+                <h3 className="text-3xl font-bold text-[#232D35]">
                   Career Interest Profile
                 </h3>
                 <div className="ml-3 bg-gradient-to-r from-green-500 to-emerald-400 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
@@ -49,10 +43,10 @@ const CareerInterestProfileSection = ({
           </div>
           
           <motion.button
-            whileHover={{ scale: 1.05, rotate: 1 }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onEditProfile}
-            className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#FFB71B] hover:to-[#FF9800] text-white hover:text-[#232D35] px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-2xl transform flex items-center shadow-xl border-2 border-white/20 cursor-pointer"
+            className="bg-[#232D35] hover:bg-[#1D63A1] text-white px-8 py-4 rounded-2xl font-bold transition-all duration-300 hover:shadow-lg flex items-center shadow-md cursor-pointer"
           >
             <Edit className="w-5 h-5 mr-3" />
             <span>Update Interest Profile </span>

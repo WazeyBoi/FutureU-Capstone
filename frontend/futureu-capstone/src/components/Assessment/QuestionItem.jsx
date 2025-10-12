@@ -91,8 +91,8 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
   return (
     <div className="question-container">
       <div className="mb-5">
-        <h5 className="text-start font-medium text-[#232D35] mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-[#1D63A1] shadow-sm flex items-start">
-          <span className="inline-flex items-center justify-center w-8 h-8 bg-[#1D63A1] text-white text-sm font-bold rounded-full mr-3 flex-shrink-0">
+        <h5 className="text-start font-medium text-[#232D35] mb-2 bg-gray-50 p-4 rounded-lg border-l-4 border-[#FFB71B] shadow-sm flex items-start">
+          <span className="inline-flex items-center justify-center text-[#2B3E4E] font-bold rounded-full mr-3 flex-shrink-0">
             {questionNumber}
           </span>
           <span className="whitespace-pre-line" dangerouslySetInnerHTML={{ __html: formatText(question.questionText) }} />
@@ -100,19 +100,39 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
         
         {/* Question meta info - hide for RIASEC/Likert questions */}
         {!isLikert && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {question.difficultyLevel && (
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                question.difficultyLevel === 'EASY' ? 'bg-green-100 text-green-800' :
-                question.difficultyLevel === 'MEDIUM' ? 'bg-[#FFB71B]/20 text-[#FFB71B]/90' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {question.difficultyLevel}
+          <div className="flex flex-wrap gap-2 mt-3 items-center justify-between">
+            <div className="ml-11 flex flex-wrap gap-2">
+              {/* {question.difficultyLevel && (
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  question.difficultyLevel === 'EASY' ? 'bg-green-100 text-green-800' :
+                  question.difficultyLevel === 'MEDIUM' ? 'bg-[#FFB71B]/20 text-[#FFB71B]/90' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {question.difficultyLevel}
+                </span>
+              )} */}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-[#2B3E4E]/90">
+                {question.questionType || (isLikert ? 'Likert Scale' : '')}
               </span>
+            </div>
+            
+            {/* Clear Answer Button - only show if there's an answer */}
+            {answer && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onAnswerChange(null)}
+                className="inline-flex items-center px-3 rounded-md text-xs font-medium text-red-600 transition-all"
+              >
+                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear Answer
+              </motion.button>
             )}
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#1D63A1]/20 text-[#1D63A1]/90">
-              {question.questionType || (isLikert ? 'Likert Scale' : '')}
-            </span>
           </div>
         )}
       </div>
@@ -128,17 +148,17 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
           {question.choices.map((choice, index) => (
             <motion.div key={choice.choiceId} variants={item}>
               <label 
-                className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`ml-11 flex items-start px-5 py-2  rounded-lg cursor-pointer transition-all ${
                   answer === choice.choiceId.toString() 
-                    ? 'bg-[#1D63A1]/10 border-[#1D63A1] shadow-md' 
-                    : 'hover:bg-gray-50 border-gray-200 hover:border-[#1D63A1]/50'
+                    ? 'bg-[#FFB71B]/10 shadow-md' 
+                    : 'hover:bg-gray-50 border-gray-200 hover:border-[#FFB71B]/50'
                 }`}
               >
                 <div className="flex">
                   <div 
                     className={`flex-shrink-0 h-5 w-5 mt-1 rounded-full border-2 flex items-center justify-center ${
                       answer === choice.choiceId.toString() 
-                        ? 'border-[#1D63A1] bg-[#1D63A1]' 
+                        ? 'border-[#FFB71B] bg-[#FFB71B]' 
                         : 'border-gray-300'
                     }`}
                   >
@@ -183,7 +203,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
         </div>
       )}
 
-      {/* RIASEC 5-Point Likert Scale - Table Structure */}
+      {/* RIASEC 5-Point Likert Scale - Table Structure with Brand Colors */}
       {isLikert && (
         <div className="mt-4">
           <div className="text-center mb-4">
@@ -218,7 +238,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <label className="cursor-pointer flex flex-col items-center">
                         <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
-                          answer === "1" ? 'border-red-500 bg-red-500' : 'border-gray-300 hover:border-red-400'
+                          answer === "1" ? 'border-[#2B3E4E] bg-[#2B3E4E]' : 'border-gray-300 hover:border-[#2B3E4E]/50'
                         }`}>
                           {answer === "1" && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
@@ -242,7 +262,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <label className="cursor-pointer flex flex-col items-center">
                         <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
-                          answer === "2" ? 'border-orange-500 bg-orange-500' : 'border-gray-300 hover:border-orange-400'
+                          answer === "2" ? 'border-[#2B3E4E] bg-[#2B3E4E]' : 'border-gray-300 hover:border-[#2B3E4E]/50'
                         }`}>
                           {answer === "2" && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
@@ -290,7 +310,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <label className="cursor-pointer flex flex-col items-center">
                         <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
-                          answer === "4" ? 'border-blue-500 bg-blue-500' : 'border-gray-300 hover:border-blue-400'
+                          answer === "4" ? 'border-[#FFB71B] bg-[#FFB71B]' : 'border-gray-300 hover:border-[#FFB71B]/50'
                         }`}>
                           {answer === "4" && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
@@ -314,7 +334,7 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <label className="cursor-pointer flex flex-col items-center">
                         <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center mb-2 transition-all ${
-                          answer === "5" ? 'border-green-500 bg-green-500' : 'border-gray-300 hover:border-green-400'
+                          answer === "5" ? 'border-[#FFB71B] bg-[#FFB71B]' : 'border-gray-300 hover:border-[#FFB71B]/50'
                         }`}>
                           {answer === "5" && (
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="h-3 w-3 rounded-full bg-white" />
@@ -338,14 +358,32 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
           </div>
           
           {/* Scale description */}
-          <div className="mt-3 text-center">
-            <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center justify-center space-x-4 text-xs text-gray-500 flex-1">
               <span>1 = Strongly Disagree</span>
               <span>•</span>
               <span>3 = Neutral</span>
               <span>•</span>
               <span>5 = Strongly Agree</span>
             </div>
+            
+            {/* Clear Answer Button for Likert - only show if there's an answer */}
+            {answer && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => onAnswerChange(null)}
+                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all ml-4"
+              >
+                <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear Answer
+              </motion.button>
+            )}
           </div>
         </div>
       )}
@@ -354,12 +392,30 @@ const QuestionItem = ({ question, answer, onAnswerChange, questionNumber }) => {
       {!isMultipleChoice && !isLikert && (
         <div className="mt-2">
           <textarea
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1]"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B]"
             rows="4"
             placeholder="Enter your answer here..."
             value={answer || ''}
             onChange={(e) => onAnswerChange(e.target.value)}
           ></textarea>
+          
+          {/* Clear Answer Button for text input - only show if there's an answer */}
+          {answer && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onAnswerChange('')}
+              className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-all mt-2"
+            >
+              <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear Answerasa
+            </motion.button>
+          )}
         </div>
       )}
     </div>

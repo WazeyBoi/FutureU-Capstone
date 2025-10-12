@@ -111,7 +111,7 @@ const AssessmentResults = () => {
       labels: ['Realistic', 'Investigative', 'Artistic', 'Social', 'Enterprising', 'Conventional'],
       datasets: [
         {
-          label: 'Your RIASEC Profile',
+          label: 'RIASEC',
           data: [
             riasecResult.realisticScore,
             riasecResult.investigativeScore,
@@ -120,12 +120,11 @@ const AssessmentResults = () => {
             riasecResult.enterprisingScore,
             riasecResult.conventionalScore
           ],
-          backgroundColor: 'rgba(29, 99, 161, 0.2)',
-          borderColor: 'rgba(29, 99, 161, 1)',
-          pointBackgroundColor: 'rgba(29, 99, 161, 1)',
-          pointBorderColor: '#fff',
-          pointHoverBackgroundColor: '#fff',
-          pointHoverBorderColor: 'rgba(29, 99, 161, 1)'
+          backgroundColor: 'rgba(255,183,27,0.2)',
+          borderColor: '#FFB71B',
+          pointBackgroundColor: '#1D63A1',
+          pointBorderColor: '#FFB71B',
+          borderWidth: 2,
         }
       ]
     };
@@ -259,7 +258,7 @@ const AssessmentResults = () => {
   }
   
   return (
-    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-x-visible">
+    <div className="max-w-8xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-x-visible">
       {/* Playful floating accent shapes background */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />

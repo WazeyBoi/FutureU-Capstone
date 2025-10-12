@@ -79,20 +79,17 @@ const ProfileSidebar = ({
     <motion.div
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
-      className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-6 border border-white/20 relative overflow-hidden h-fit"
+      className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 relative overflow-hidden h-fit"
     >
-      {/* Card Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1D63A1]/5 via-transparent to-[#FFB71B]/5"></div>
-      <div className="absolute top-4 right-4 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/10 to-transparent rounded-full blur-xl"></div>
 
       {/* Profile Picture Section */}
-      <div className="text-center mb-6 relative z-10">
+      <div className="text-center mb-6">
         <div className="relative inline-block mb-4">
           <div
             onClick={onProfilePictureClick}
-            className="w-28 h-28 rounded-full bg-gradient-to-br from-[#1D63A1] via-[#2B3E4E] to-[#FFB71B] p-1.5 cursor-pointer group hover:shadow-2xl transition-all duration-500 hover:scale-105"
+            className="w-24 h-24 rounded-full border-2 border-gray-800 cursor-pointer group hover:shadow-lg transition-all duration-300"
           >
-            <div className="w-full h-full rounded-full overflow-hidden bg-white relative">
+            <div className="w-full h-full rounded-full overflow-hidden bg-gray-100 relative">
               {(() => {
                 const resolveSrc = (url) => {
                   if (!url) return null;
@@ -108,32 +105,29 @@ const ProfileSidebar = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FFB71B] to-[#FF9800]">
-                    <User className="w-16 h-16 text-white" />
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <User className="w-12 h-12 text-gray-400" />
                   </div>
                 );
               })()}
               
-              {/* Enhanced Upload overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-full flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+              {/* Upload overlay */}
+              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
                 {uploading ? (
                   <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
                 ) : (
-                  <div className="text-center">
-                    <Camera className="w-4 h-4 text-white mx-auto mb-1" />
-                    <span className="text-xs text-white font-bold">Change</span>
-                  </div>
+                  <Camera className="w-6 h-6 text-white" />
                 )}
               </div>
             </div>
           </div>
 
-          {/* Enhanced Camera icon indicator */}
-          <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-gradient-to-br from-[#FFB71B] to-[#FF9800] rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+          {/* Edit icon indicator */}
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
             {uploading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
             ) : (
-              <Upload className="w-4 h-4 text-white" />
+              <User className="w-3 h-3 text-white" />
             )}
           </div>
 
@@ -147,37 +141,35 @@ const ProfileSidebar = ({
           />
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <h2 className="text-xl font-bold text-[#232D35] mb-1">
-              {user?.firstName} {user?.lastname}
-            </h2>
-            <p className="text-gray-600 text-sm mb-3">{user?.email}</p>
-          </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {user?.firstName} {user?.lastname}
+          </h2>
+          <p className="text-gray-600 text-sm">{user?.email}</p>
           
-          <div className="inline-flex items-center bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg">
-            <GraduationCap className="w-3 h-3 mr-1" />
-            <span>{user?.role || 'Student'}</span>
+          <div className="inline-flex items-center bg-gray-800 text-white px-3 py-1 rounded-full text-xs font-semibold">
+            <User className="w-3 h-3 mr-1" />
+            <span>{user?.role || 'STUDENT'}</span>
           </div>
         </div>
       </div>
 
-      {/* Enhanced Action Buttons */}
-      <div className="space-y-3 relative z-10 mb-6">
+      {/* Action Buttons */}
+      <div className="space-y-3 mb-6">
         {!editMode ? (
           <>
             <button
               onClick={onEdit}
-              className="w-full bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#1D63A1]/90 hover:to-[#2B3E4E]/90 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center group text-sm cursor-pointer"
+              className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 flex items-center justify-center group cursor-pointer"
             >
-              <Edit className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+              <Lock className="w-4 h-4 mr-2" />
               Edit Profile
             </button>
             <button
               onClick={onChangePassword}
-              className="w-full bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center group hover:shadow-lg text-sm cursor-pointer"
+              className="w-full bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center group cursor-pointer"
             >
-              <Lock className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform cursor-pointer" />
+              <Lock className="w-4 h-4 mr-2 cursor-pointer" />
               Change Password
             </button>
           </>
@@ -186,7 +178,7 @@ const ProfileSidebar = ({
             <button
               onClick={onSave}
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm cursor-pointer"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 flex items-center justify-center cursor-pointer"
             >
               {saving ? (
                 <>
@@ -202,7 +194,7 @@ const ProfileSidebar = ({
             </button>
             <button
               onClick={onCancel}
-              className="flex-1 bg-white/60 backdrop-blur-sm hover:bg-white/80 text-gray-700 py-3 px-4 rounded-xl font-bold transition-all duration-300 border border-gray-200/50 hover:border-gray-300 flex items-center justify-center hover:shadow-lg text-sm cursor-pointer"
+              className="flex-1 bg-white hover:bg-gray-50 text-gray-800 py-3 px-4 rounded-lg font-medium transition-all duration-300 border border-gray-300 flex items-center justify-center cursor-pointer"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel

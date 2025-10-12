@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as recommendationService from '../../services/recommendationService';
 
 const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
@@ -9,6 +9,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
   const [isDreamCareerRefreshing, setIsDreamCareerRefreshing] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [dreamCareerError, setDreamCareerError] = useState(null);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
 
   // Helper: extract up to `n` short action sentences from a long text block
   const extractActions = (text, n = 3) => {
@@ -275,7 +276,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
       initial={{ opacity: 0, y: 20 }} 
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: 0.5 }} 
-      className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+      className="space-y-8 bg-[#F8F9FA] rounded-3xl relative"
     >
       {/* Decorative playful background blobs (no icons) */}
       <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-gradient-to-bl from-[#1D63A1]/20 to-[#1D63A1]/10 rounded-full opacity-30 pointer-events-none transform rotate-6"></div>
@@ -284,7 +285,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 0.5, delay: 0.1 }} 
-        className="rounded-3xl shadow-lg p-6 animate-card-pop relative z-20  overflow-hidden bg-white border border-[#FFB71B]/10"
+        className="rounded-3xl shadow-lg p-6 animate-card-pop relative overflow-hidden bg-white border border-[#FFB71B]/10"
       >
         <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
 
@@ -310,7 +311,7 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
                   {isDreamCareerRefreshing ? 'Refreshing...' : 'Refresh'}
                 </button>
                 <button
-                  onClick={handleRegenerateDreamCareerAnalysis}
+                  onClick={() => setShowRegenerateConfirm(true)}
                   disabled={isDreamCareerRefreshing || isRegenerating}
                   className={`px-3 py-1 text-sm font-medium rounded-lg transition-all ${
                     isDreamCareerRefreshing || isRegenerating
@@ -514,6 +515,131 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
             </div>
           )}
       </motion.div>
+
+      {/* Regenerating Loading Modal */}
+      <AnimatePresence>
+        {isRegenerating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-[70] flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', duration: 0.4, bounce: 0.3 }}
+              className="bg-white rounded-3xl shadow-2xl max-w-md mx-auto p-8 flex flex-col items-center"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-16 h-16 border-4 border-[#FFB71B] border-t-transparent rounded-full mb-6"
+              />
+
+              <h3 className="text-2xl font-bold mb-3 text-[#232D35]">
+                Regenerating Analysis...
+              </h3>
+
+              <p className="text-gray-600 text-center mb-4">
+                Creating a fresh analysis of your dream career alignment. This may take a few minutes.
+              </p>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 w-full">
+                <p className="text-xs text-amber-800 text-center">
+                  ⏳ Please wait while we generate new insights for you.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Regeneration Confirmation Dialog */}
+      <AnimatePresence>
+        {showRegenerateConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-[70] flex items-center justify-center pt-45"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto py-15 flex flex-col items-center px-8"
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src="/src/assets/characters/raiseHand.svg"
+                alt="Raise hand mascot"
+                className="absolute -top-75 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+
+              <motion.h3
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-2xl font-bold mb-3 text-[#232D35]"
+              >
+                Regenerate Dream Career Analysis?
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-2 text-center"
+              >
+                This will generate a completely new AI-driven analysis of your dream career alignment with fresh insights and perspectives.
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 w-full"
+              >
+                <p className="text-xs text-amber-800 text-center">
+                  ⚠️ This process may take a few minutes. The new analysis may provide different focus areas and recommendations.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+                className="flex gap-3 justify-center w-full"
+              >
+                <button
+                  onClick={() => setShowRegenerateConfirm(false)}
+                  className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold shadow-md transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRegenerateConfirm(false);
+                    handleRegenerateDreamCareerAnalysis();
+                  }}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Yes, Regenerate
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

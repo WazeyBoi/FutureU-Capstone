@@ -227,11 +227,11 @@ const CompareSchools = ({ schools, onClose }) => {
                     <div className="border-t border-gray-100"></div>
 
                     {/* Type */}
-                    <div>
-                      <div className="text-sm font-medium text-gray-500 mb-1.5">Type</div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-gray-500 mb-1.5 text-left">Type</div>
                       <div className="flex items-start">
                         <Building className="w-5 h-5 mr-2 text-yellow-500 flex-shrink-0" />
-                        <span className="text-gray-900 text-sm">{school.type}</span>
+                        <span className="text-gray-900 text-sm text-left">{school.type}</span>
                       </div>
                     </div>
 
@@ -239,11 +239,11 @@ const CompareSchools = ({ schools, onClose }) => {
                     <div className="border-t border-gray-100"></div>
 
                     {/* Total Accredited Programs Summary */}
-                    <div>
-                      <div className="text-sm font-medium text-gray-500 mb-1.5">Program Summary</div>
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-gray-500 mb-1.5 text-left">Program Summary</div>
                       <div className="flex items-start">
                         <Award className="w-5 h-5 mr-2 text-yellow-500 flex-shrink-0" />
-                        <span className="text-gray-900 text-sm">{school.totalAccredited} Total Accredited Programs</span>
+                        <span className="text-gray-900 text-sm text-left">{school.totalAccredited} Total Accredited Programs</span>
                       </div>
                     </div>
                   </div>

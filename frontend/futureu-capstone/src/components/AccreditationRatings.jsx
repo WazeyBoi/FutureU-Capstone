@@ -269,17 +269,10 @@ const AccreditationRatings = () => {
       )}
       
       {/* Hero Section - Dark blue banner with text */}
-      <div className={`bg-slate-800 text-white py-12 px-6 relative overflow-hidden transition-all duration-700 ease-out transform ${heroAnimated ? 'opacity-100' : 'opacity-0 translate-y-[-20px]'}`}>
+      <div className={`bg-slate-800 text-white py-12 px-6 transition-all duration-700 ease-out transform ${heroAnimated ? 'opacity-100' : 'opacity-0 translate-y-[-20px]'}`}>
         <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-2">Accreditation & Recognition Status</h1>
           <p className="text-lg text-gray-300">Explore the quality assurance ratings of educational institutions</p>
-        </div>
-        
-        {/* Wave shape at the bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 overflow-hidden">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full h-auto">
-            <path fill="#f9fafb" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
-          </svg>
         </div>
       </div>
 
