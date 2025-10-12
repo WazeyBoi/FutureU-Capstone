@@ -13,6 +13,7 @@ import ResumeAssessmentModal from '../components/Assessment/ResumeAssessmentModa
 import SaveExitConfirmationModal from '../components/assessment/SaveExitConfirmationModal';
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
+import lazySVG from '../assets/characters/lazy.svg';
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -80,6 +81,11 @@ const TakeAssessment = () => {
 
   // Add state to control showing the assessment tips/instructions
   const [showAssessmentTips, setShowAssessmentTips] = useState(true);
+
+  // Add state for leave page confirmation modal
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const shouldBlockNavigation = useRef(false);
+  const isLeavingConfirmed = useRef(false);
 
   // Add state to store the last submitted userAssessmentId
   const [lastUserAssessmentId, setLastUserAssessmentId] = useState(null);
@@ -987,6 +993,64 @@ const TakeAssessment = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [completed, userAnswers]);
+
+  // Handle navigation blocking for in-app navigation (back button)
+  // This approach works for Edge, Chrome, Firefox, and Safari
+  useEffect(() => {
+    // Update the ref based on current state
+    shouldBlockNavigation.current = !completed && Object.keys(userAnswers).length > 0;
+    
+    if (!shouldBlockNavigation.current) return;
+
+    let historyLength = window.history.length;
+    
+    // Push initial state
+    window.history.pushState({ page: 'assessment' }, '', window.location.href);
+
+    const handlePopState = (event) => {
+      console.log('Back button pressed, shouldBlock:', shouldBlockNavigation.current);
+      
+      if (shouldBlockNavigation.current && !isLeavingConfirmed.current) {
+        // Stop the navigation immediately
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Push state again to stay on current page
+        window.history.pushState({ page: 'assessment' }, '', window.location.href);
+        
+        // Show the confirmation modal
+        setShowLeaveConfirmation(true);
+        
+        return false;
+      }
+    };
+
+    // Use both capture and bubble phase to catch the event early
+    window.addEventListener('popstate', handlePopState, true);
+    window.addEventListener('popstate', handlePopState, false);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState, true);
+      window.removeEventListener('popstate', handlePopState, false);
+    };
+  }, [completed, userAnswers]);
+
+  // Handle leave confirmation
+  const handleConfirmLeave = () => {
+    console.log('User confirmed leave');
+    setShowLeaveConfirmation(false);
+    isLeavingConfirmed.current = true;
+    shouldBlockNavigation.current = false;
+    
+    // Navigate to student home page
+    navigate('/student-home');
+  };
+
+  const handleCancelLeave = () => {
+    console.log('User cancelled leave');
+    setShowLeaveConfirmation(false);
+    // User chose to stay, modal closes and they remain on page
+  };
   
   // Insert this modal before the main return
   if (showResumeModal) {
@@ -1453,6 +1517,76 @@ const TakeAssessment = () => {
           onGoToDashboard={() => navigate('/assessment-dashboard')}
         />
       )}
+
+      {/* Leave Page Confirmation Dialog */}
+      <AnimatePresence>
+        {showLeaveConfirmation && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-[70] flex items-center justify-center pt-45"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.3 }}
+              className="relative bg-white rounded-lg shadow-xl max-w-md mx-auto py-15 flex flex-col items-center"
+            >
+              <motion.img
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.3 }}
+                src={lazySVG}
+                alt="Lazy mascot"
+                className="absolute -top-75 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
+                style={{ zIndex: 60 }}
+                draggable="false"
+              />
+              
+              <motion.h3 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-2xl font-bold mb-3"
+              >
+                Leave Assessment?
+              </motion.h3>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-600 mb-4 text-center"
+              >
+                You're about to leave this page. Your progress will be <span className="font-semibold text-red-600">lost</span> unless you save it first.
+              </motion.p>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+                className="flex gap-3 justify-center w-full mt-5"
+              >
+                <button
+                  onClick={handleCancelLeave}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Stay & Continue
+                </button>
+                <button
+                  onClick={handleConfirmLeave}
+                  className="px-6 py-2.5 bg-[#2B3E4E] hover:bg-red-700 text-white rounded-xl font-bold shadow-md transition-all"
+                >
+                  Leave Anyway
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
