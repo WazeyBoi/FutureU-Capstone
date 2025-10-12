@@ -1324,8 +1324,13 @@ public class GeminiAIService {
         try {
             // Build a concise prompt that includes career titles, descriptions and current scores
             StringBuilder prompt = new StringBuilder();
-            prompt.append("You are an expert career counselor. For each career provided, re-evaluate the strength of fit for the student and return an adjusted match score (0-100).\n");
-            prompt.append("Use the career description and industry fields where available. Use objective assessment evidence (student profile) to adjust the score. Return ONLY a JSON array of objects with keys 'careerTitle' and 'adjustedScore'. Example: [{\"careerTitle\": \"Software Engineer\", \"adjustedScore\": 87.5}, ...]\n\n");
+            prompt.append("You are an expert career counselor. For each career provided, re-evaluate the strength of fit for the student and return an adjusted match score.\n");
+            prompt.append("Use the career description and industry fields where available. Use objective assessment evidence (student profile) to adjust the score.\n");
+            prompt.append("IMPORTANT SCORING RULES:\n");
+            prompt.append("- Scores must be between 1-99 (NEVER output 0% or 100%)\n");
+            prompt.append("- These are already top career options, so realistic scores should range from 60-95\n");
+            prompt.append("- A perfect 100% match doesn't exist in reality, and 0% means the career shouldn't be recommended at all\n");
+            prompt.append("Return ONLY a JSON array of objects with keys 'careerTitle' and 'adjustedScore'. Example: [{\"careerTitle\": \"Software Engineer\", \"adjustedScore\": 87.5}, ...]\n\n");
 
             for (int i = 0; i < careers.size(); i++) {
                 edu.cit.futureu.entity.CareerEntity c = careers.get(i);
@@ -1369,7 +1374,7 @@ public class GeminiAIService {
                 prompt.append("(Student profile not provided)\n");
             }
 
-            prompt.append("\nIMPORTANT: Return ONLY a JSON array with objects containing 'careerTitle' and 'adjustedScore' (0-100).\n");
+            prompt.append("\nIMPORTANT: Return ONLY a JSON array with objects containing 'careerTitle' and 'adjustedScore' (1-99, never 0 or 100).\n");
 
             // Rate limit and make AI call
             waitForRateLimit();
