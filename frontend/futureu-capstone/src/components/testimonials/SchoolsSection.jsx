@@ -152,7 +152,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
         if (cachedRatings && schools.length === cachedRatings.schoolCount) {
           setSchoolRatings(cachedRatings.ratings || {});
           setLoadingRatings(false);
-          console.log('Using cached school ratings for instant display');
+          // console.log('Using cached school ratings for instant display');
           return;
         }
 
