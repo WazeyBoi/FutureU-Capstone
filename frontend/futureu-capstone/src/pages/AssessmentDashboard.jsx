@@ -119,7 +119,7 @@ const AssessmentDashboard = () => {
                 sectionResults: resultData.sectionResults
               };
             } catch (err) {
-              console.error(`Error fetching results for assessment ${assessment.userQuizAssessment}:`, err);
+              // console.error(`Error fetching results for assessment ${assessment.userQuizAssessment}:`, err);
               return assessment;
             }
           }
@@ -190,7 +190,7 @@ const AssessmentDashboard = () => {
       } catch (err) {
         setError('Failed to load assessments. Please try again later.');
         setLoading(false);
-        console.error('Error fetching assessments:', err);
+        // console.error('Error fetching assessments:', err);
       }
     };
 

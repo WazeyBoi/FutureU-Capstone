@@ -69,7 +69,7 @@ const AssessmentResults = () => {
       } catch (err) {
         setError('Failed to load assessment results. Please try again later.');
         setLoading(false);
-        console.error('Error loading results:', err);
+        // console.error('Error loading results:', err);
       }
     };
     

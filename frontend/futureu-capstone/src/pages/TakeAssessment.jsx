@@ -161,19 +161,19 @@ const TakeAssessment = () => {
         setQuizTimeRemaining(QUIZ_TIME_LIMIT);
         setQuizStartTime(Date.now());
         setQuizTimerActive(true);
-        console.log(`Quiz timer started - ${QUIZ_TIME_LIMIT} seconds (90 minutes) for all quiz sections`);
+        // console.log(`Quiz timer started - ${QUIZ_TIME_LIMIT} seconds (90 minutes) for all quiz sections`);
       }
       
       // Stop quiz timer when entering Interest Assessment
       if (!isCurrentlyInQuizSection && quizTimerActive) {
         setQuizTimerActive(false);
-        console.log('Quiz timer paused - entered Interest Assessment');
+        // console.log('Quiz timer paused - entered Interest Assessment');
       }
       
       // Resume quiz timer when returning to quiz sections
       if (isCurrentlyInQuizSection && !quizTimerActive && quizTimeRemaining !== null) {
         setQuizTimerActive(true);
-        console.log('Quiz timer resumed - returned to quiz section');
+        // console.log('Quiz timer resumed - returned to quiz section');
       }
     }
   }, [currentSection, sectionList, quizTimerActive, quizTimeRemaining]);
@@ -237,7 +237,7 @@ const TakeAssessment = () => {
         if (existingProgress) {
           // Double security check: Verify that this assessment belongs to the current user
           if (existingProgress.user.userId !== userId) {
-            console.error("Security violation: Attempt to access another user's assessment");
+            // console.error("Security violation: Attempt to access another user's assessment");
             setError("You cannot access another user's assessment progress.");
             setLoading(false);
             return;
@@ -262,7 +262,7 @@ const TakeAssessment = () => {
             // Set attempt number to previous attempts + 1
             setAttemptNo(previousAttempts + 1);
           } catch (err) {
-            console.error("Error checking previous attempts:", err);
+            // console.error("Error checking previous attempts:", err);
             setAttemptNo(1); // Default to 1 if we can't determine
           }
           
@@ -434,7 +434,7 @@ const TakeAssessment = () => {
       } catch (err) {
         setError('Failed to load assessment. Please try again later.');
         setLoading(false);
-        console.error('Error loading assessment:', err);
+        // console.error('Error loading assessment:', err);
       }
     };
 
@@ -679,7 +679,7 @@ const TakeAssessment = () => {
     } catch (err) {
       setError('Failed to load assessment. Please try again later.');
       setLoading(false);
-      console.error('Error loading assessment:', err);
+      // console.error('Error loading assessment:', err);
     }
   };
 
@@ -840,7 +840,7 @@ const TakeAssessment = () => {
     try {
       setSubmitting(true);
       
-      console.log('Assessment completed');
+      // console.log('Assessment completed');
       
       // Transform answers into the format expected by the backend
       const formattedAnswers = Object.keys(userAnswers).map(questionId => ({
@@ -860,7 +860,7 @@ const TakeAssessment = () => {
         const storedStartTime = localStorage.getItem(`assessment_start_time_${assessmentId}`);
         if (storedStartTime) {
           startTime = parseInt(storedStartTime);
-          console.log('Retrieved start time from localStorage:', startTime);
+          // console.log('Retrieved start time from localStorage:', startTime);
         }
       }
       
@@ -869,15 +869,15 @@ const TakeAssessment = () => {
       } else {
         // Fallback: if no start time available, set a default time (e.g., 1 minute)
         timeSpentSeconds = 60; // 1 minute as fallback
-        console.warn('No start time available, using fallback time');
+        // console.warn('No start time available, using fallback time');
       }
       
-      console.log('Assessment completion time tracking:', {
-        assessmentStartTime,
-        startTimeUsed: startTime,
-        currentTime: Date.now(),
-        timeSpentSeconds
-      });
+      // console.log('Assessment completion time tracking:', {
+      //   assessmentStartTime,
+      //   startTimeUsed: startTime,
+      //   currentTime: Date.now(),
+      //   timeSpentSeconds
+      // });
       
       // Create submission payload including sections, attempt number, and time spent
       const payload = {
@@ -889,7 +889,7 @@ const TakeAssessment = () => {
         timeSpentSeconds: timeSpentSeconds
       };
       
-      console.log('Submitting assessment with payload:', payload);
+      // console.log('Submitting assessment with payload:', payload);
       
       // Submit the complete assessment for scoring
       const result = await userAssessmentService.submitCompletedAssessment(payload);
@@ -925,7 +925,7 @@ const TakeAssessment = () => {
     } catch (err) {
       setSubmitting(false);
       setError('Failed to submit assessment. Please try again.');
-      console.error('Error submitting assessment:', err);
+      // console.error('Error submitting assessment:', err);
     }
   };
   
@@ -959,7 +959,7 @@ const TakeAssessment = () => {
         assessmentStartTime: assessmentStartTime
       };
       
-      console.log('Saving progress with payload:', payload);
+      // console.log('Saving progress with payload:', payload);
       
       // Call API to save progress using the service
       const response = await userAssessmentService.saveProgress(payload);
@@ -975,7 +975,7 @@ const TakeAssessment = () => {
     } catch (err) {
       setIsSaving(false);
       setSaveError('Failed to save progress. Please try again.');
-      console.error('Error saving progress:', err);
+      // console.error('Error saving progress:', err);
     }
   };
 
@@ -1010,7 +1010,7 @@ const TakeAssessment = () => {
     window.history.pushState({ page: 'assessment' }, '', window.location.href);
 
     const handlePopState = (event) => {
-      console.log('Back button pressed, shouldBlock:', shouldBlockNavigation.current);
+      // console.log('Back button pressed, shouldBlock:', shouldBlockNavigation.current);
       
       if (shouldBlockNavigation.current && !isLeavingConfirmed.current) {
         // Stop the navigation immediately
@@ -1039,7 +1039,7 @@ const TakeAssessment = () => {
 
   // Handle leave confirmation
   const handleConfirmLeave = () => {
-    console.log('User confirmed leave');
+    // console.log('User confirmed leave');
     setShowLeaveConfirmation(false);
     isLeavingConfirmed.current = true;
     shouldBlockNavigation.current = false;
@@ -1049,7 +1049,7 @@ const TakeAssessment = () => {
   };
 
   const handleCancelLeave = () => {
-    console.log('User cancelled leave');
+    // console.log('User cancelled leave');
     setShowLeaveConfirmation(false);
     // User chose to stay, modal closes and they remain on page
   };
