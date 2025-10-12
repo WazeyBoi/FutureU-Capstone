@@ -824,13 +824,13 @@ const StudentHomepage = () => {
               >
                 <button
                   onClick={handleCancelTakeAssessment}
-                  className="w-full px-4 py-2 text-sm font-medium text-white hover:text-[#2B3E4E] bg-[#2B3E4E] rounded-md hover:bg-gray-50 focus:outline-none"
+                  className="cursor-pointer w-full px-4 py-2 text-sm font-medium text-white hover:text-white bg-[#2B3E4E] rounded-md hover:bg-[#FFB71B] focus:outline-none"
                 >
                   Not Yet
                 </button>
                 <button
                   onClick={handleConfirmTakeAssessment}
-                  className="w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-xl font-bold shadow-md transition-all"
+                  className="cursor-pointer w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-md font-bold shadow-md transition-all"
                 >
                   Yes, Start Assessment
                 </button>
