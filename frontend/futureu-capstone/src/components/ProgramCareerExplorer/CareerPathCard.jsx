@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, 
@@ -18,10 +18,13 @@ import {
   ChevronUp,
   Star,
   Award,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { schoolLogos } from '../AcademicExplorer/constants';
 
-const CareerPathCard = ({ careerPath, index }) => {
+const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
   const [showCareersModal, setShowCareersModal] = useState(false);
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [showDescription, setShowDescription] = useState(false);
@@ -51,6 +54,10 @@ const CareerPathCard = ({ careerPath, index }) => {
   const formatSalary = (salary) => {
     if (!salary) return 'Not specified';
     return salary.includes('₱') ? salary : `₱${salary}`;
+  };
+
+  const getSchoolLogo = (schoolId) => {
+    return schoolLogos[schoolId] || null;
   };
 
   // Career Details Component - Enhanced Design
@@ -219,7 +226,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                       <div>
                         <span className={`text-xs font-bold uppercase tracking-wider block ${
                           career.jobTrend.toLowerCase().includes('growing') 
-                            ? 'text-green-600' 
+                            ? 'text-green-600'
                             : career.jobTrend.toLowerCase().includes('declining') 
                             ? 'text-red-600'
                             : 'text-blue-600'
@@ -287,23 +294,54 @@ const CareerPathCard = ({ careerPath, index }) => {
 
           {/* Enhanced Action Buttons */}
           <div className="flex gap-3 bg-white pt-8 pb-4 border-t border-gray-200 z-20 relative flex-shrink-0">
-              <button
-                onClick={() => {
-                  window.location.href = `/career-pathways?career=${career.careerId}`;
-                }}
-                className="flex-1 bg-[#232D35] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02]"
-              >
-                <ExternalLink className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                Explore Career
-              </button>
-              <button
-                onClick={() => {
-                  console.log('View programs for career:', career.careerId);
-                }}
-                className="px-4 py-3 bg-[#FFB71B] text-white rounded-xl font-semibold hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-              >
-                View Programs
-              </button>
+            <button
+              onClick={() => {
+                console.log('Explore Career clicked for:', career.careerTitle);
+
+                // Close the modal first
+                setShowCareersModal(false);
+                setSelectedCareer(null);
+                setShowDescription(false);
+
+                // Trigger the parent component's career selection with 'top' scroll
+                if (onCareerSelect) {
+                  onCareerSelect(career, 'hero');
+                } else {
+                  // Fallback: Dispatch a custom event with scroll target
+                  window.dispatchEvent(new CustomEvent('selectCareerFromModal', {
+                    detail: { career, scrollTarget: 'top' }
+                  }));
+                }
+              }}
+              className="flex-1 bg-[#232D35] text-white px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer"
+            >
+              <ExternalLink className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+              Explore Career
+            </button>
+            <button
+              onClick={() => {
+                console.log('View Related Programs clicked for:', career.careerTitle);
+
+                // Close the modal first
+                setShowCareersModal(false);
+                setSelectedCareer(null);
+                setShowDescription(false);
+
+                // Trigger the parent component's career selection with 'programs' scroll
+                if (onCareerSelect) {
+                  onCareerSelect(career, 'programs');
+                } else {
+                  // Fallback: Dispatch a custom event with scroll target
+                  window.dispatchEvent(new CustomEvent('selectCareerFromModal', {
+                    detail: { career, scrollTarget: 'programs' }
+                  }));
+                }
+              }}
+              className="flex-1 bg-[#FFB71B] text-[#2B3E4E] px-4 py-3 rounded-xl font-semibold hover:shadow-xl transition-all duration-300 flex items-center justify-center group transform hover:scale-[1.02] cursor-pointer"
+            >
+              <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+              View Related Programs
+            </button>
           </div>
         </div>
       </>
@@ -378,7 +416,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Expandable Description */}
               <AnimatePresence>
                 {showDescription && careerPath.careerPathDescription && (
@@ -438,7 +476,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                               : 'border-gray-200 hover:border-[#FFB71B]/50 hover:bg-white shadow-sm hover:shadow-md'
                           }`}
                         >
-                          <div className="flex items-start">
+                          <div className="flex items-start cursor-pointer">
                             <div className="w-10 h-10 bg-[#FFB71B] rounded-lg flex items-center justify-center mr-3 flex-shrink-0 group-hover:scale-110 transition-transform shadow-md">
                               <Briefcase className="w-5 h-5 text-white" />
                             </div>
@@ -503,7 +541,7 @@ const CareerPathCard = ({ careerPath, index }) => {
                 <Target className="w-7 h-7 text-[#FFB71B]" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#2B3E4E] mb-1">
+                <h3 className="text-xl font-bold text-[#2B3E4E] mb-1"> 
                   {careerPath.careerPathName}
                 </h3>
                 <div className="flex items-center text-sm text-gray-600">
@@ -515,13 +553,13 @@ const CareerPathCard = ({ careerPath, index }) => {
             
             <button
               onClick={() => setShowCareersModal(true)}
-              className="flex items-center px-4 py-2 bg-[#FFB71B] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 transform shadow-md hover:shadow-lg"
+              className="flex items-center px-4 py-2 bg-[#FFB71B] text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 transform shadow-md hover:shadow-lg cursor-pointer"
             >
               <span className="mr-2">View Careers</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-          
+
           {/* Full Description Preview */}
           {careerPath.careerPathDescription && (
             <div className="mt-4 p-4 bg-white rounded-xl border border-gray-100 shadow-lg">
