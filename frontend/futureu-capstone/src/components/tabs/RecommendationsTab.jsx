@@ -533,7 +533,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 Assessment completed on {formatDate(recommendationPacket.dateCompleted)}
               </p>
             )}
-            {checkedExisting && !loading && !error && (
+            {checkedExisting && !loading && !error && aiRecommendations && (
               <div className="mt-4 flex flex-wrap gap-3 items-center">
                 <button
                   onClick={handleRefreshRecommendations}
@@ -592,7 +592,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
               >
                 <div className="leading-tight">
                   <div className="text-sm font-semibold">Dream Career Analysis</div>
-                  <div className="text-[12px] text-gray-600">AI insights available in the dedicated "Dream Career Analysis" tab</div>
+                  <div className="text-[12px] text-gray-600">AI insights available in the dedicated "Dream Career Analysis" tab after you get your results here</div>
                 </div>
               </motion.div>
             )}
@@ -623,6 +623,8 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 <p className="text-sm text-gray-600 mb-3">
                   Currently analyzing your profile and creating personalized career path explanations. 
                   This may take 5-7- minutes of processing...
+                  <br/>
+                  Don't switch to other tabs
                 </p>
                 <div className="flex items-center justify-center space-x-2 mt-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1D63A1]"></div>

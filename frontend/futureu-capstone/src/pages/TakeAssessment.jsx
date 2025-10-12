@@ -1155,7 +1155,7 @@ const TakeAssessment = () => {
   // Completed state
   if (completed) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-white-100 via-blue-100 to-blue-100 py-10 pt-40 overflow-hidden">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-[#2B3E4E] via-white to-[#FFB71B] py-10 pt-40 overflow-hidden">
         <motion.div 
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -1200,7 +1200,7 @@ const TakeAssessment = () => {
           >
             <button
               onClick={() => navigate(`/assessment-results/${lastUserAssessmentId || ''}`)}
-              className="px-6 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-full font-semibold shadow transition-colors"
+              className="px-6 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white rounded-lg font-semibold shadow transition-colors"
               disabled={!lastUserAssessmentId}
             >
               Continue
