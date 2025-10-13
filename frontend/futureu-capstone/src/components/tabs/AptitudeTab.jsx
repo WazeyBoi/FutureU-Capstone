@@ -241,7 +241,7 @@ const AptitudeTab = ({ results, getScoreColor, getScoreBgColor }) => {
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }} 
         transition={{ duration: 0.5 }}
-        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+        className="space-y-8 relative z-10"
       >
         {/* Visual + Recommendations: side-by-side on large screens */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -315,9 +315,9 @@ const AptitudeTab = ({ results, getScoreColor, getScoreBgColor }) => {
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10"
+          className="p-6 md:p-8 "
         >
-          <h3 className="text-2xl font-extrabold text-[#232D35] mb-6 text-center">Aptitude Breakdown</h3>
+          <h3 className="text-2xl font-extrabold text-[#232D35] mb-12 text-center">Aptitude Breakdown</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
             {sortedAptitudes.map((aptitude, index) => {

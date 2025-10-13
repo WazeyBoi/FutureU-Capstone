@@ -258,7 +258,7 @@ const AssessmentResults = () => {
   }
   
   return (
-    <div className="max-w-8xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-x-visible">
+    <div className="max-w-8xl mx-auto py-10 px-4 sm:px-8 min-h-screen relative overflow-x-visible">
       {/* Playful floating accent shapes background */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
@@ -283,7 +283,7 @@ const AssessmentResults = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-xl p-8 mb-10 animate-card-pop border-2 border-[#1D63A1]/10"
+          className="-3xl p-8 mb-10 animate-card-pop"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
@@ -305,23 +305,23 @@ const AssessmentResults = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-[#1D63A1]/10 to-[#FFB71B]/10 rounded-2xl p-6 text-center shadow-md">
+            <div className=" rounded-2xl p-6 text-center">
               {/* <h3 className="text-lg font-bold text-[#232D35] mb-3">Your Assessment Includes</h3> */}
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-white/70 rounded-lg p-3">
+                <div className="bg-white rounded-lg p-4 shadow lg border border-[#FFB71B]/10">
                   <div className="font-semibold text-[#1D63A1]">Interest Profile</div>
                   <div className="text-xs text-gray-600">RIASEC personality types</div>
                 </div>
-                <div className="bg-white/70 rounded-lg p-3">
+                <div className="bg-white rounded-lg p-4 shadow lg border border-[#FFB71B]/10">
                   <div className="font-semibold text-[#1D63A1]">Aptitude Analysis</div>
                   <div className="text-xs text-gray-600">Cognitive strengths</div>
                 </div>
-                <div className="bg-white/70 rounded-lg p-3">
+                <div className="bg-white rounded-lg p-4 shadow lg border border-[#FFB71B]/10">
                   <div className="font-semibold text-[#1D63A1]">Track Matching</div>
                   <div className="text-xs text-gray-600">Academic & Non-Academic</div>
                 </div>
-                <div className="bg-white/70 rounded-lg p-3">
-                  <div className="font-semibold text-[#1D63A1]">Career Pthway Options</div>
+                <div className="bg-white rounded-lg p-4 shadow lg border border-[#FFB71B]/10">
+                  <div className="font-semibold text-[#1D63A1]">Career Pathway Options</div>
                   <div className="text-xs text-gray-600">Personalized results</div>
                 </div>
               </div>
@@ -329,7 +329,7 @@ const AssessmentResults = () => {
           </div>
         </motion.div>
         {/* Sticky Tab Navigation */}
-        <div className="sticky top-0 z-20 bg-[#F8F9FA] pb-4 mb-8 border-b-2 border-[#1D63A1]/20">
+        <div className="sticky top-0 z-20 pb-4 mb-8 border-b-2 border-[#2B3E4E]/20">
           <nav className="flex space-x-4">
             {['overview', 'interests', 'aptitude', 'academic', 'recommendations', 'dream-career'].map(tab => (
               <button 
