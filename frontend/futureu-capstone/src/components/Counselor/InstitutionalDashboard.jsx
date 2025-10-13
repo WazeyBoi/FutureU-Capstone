@@ -6,8 +6,7 @@ import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
 import profileService from '../../services/profileService';
 import institutionService from '../../services/institutionService';
-import { fetchAllCareerRecommendations, fetchRecommendationsByResult } from '../../services/recommendationService';
-import programRecommendationService from '../../services/programRecommendationService';
+import { fetchRecommendations } from '../../services/recommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
   BookOpen, User, LogOut, MessageSquare,
@@ -45,6 +44,8 @@ const InstitutionalDashboard = () => {
   // Show more/less state for top lists
   const [showMoreCareers, setShowMoreCareers] = useState(false);
   const [showMorePrograms, setShowMorePrograms] = useState(false);
+  const [showCareersModal, setShowCareersModal] = useState(false);
+  const [showProgramsModal, setShowProgramsModal] = useState(false);
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -119,86 +120,90 @@ const InstitutionalDashboard = () => {
     }
   }, [counselorId]);
 
-  // Fetch career recommendations for institution students
+  // Fetch career AND program recommendations from comprehensive endpoint (proper structure)
   useEffect(() => {
-    const fetchInstitutionCareers = async () => {
+    const fetchInstitutionRecommendations = async () => {
       if (institutionAssessmentResults.length === 0) {
         setInstitutionCareerRecommendations([]);
+        setInstitutionProgramRecommendations([]);
         return;
       }
 
       try {
-        console.log('Fetching career recommendations for', institutionAssessmentResults.length, 'assessment results');
+        console.log('Fetching comprehensive recommendations for', institutionAssessmentResults.length, 'students');
         
-        // Fetch career recommendations for each assessment result and preserve the resultId association
-        const careerPromises = institutionAssessmentResults.map(result => 
-          fetchRecommendationsByResult(result.resultId).then(response => ({
+        // Fetch comprehensive recommendations for each assessment result
+        // This gives us the proper structure: careerPaths[] -> careers[] and programs[]
+        const comprehensivePromises = institutionAssessmentResults.map(result => {
+          const userAssessmentId = result.userAssessment?.userQuizAssessment;
+          if (!userAssessmentId) {
+            console.warn('No userAssessmentId found for result:', result.resultId);
+            return Promise.resolve({ resultId: result.resultId, careerPaths: [] });
+          }
+          
+          return fetchRecommendations(userAssessmentId).then(response => ({
             resultId: result.resultId,
-            recommendations: response.data || []
+            userAssessmentId: userAssessmentId,
+            careerPaths: response.data?.recommendations?.careerPaths || []
           })).catch(err => {
-            console.error(`Error fetching career recommendations for result ${result.resultId}:`, err);
-            return { resultId: result.resultId, recommendations: [] };
-          })
-        );
+            console.error(`Error fetching comprehensive recommendations for userAssessment ${userAssessmentId}:`, err);
+            return { resultId: result.resultId, userAssessmentId, careerPaths: [] };
+          });
+        });
         
-        const careerResults = await Promise.all(careerPromises);
+        const comprehensiveResults = await Promise.all(comprehensivePromises);
         
-        // Flatten recommendations but add resultId to each recommendation
-        const allInstitutionCareers = careerResults.flatMap(({ resultId, recommendations }) => 
-          recommendations.map(rec => ({ ...rec, associatedResultId: resultId }))
-        );
+        // Extract careers from all career paths across all students
+        const allInstitutionCareers = [];
+        comprehensiveResults.forEach(({ resultId, userAssessmentId, careerPaths }) => {
+          careerPaths.forEach(path => {
+            if (Array.isArray(path.careers)) {
+              path.careers.forEach(career => {
+                allInstitutionCareers.push({
+                  ...career,
+                  associatedResultId: resultId,
+                  userAssessmentId: userAssessmentId,
+                  careerPathId: path.careerPathId,
+                  careerPathName: path.careerPathName
+                });
+              });
+            }
+          });
+        });
         
-        console.log('Total career recommendations for institution:', allInstitutionCareers.length);
-        console.log('Sample career recommendation with resultId:', allInstitutionCareers[0]);
+        // Extract programs from all career paths across all students  
+        const allInstitutionPrograms = [];
+        comprehensiveResults.forEach(({ resultId, userAssessmentId, careerPaths }) => {
+          careerPaths.forEach(path => {
+            if (Array.isArray(path.programs)) {
+              path.programs.forEach(program => {
+                allInstitutionPrograms.push({
+                  ...program,
+                  associatedResultId: resultId,
+                  userAssessmentId: userAssessmentId,
+                  careerPathId: path.careerPathId,
+                  careerPathName: path.careerPathName
+                });
+              });
+            }
+          });
+        });
+        
+        console.log('Total career recommendations from career paths:', allInstitutionCareers.length);
+        console.log('Total program recommendations from career paths:', allInstitutionPrograms.length);
+        console.log('Sample career:', allInstitutionCareers[0]);
+        console.log('Sample program:', allInstitutionPrograms[0]);
         
         setInstitutionCareerRecommendations(allInstitutionCareers);
-      } catch (err) {
-        console.error('Error fetching institution career recommendations:', err);
-        setInstitutionCareerRecommendations([]);
-      }
-    };
-
-    fetchInstitutionCareers();
-  }, [institutionAssessmentResults]);  // Fetch program recommendations for institution students
-  useEffect(() => {
-    const fetchInstitutionPrograms = async () => {
-      if (institutionAssessmentResults.length === 0) {
-        setInstitutionProgramRecommendations([]);
-        return;
-      }
-
-      try {
-        console.log('Fetching program recommendations for', institutionAssessmentResults.length, 'assessment results');
-        
-        // Fetch program recommendations for each assessment result and preserve the resultId association
-        const programPromises = institutionAssessmentResults.map(result => 
-          programRecommendationService.fetchProgramRecommendationsByResult(result.resultId).then(response => ({
-            resultId: result.resultId,
-            recommendations: response.data || []
-          })).catch(err => {
-            console.error(`Error fetching program recommendations for result ${result.resultId}:`, err);
-            return { resultId: result.resultId, recommendations: [] };
-          })
-        );
-        
-        const programResults = await Promise.all(programPromises);
-        
-        // Flatten recommendations but add resultId to each recommendation
-        const allInstitutionPrograms = programResults.flatMap(({ resultId, recommendations }) => 
-          recommendations.map(rec => ({ ...rec, associatedResultId: resultId }))
-        );
-        
-        console.log('Total program recommendations for institution:', allInstitutionPrograms.length);
-        console.log('Sample program recommendation with resultId:', allInstitutionPrograms[0]);
-        
         setInstitutionProgramRecommendations(allInstitutionPrograms);
       } catch (err) {
-        console.error('Error fetching institution program recommendations:', err);
+        console.error('Error fetching institution recommendations:', err);
+        setInstitutionCareerRecommendations([]);
         setInstitutionProgramRecommendations([]);
       }
     };
 
-    fetchInstitutionPrograms();
+    fetchInstitutionRecommendations();
   }, [institutionAssessmentResults]);
 
   // Filter and paginate results based on search and filter criteria
@@ -835,11 +840,15 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       });
     });
 
-    const maxCount = Math.max(...Object.values(riasecCodeCounts));
-    const mostCommonCodes = Object.entries(riasecCodeCounts)
-      .filter(([code, count]) => count === maxCount && count > 0)
+    // Get top 3 RIASEC codes by count
+    const topRiasecCodes = Object.entries(riasecCodeCounts)
+      .sort((a, b) => b[1] - a[1]) // Sort by count (highest first)
+      .slice(0, 3) // Take top 3
+      .filter(([code, count]) => count > 0) // Only include codes with at least 1 student
       .map(([code]) => code);
-    const mostCommonRiasec = mostCommonCodes.length > 0 ? mostCommonCodes.join(', ') : 'N/A';
+    
+    const mostCommonRiasec = topRiasecCodes.length > 0 ? topRiasecCodes.join(', ') : 'N/A';
+    const mostCommonCodes = topRiasecCodes;
 
     // Performance distribution analysis for each field
     const performanceAnalysis = {};
@@ -849,9 +858,11 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     });
 
     // Career recommendations aggregation
+    // Data comes from CareerRecommendationDetailEntity via career_path_recommendation
     const careerCounts = {};
     careers.forEach(rec => {
-      const title = rec.careerPath?.careerTitle || rec.careerTitle || rec.name || rec.title;
+      // Structure from comprehensive endpoint: rec.careerTitle, rec.careerId, rec.matchPercentage, etc.
+      const title = rec.careerTitle || rec.career?.careerTitle || rec.title || rec.name;
       if (title) careerCounts[title] = (careerCounts[title] || 0) + 1;
     });
     const topCareers = Object.entries(careerCounts)
@@ -859,9 +870,11 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       .map(([title, count]) => ({ title, count }));
 
     // Program recommendations aggregation
+    // Data comes from ProgramRecommendationDetailEntity via career_path_recommendation
     const programCounts = {};
     programs.forEach(rec => {
-      const name = rec.program?.programName || rec.programName || rec.name || rec.title;
+      // Structure from comprehensive endpoint: rec.programName, rec.programId, rec.matchPercentage, etc.
+      const name = rec.programName || rec.program?.programName || rec.name || rec.title;
       if (name) programCounts[name] = (programCounts[name] || 0) + 1;
     });
     const topPrograms = Object.entries(programCounts)
@@ -977,7 +990,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   // Quick stats for institution dashboard
   const quickStats = [
     {
-      name: "Institution Students",
+      name: "Students",
       value: institutionStudents.length.toString(),
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
@@ -1086,31 +1099,39 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-5">
+    <div className="min-h-screen bg-gradient-to-br from-white via-[#FFB71B]/5 to-[#2B3E4E]/5 pb-5 relative overflow-hidden">
+      {/* Decorative floating shapes */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/20 to-[#2B3E4E]/10 rounded-full blur-2xl animate-bounce-slow" />
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#2B3E4E]/15 to-[#FFB71B]/20 rounded-full blur-2xl animate-bounce-slower" />
+        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-[#FFB71B]/15 rounded-full blur-xl animate-pulse" />
+        <div className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-[#2B3E4E]/15 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+      
       {/* Header Section */}
-      <div className="px-15 pt-10 flex flex-col items-start">
-        <p className="text-2xl font-bold text-[#2B3E4E]">
-          Institutional Dashboard - <span className="text-[#1D63A1]">
+      <div className="px-15 pt-10 flex flex-col items-start relative z-10">
+        <p className="text-3xl font-bold text-[#2B3E4E]">
+          Institutional Dashboard - <span className="text-[#FFB71B]">
             {institutionInfo?.name || "Institution"}
           </span>
         </p>
-        <div className="flex items-center text-gray-500 mt-1">
-          <Clock className="h-4 w-4 mr-1.5" />
+        <div className="flex items-center text-[#2B3E4E]/70 mt-1">
+          <Clock className="h-4 w-4 mr-1.5 text-[#FFB71B]" />
           <span className="text-xs">{formattedTime}</span>
           <span className="mx-1.5">•</span>
           <span className="text-xs">{formattedDate}</span>
         </div>
         {institutionInfo && (
-          <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+          <div className="flex items-center gap-4 text-sm text-[#2B3E4E]/70 mt-2">
             {institutionInfo.emailDomain && (
               <span className="flex items-center gap-1">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 text-[#FFB71B]" />
                 @{institutionInfo.emailDomain}
               </span>
             )}
             {institutionInfo.schoolCode && (
               <span className="flex items-center gap-1">
-                <Hash className="h-4 w-4" />
+                <Hash className="h-4 w-4 text-[#FFB71B]" />
                 {institutionInfo.schoolCode}
               </span>
             )}
@@ -1119,27 +1140,27 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       </div>
 
       {/* Legend Section - Moved outside chart */}
-      <section className="w-full px-15 pt-6 pb-2">
+      <section className="w-full px-15 pt-6 pb-2 relative z-10">
         {/* Legend */}
-        <div className="flex items-center justify-left gap-6 mb-4">
+        <div className="flex items-center justify-left gap-6 mb-4 bg-white/50 backdrop-blur-sm p-4 rounded-xl border border-[#FFB71B]/20">
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-600 rounded"></div>
-              <span>Well Above School Avg</span>
+              <div className="w-4 h-4 bg-green-600 rounded shadow-sm"></div>
+              <span className="text-[#2B3E4E]">Well Above School Avg</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-500 rounded"></div>
-              <span>Above School Avg</span>
+              <div className="w-4 h-4 bg-blue-500 rounded shadow-sm"></div>
+              <span className="text-[#2B3E4E]">Above School Avg</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-orange-500 rounded"></div>
-              <span>Below School Avg</span>
+              <div className="w-4 h-4 bg-orange-500 rounded shadow-sm"></div>
+              <span className="text-[#2B3E4E]">Below School Avg</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-500 rounded"></div>
-              <span>Well Below School Avg</span>
+              <div className="w-4 h-4 bg-red-500 rounded shadow-sm"></div>
+              <span className="text-[#2B3E4E]">Well Below School Avg</span>
             </div>
-            <div className="text-xs text-gray-500 ml-2">
+            <div className="text-xs text-[#2B3E4E]/60 ml-2 font-medium">
               Relative to classmates in same school
             </div>
           </div>
@@ -1148,9 +1169,13 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
         {/* Institution Insights Summary Section */}
         <div className="flex flex-row gap-2 mb-8 items-start">
           {/* Performance Distribution Charts */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 flex flex-col w-full max-w-[calc(100%-280px)]">
-            <div className="flex items-center justify-between w-full mb-6">
-              <div className="flex-1 text-2xl font-bold text-[#1D63A1] tracking-tight">
+          <div className="bg-white rounded-xl shadow-[0_8px_30px_rgba(255,183,27,0.15)] p-6 flex flex-col w-full max-w-[calc(100%-280px)] relative overflow-hidden group">
+            {/* Decorative gradient orbs */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-bl from-[#FFB71B]/10 to-transparent rounded-full blur-2xl"></div>
+            <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-gradient-to-tr from-[#2B3E4E]/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="flex items-center justify-between w-full mb-6 relative z-10">
+              <div className="ml-14 mt-5 text-3xl font-bold text-[#2B3E4E] tracking-tight">
                 Performance Distribution Analysis
               </div>
               <div className="flex items-center gap-6">
@@ -1158,16 +1183,16 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleExportResults('csv')}
-                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
+                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
                     CSV
                   </button>
                   <button
                     onClick={() => handleExportResults('pdf')}
-                    className="bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] hover:from-[#FFB71B] hover:to-[#FFB71B] text-white py-2 px-3 rounded-xl text-sm font-bold shadow-md transition-all flex items-center gap-2"
+                    className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
                   >
-                    <FileText className="h-4 w-4" />
+                    <FileText className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
                     PDF
                   </button>
                 </div>
@@ -1193,7 +1218,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold text-[#1D63A1] text-center">General Scholastic Aptitude</h3>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/70 bg-clip-text text-transparent text-center">General Scholastic Aptitude</h3>
               </div>
 
               {/* Academic Tracks Chart - Standard size */}
@@ -1233,7 +1258,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold text-[#4CAF50] text-center">Non-Academic Track Performance</h3>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] bg-clip-text text-transparent text-center">Non-Academic Track Performance</h3>
               </div>
             </div>
           </div>
@@ -1244,27 +1269,29 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               {quickStats.map((stat, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-xl shadow p-4 flex flex-col items-center border border-gray-100 w-28 h-28 justify-center transition-all duration-200 hover:shadow-lg"
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl p-4 flex flex-col items-center border-2 border-[#FFB71B]/20 w-28 h-28 justify-center transition-all duration-200 relative overflow-hidden group"
                   style={{ aspectRatio: '1 / 1' }}
                 >
-                  <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-sm`}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FFB71B]/5 to-[#2B3E4E]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-md group-hover:scale-110 transition-transform relative z-10`}>
                     <div className="text-white">{stat.icon}</div>
                   </div>
-                  <div className="text-xs text-gray-500 text-center">{stat.name}</div>
-                  <div className="text-lg font-bold text-[#2B3E4E] text-center">{stat.value}</div>
+                  <div className="text-xs text-[#2B3E4E]/70 text-center relative z-10">{stat.name}</div>
+                  <div className="text-lg font-bold text-[#2B3E4E] text-center relative z-10">{stat.value}</div>
                 </div>
               ))}
             </div>
             
             {/* Most Common RIASEC for Institution */}
-            <div className="bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center py-4 px-4 min-h-0 hover:shadow-lg">
-              <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 mb-2">
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl flex flex-col items-center py-4 px-4 min-h-0 transition-all duration-200 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-[#FFB71B]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#FFB71B] mb-2 shadow-lg relative z-10 group-hover:scale-110 transition-transform">
                 <School className="w-6 h-6 text-white" />
               </div>
-              <div className="text-xs uppercase text-gray-400 font-semibold mb-0.5 tracking-wider text-center">Institution Personality</div>
-              <div className="text-2xl font-bold text-[#1D63A1] mb-0.5 text-center">{institutionInsights.mostCommonRiasec}</div>
-              <div className="text-xs text-gray-400 mb-0.5 text-center">(Top RIASEC code{institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.length > 1 ? 's' : ''})</div>
-              <div className="text-xs text-gray-500 text-center mb-0.5">
+              <div className="text-xs uppercase text-[#2B3E4E]/60 font-semibold mb-0.5 tracking-wider text-center relative z-10">Institution Personality</div>
+              <div className="text-2xl font-bold text-[#FFB71B] mb-0.5 text-center relative z-10">{institutionInsights.mostCommonRiasec}</div>
+              <div className="text-xs text-[#2B3E4E]/60 mb-0.5 text-center relative z-10">(Top 3 RIASEC codes)</div>
+              <div className="text-xs text-[#2B3E4E]/70 text-center mb-0.5 relative z-10">
                 {institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.map((code, idx) => {
                   const descMap = {
                     R: 'Realistic',
@@ -1277,9 +1304,10 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                   return <span key={code}>{descMap[code]}{idx < institutionInsights.mostCommonCodes.length - 1 ? ', ' : ''}</span>;
                 })}
               </div>
-              <div className="text-xs text-blue-500 font-semibold text-center">
+              <div className="text-xs text-[#FFB71B] font-semibold text-center relative z-10">
                 {(() => {
                   const total = institutionAssessmentResults.length;
+                  // Count students whose top RIASEC code matches any of the top 3 institution codes
                   const codeCount = institutionAssessmentResults.reduce((acc, r) => {
                     const scores = [
                       { code: 'R', value: r.realisticScore },
@@ -1296,7 +1324,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     }
                     return acc;
                   }, 0);
-                  return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
+                  // return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
                 })()}
               </div>
             </div>
@@ -1347,18 +1375,18 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
 
           {/* Top Careers - Compact */}
           <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-cyan-600 mb-2 mx-auto">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500 mb-2 mx-auto">
               <BarChart2 className="w-5 h-5 text-white" />
             </div>
-            <div className="text-sm font-bold text-gray-700 text-center mb-2">Top Careers</div>
+            <div className="text-xl font-bold text-gray-700 text-center mb-2">Top Careers</div>
             {institutionInsights.topCareers.length === 0 ? (
-              <div className="text-center py-2">
+              <div className="text-center py-2 relative z-10">
                 {institutionStudents.length === 0 ? (
-                  <div className="text-gray-400 text-xs">No students found</div>
+                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
                 ) : (
                   <>
-                    <div className="text-gray-400 text-xs mb-2">No career data yet</div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-[#2B3E4E]/40 text-xs mb-2">No career data yet</div>
+                    <div className="text-[#2B3E4E]/60 text-xs">
                       Encourage students to complete assessments
                     </div>
                   </>
@@ -1367,24 +1395,24 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             ) : (
               <>
                 {institutionInsights.topCareers
-                  .slice(0, showMoreCareers ? institutionInsights.topCareers.length : 3)
+                  .slice(0, 3)
                   .map((c, i) => {
                     const total = institutionCareerRecommendations.length;
                     const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
                     return (
-                      <div key={i} className="flex justify-between items-center text-xs mb-1">
-                        <span className="truncate pr-2">{i + 1}. {c.title}</span>
-                        <span className="text-gray-500 text-right">{percent}%</span>
+                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                        <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {c.title}</span>
+                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
                       </div>
                     );
                   })}
                 {/* Show button if more than 3 items exist */}
                 {institutionInsights.topCareers.length > 3 && (
                   <button
-                    onClick={() => setShowMoreCareers(!showMoreCareers)}
-                    className="w-full text-xs text-cyan-600 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 border border-cyan-200 hover:border-cyan-300"
+                    onClick={() => setShowCareersModal(true)}
+                    className="w-full text-xs text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
                   >
-                    {showMoreCareers ? `Show Less ▲` : `Show All (${institutionInsights.topCareers.length}) ▼`}
+                    View All ({institutionInsights.topCareers.length}) →
                   </button>
                 )}
               </>
@@ -1392,19 +1420,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
           </div>
 
           {/* Top Programs - Compact */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 mb-2 mx-auto">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl hover:border-[#FFB71B]/40 flex flex-col py-4 px-6 min-h-[140px] flex-1 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#2B3E4E] mb-2 mx-auto shadow-lg relative z-10 group-hover:scale-110 transition-transform">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
-            <div className="text-sm font-bold text-gray-700 text-center mb-2">Top Programs</div>
+            <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Programs</div>
             {institutionInsights.topPrograms.length === 0 ? (
-              <div className="text-center py-2">
+              <div className="text-center py-2 relative z-10">
                 {institutionStudents.length === 0 ? (
-                  <div className="text-gray-400 text-xs">No students found</div>
+                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
                 ) : (
                   <>
-                    <div className="text-gray-400 text-xs mb-2">No program data yet</div>
-                    <div className="text-gray-500 text-xs">
+                    <div className="text-[#2B3E4E]/40 text-xs mb-2">No program data yet</div>
+                    <div className="text-[#2B3E4E]/60 text-xs">
                       Encourage students to complete assessments
                     </div>
                   </>
@@ -1413,24 +1442,24 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             ) : (
               <>
                 {institutionInsights.topPrograms
-                  .slice(0, showMorePrograms ? institutionInsights.topPrograms.length : 3)
+                  .slice(0, 3)
                   .map((p, i) => {
                     const total = institutionProgramRecommendations.length;
                     const percent = total > 0 ? ((p.count / total) * 100).toFixed(0) : '0';
                     return (
-                      <div key={i} className="flex justify-between items-center text-xs mb-1">
-                        <span className="truncate pr-2">{i + 1}. {p.name}</span>
-                        <span className="text-gray-500 text-right">{percent}%</span>
+                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                        <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {p.name}</span>
+                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
                       </div>
                     );
                   })}
                 {/* Show button if more than 3 items exist */}
                 {institutionInsights.topPrograms.length > 3 && (
                   <button
-                    onClick={() => setShowMorePrograms(!showMorePrograms)}
-                    className="w-full text-xs text-yellow-600 hover:text-yellow-800 bg-yellow-50 hover:bg-yellow-100 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 border border-yellow-200 hover:border-yellow-300"
+                    onClick={() => setShowProgramsModal(true)}
+                    className="w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
                   >
-                    {showMorePrograms ? `Show Less ▲` : `Show All (${institutionInsights.topPrograms.length}) ▼`}
+                    View All ({institutionInsights.topPrograms.length}) →
                   </button>
                 )}
               </>
@@ -1440,9 +1469,9 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       </section>
 
       {/* Search and Filter Header */}
-      <header>
+      <header className="relative z-10">
         <div className="px-15 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt6 rounded-xl">
             <div className="text-left my-5">
               <h2 className="text-1xl font-medium text-[#2B3E4E]">
                 Institution assessment results for: <br/>
@@ -1462,7 +1491,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       </header>
 
       {/* Main Content */}
-      <main className="w-full flex flex-col lg:flex-row gap-8 px-15">
+      <main className="w-full flex flex-col lg:flex-row gap-8 px-15 relative z-10">
         {/* Main Content Column */}
         <div className="flex-1 min-w-0">
           <AssessmentResultsGrid
@@ -1479,16 +1508,17 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
         {/* Sidebar: Institution Stats + Recent Activity */}
         <aside className="w-full lg:w-72 flex-shrink-0">
           {/* Institution Completion Rate */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-4 animate-fade-in">
-            <h3 className="text-base font-bold text-[#2B3E4E] mb-1">Institution Completion Rate</h3>
-            <div className="text-2xl font-bold text-green-600 mb-1">{completionRate}%</div>
-            <div className="text-xs text-gray-500 mb-2">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl border-2 border-[#FFB71B]/20 hover:border-[#2B3E4E]/40 p-4 mb-4 animate-fade-in transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FFB71B]/5 to-[#2B3E4E]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-1 relative z-10">Institution Completion Rate</h3>
+            <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent mb-1 relative z-10">{completionRate}%</div>
+            <div className="text-xs text-[#2B3E4E]/70 mb-2 relative z-10">
               {institutionStudents.length - studentsWithNoResults.length} of {institutionStudents.length} institution students completed assessments
             </div>
             {studentsWithNoResults.length > 0 && (
-              <div>
-                <div className="text-xs text-gray-400 mb-1">Students with no results:</div>
-                <ul className="max-h-20 overflow-y-auto text-xs text-gray-700">
+              <div className="relative z-10">
+                <div className="text-xs text-[#2B3E4E]/60 mb-1">Students with no results:</div>
+                <ul className="max-h-20 overflow-y-auto text-xs text-[#2B3E4E]/80">
                   {studentsWithNoResults.slice(0, 5).map((student, idx) => (
                     <li key={getUserId(student) || idx} className="mb-1 truncate flex items-center gap-2">
                       {getStudentSourceIcon(student)}
@@ -1641,6 +1671,120 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     </>
                   )}
                 </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      
+      {/* Top Careers Modal */}
+      {showCareersModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowCareersModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#FFB71B] to-[#2B3E4E] p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
+                    <BarChart2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">All Top Careers</h3>
+                    <p className="text-sm text-white/80">Institution-wide career recommendations</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCareersModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+              <div className="space-y-2">
+                {institutionInsights.topCareers.map((c, i) => {
+                  const total = institutionCareerRecommendations.length;
+                  const percent = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0';
+                  return (
+                    <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-[#FFB71B]/5 to-transparent hover:from-[#FFB71B]/10 transition-colors border border-[#FFB71B]/20">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#FFB71B] to-[#2B3E4E] text-white font-bold text-sm flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                        <span className="font-medium text-[#2B3E4E] truncate">{c.title}</span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-sm text-[#2B3E4E]/70">{c.count} students</span>
+                        <span className="text-lg font-bold text-[#FFB71B]">{percent}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Top Programs Modal */}
+      {showProgramsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowProgramsModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">All Top Programs</h3>
+                    <p className="text-sm text-white/80">Institution-wide program recommendations</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowProgramsModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+              <div className="space-y-2">
+                {institutionInsights.topPrograms.map((p, i) => {
+                  const total = institutionProgramRecommendations.length;
+                  const percent = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0';
+                  return (
+                    <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-[#2B3E4E]/5 to-transparent hover:from-[#2B3E4E]/10 transition-colors border border-[#2B3E4E]/20">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#2B3E4E] to-[#FFB71B] text-white font-bold text-sm flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                        <span className="font-medium text-[#2B3E4E] truncate">{p.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <span className="text-sm text-[#2B3E4E]/70">{p.count} students</span>
+                        <span className="text-lg font-bold text-[#FFB71B]">{percent}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </motion.div>
