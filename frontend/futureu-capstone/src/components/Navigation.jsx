@@ -327,7 +327,7 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-16 w-full">
             {/* Brand with Logo */}
             <Link 
-              to="/counselor-generaldashboard" 
+              to="/counselor-general-dashboard" 
               className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
               onMouseEnter={() => setLogoHover(true)}
               onMouseLeave={() => setLogoHover(false)}

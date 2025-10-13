@@ -648,7 +648,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     setSchoolCodeInput('');
     setSchoolCodeError(null);
     // Redirect to general counselor dashboard
-    navigate('/counselor-dashboard');
+    navigate('/counselor-general-dashboard');
   };
 
   // Calculate average time spent for institution students
@@ -1094,7 +1094,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 Go to Profile Settings
               </button>
               <button
-                onClick={() => navigate('/counselor-dashboard')}
+                onClick={() => navigate('/counselor-general-dashboard')}
                 className="w-full py-2 px-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
               >
                 View General Dashboard
@@ -1665,20 +1665,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
           >
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#2B3E4E] to-[#1D63A1] p-6 text-white">
+            <div className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E] p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
+                  <div className="text-[#FFB71B] w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
                     <Hash className="w-5 h-5" />
                   </div>
                   <h3 className="text-xl font-bold">Setup School Code</h3>
                 </div>
                 <button
                   onClick={handleSchoolCodeCancel}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="cursor-pointer p-2 hover:bg-white/10 text-[#FFB71B] rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1705,7 +1705,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     type="text"
                     value={schoolCodeInput}
                     onChange={(e) => setSchoolCodeInput(e.target.value)}
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-colors"
+                    className="w-full p-3 border-2 border-[#2B3E4E]/50 rounded-xl focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
                     placeholder="Enter your school code"
                     disabled={schoolCodeLoading}
                   />
@@ -1716,7 +1716,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               <div className="flex space-x-3">
                 <button
                   onClick={handleSchoolCodeCancel}
-                  className="flex-1 py-3 px-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+                  className="cursor-pointer flex-1 py-3 px-4 bg-[#2B3E4E] text-white rounded-xl hover:bg-[#FFB71B] transition-colors font-medium"
                   disabled={schoolCodeLoading}
                 >
                   Use General Dashboard
@@ -1724,7 +1724,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 <button
                   onClick={handleSchoolCodeSave}
                   disabled={schoolCodeLoading || !schoolCodeInput.trim()}
-                  className="flex-1 py-3 px-4 bg-[#1D63A1] text-white rounded-xl hover:bg-[#1D63A1]/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="cursor-pointer flex-1 py-3 px-4 bg-[#FFB71B] text-[#2B3E4E] rounded-xl hover:bg-[#2B3E4E] hover:text-white transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {schoolCodeLoading ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
