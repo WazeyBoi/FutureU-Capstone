@@ -514,9 +514,9 @@ const StudentReportPage = () => {
     .join("");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] pt-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] px-13 py-10">
       {/* Back Button */}
-      <div className="mb-8 flex justify-start w-full max-w-7xl">
+      <div className="mb-8 flex justify-start w-full max-w-8xl">
         <button
           className="flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
           onClick={() =>
@@ -541,7 +541,7 @@ const StudentReportPage = () => {
           Back to Main Dashboard
         </button>
       </div>
-      <div className="bg-white rounded-3xl shadow-2xl max-w-7xl w-full border border-[#FFB71B]/30 overflow-y-auto animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl w-full border border-[#FFB71B]/30 overflow-y-auto animate-fade-in">
         {/* Header with Overall & RIASEC */}
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
           {/* Decorative playful icon */}
@@ -635,8 +635,8 @@ const StudentReportPage = () => {
           </div>
         </div>
         {/* Scores Section as Tabs with Graphs */}
-        <div className="w-full flex flex-col items-center justify-center px-2 md:px-0">
-          <div className="max-w-6xl w-full px-4 md:px-10 py-8">
+        <div className="w-full flex flex-col items-center justify-center md:px-0">
+          <div className=" w-full px-4 md:px-10 py-8">
             {/* Navigation Tabs */}
             <CounselorTabs
               activeTab={activeTab}
