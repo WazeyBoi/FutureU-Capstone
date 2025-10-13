@@ -179,8 +179,13 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
       }
     });
 
-    allCareers.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
-    const topCareerDetails = allCareers.slice(0, 5).map((careerDetail) => {
+    // Remove duplicate careers by careerId before sorting and displaying
+    const uniqueCareers = allCareers.filter((career, index, self) => 
+      index === self.findIndex((c) => c.careerId === career.careerId)
+    );
+
+    uniqueCareers.sort((a, b) => (b.matchPercentage || 0) - (a.matchPercentage || 0));
+    const topCareerDetails = uniqueCareers.slice(0, 5).map((careerDetail) => {
       const summary = careerDetail.summary || 'This career aligns with your strengths.';
       const pathSuffix = careerDetail.pathName ? ` | Pathway: ${careerDetail.pathName}` : '';
       return {
@@ -652,7 +657,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           </motion.div>
         )}
         {!isRegenerating && careerPathDetails.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="bg-white rounded-2xl shadow-md p-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.05 }} className="rounded-2xl">
             <div className="flex items-center justify-end gap-10 mb-6">
               <h3 className="text-2xl font-bold text-[#232D35]">Your Career Pathways</h3>
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#232D35] bg-white px-4 py-1.5 rounded-full border-2 border-[#FFB71B] shadow-sm">
@@ -665,13 +670,21 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 const breakdown = path.componentBreakdown || {};
                 const pathKey = path.careerPathId ?? idx;
                 const activeTab = pathTabs[pathKey] || 'careers';
-                const careers = Array.isArray(path.careers) ? path.careers.slice(0, 5) : [];
+                
+                // Deduplicate careers by careerId before slicing
+                const uniqueCareers = Array.isArray(path.careers) 
+                  ? path.careers.filter((career, index, self) => 
+                      index === self.findIndex((c) => c.careerId === career.careerId)
+                    )
+                  : [];
+                const careers = uniqueCareers.slice(0, 5);
+                
                 const programs = Array.isArray(path.programs) ? path.programs : [];
                 const expandedProgramId = expandedPathPrograms[pathKey] ?? null;
                 return (
                   <div 
                     key={pathKey} 
-                    className=" rounded-3xl p-6 transition-all"
+                    className="bg-white rounded-3xl p-6 transition-all"
                     style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.10)' }}
                   >
                     {/* Header */}
