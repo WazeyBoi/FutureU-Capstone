@@ -34,9 +34,11 @@ const CounselorDashboard = () => {
 
   // Add state for assessment results, search/filter, and modal
   const [assessmentResults, setAssessmentResults] = useState([]);
-  const [filteredResults, setFilteredResults] = useState([]);
+  const [filteredAssessmentResults, setFilteredAssessmentResults] = useState([]); // For insights/charts
+  const [filteredResults, setFilteredResults] = useState([]); // For grid display
   const [searchStudent, setSearchStudent] = useState("");
   const [selectedAssessment, setSelectedAssessment] = useState("");
+  const [affiliationFilter, setAffiliationFilter] = useState("unaffiliated"); // "all" or "unaffiliated"
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [allCareerRecommendations, setAllCareerRecommendations] = useState([]);
@@ -59,8 +61,20 @@ const CounselorDashboard = () => {
           adminAssessmentService.getAllAssessments()
         ]);
 
-        // Filter only student users
-        const students = users.filter(user => user.role === 'STUDENT');
+        // Filter only student users who are UNAFFILIATED (no school code AND no institutional email)
+        const students = users.filter(user => {
+          if (user.role !== 'STUDENT') return false;
+          
+          const email = user.email || '';
+          const schoolCode = user.schoolCode || '';
+          
+          // Check if user has institutional email domain
+          const hasInstitutionalEmail = email.includes('@') && 
+            (email.endsWith('.edu') || email.includes('school') || email.includes('university'));
+          
+          // Only include unaffiliated students (no school code AND no institutional email)
+          return !schoolCode && !hasInstitutionalEmail;
+        });
 
         // Update state with actual counts
         setStudentCount(students.length);
@@ -120,9 +134,53 @@ const CounselorDashboard = () => {
     fetchPrograms();
   }, []);
 
-  // Filter and paginate results in-memory
+  // Filter assessment results for insights/charts based on affiliation filter
   useEffect(() => {
     let results = [...assessmentResults];
+    
+    // Apply affiliation filter based on toggle selection
+    if (affiliationFilter === "unaffiliated") {
+      // Filter to show only UNAFFILIATED students (no email domain AND no school code)
+      results = results.filter(r => {
+        const user = r.userAssessment?.user || {};
+        const email = user.email || '';
+        const schoolCode = user.schoolCode || '';
+        
+        // Check if user has institutional email domain
+        const hasInstitutionalEmail = email.includes('@') && 
+          (email.endsWith('.edu') || email.includes('school') || email.includes('university'));
+        
+        // Student is unaffiliated if they have NO school code AND NO institutional email
+        return !schoolCode && !hasInstitutionalEmail;
+      });
+    }
+    // If affiliationFilter === "all", show all students (no filter applied)
+    
+    setFilteredAssessmentResults(results);
+  }, [assessmentResults, affiliationFilter]);
+
+  // Filter and paginate results in-memory for grid display
+  useEffect(() => {
+    let results = [...assessmentResults];
+    
+    // Apply affiliation filter based on toggle selection
+    if (affiliationFilter === "unaffiliated") {
+      // Filter to show only UNAFFILIATED students (no email domain AND no school code)
+      results = results.filter(r => {
+        const user = r.userAssessment?.user || {};
+        const email = user.email || '';
+        const schoolCode = user.schoolCode || '';
+        
+        // Check if user has institutional email domain
+        const hasInstitutionalEmail = email.includes('@') && 
+          (email.endsWith('.edu') || email.includes('school') || email.includes('university'));
+        
+        // Student is unaffiliated if they have NO school code AND NO institutional email
+        return !schoolCode && !hasInstitutionalEmail;
+      });
+    }
+    // If affiliationFilter === "all", show all students (no filter applied)
+    
     if (searchStudent) {
       results = results.filter(r => {
         const user = r.userAssessment?.user || {};
@@ -138,7 +196,7 @@ const CounselorDashboard = () => {
     const startIdx = (page - 1) * pageSize;
     const endIdx = startIdx + pageSize;
     setFilteredResults(results.slice(startIdx, endIdx));
-  }, [searchStudent, selectedAssessment, assessmentResults, page, pageSize]);
+  }, [searchStudent, selectedAssessment, assessmentResults, page, pageSize, affiliationFilter]);
 
   // Update time every minute
   useEffect(() => {
@@ -193,13 +251,13 @@ const CounselorDashboard = () => {
     // Average in minutes
     return times.reduce((a, b) => a + b, 0) / times.length / 60;
   };
-  const averageTimeSpent = getAverageTimeSpent(assessmentResults);
+  const averageTimeSpent = getAverageTimeSpent(filteredAssessmentResults);
 
-  // Quick stats for the dashboard
+  // Quick stats for the dashboard - use filtered results
   const quickStats = [
     {
-      name: "Total Students",
-      value: studentCount.toString(),
+      name: affiliationFilter === "unaffiliated" ? "Unaffiliated Students" : "Total Students",
+      value: filteredAssessmentResults.length.toString(),
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
     },
@@ -217,11 +275,11 @@ const CounselorDashboard = () => {
     },
   ];
 
-  // Counselor tools (dynamic counts)
+  // Counselor tools (dynamic counts) - use filtered results
   const counselorTools = [
     { name: 'Students', icon: <Users className="h-8 w-8 mb-3" />, count: studentCount },
     { name: 'Assessments', icon: <FileText className="h-8 w-8 mb-3" />, count: assessmentCount },
-    { name: 'Reports', icon: <BarChart2 className="h-8 w-8 mb-3" />, count: assessmentResults.length },
+    { name: 'Reports', icon: <BarChart2 className="h-8 w-8 mb-3" />, count: filteredAssessmentResults.length },
     { name: 'Career Guidance', icon: <BookOpen className="h-8 w-8 mb-3" />, count: 0 }
   ];
 
@@ -230,8 +288,8 @@ const CounselorDashboard = () => {
     return tool.name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  // Get unique assessment titles for filter dropdown
-  const assessmentTitles = Array.from(new Set(assessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean)));
+  // Get unique assessment titles for filter dropdown - use filtered results
+  const assessmentTitles = Array.from(new Set(filteredAssessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean)));
   const selectedAssessmentLabel = selectedAssessment || 'All Assessments';
 
   // Modal handlers
@@ -243,8 +301,8 @@ const CounselorDashboard = () => {
     setSelectedResult(null);
   };
 
-  // Replace Recent Activity section with real recent completions
-  const recentActivities = assessmentResults
+  // Replace Recent Activity section with real recent completions - use filtered results
+  const recentActivities = filteredAssessmentResults
     .filter(r => r.userAssessment?.dateCompleted)
     .sort((a, b) => new Date(b.userAssessment.dateCompleted) - new Date(a.userAssessment.dateCompleted))
     .slice(0, 5);
@@ -409,8 +467,8 @@ const CounselorDashboard = () => {
     };
   };
 
-  // Aggregate insights for dashboard summary
-  const dashboardInsights = aggregateDashboardInsights(assessmentResults, allCareerRecommendations, allProgramRecommendations);
+  // Aggregate insights for dashboard summary - use filtered results based on affiliation filter
+  const dashboardInsights = aggregateDashboardInsights(filteredAssessmentResults, allCareerRecommendations, allProgramRecommendations);
 
   // Enhanced tooltip component with status information
   const CustomTooltip = ({ active, payload, label }) => {
@@ -528,9 +586,9 @@ const CounselorDashboard = () => {
   // Only include students whose most recent attempt is < 50 in any nonRiasecFields, or have no results
   const userIdMap = user => user?.id || user?.userId;
 
-  // Map: userId -> all their results (sorted by dateCompleted or dateComputed desc)
+  // Map: userId -> all their results (sorted by dateCompleted or dateComputed desc) - use filtered results
   const userResultsMap = {};
-  assessmentResults.forEach(r => {
+  filteredAssessmentResults.forEach(r => {
     const user = r.userAssessment?.user;
     const id = userIdMap(user);
     if (!id) return;
@@ -608,6 +666,39 @@ const CounselorDashboard = () => {
           <span className="mx-1.5">•</span>
           <span className="text-xs">{formattedDate}</span>
         </div>
+        
+        {/* Dynamic Info Banner based on filter */}
+        {affiliationFilter === "unaffiliated" && (
+          <div className="mt-4 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-blue-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-800">Showing Unaffiliated Students Only</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Displaying students without institutional affiliation (no school email domain or school code). 
+                  For affiliated students, visit the <span className="font-semibold">Institutional Dashboard</span>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {affiliationFilter === "all" && (
+          <div className="mt-4 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+            <div className="flex items-start">
+              <svg className="w-5 h-5 text-green-500 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-green-800">Showing All Students</p>
+                <p className="text-xs text-green-700 mt-1">
+                  Displaying all students regardless of affiliation status (both affiliated and unaffiliated).
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       {/* Insights Summary Section */}
       <section className="w-full px-15 pt-6 pb-2">
@@ -719,9 +810,9 @@ const CounselorDashboard = () => {
               </div>
               <div className="text-xs text-blue-500 font-semibold text-center">
                 {(() => {
-                  // Count how many assessments had each of the most common codes as their highest (including ties)
-                  const total = assessmentResults.length;
-                  const codeCount = assessmentResults.reduce((acc, r) => {
+                  // Count how many assessments had each of the most common codes as their highest (including ties) - use filtered results
+                  const total = filteredAssessmentResults.length;
+                  const codeCount = filteredAssessmentResults.reduce((acc, r) => {
                     const scores = [
                       { code: 'R', value: r.realisticScore },
                       { code: 'I', value: r.investigativeScore },
@@ -837,6 +928,33 @@ const CounselorDashboard = () => {
                 Showing results for: <br/><span className="text-[#FFB71B] text-3xl font-bold">{selectedAssessmentLabel}</span>
               </h2>
             </div>
+
+          {/* Affiliation Filter Buttons */}
+          <div className="mb-4 flex items-center gap-3">
+            <span className="text-sm font-semibold text-gray-700">Student Affiliation:</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setAffiliationFilter("all")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  affiliationFilter === "all"
+                    ? "bg-[#1D63A1] text-white shadow-md"
+                    : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                All Students
+              </button>
+              <button
+                onClick={() => setAffiliationFilter("unaffiliated")}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  affiliationFilter === "unaffiliated"
+                    ? "bg-[#FFB71B] text-white shadow-md"
+                    : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                }`}
+              >
+                Unaffiliated Only
+              </button>
+            </div>
+          </div>
 
           {/* Search & Filter Bar */}
           <SearchFilterBar

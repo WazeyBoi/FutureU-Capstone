@@ -6,7 +6,7 @@ import { useProfile } from '../contexts/ProfileContext';
 import FutureULogo from '../assets/header_logo_normal.svg';
 import FutureULogo2 from '../assets/header_logo_yellow.svg';
 import { clearRecommendationsFromLocalStorage } from './tabs/RecommendationsTab';
-import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut, User, Sparkles, ChevronDown, X } from 'lucide-react';
+import { Users, FileText, Calendar, MessageSquare, BarChart2, BookOpen, LogOut, User, Sparkles, ChevronDown, X, Building2 } from 'lucide-react';
 import { useCareerInterestProfile } from '../hooks/useCareerInterestProfile';
 import { AnimatePresence, motion } from 'framer-motion';
 import CareerInterestProfileWizard from './CareerInterestProfile/CareerInterestProfileWizard';
@@ -327,7 +327,7 @@ const Navigation = () => {
           <div className="flex items-center justify-between h-16 w-full">
             {/* Brand with Logo */}
             <Link 
-              to="/counselor-dashboard" 
+              to="/counselor-generaldashboard" 
               className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
               onMouseEnter={() => setLogoHover(true)}
               onMouseLeave={() => setLogoHover(false)}
@@ -349,16 +349,30 @@ const Navigation = () => {
             {/* Counselor Navigation Links */}
             <div className="flex items-center space-x-1">
               <Link
-                to="/counselor-dashboard"
+                to="/counselor-general-dashboard"
                 className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                  location.pathname.startsWith('/counselor-dashboard')
+                  location.pathname === '/counselor-general-dashboard'
                     ? 'bg-[#FFB71B] text-black shadow-lg'
                     : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                 }`}
               >
                 <span className="relative z-10">
                   <BarChart2 className="w-4 h-4 inline-block mr-1.5" />
-                  Dashboard
+                  General Dashboard
+                </span>
+              </Link>
+              
+              <Link
+                to="/counselor/institutional-dashboard"
+                className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  location.pathname === '/counselor/institutional-dashboard'
+                    ? 'bg-[#FFB71B] text-black shadow-lg'
+                    : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
+                }`}
+              >
+                <span className="relative z-10">
+                  <Building2 className="w-4 h-4 inline-block mr-1.5" />
+                  Institutional Dashboard
                 </span>
               </Link>
               
@@ -398,7 +412,7 @@ const Navigation = () => {
                 : userRole === 'ADMIN'
                   ? '/admin-dashboard'
                   : (userRole === 'CAREER_COUNSELOR' || userRole === 'GUIDANCE_COUNSELOR')
-                    ? '/counselor-dashboard'
+                    ? '/counselor-general-dashboard'
                     : '/student-home'
             } 
             className="group flex items-center space-x-2 transition-all duration-300 hover:scale-105"
@@ -438,9 +452,9 @@ const Navigation = () => {
                 </Link>
                 
                 <Link
-                  to="/counselor-dashboard"
+                  to="/counselor-general-dashboard"
                   className={`relative px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
-                    isActive('/counselor-dashboard')
+                    isActive('/counselor-general-dashboard')
                       ? 'bg-[#FFB71B] text-black shadow-lg'
                       : 'text-black hover:bg-[#FFB71B]/20 hover:text-[#FFB71B] hover:shadow-md'
                   }`}
