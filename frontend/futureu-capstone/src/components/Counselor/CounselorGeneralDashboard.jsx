@@ -19,7 +19,7 @@ import TopCareerPathsModal from './TopCareerPathsModal';
 import TopProgramsModal from './TopProgramsModal';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-const InstitutionalDashboard = () => {
+const CounselorrGeneralDashboard = () => {
   const navigate = useNavigate();
   const counselorUser = authService.getCurrentUser();
   const counselorId = authService.getCurrentUserId();
@@ -30,8 +30,12 @@ const InstitutionalDashboard = () => {
   const [institutionInfo, setInstitutionInfo] = useState(null);
   const [institutionStudents, setInstitutionStudents] = useState([]);
   
+  // Affiliation filter state (NEW for General Dashboard)
+  const [affiliationFilter, setAffiliationFilter] = useState("unaffiliated"); // "all" or "unaffiliated"
+  
   // Assessment data states - filtered for institution
   const [allAssessmentResults, setAllAssessmentResults] = useState([]);
+  const [filteredAssessmentResults, setFilteredAssessmentResults] = useState([]); // For charts/insights based on affiliation
   const [institutionAssessmentResults, setInstitutionAssessmentResults] = useState([]);
   const [filteredResults, setFilteredResults] = useState([]);
   
@@ -66,79 +70,77 @@ const InstitutionalDashboard = () => {
   const [schoolCodeLoading, setSchoolCodeLoading] = useState(false);
   const [schoolCodeError, setSchoolCodeError] = useState(null);
 
-  // Fetch institution data and filtered results
+  // Fetch ALL assessment data (not institution-specific)
   useEffect(() => {
-    const fetchInstitutionData = async () => {
+    const fetchAllData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Fetch counselor's institution info
-        const institution = await counselorService.getCounselorInstitution(counselorId);
-        
-        // Check if counselor has institutional access
-        if (!institution || (!institution.emailDomain && !institution.schoolCode)) {
-          // Show school code setup modal instead of error
-          setShowSchoolCodeModal(true);
-          setLoading(false);
-          return;
-        }
-        
-        setInstitutionInfo(institution);
-
-        // Fetch filtered student results for the institution
-        const institutionStudentData = await counselorService.getInstitutionStudentResults(counselorId);
-        setInstitutionStudents(institutionStudentData);
-
-        // Fetch all assessment results and filter for institution students
+        // Fetch ALL assessment results (not filtered by institution)
         const allResults = await userAssessmentService.getAllAssessmentResults();
         setAllAssessmentResults(allResults);
-        
-        // Filter results for institution students only
-        const institutionUserIds = new Set(
-          institutionStudentData.map(student => student.userId || student.id)
-        );
-        
-        const filteredAssessmentResults = allResults.filter(result => {
-          const userId = result.userAssessment?.user?.id || result.userAssessment?.user?.userId;
-          return institutionUserIds.has(userId);
-        });
-        
-        setInstitutionAssessmentResults(filteredAssessmentResults);
-        setTotalResults(filteredAssessmentResults.length);
-
-        // Fetch assessment statistics for institution
-        const stats = await counselorService.getInstitutionAssessmentStats(counselorId);
-        setAssessmentStats(stats);
+        setInstitutionAssessmentResults(allResults); // Keep for compatibility
+        setTotalResults(allResults.length);
 
         setLoading(false);
       } catch (err) {
-        setError('Failed to load institutional dashboard data. Please try again later.');
+        setError('Failed to load dashboard data. Please try again later.');
         setLoading(false);
-        console.error('Error fetching institution data:', err);
+        console.error('Error fetching assessment data:', err);
       }
     };
 
     if (counselorId) {
-      fetchInstitutionData();
+      fetchAllData();
     }
   }, [counselorId]);
+
+  // Filter assessment results based on affiliation filter (NEW for General Dashboard)
+  useEffect(() => {
+    let results = [...allAssessmentResults];
+    
+    if (affiliationFilter === "unaffiliated") {
+      // Filter for unaffiliated students only (no school code AND no institutional email)
+      results = results.filter(r => {
+        const user = r.userAssessment?.user;
+        if (!user) return false;
+        
+        const email = user.email || '';
+        const schoolCode = user.schoolCode || '';
+        
+        // Check if email is institutional (.edu, school, university, etc.)
+        const hasInstitutionalEmail = email.includes('@') && 
+          (email.endsWith('.edu') || 
+           email.includes('school') || 
+           email.includes('university') ||
+           email.includes('college') ||
+           email.includes('.edu.'));
+        
+        // Unaffiliated = NO school code AND NO institutional email
+        return !schoolCode && !hasInstitutionalEmail;
+      });
+    }
+    // If "all", use all results (no filtering)
+    
+    setFilteredAssessmentResults(results);
+  }, [allAssessmentResults, affiliationFilter]);
 
   // Fetch career AND program recommendations from comprehensive endpoint (proper structure)
   useEffect(() => {
     const fetchInstitutionRecommendations = async () => {
-      if (institutionAssessmentResults.length === 0) {
+      if (filteredAssessmentResults.length === 0) {
         setInstitutionCareerRecommendations([]);
         setInstitutionProgramRecommendations([]);
         return;
       }
 
       try {
-        // console.log('Fetching comprehensive recommendations for', institutionAssessmentResults.length, 'students');
+        // console.log('Fetching comprehensive recommendations for', filteredAssessmentResults.length, 'students');
         
         // Fetch comprehensive recommendations for each assessment result
         // This gives us the proper structure: careerPaths[] -> careers[] and programs[]
-        const comprehensivePromises = institutionAssessmentResults.map(result => {
+        const comprehensivePromises = filteredAssessmentResults.map(result => {
           const userAssessmentId = result.userAssessment?.userQuizAssessment;
           if (!userAssessmentId) {
             console.warn('No userAssessmentId found for result:', result.resultId);
@@ -208,11 +210,11 @@ const InstitutionalDashboard = () => {
     };
 
     fetchInstitutionRecommendations();
-  }, [institutionAssessmentResults]);
+  }, [filteredAssessmentResults]);
 
   // Filter and paginate results based on search and filter criteria
   useEffect(() => {
-    let results = [...institutionAssessmentResults];
+    let results = [...filteredAssessmentResults];
     
     // Apply search filter
     if (searchStudent) {
@@ -237,7 +239,7 @@ const InstitutionalDashboard = () => {
     const startIdx = (page - 1) * pageSize;
     const endIdx = startIdx + pageSize;
     setFilteredResults(results.slice(startIdx, endIdx));
-  }, [searchStudent, selectedAssessment, institutionAssessmentResults, page, pageSize]);
+  }, [searchStudent, selectedAssessment, filteredAssessmentResults, page, pageSize]);
 
   // Update time every minute
   useEffect(() => {
@@ -339,8 +341,8 @@ const InstitutionalDashboard = () => {
       'Least Program 5'
     ];
 
-    // Remove duplicates by result ID first
-    const uniqueResults = institutionAssessmentResults.filter((result, index, arr) => 
+    // Remove duplicates by result ID first - use filtered results
+    const uniqueResults = filteredAssessmentResults.filter((result, index, arr) => 
       arr.findIndex(r => r.resultId === result.resultId) === index
     );
 
@@ -535,13 +537,13 @@ const InstitutionalDashboard = () => {
   // Generate PDF summary (simple version)
   const generatePDFSummary = () => {
     const summaryText = `
-INSTITUTIONAL DASHBOARD SUMMARY
-Institution: ${institutionInfo?.name || 'Unknown'}
+GENERAL DASHBOARD SUMMARY
+${affiliationFilter === "all" ? "All Students" : "Unaffiliated Students Only"}
 Generated: ${new Date().toLocaleString()}
 
 OVERVIEW:
-- Total Students: ${institutionStudents.length}
-- Completed Assessments: ${institutionAssessmentResults.length}
+- Total Students: ${uniqueStudentCount}
+- Completed Assessments: ${filteredAssessmentResults.length}
 - Completion Rate: ${completionRate}%
 - Average Time: ${averageTimeSpent.toFixed(1)} minutes
 
@@ -663,22 +665,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     return times.reduce((a, b) => a + b, 0) / times.length / 60;
   };
 
-  const averageTimeSpent = getAverageTimeSpent(institutionAssessmentResults);
+  const averageTimeSpent = getAverageTimeSpent(filteredAssessmentResults);
 
-  // Assessment completion tracking for institution students
+  // Assessment completion tracking - use filtered results
   const getUserId = user => user?.id || user?.userId;
   
-  const studentsWithResultsIds = new Set(
-    institutionAssessmentResults.map(r => getUserId(r.userAssessment?.user)).filter(Boolean)
-  );
+  const uniqueStudentCount = new Set(
+    filteredAssessmentResults.map(r => getUserId(r.userAssessment?.user)).filter(Boolean)
+  ).size;
   
-  const studentsWithNoResults = institutionStudents.filter(s => !studentsWithResultsIds.has(getUserId(s)));
-  const completionRate = institutionStudents.length > 0 ? 
-    ((institutionStudents.length - studentsWithNoResults.length) / institutionStudents.length * 100).toFixed(1) : '0.0';
+  const completionRate = '100.0'; // All filtered results are completed
 
-  // Get unique assessment titles for filter dropdown
+  // Get unique assessment titles for filter dropdown - use filtered results
   const assessmentTitles = Array.from(
-    new Set(institutionAssessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean))
+    new Set(filteredAssessmentResults.map(r => r.userAssessment?.assessment?.title).filter(Boolean))
   );
   const selectedAssessmentLabel = selectedAssessment || 'All Assessments';
 
@@ -917,9 +917,9 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     };
   };
 
-  // Calculate institution dashboard insights
+  // Calculate dashboard insights - use filtered results
   const institutionInsights = aggregateInstitutionInsights(
-    institutionAssessmentResults, 
+    filteredAssessmentResults, 
     institutionCareerRecommendations, 
     institutionProgramRecommendations
   );
@@ -1002,17 +1002,17 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     return null;
   };
 
-  // Quick stats for institution dashboard
+  // Quick stats for dashboard
   const quickStats = [
     {
       name: "Students",
-      value: institutionStudents.length.toString(),
+      value: uniqueStudentCount.toString(),
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
     },
     {
       name: "Assessments",
-      value: institutionAssessmentResults.length.toString(),
+      value: filteredAssessmentResults.length.toString(),
       icon: <FileText className="h-6 w-6" />,
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
     },
@@ -1024,8 +1024,8 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     },
   ];
 
-  // Recent activities for institution students
-  const recentActivities = institutionAssessmentResults
+  // Recent activities - use filtered results
+  const recentActivities = filteredAssessmentResults
     .filter(r => r.userAssessment?.dateCompleted)
     .sort((a, b) => new Date(b.userAssessment.dateCompleted) - new Date(a.userAssessment.dateCompleted))
     .slice(0, 5);
@@ -1125,31 +1125,72 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       
       {/* Header Section */}
       <div className="px-15 pt-10 flex flex-col items-start relative z-10">
-        <p className="text-3xl font-bold text-[#2B3E4E]">
-          Institutional Dashboard - <span className="text-[#FFB71B]">
-            {institutionInfo?.name || "Institution"}
-          </span>
-        </p>
-        <div className="flex items-center text-[#2B3E4E]/70 mt-1">
-          <Clock className="h-4 w-4 mr-1.5 text-[#FFB71B]" />
-          <span className="text-xs">{formattedTime}</span>
-          <span className="mx-1.5">•</span>
-          <span className="text-xs">{formattedDate}</span>
+        <div className="flex items-center justify-between w-full">
+          <div>
+            <p className="text-3xl font-bold text-[#2B3E4E]">
+              General Counselor Dashboard
+            </p>
+            <div className="flex items-center text-[#2B3E4E]/70 mt-1">
+              <Clock className="h-4 w-4 mr-1.5 text-[#FFB71B]" />
+              <span className="text-xs">{formattedTime}</span>
+              <span className="mx-1.5">•</span>
+              <span className="text-xs">{formattedDate}</span>
+            </div>
+          </div>
+
+          {/* Affiliation Filter Toggle Buttons */}
+          <div className="flex items-center gap-3 px-4 py-2 rounded-xl">
+            <span className="text-sm font-semibold text-[#2B3E4E] mr-2">Filter:</span>
+            <button
+              onClick={() => setAffiliationFilter("all")}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                affiliationFilter === "all"
+                  ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white shadow-lg'
+                  : 'bg-white text-[#2B3E4E] shadow-lg hover:bg-[#FFB71B]/10'
+              }`}
+            >
+              <Users className="w-4 h-4 inline-block mr-1.5" />
+              All Students
+            </button>
+            <button
+              onClick={() => setAffiliationFilter("unaffiliated")}
+              className={`px-5 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                affiliationFilter === "unaffiliated"
+                  ? 'bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] text-white shadow-lg'
+                  : 'bg-white text-[#2B3E4E] shadow-lg hover:bg-[#FFB71B]/10'
+              }`}
+            >
+              <UserCheck className="w-4 h-4 inline-block mr-1.5" />
+              Unaffiliated Only
+            </button>
+          </div>
         </div>
-        {institutionInfo && (
-          <div className="flex items-center gap-4 text-sm text-[#2B3E4E]/70 mt-2">
-            {institutionInfo.emailDomain && (
-              <span className="flex items-center gap-1">
-                <Mail className="h-4 w-4 text-[#FFB71B]" />
-                @{institutionInfo.emailDomain}
-              </span>
-            )}
-            {institutionInfo.schoolCode && (
-              <span className="flex items-center gap-1">
-                <Hash className="h-4 w-4 text-[#FFB71B]" />
-                {institutionInfo.schoolCode}
-              </span>
-            )}
+
+        {/* Info Banner */}
+        {affiliationFilter === "unaffiliated" && (
+          <div className="mt-4 w-full bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-500/30 rounded-xl p-4 flex items-center gap-3">
+            {/* <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <UserCheck className="w-5 h-5 text-white" />
+            </div> */}
+            <div className='text-left'>
+              <p className="text-sm font-semibold text-blue-700">Viewing Unaffiliated Students Only</p>
+              <p className="text-xs text-blue-600">
+                Showing students without institutional email addresses or school codes.
+              </p>
+            </div>
+          </div>
+        )}
+        {affiliationFilter === "all" && (
+          <div className="mt-4 w-full bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 rounded-xl p-4 flex items-center gap-3">
+            {/* <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-white" />
+            </div> */}
+            <div className='text-left'>
+              <p className="text-sm font-semibold text-green-700">Viewing All Students</p>
+              <p className="text-xs text-green-600">
+                Showing all students in the system, including both affiliated and unaffiliated users.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -1161,22 +1202,22 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
           <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-600 rounded shadow-sm"></div>
-              <span className="text-[#2B3E4E]">Well Above School Avg</span>
+              <span className="text-[#2B3E4E]">Well Above Average</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-500 rounded shadow-sm"></div>
-              <span className="text-[#2B3E4E]">Above School Avg</span>
+              <span className="text-[#2B3E4E]">Above Average</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-orange-500 rounded shadow-sm"></div>
-              <span className="text-[#2B3E4E]">Below School Avg</span>
+              <span className="text-[#2B3E4E]">Below Average</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-500 rounded shadow-sm"></div>
-              <span className="text-[#2B3E4E]">Well Below School Avg</span>
+              <span className="text-[#2B3E4E]">Well Below Average</span>
             </div>
             <div className="text-xs text-[#2B3E4E]/60 ml-2 font-medium">
-              Relative to classmates in same school
+              Relative to all students in the system
             </div>
           </div>
         </div>
@@ -1321,9 +1362,9 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               </div>
               <div className="text-xs text-[#FFB71B] font-semibold text-center relative z-10">
                 {(() => {
-                  const total = institutionAssessmentResults.length;
-                  // Count students whose top RIASEC code matches any of the top 3 institution codes
-                  const codeCount = institutionAssessmentResults.reduce((acc, r) => {
+                  const total = filteredAssessmentResults.length;
+                  // Count students whose top RIASEC code matches any of the top 3 codes - use filtered results
+                  const codeCount = filteredAssessmentResults.reduce((acc, r) => {
                     const scores = [
                       { code: 'R', value: r.realisticScore },
                       { code: 'I', value: r.investigativeScore },
@@ -1399,13 +1440,13 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Career Paths</div>
             {institutionInsights.topCareerPaths.length === 0 ? (
               <div className="text-center py-2 relative z-10">
-                {institutionStudents.length === 0 ? (
-                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
+                {filteredAssessmentResults.length === 0 ? (
+                  <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
                   <>
                     <div className="text-[#2B3E4E]/40 text-xs mb-2">No career path data yet</div>
                     <div className="text-[#2B3E4E]/60 text-xs">
-                      Encourage students to complete assessments
+                      Waiting for recommendation data
                     </div>
                   </>
                 )}
@@ -1445,13 +1486,13 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             <div className="text-xl font-bold text-gray-700 text-center mb-2">Top Careers</div>
             {institutionInsights.topCareers.length === 0 ? (
               <div className="text-center py-2 relative z-10">
-                {institutionStudents.length === 0 ? (
-                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
+                {filteredAssessmentResults.length === 0 ? (
+                  <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
                   <>
                     <div className="text-[#2B3E4E]/40 text-xs mb-2">No career data yet</div>
                     <div className="text-[#2B3E4E]/60 text-xs">
-                      Encourage students to complete assessments
+                      Waiting for recommendation data
                     </div>
                   </>
                 )}
@@ -1492,13 +1533,13 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Programs</div>
             {institutionInsights.topPrograms.length === 0 ? (
               <div className="text-center py-2 relative z-10">
-                {institutionStudents.length === 0 ? (
-                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
+                {filteredAssessmentResults.length === 0 ? (
+                  <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
                   <>
                     <div className="text-[#2B3E4E]/40 text-xs mb-2">No program data yet</div>
                     <div className="text-[#2B3E4E]/60 text-xs">
-                      Encourage students to complete assessments
+                      Waiting for recommendation data
                     </div>
                   </>
                 )}
@@ -1571,53 +1612,39 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
 
         {/* Sidebar: Institution Stats + Recent Activity */}
         <aside className="w-full lg:w-72 flex-shrink-0">
-          {/* Institution Completion Rate */}
+          {/* Completion Rate */}
           <div className="bg-white rounded-xl shadow-lg hover:shadow-xl border-2 border-[#FFB71B]/20 hover:border-[#2B3E4E]/40 p-4 mb-4 animate-fade-in transition-all duration-200 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#FFB71B]/5 to-[#2B3E4E]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <h3 className="text-base font-bold text-[#2B3E4E] mb-1 relative z-10">Institution Completion Rate</h3>
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-1 relative z-10">Completion Status</h3>
             <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent mb-1 relative z-10">{completionRate}%</div>
             <div className="text-xs text-[#2B3E4E]/70 mb-2 relative z-10">
-              {institutionStudents.length - studentsWithNoResults.length} of {institutionStudents.length} institution students completed assessments
+              {filteredAssessmentResults.length} completed assessments
             </div>
-            {studentsWithNoResults.length > 0 && (
-              <div className="relative z-10">
-                <div className="text-xs text-[#2B3E4E]/60 mb-1">Students with no results:</div>
-                <ul className="max-h-20 overflow-y-auto text-xs text-[#2B3E4E]/80">
-                  {studentsWithNoResults.slice(0, 5).map((student, idx) => (
-                    <li key={getUserId(student) || idx} className="mb-1 truncate flex items-center gap-2">
-                      {getStudentSourceIcon(student)}
-                      {student.firstName} {student.lastName || student.lastname}
-                    </li>
-                  ))}
-                  {studentsWithNoResults.length > 5 && (
-                    <li className="text-gray-400">+ {studentsWithNoResults.length - 5} more</li>
-                  )}
-                </ul>
-              </div>
-            )}
+            <div className="text-xs text-[#2B3E4E]/60 relative z-10">
+              Showing {affiliationFilter === "all" ? "all students" : "unaffiliated students only"}
+            </div>
           </div>
 
-          {/* Institution Connection Summary */}
+          {/* Filter Summary */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-4 animate-fade-in">
-            <h3 className="text-base font-bold text-[#1D63A1] mb-1">Connection Types</h3>
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-1">Current Filter</h3>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-blue-600" />
-                  Email Domain
+                  <Users className="h-4 w-4 text-[#FFB71B]" />
+                  {affiliationFilter === "all" ? "All Students" : "Unaffiliated Only"}
                 </span>
                 <span className="text-sm font-semibold">
-                  {institutionStudents.filter(s => s.email && institutionInfo?.emailDomain && 
-                    s.email.includes(`@${institutionInfo.emailDomain}`)).length}
+                  {uniqueStudentCount} students
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2 text-sm">
-                  <Hash className="h-4 w-4 text-green-600" />
-                  School Code
+                  <FileText className="h-4 w-4 text-[#FFB71B]" />
+                  Assessments
                 </span>
                 <span className="text-sm font-semibold">
-                  {institutionStudents.filter(s => s.schoolCode === institutionInfo?.schoolCode).length}
+                  {filteredAssessmentResults.length}
                 </span>
               </div>
             </div>
@@ -1625,17 +1652,16 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
 
           {/* Recent Activity */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 animate-fade-in max-h-[340px] overflow-y-auto">
-            <h3 className="text-base font-bold text-[#2B3E4E] mb-3">Recent Institution Activity</h3>
+            <h3 className="text-base font-bold text-[#2B3E4E] mb-3">Recent Activity</h3>
             <div className="space-y-2">
               {recentActivities.length === 0 ? (
                 <div className="flex flex-col items-center py-4">
-                  <School className="w-12 h-12 text-gray-300 mb-2" />
+                  <FileText className="w-12 h-12 text-gray-300 mb-2" />
                   <div className="text-gray-400 text-xs text-center">No recent activity yet.</div>
                 </div>
               ) : recentActivities.map((activity, idx) => {
                 const user = activity.userAssessment?.user || {};
                 const assessment = activity.userAssessment?.assessment || {};
-                const student = institutionStudents.find(s => getUserId(s) === getUserId(user));
                 return (
                   <div key={idx} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors animate-pop-in" style={{ animationDelay: `${idx * 60}ms` }}>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">
@@ -1644,7 +1670,6 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <div className="flex-start flex-1 min-w-0">
                       <div className="text-left truncate font-medium text-xs text-gray-800 flex items-center gap-1">
                         {user.firstName} {user.lastName}
-                        {student && getStudentSourceIcon(student)}
                       </div>
                       <div className="text-left truncate text-[11px] text-gray-500">{assessment.title}</div>
                     </div>
@@ -1766,4 +1791,4 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   );
 };
 
-export default InstitutionalDashboard;
+export default CounselorrGeneralDashboard;

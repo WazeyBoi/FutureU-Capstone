@@ -32,7 +32,7 @@ const Assessments = () => {
     } catch (err) {
       setError('Failed to load assessments. Please try again later.');
       setLoading(false);
-      console.error('Error fetching assessments:', err);
+      // console.error('Error fetching assessments:', err);
     }
   };
 

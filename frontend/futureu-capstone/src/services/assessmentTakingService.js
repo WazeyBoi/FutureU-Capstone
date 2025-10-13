@@ -226,7 +226,7 @@ class AssessmentTakingService {
       });
     });
 
-    console.log(`Selected ${selectedPassages.length} passages with ${selectedQuestions.length} total questions for reading comprehension`);
+    // console.log(`Selected ${selectedPassages.length} passages with ${selectedQuestions.length} total questions for reading comprehension`);
     
     return selectedQuestions;
   }
@@ -301,7 +301,7 @@ class AssessmentTakingService {
    * @param {string} context - Context where the error occurred
    */
   handleError(error, context = '') {
-    console.error(`Assessment taking service error${context ? ' - ' + context : ''}:`, error);
+    // console.error(`Assessment taking service error${context ? ' - ' + context : ''}:`, error);
   }
 }
 

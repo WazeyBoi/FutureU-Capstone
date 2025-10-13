@@ -31,7 +31,7 @@ const AssessmentSubCategories = () => {
       } catch (err) {
         setError('Failed to load assessment sub-categories. Please try again later.');
         setLoading(false);
-        console.error('Error fetching data:', err);
+        // console.error('Error fetching data:', err);
       }
     };
 

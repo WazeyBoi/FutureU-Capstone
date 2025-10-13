@@ -87,17 +87,17 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
       }
       setError(null);
 
-      console.log('Fetching dream career insight...');
+      // console.log('Fetching dream career insight...');
       const response = await recommendationService.fetchRecommendations(userAssessmentId);
 
       if (response?.data?.recommendations) {
         setDreamInsight(response.data.recommendations.dreamCareerInsight || null);
-        console.log('Dream career insight loaded successfully');
+        // console.log('Dream career insight loaded successfully');
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      console.error('Error fetching dream career insight:', err);
+      // console.error('Error fetching dream career insight:', err);
       let errorMessage = 'Failed to load dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
@@ -118,11 +118,11 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
     setIsDreamCareerRefreshing(true);
     setDreamCareerError(null);
     try {
-      console.log('Refreshing dream career analysis...');
+      // console.log('Refreshing dream career analysis...');
       await fetchDreamCareerInsight({ forceRefresh: true });
-      console.log('Dream career analysis refreshed successfully');
+      // console.log('Dream career analysis refreshed successfully');
     } catch (err) {
-      console.error('Dream career analysis refresh failed:', err);
+      // console.error('Dream career analysis refresh failed:', err);
       let errorMessage = 'Failed to refresh dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
@@ -146,13 +146,13 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
     setDreamCareerError(null);
 
     try {
-      console.log('Regenerating dream career analysis...');
+      // console.log('Regenerating dream career analysis...');
       // Call a specific regenerate endpoint that forces new AI analysis
       const response = await recommendationService.regenerateDreamCareerAnalysis(userAssessmentId);
       
       if (response?.data?.dreamCareerInsight) {
         setDreamInsight(response.data.dreamCareerInsight);
-        console.log('Dream career analysis regenerated successfully');
+        // console.log('Dream career analysis regenerated successfully');
         
         // Clear any existing error and show success feedback
         setDreamCareerError(null);
@@ -162,12 +162,12 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
         setDreamCareerError(null); // Make sure no error is shown
         
         // You could add a success toast here if you have a toast system
-        console.log(successMessage);
+        // console.log(successMessage);
       } else {
         throw new Error('Failed to regenerate analysis');
       }
     } catch (err) {
-      console.error('Dream career analysis regeneration failed:', err);
+      // console.error('Dream career analysis regeneration failed:', err);
       let errorMessage = 'Failed to regenerate dream career analysis. Please try again.';
       
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
@@ -246,11 +246,11 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 0.5 }} 
-        className="bg-white rounded-3xl shadow-xl p-8 text-center border-2 border-[#1D63A1]/10 animate-card-pop"
+        className="p-8 text-center animate-card-pop"
       >
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-16 h-16 bg-[#1D63A1]/10 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-[#1D63A1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-[#FFB71B]/10 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-[#2B3E4E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
           </div>
@@ -262,9 +262,9 @@ const DreamCareerAnalysisTab = ({ userAssessmentId }) => {
           </div>
           <button
             onClick={() => window.location.href = '/profile'}
-            className="px-6 py-2 bg-[#1D63A1] text-white rounded-lg hover:bg-[#1D63A1]/90 transition-colors"
+            className="px-6 py-2 bg-[#FFB71B] text-white rounded-lg hover:bg-[#2B3E4E] transition-colors"
           >
-            Update Profile
+            Set Profile
           </button>
         </div>
       </motion.div>

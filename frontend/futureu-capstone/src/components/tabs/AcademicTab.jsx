@@ -114,7 +114,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+        className="space-y-8 relative z-10"
       >
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop relative overflow-hidden">
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
@@ -214,7 +214,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               <motion.div 
                 key={track.id} 
                 whileHover={{ scale: 1.02 }} 
-                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5 h-50"
                 style={{ boxShadow: '0 10px 26px rgba(29,99,161,0.15)' }}
               >
                 <div className="flex justify-between items-center mb-3">
@@ -241,7 +241,7 @@ const AcademicTab = ({ results, generateAcademicTracksData, getScoreColor, getSc
               <motion.div 
                 key={track.id} 
                 whileHover={{ scale: 1.02 }} 
-                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5"
+                className="bg-white rounded-2xl p-6 transition-transform transform hover:-translate-y-0.5x h-50"
                 style={{ boxShadow: '0 10px 26px rgba(255,183,27,0.15)' }}
               >
                 <div className="flex justify-between items-center mb-3">

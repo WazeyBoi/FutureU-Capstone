@@ -69,7 +69,7 @@ const Questions = () => {
     } catch (err) {
       setError('Failed to load questions. Please try again later.');
       setLoading(false);
-      console.error('Error fetching data:', err);
+      // console.error('Error fetching data:', err);
     }
   };
 
@@ -87,7 +87,7 @@ const Questions = () => {
       const choicesData = await choiceService.getChoicesByQuestion(question.questionId);
       setQuestionChoices(choicesData);
     } catch (err) {
-      console.error('Error fetching choices:', err);
+      // console.error('Error fetching choices:', err);
       setQuestionChoices([]);
     }
   };
@@ -147,7 +147,7 @@ const Questions = () => {
       setEditQuestionText('');
       setSuccessMessage('Question updated successfully!');
     } catch (error) {
-      console.error('Error updating question:', error);
+      // console.error('Error updating question:', error);
       setErrorMessage('Failed to update question. Please try again.');
     } finally {
       setSaving(false);
@@ -194,7 +194,7 @@ const Questions = () => {
       setEditChoiceText('');
       setSuccessMessage('Choice updated successfully!');
     } catch (error) {
-      console.error('Error updating choice:', error);
+      // console.error('Error updating choice:', error);
       setErrorMessage('Failed to update choice. Please try again.');
     } finally {
       setSaving(false);
@@ -221,7 +221,7 @@ const Questions = () => {
       
       setSuccessMessage(`Choice marked as ${!choice.correct ? 'correct' : 'incorrect'}!`);
     } catch (error) {
-      console.error('Error updating choice correctness:', error);
+      // console.error('Error updating choice correctness:', error);
       setErrorMessage('Failed to update choice correctness. Please try again.');
     } finally {
       setSaving(false);

@@ -119,7 +119,7 @@ const AssessmentDashboard = () => {
                 sectionResults: resultData.sectionResults
               };
             } catch (err) {
-              console.error(`Error fetching results for assessment ${assessment.userQuizAssessment}:`, err);
+              // console.error(`Error fetching results for assessment ${assessment.userQuizAssessment}:`, err);
               return assessment;
             }
           }
@@ -190,7 +190,7 @@ const AssessmentDashboard = () => {
       } catch (err) {
         setError('Failed to load assessments. Please try again later.');
         setLoading(false);
-        console.error('Error fetching assessments:', err);
+        // console.error('Error fetching assessments:', err);
       }
     };
 
@@ -516,19 +516,21 @@ const AssessmentDashboard = () => {
   }
 
   return (
-    <div className="max-w-8xl mx-auto py-10 px-4 sm:px-8 bg-[#F8F9FA] min-h-screen relative overflow-visible">
+    <div className="max-w-8xl mx-auto py-10 px-4 sm:px-8 bg-white min-h-screen relative overflow-visible">
       {/* Playful floating shapes background */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#1D63A1]/20 rounded-full blur-2xl animate-bounce-slow" />
-        <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#1D63A1]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
-        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#232D35]/10 to-[#1D63A1]/10 rounded-full blur-2xl animate-bounce-slowest" />
+        <div className="absolute top-10 left-10 w-32 h-32 bg-gradient-to-br from-[#FFB71B]/30 to-[#2B3E4E]/20 rounded-full blur-2xl animate-bounce-slow" />
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-tr from-[#2B3E4E]/20 to-[#FFB71B]/30 rounded-full blur-2xl animate-bounce-slower" />
+        <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-gradient-to-br from-[#FFB71B]/10 to-[#2B3E4E]/10 rounded-full blur-2xl animate-bounce-slowest" />
+        <div className="absolute top-1/4 right-1/4 w-16 h-16 bg-[#FFB71B]/20 rounded-full blur-xl animate-pulse" />
+        <div className="absolute bottom-1/4 left-1/4 w-20 h-20 bg-[#2B3E4E]/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
       <div className="relative z-10">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#1D63A1] to-[#2B3E4E] bg-clip-text text-transparent drop-shadow-lg tracking-tight animate-pop">
+          <h1 className="text-4xl font-extrabold text-[#2B3E4E] animate-pop">
             Assessment Dashboard
           </h1>
-          <p className="mt-4 text-lg text-[#232D35]/70 font-medium animate-fade-in">
+          <p className="mt-4 text-lg text-[#2B3E4E]/70 font-medium animate-fade-in">
             Continue your educational journey or start something new!
           </p>
         </div>
@@ -610,8 +612,8 @@ const AssessmentDashboard = () => {
 
         {/* Available Assessments */}
         <div className="mb-14">
-          <h2 className="text-xl font-bold text-[#232D35] mb-4 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#1D63A1]/20 text-[#FFB71B] mr-1">
+          <h2 className="text-xl font-bold text-[#2B3E4E] mb-4 pb-2 border-b-2 border-gradient-to-r from-[#FFB71B] to-[#2B3E4E] flex items-center gap-2 animate-slide-in">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/70 text-white mr-1 shadow-lg">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
             </span>
             Available Assessments
@@ -621,23 +623,22 @@ const AssessmentDashboard = () => {
               {availableAssessments.map((assessment, idx) => (
                 <motion.div
                   key={assessment.assessmentId}
-                  whileHover={{ scale: 1.03 }}
-                  className="bg-white rounded-3xl shadow-xl hover:border-[#FFB71B]/40 transition-all duration-300 overflow-hidden relative group animate-card-pop"
+                  className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(255,183,27,0.15)] hover:shadow-[0_12px_40px_rgba(43,62,78,0.25)] border-2 border-[#FFB71B]/20 hover:border-[#2B3E4E]/40 transition-all duration-300 overflow-hidden relative group animate-card-pop"
                 >
-                  <div className="absolute -top-4 -left-4 bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] w-12 h-12 rounded-full opacity-20 group-hover:opacity-40 transition" />
-                  <div className="p-6 border-b border-[#1D63A1]/20 bg-gradient-to-r from-[#1D63A1]/10 to-[#1D63A1]/5">
-                    <h3 className="text-lg font-bold text-[#232D35] flex items-center gap-2">
-                      {/* <svg className="w-5 h-5 text-[#FFB71B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg> */}
+                  <div className="absolute -top-6 -left-6 bg-gradient-to-br from-[#FFB71B] to-[#2B3E4E] w-20 h-20 rounded-full opacity-10 group-hover:opacity-20 transition blur-xl" />
+                  <div className="absolute -bottom-6 -right-6 bg-gradient-to-tl from-[#2B3E4E] to-[#FFB71B] w-24 h-24 rounded-full opacity-10 group-hover:opacity-20 transition blur-xl" />
+                  <div className="p-6 border-b-2 border-[#FFB71B]/20 bg-gradient-to-r from-[#FFB71B]/5 via-white to-[#2B3E4E]/5 relative">
+                    <h3 className="text-lg font-bold text-[#2B3E4E] flex items-center gap-2">
                       {assessment.title}
                     </h3>
-                    <p className="text-left text-sm text-[#232D35]/70 mt-1">{assessment.description}</p>
+                    <p className="text-left text-sm text-[#2B3E4E]/70 mt-1">{assessment.description}</p>
                   </div>
-                  <div className="flex-1 flex flex-col items-end p-6">
+                  <div className="flex-1 flex flex-col items-end p-6 relative">
                     <button
                       onClick={() => handleStartAssessment(assessment.assessmentId)}
-                      className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
+                      className="cursor-pointer bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 text-white py-2.5 px-6 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 group/btn"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                      <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                       Start Assessment
                     </button>
                   </div>
@@ -880,7 +881,7 @@ const AssessmentDashboard = () => {
         {Object.keys(completedByAssessment).length > 0 ? (
           <div className="mb-14">
             <h2 className="text-xl font-bold text-[#232D35] mb-6 pb-2 border-b border-[#1D63A1]/20 flex items-center gap-2 animate-slide-in">
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFB71B]/30 text-[#1D63A1] mr-1">
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#FFB71B] text-white mr-1">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
               </span>
               Your Assessment History
@@ -894,24 +895,23 @@ const AssessmentDashboard = () => {
                     key={assessmentId}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    whileHover={{ scale: 1.03 }}
                     className="bg-white rounded-3xl shadow-xl hover:border-[#FFB71B]/40 transition-all duration-300 flex flex-col overflow-hidden animate-card-pop relative"
                   >
-                    <div className="absolute -top-4 -right-4 bg-gradient-to-br from-[#FFB71B] to-[#1D63A1] w-12 h-12 rounded-full opacity-20 group-hover:opacity-40 transition" />
-                    <div className="p-6 border-b border-[#1D63A1]/20 bg-gradient-to-r from-[#1D63A1]/10 to-[#1D63A1]/5 flex justify-between items-center">
+                    <div className="absolute -top-4 -right-4 bg-gradient-to-br from-[#w] to-white w-12 h-12 rounded-full opacity-20 group-hover:opacity-40 transition" />
+                    <div className="p-6 border-b border-[#1D63A1]/20 bg-[#2B3E4E] flex justify-between items-center">
                       <div className='w-2/3'>
-                        <h3 className="text-xl font-bold text-[#232D35] flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
                           {/* <svg className="w-5 h-5 text-[#FFB71B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg> */}
                           {assessment.title}
                         </h3>
-                        <p className="text-left text-sm text-[#232D35]/70 mt-1">{assessment.description}</p>
+                        <p className="text-left text-sm text-white/70 mt-1">{assessment.description}</p>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <div className="bg-[#2B3E4E]/20 px-4 py-2 rounded-lg">
-                          <span className="text-xs text-[#2B3E4E] block">Attempts</span>
-                          <span className="text-2xl font-bold text-[#2B3E4E]">{stats.attempts}</span>
+                      {/* <div className="flex flex-col items-end">
+                        <div className="bg-[#FFB71B]/80 px-4 py-2 rounded-lg">
+                          <span className="text-xs text-white block">Attempts</span>
+                          <span className="text-2xl font-bold text-white">{stats.attempts}</span>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
                     <div className="p-6 flex-1 flex flex-col gap-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -921,7 +921,7 @@ const AssessmentDashboard = () => {
                             className={`rounded-xl border-2 p-4 flex flex-col gap-2 shadow-sm transition-all duration-200 bg-[#F8F9FA] hover:bg-[#FFB71B]/10 border-[#1D63A1]/10 animate-attempt-pop`}
                           >
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-[#2B3E4E] text-base">Attempt #{attempt.attemptNo || i + 1}</span>
+                              {/* <span className="font-bold text-[#2B3E4E] text-base">Attempt #{attempt.attemptNo || i + 1}</span> */}
                               {/* <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-bold border ${getScoreBgClass(attempt.result?.overallScore || 0)} ${getScoreColorClass(attempt.result?.overallScore || 0)}`}>
                                 {attempt.result?.overallScore?.toFixed(1) || 0}%
                               </span> */}
@@ -1032,13 +1032,13 @@ const AssessmentDashboard = () => {
               >
                 <button
                   onClick={handleCancelStartAssessment}
-                  className="w-full px-4 py-2 text-sm font-medium text-white hover:text-[#2B3E4E] bg-[#2B3E4E] rounded-md hover:bg-gray-50 focus:outline-none"
+                  className="cursor-pointer w-full px-4 py-2 text-sm font-medium text-white hover:text-white bg-[#2B3E4E] rounded-md hover:bg-[#FFB71B] focus:outline-none"
                 >
                   Not Yet
                 </button>
                 <button
                   onClick={handleConfirmStartAssessment}
-                  className="w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-xl font-bold shadow-md transition-all"
+                  className="cursor-pointer w-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white py-2 px-4 rounded-md font-bold shadow-md transition-all"
                 >
                   Yes, Start Assessment
                 </button>

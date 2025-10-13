@@ -53,12 +53,12 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="space-y-8 bg-[#F8F9FA] rounded-3xl relative z-10"
+        className="space-y-8 relative z-10"
       >
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop relative overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="p-6 md:p-8 animate-card-pop relative overflow-visible">
           <div className="absolute -left-12 -top-12 w-48 h-48 bg-gradient-to-tr from-[#FFB71B]/30 to-[#FFB71B]/10 rounded-full opacity-40 pointer-events-none transform -rotate-12"></div>
           
-          <h3 className="text-2xl font-extrabold text-[#232D35] mb-4 relative z-10">What is RIASEC</h3>
+          <h3 className="text-left text-2xl font-extrabold text-[#232D35] mb-4 relative z-10">What is RIASEC</h3>
           <p className="text-left text-sm text-gray-700 leading-relaxed mb-3 relative z-10">
             The RIASEC model, developed by psychologist John Holland, categorizes people and work environments into six types: 
             Realistic, Investigative, Artistic, Social, Enterprising, and Conventional. Your results indicate which types align most 
@@ -142,8 +142,8 @@ const InterestsTab = ({ results, generateRiasecRadarData, getRiasecDescription }
           </motion.div>
         </motion.div>
         
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="bg-white rounded-3xl shadow-lg p-6 md:p-8 border border-[#FFB71B]/10 animate-card-pop">
-          <h3 className="text-xl font-extrabold text-[#232D35] mb-6">RIASEC Type Breakdown</h3>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="p-6 md:p-8 animate-card-pop">
+          <h3 className="text-xl font-extrabold text-[#232D35] mb-12">RIASEC Type Breakdown</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Realistic */}
             <motion.div 

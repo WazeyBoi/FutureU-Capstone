@@ -185,7 +185,7 @@ class UserAssessmentService {
         // that falls out of the range of 2xx
         errorMessage = error.response.data?.message || 
                       `Server error: ${error.response.status} - ${error.response.statusText}`;
-        console.error('Server error response:', error.response.data);
+        // console.error('Server error response:', error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         errorMessage = 'No response received from server. Check your network connection.';
@@ -284,7 +284,7 @@ class UserAssessmentService {
    * @param {string} context - Context where the error occurred
    */
   handleError(error, context = '') {
-    console.error(`User assessment service error${context ? ' - ' + context : ''}:`, error);
+    // console.error(`User assessment service error${context ? ' - ' + context : ''}:`, error);
   }
 }
 
