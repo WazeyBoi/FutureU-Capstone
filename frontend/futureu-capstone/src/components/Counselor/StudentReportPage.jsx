@@ -522,7 +522,7 @@ const StudentReportPage = () => {
           onClick={() =>
             window.history.length > 1
               ? window.history.back()
-              : window.location.assign("/counselor-dashboard")
+              : window.location.assign("/counselor-general-dashboard")
           }
         >
           <svg

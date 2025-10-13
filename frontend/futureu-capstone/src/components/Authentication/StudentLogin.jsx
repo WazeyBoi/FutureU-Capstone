@@ -19,12 +19,20 @@ const StudentLogin = () => {
     try {
       const userData = await authService.signin(email, password);
       
-      // Check if user has admin role (case-insensitive)
+      // Check user role and redirect accordingly
       const role = authService.getUserRole();
       
       if (role && role.toUpperCase() === 'ADMIN') {
         // If admin tries to use student login, show error and log them out
         setError('Please use the Admin login page for administrator access.');
+        authService.signout(); // Log them out (but don't redirect)
+        setLoading(false);
+        return;
+      }
+      
+      if (role && (role.toUpperCase() === 'GUIDANCE_COUNSELOR' || role.toUpperCase() === 'CAREER_COUNSELOR')) {
+        // If counselor tries to use student login, show error and log them out
+        setError('Please use the Counselor login page for counselor access.');
         authService.signout(); // Log them out (but don't redirect)
         setLoading(false);
         return;

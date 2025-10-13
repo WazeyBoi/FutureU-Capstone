@@ -10,8 +10,8 @@ const Unauthorized = () => {
     
     if (userRole === 'ADMIN') {
       return '/admin-dashboard';
-    } else if (userRole === 'GUIDANCE_COUNSELOR') {
-      return '/counselor-dashboard';
+    } else if (userRole === 'GUIDANCE_COUNSELOR' || userRole === 'CAREER_COUNSELOR') {
+      return '/counselor-general-dashboard';
     } else {
       return '/user-landing-page'; // Default for students or other roles
     }

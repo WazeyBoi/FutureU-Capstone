@@ -11,7 +11,7 @@ const PublicRoute = ({ children }) => {
     if (role === 'ADMIN') {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (role === 'CAREER_GUIDANCE') {
-      return <Navigate to="/counselor-dashboard" replace />;
+      return <Navigate to="/counselor-general-dashboard" replace />;
     } else {
       // Default for STUDENT or other roles - redirect to student homepage
       return <Navigate to="/student-home" replace />;

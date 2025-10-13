@@ -649,8 +649,8 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     setShowSchoolCodeModal(false);
     setSchoolCodeInput('');
     setSchoolCodeError(null);
-    // Redirect to general counselor dashboard
-    navigate('/counselor-dashboard');
+    // Stay on general counselor dashboard (already here)
+    // No navigation needed
   };
 
   // Calculate average time spent for institution students
@@ -1094,10 +1094,10 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 Go to Profile Settings
               </button>
               <button
-                onClick={() => navigate('/counselor-dashboard')}
+                onClick={() => navigate('/counselor/institutional-dashboard')}
                 className="w-full py-2 px-4 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
               >
-                View General Dashboard
+                View Institutional Dashboard
               </button>
             </div>
           ) : (
