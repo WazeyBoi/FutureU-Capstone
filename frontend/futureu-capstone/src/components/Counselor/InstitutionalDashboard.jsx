@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import SearchFilterBar from './SearchFilterBar';
 import AssessmentResultsGrid from './AssessmentResultsGrid';
+import TopCareersModal from './TopCareersModal';
+import TopCareerPathsModal from './TopCareerPathsModal';
+import TopProgramsModal from './TopProgramsModal';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const InstitutionalDashboard = () => {
@@ -46,6 +49,7 @@ const InstitutionalDashboard = () => {
   const [showMorePrograms, setShowMorePrograms] = useState(false);
   const [showCareersModal, setShowCareersModal] = useState(false);
   const [showProgramsModal, setShowProgramsModal] = useState(false);
+  const [showCareerPathsModal, setShowCareerPathsModal] = useState(false);
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -869,6 +873,16 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       .sort((a, b) => b[1] - a[1])
       .map(([title, count]) => ({ title, count }));
 
+    // Career Path aggregation (from careerPathName in the recommendations)
+    const careerPathCounts = {};
+    careers.forEach(rec => {
+      const pathName = rec.careerPathName;
+      if (pathName) careerPathCounts[pathName] = (careerPathCounts[pathName] || 0) + 1;
+    });
+    const topCareerPaths = Object.entries(careerPathCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+
     // Program recommendations aggregation
     // Data comes from ProgramRecommendationDetailEntity via career_path_recommendation
     const programCounts = {};
@@ -893,7 +907,8 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     return { 
       mostCommonRiasec, 
       performanceAnalysis, 
-      topCareers, 
+      topCareers,
+      topCareerPaths, 
       topPrograms, 
       riasecCodeCounts, 
       mostCommonCodes,
@@ -1334,10 +1349,11 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
         {/* Compact Summary Cards */}
         <div className="flex flex-row gap-4 mb-6">
           {/* Strengths & Concerns Combined */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-bold text-gray-700">Performance Overview</div>
-              <div className="flex gap-2">
+          <div className="bg-white rounded-xl shadow-md flex flex-col py-4 px-6 min-h-[140px] flex-1">
+            <div className="text-left  mb-3">
+              <span className="text-sm font-bold text-gray-700">Performance Overview</span>
+                <span className="text-xs text-gray-400 ml-2">within school distribution</span>
+              <div className="flex justify-center gap-2">
                 <div className="flex items-center gap-1 text-xs">
                   <div className="w-3 h-3 bg-green-600 rounded"></div>
                   <span>Strengths</span>
@@ -1346,7 +1362,6 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                   <div className="w-3 h-3 bg-red-500 rounded"></div>
                   <span>Concerns</span>
                 </div>
-                <div className="text-xs text-gray-400 ml-2">within school distribution</div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 flex-1">
@@ -1373,9 +1388,58 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
           </div>
 
+          {/* Top Career Paths - Compact */}
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl flex flex-col py-4 px-6 min-h-[140px] flex-1 transition-all duration-200 relative overflow-hidden group">
+            {/* Decorative gradient orb */}
+            {/* <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-bl from-[#2B3E4E]/10 via-[#FFB71B]/10 to-transparent rounded-full blur-2xl transition-opacity"></div> */}
+            
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#FFB71B] mb-2 mx-auto shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Career Paths</div>
+            {institutionInsights.topCareerPaths.length === 0 ? (
+              <div className="text-center py-2 relative z-10">
+                {institutionStudents.length === 0 ? (
+                  <div className="text-[#2B3E4E]/40 text-xs">No students found</div>
+                ) : (
+                  <>
+                    <div className="text-[#2B3E4E]/40 text-xs mb-2">No career path data yet</div>
+                    <div className="text-[#2B3E4E]/60 text-xs">
+                      Encourage students to complete assessments
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                {institutionInsights.topCareerPaths
+                  .slice(0, 3)
+                  .map((cp, i) => {
+                    const total = institutionCareerRecommendations.length;
+                    const percent = total > 0 ? ((cp.count / total) * 100).toFixed(0) : '0';
+                    return (
+                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                        <span className="truncate pr-2 text-[#2B3E4E] font-medium">{i + 1}. {cp.name}</span>
+                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
+                      </div>
+                    );
+                  })}
+                {/* Show button if more than 3 items exist */}
+                {institutionInsights.topCareerPaths.length > 3 && (
+                  <button
+                    onClick={() => setShowCareerPathsModal(true)}
+                    className="w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
+                  >
+                    View All ({institutionInsights.topCareerPaths.length}) →
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+
           {/* Top Careers - Compact */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-100 flex flex-col py-4 px-6 min-h-[140px] flex-1">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500 mb-2 mx-auto">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl flex flex-col py-4 px-6 min-h-[140px] flex-1 transition-all duration-200 relative overflow-hidden group">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500 mb-2 mx-auto group-hover:scale-110 transition-transform">
               <BarChart2 className="w-5 h-5 text-white" />
             </div>
             <div className="text-xl font-bold text-gray-700 text-center mb-2">Top Careers</div>
@@ -1420,8 +1484,8 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
           </div>
 
           {/* Top Programs - Compact */}
-          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl hover:border-[#FFB71B]/40 flex flex-col py-4 px-6 min-h-[140px] flex-1 transition-all duration-200 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-xl flex flex-col py-4 px-6 min-h-[140px] flex-1 transition-all duration-200 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-transparent transition-opacity"></div>
             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#2B3E4E] mb-2 mx-auto shadow-lg relative z-10 group-hover:scale-110 transition-transform">
               <BookOpen className="w-5 h-5 text-white" />
             </div>
@@ -1677,119 +1741,27 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
         </div>
       )}
       
-      {/* Top Careers Modal */}
-      {showCareersModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowCareersModal(false)}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#FFB71B] to-[#2B3E4E] p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
-                    <BarChart2 className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">All Top Careers</h3>
-                    <p className="text-sm text-white/80">Institution-wide career recommendations</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCareersModal(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
+      {/* Modals */}
+      <TopCareersModal 
+        isOpen={showCareersModal}
+        onClose={() => setShowCareersModal(false)}
+        topCareers={institutionInsights.topCareers}
+        totalRecommendations={institutionCareerRecommendations.length}
+      />
 
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
-              <div className="space-y-2">
-                {institutionInsights.topCareers.map((c, i) => {
-                  const total = institutionCareerRecommendations.length;
-                  const percent = total > 0 ? ((c.count / total) * 100).toFixed(1) : '0';
-                  return (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-[#FFB71B]/5 to-transparent hover:from-[#FFB71B]/10 transition-colors border border-[#FFB71B]/20">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#FFB71B] to-[#2B3E4E] text-white font-bold text-sm flex items-center justify-center">
-                          {i + 1}
-                        </span>
-                        <span className="font-medium text-[#2B3E4E] truncate">{c.title}</span>
-                      </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm text-[#2B3E4E]/70">{c.count} students</span>
-                        <span className="text-lg font-bold text-[#FFB71B]">{percent}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <TopCareerPathsModal 
+        isOpen={showCareerPathsModal}
+        onClose={() => setShowCareerPathsModal(false)}
+        topCareerPaths={institutionInsights.topCareerPaths}
+        totalRecommendations={institutionCareerRecommendations.length}
+      />
 
-      {/* Top Programs Modal */}
-      {showProgramsModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" onClick={() => setShowProgramsModal(false)}>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mr-3">
-                    <BookOpen className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">All Top Programs</h3>
-                    <p className="text-sm text-white/80">Institution-wide program recommendations</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowProgramsModal(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
-              <div className="space-y-2">
-                {institutionInsights.topPrograms.map((p, i) => {
-                  const total = institutionProgramRecommendations.length;
-                  const percent = total > 0 ? ((p.count / total) * 100).toFixed(1) : '0';
-                  return (
-                    <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-gradient-to-r from-[#2B3E4E]/5 to-transparent hover:from-[#2B3E4E]/10 transition-colors border border-[#2B3E4E]/20">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-[#2B3E4E] to-[#FFB71B] text-white font-bold text-sm flex items-center justify-center">
-                          {i + 1}
-                        </span>
-                        <span className="font-medium text-[#2B3E4E] truncate">{p.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        <span className="text-sm text-[#2B3E4E]/70">{p.count} students</span>
-                        <span className="text-lg font-bold text-[#FFB71B]">{percent}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <TopProgramsModal 
+        isOpen={showProgramsModal}
+        onClose={() => setShowProgramsModal(false)}
+        topPrograms={institutionInsights.topPrograms}
+        totalRecommendations={institutionProgramRecommendations.length}
+      />
     </div>
   );
 };
