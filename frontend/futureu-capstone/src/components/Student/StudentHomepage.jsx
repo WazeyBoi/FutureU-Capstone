@@ -7,6 +7,7 @@ import assessmentTakingService from "../../services/assessmentTakingService";
 import programService from "../../services/programService";
 import schoolService from "../../services/schoolService";
 import careerService from "../../services/careerService";
+import * as recommendationService from "../../services/recommendationService";
 // Add Career Interest Profile imports
 import { useCareerInterestProfile } from "../../hooks/useCareerInterestProfile";
 import CareerInterestProfileWizard from "../CareerInterestProfile/CareerInterestProfileWizard";
@@ -105,6 +106,7 @@ const StudentHomepage = () => {
   const [completedAssessments, setCompletedAssessments] = useState([]);
   const [inProgressAssessments, setInProgressAssessments] = useState([]);
   const [latestAssessmentResult, setLatestAssessmentResult] = useState(null);
+  const [recommendationsData, setRecommendationsData] = useState(null);
   const [statsData, setStatsData] = useState({
     programs: 0,
     schools: 0,
@@ -279,6 +281,17 @@ const StudentHomepage = () => {
               console.error("Error fetching assessment results:", err);
             }
           }
+
+          // Fetch recommendations data if assessment is completed
+          try {
+            const recommendationsResponse = await recommendationService.fetchRecommendations(
+              latest.userQuizAssessment
+            );
+            setRecommendationsData(recommendationsResponse.data);
+          } catch (err) {
+            console.error("Error fetching recommendations:", err);
+            // Don't show error to user, recommendations are optional for homepage
+          }
         }
 
         // Fetch stats data for quick stats section
@@ -325,6 +338,15 @@ const StudentHomepage = () => {
       const latest = completedAssessments[completedAssessments.length - 1];
       navigateAndScrollToTop(
         `/assessment-results/${latest.userQuizAssessment}`
+      );
+    }
+  };
+
+  const handleViewRecommendations = () => {
+    if (completedAssessments.length > 0) {
+      const latest = completedAssessments[completedAssessments.length - 1];
+      navigateAndScrollToTop(
+        `/assessment-results/${latest.userQuizAssessment}?tab=recommendations`
       );
     }
   };
@@ -471,9 +493,9 @@ const StudentHomepage = () => {
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
+                        {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
                           <CheckCircle className="w-5 h-5" />
-                        </div>
+                        </div> */}
                         <div className="flex-1">
                           <div className="font-semibold mb-1">
                             Assessment Completed!
@@ -594,8 +616,8 @@ const StudentHomepage = () => {
                     >
                       {/* Header bar */}
                       <div className="flex items-center justify-between py-3">
-                        <h3 className="text-xl font-bold text-[#2B3E4E] flex items-center">
-                          <Brain className="w-5 h-5 mr-2 text-[#FFB71B]" />
+                        <h3 className="text-3xl font-bold text-[#2B3E4E] flex items-center">
+                          {/* <Brain className="w-5 h-5 mr-2 text-[#FFB71B]" /> */}
                           Your Assessment Overview
                         </h3>
                         <button
@@ -863,29 +885,96 @@ const StudentHomepage = () => {
                                   </div>
                                   <div>
                                     <h4 className="text-xl font-bold text-[#2B3E4E] mb-1">
-                                      Career Pathways & Sample Careers
+                                      Career Pathways & Top Careers
                                     </h4>
                                     <p className="text-sm text-gray-600">
-                                      Recommended career directions and specific
-                                      job examples
+                                      Your recommended career directions based on assessment
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                    Coming Soon
+                                {recommendationsData?.recommendations?.careerPaths && (
+                                  <button
+                                    onClick={handleViewRecommendations}
+                                    className="cursor-pointer text-xs font-semibold text-[#2B3E4E] hover:text-[#FFB71B] transition-colors flex items-center gap-1"
+                                  >
+                                    View All
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {recommendationsData?.recommendations?.careerPaths && 
+                               recommendationsData.recommendations.careerPaths.length > 0 ? (
+                                <div className="space-y-4">
+                                  {recommendationsData.recommendations.careerPaths.slice(0, 3).map((pathway, index) => {
+                                    // Get top 3 careers from this pathway
+                                    const topCareers = pathway.careers?.slice(0, 3) || [];
+                                    
+                                    return (
+                                      <motion.div
+                                        key={pathway.careerPathId || index}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100"
+                                      >
+                                        <div className="flex items-start justify-between mb-3">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-white bg-green-600 px-2 py-1 rounded-lg">
+                                              #{index + 1}
+                                            </span>
+                                            <h5 className="font-bold text-[#2B3E4E] text-base">
+                                              {pathway.careerPathName}
+                                            </h5>
+                                          </div>
+                                          <span className="text-sm font-bold text-green-600">
+                                            {(pathway.matchPercentage || 0).toFixed(1)}% Match
+                                          </span>
+                                        </div>
+                                        
+                                        {topCareers.length > 0 && (
+                                          <div className="mt-3 space-y-2">
+                                            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                              Top Careers in this Path:
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                              {topCareers.map((career, careerIdx) => (
+                                                <div
+                                                  key={career.careerId || careerIdx}
+                                                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-green-200 text-sm"
+                                                >
+                                                  <Briefcase className="w-3 h-3 text-green-600" />
+                                                  <span className="font-medium text-[#2B3E4E]">
+                                                    {career.careerTitle}
+                                                  </span>
+                                                  <span className="text-xs text-green-600 font-semibold">
+                                                    {(career.matchPercentage || 0).toFixed(1)}%
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </motion.div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-green-200">
+                                  <div className="text-gray-400 mb-2">
+                                    <Compass className="w-8 h-8 mx-auto" />
                                   </div>
+                                  <p className="text-gray-500 text-sm">
+                                    Career recommendations will appear here after generating results
+                                  </p>
+                                  <button
+                                    onClick={handleViewRecommendations}
+                                    className="cursor-pointer mt-3 text-sm font-semibold text-[#2B3E4E] hover:text-[#FFB71B] transition-colors"
+                                  >
+                                    Go to Results Tab →
+                                  </button>
                                 </div>
-                              </div>
-                              <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-green-200 shadow-inner">
-                                <div className="text-gray-400 mb-2">
-                                  <Compass className="w-8 h-8 mx-auto" />
-                                </div>
-                                <p className="text-gray-500 text-sm">
-                                  Career pathway and sample career
-                                  recommendations will be available soon
-                                </p>
-                              </div>
+                              )}
                             </motion.div>
                           </motion.div>
 
@@ -908,26 +997,104 @@ const StudentHomepage = () => {
                                       Academic Programs
                                     </h4>
                                     <p className="text-sm text-gray-600">
-                                      Recommended degree programs and courses
-                                      based on your profile
+                                      Recommended degree programs from your career pathways
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
-                                    Coming Soon
+                                {recommendationsData?.recommendations?.careerPaths && (
+                                  <button
+                                    onClick={handleViewRecommendations}
+                                    className="cursor-pointer text-xs font-semibold text-[#2B3E4E] hover:text-[#FFB71B] transition-colors flex items-center gap-1"
+                                  >
+                                    View All
+                                    <ArrowRight className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+
+                              {recommendationsData?.recommendations?.careerPaths && 
+                               recommendationsData.recommendations.careerPaths.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {(() => {
+                                    // Collect all programs from all pathways
+                                    const allPrograms = [];
+                                    recommendationsData.recommendations.careerPaths.forEach((pathway) => {
+                                      if (pathway.programs && Array.isArray(pathway.programs)) {
+                                        pathway.programs.forEach((program) => {
+                                          allPrograms.push({
+                                            ...program,
+                                            pathwayName: pathway.careerPathName,
+                                            pathwayMatch: pathway.matchPercentage
+                                          });
+                                        });
+                                      }
+                                    });
+
+                                    // Remove duplicates by programId and take top 4
+                                    const uniquePrograms = allPrograms
+                                      .filter((program, index, self) => 
+                                        index === self.findIndex((p) => p.programId === program.programId)
+                                      )
+                                      .slice(0, 4);
+
+                                    return uniquePrograms.map((program, index) => {
+                                      const schoolCount = program.recommendedSchools?.length || 0;
+                                      
+                                      return (
+                                        <motion.div
+                                          key={program.programId || index}
+                                          initial={{ opacity: 0, scale: 0.95 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          transition={{ delay: index * 0.1 }}
+                                          className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 hover:border-amber-300 transition-all cursor-pointer"
+                                          onClick={handleViewRecommendations}
+                                        >
+                                          <div className="flex items-start justify-between mb-2">
+                                            <h5 className="font-bold text-[#2B3E4E] text-sm flex-1 pr-2">
+                                              {program.programName}
+                                            </h5>
+                                            <BookOpen className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                                          </div>
+                                          
+                                          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                                            {program.summary || 'Recommended based on your assessment profile'}
+                                          </p>
+
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 text-xs">
+                                              <div className="flex items-center gap-1 text-amber-600">
+                                                <Building className="w-3 h-3" />
+                                                <span className="font-semibold">{schoolCount}</span>
+                                                <span className="text-gray-500">
+                                                  {schoolCount === 1 ? 'school' : 'schools'}
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
+                                              {program.pathwayName}
+                                            </span>
+                                          </div>
+                                        </motion.div>
+                                      );
+                                    });
+                                  })()}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-amber-200">
+                                  <div className="text-gray-400 mb-2">
+                                    <GraduationCap className="w-8 h-8 mx-auto" />
                                   </div>
+                                  <p className="text-gray-500 text-sm">
+                                    Academic program recommendations will appear here after generating results
+                                  </p>
+                                  <button
+                                    onClick={handleViewRecommendations}
+                                    className="cursor-pointer mt-3 text-sm font-semibold text-[#2B3E4E] hover:text-[#FFB71B] transition-colors"
+                                  >
+                                    Go to Results Tab →
+                                  </button>
                                 </div>
-                              </div>
-                              <div className="text-center py-8 bg-white/50 rounded-lg border-2 border-dashed border-amber-200 shadow-inner">
-                                <div className="text-gray-400 mb-2">
-                                  <GraduationCap className="w-8 h-8 mx-auto" />
-                                </div>
-                                <p className="text-gray-500 text-sm">
-                                  Academic program recommendations will be
-                                  available soon
-                                </p>
-                              </div>
+                              )}
                             </motion.div>
                           </motion.div>
                         </motion.div>
