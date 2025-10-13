@@ -134,7 +134,7 @@ const InstitutionalDashboard = () => {
       }
 
       try {
-        console.log('Fetching comprehensive recommendations for', institutionAssessmentResults.length, 'students');
+        // console.log('Fetching comprehensive recommendations for', institutionAssessmentResults.length, 'students');
         
         // Fetch comprehensive recommendations for each assessment result
         // This gives us the proper structure: careerPaths[] -> careers[] and programs[]
@@ -193,10 +193,10 @@ const InstitutionalDashboard = () => {
           });
         });
         
-        console.log('Total career recommendations from career paths:', allInstitutionCareers.length);
-        console.log('Total program recommendations from career paths:', allInstitutionPrograms.length);
-        console.log('Sample career:', allInstitutionCareers[0]);
-        console.log('Sample program:', allInstitutionPrograms[0]);
+        // console.log('Total career recommendations from career paths:', allInstitutionCareers.length);
+        // console.log('Total program recommendations from career paths:', allInstitutionPrograms.length);
+        // console.log('Sample career:', allInstitutionCareers[0]);
+        // console.log('Sample program:', allInstitutionPrograms[0]);
         
         setInstitutionCareerRecommendations(allInstitutionCareers);
         setInstitutionProgramRecommendations(allInstitutionPrograms);
@@ -344,26 +344,26 @@ const InstitutionalDashboard = () => {
       arr.findIndex(r => r.resultId === result.resultId) === index
     );
 
-    console.log('Unique results for CSV:', uniqueResults.length);
-    console.log('Sample career recommendations:', institutionCareerRecommendations.slice(0, 3));
-    console.log('Sample program recommendations:', institutionProgramRecommendations.slice(0, 3));
+    // console.log('Unique results for CSV:', uniqueResults.length);
+    // console.log('Sample career recommendations:', institutionCareerRecommendations.slice(0, 3));
+    // console.log('Sample program recommendations:', institutionProgramRecommendations.slice(0, 3));
     
     // Debug: Show structure of first recommendation
-    if (institutionCareerRecommendations.length > 0) {
-      console.log('Career recommendation structure:', institutionCareerRecommendations[0]);
-      console.log('Career recommendation keys:', Object.keys(institutionCareerRecommendations[0]));
-    }
-    if (institutionProgramRecommendations.length > 0) {
-      console.log('Program recommendation structure:', institutionProgramRecommendations[0]);
-      console.log('Program recommendation keys:', Object.keys(institutionProgramRecommendations[0]));
-    }
+    // if (institutionCareerRecommendations.length > 0) {
+    //   console.log('Career recommendation structure:', institutionCareerRecommendations[0]);
+    //   console.log('Career recommendation keys:', Object.keys(institutionCareerRecommendations[0]));
+    // }
+    // if (institutionProgramRecommendations.length > 0) {
+    //   console.log('Program recommendation structure:', institutionProgramRecommendations[0]);
+    //   console.log('Program recommendation keys:', Object.keys(institutionProgramRecommendations[0]));
+    // }
     
     // Debug: Show structure of first result
-    if (uniqueResults.length > 0) {
-      console.log('Result structure:', uniqueResults[0]);
-      console.log('Result keys:', Object.keys(uniqueResults[0]));
-      console.log('User from result:', uniqueResults[0].userAssessment?.user);
-    }
+    // if (uniqueResults.length > 0) {
+    //   console.log('Result structure:', uniqueResults[0]);
+    //   console.log('Result keys:', Object.keys(uniqueResults[0]));
+    //   console.log('User from result:', uniqueResults[0].userAssessment?.user);
+    // }
 
     const rows = uniqueResults.map((result, index) => {
       const user = result.userAssessment?.user || {};
@@ -470,19 +470,19 @@ const InstitutionalDashboard = () => {
       });
 
       // Debug logging for first few students
-      if (index < 3) {
-        console.log(`Student ${user.firstName} ${user.lastName}:`, {
-          resultId: result.resultId,
-          careerMatches: studentCareers.length,
-          programMatches: studentPrograms.length,
-          top5Careers,
-          least5Careers,
-          top5Programs,
-          least5Programs,
-          sampleCareer: studentCareers[0],
-          sampleProgram: studentPrograms[0]
-        });
-      }
+      // if (index < 3) {
+      //   console.log(`Student ${user.firstName} ${user.lastName}:`, {
+      //     resultId: result.resultId,
+      //     careerMatches: studentCareers.length,
+      //     programMatches: studentPrograms.length,
+      //     top5Careers,
+      //     least5Careers,
+      //     top5Programs,
+      //     least5Programs,
+      //     sampleCareer: studentCareers[0],
+      //     sampleProgram: studentPrograms[0]
+      //   });
+      // }
 
       return [
         `${user.firstName || ''} ${user.lastName || ''}`.trim(),
@@ -509,7 +509,7 @@ const InstitutionalDashboard = () => {
       ];
     });
 
-    console.log(`Generated CSV with ${rows.length} unique student records`);
+    // console.log(`Generated CSV with ${rows.length} unique student records`);
     return [headers, ...rows];
   };
 
@@ -751,9 +751,9 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
     // If categories don't add up to total, we have a logic error - fix it
     let finalAtAvg = atAvg;
     if (categorySum !== total) {
-      console.warn(`Category sum mismatch! Expected: ${total}, Got: ${categorySum}`);
+      // console.warn(`Category sum mismatch! Expected: ${total}, Got: ${categorySum}`);
       finalAtAvg = Math.max(0, total - (wellAboveAvg + aboveAvg + belowAvg + wellBelowAvg));
-      console.log(`Adjusted atAvg from ${atAvg} to ${finalAtAvg}`);
+      // console.log(`Adjusted atAvg from ${atAvg} to ${finalAtAvg}`);
     }
     
     // Educational performance levels based on actual distribution categories
@@ -925,12 +925,12 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   );
 
   // Debug logging for career and program counts
-  console.log('Institution insights:', {
-    totalCareers: institutionInsights.topCareers.length,
-    totalPrograms: institutionInsights.topPrograms.length,
-    topCareers: institutionInsights.topCareers,
-    topPrograms: institutionInsights.topPrograms
-  });
+  // console.log('Institution insights:', {
+  //   totalCareers: institutionInsights.topCareers.length,
+  //   totalPrograms: institutionInsights.topPrograms.length,
+  //   topCareers: institutionInsights.topCareers,
+  //   topPrograms: institutionInsights.topPrograms
+  // });
 
   // Enhanced tooltip component with within-school peer comparison information
   const CustomTooltip = ({ active, payload, label }) => {

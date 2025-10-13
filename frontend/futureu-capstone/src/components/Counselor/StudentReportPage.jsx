@@ -7,20 +7,20 @@ import { motion } from "framer-motion";
 import CounselorTabs from "./CounselorTabs";
 
 const highlightScore = (score, max = 100) => {
-  if (score >= 0.85 * max) return "text-green-600 font-bold";
-  if (score >= 0.7 * max) return "text-yellow-600 font-semibold";
-  if (score) return "text-red-500 font-semibold";
-  return "text-gray-500";
+  if (score >= 0.85 * max) return "text-[#FFB71B] font-bold";
+  if (score >= 0.7 * max) return "text-[#2B3E4E] font-semibold";
+  if (score) return "text-gray-500 font-semibold";
+  return "text-gray-400";
 };
 
 // Helper function to get performance level description
 const getPerformanceLevel = (score, max = 100) => {
   const percentage = (score / max) * 100;
-  if (percentage >= 85) return { level: "Excellent", color: "text-green-600", bgColor: "bg-green-100" };
-  if (percentage >= 70) return { level: "Above Average", color: "text-green-600", bgColor: "bg-green-50" };
-  if (percentage >= 50) return { level: "Average", color: "text-yellow-600", bgColor: "bg-yellow-50" };
-  if (percentage >= 30) return { level: "Below Average", color: "text-orange-600", bgColor: "bg-orange-50" };
-  return { level: "Needs Support", color: "text-red-600", bgColor: "bg-red-50" };
+  if (percentage >= 85) return { level: "Excellent", color: "text-[#FFB71B]", bgColor: "bg-[#FFB71B]/20" };
+  if (percentage >= 70) return { level: "Above Average", color: "text-[#FFB71B]", bgColor: "bg-[#FFB71B]/10" };
+  if (percentage >= 50) return { level: "Average", color: "text-[#2B3E4E]", bgColor: "bg-[#2B3E4E]/10" };
+  if (percentage >= 30) return { level: "Below Average", color: "text-[#2B3E4E]", bgColor: "bg-[#2B3E4E]/20" };
+  return { level: "Needs Support", color: "text-gray-600", bgColor: "bg-gray-100" };
 };
 
 // Helper function to get relative track performance (compared to student's own scores)
@@ -37,28 +37,28 @@ const getRelativeTrackPerformance = (tracks) => {
     
     if (rank === 1) {
       relativeLevel = "Strongest Area";
-      color = "text-emerald-700";
-      bgColor = "bg-emerald-100";
+      color = "text-[#FFB71B]";
+      bgColor = "bg-[#FFB71B]/20";
       description = "Your highest performing track";
     } else if (rank === 2 && totalTracks > 3) {
       relativeLevel = "Strong Area";
-      color = "text-green-700";
-      bgColor = "bg-green-100";
+      color = "text-[#FFB71B]";
+      bgColor = "bg-[#FFB71B]/10";
       description = "One of your stronger areas";
     } else if (rank === totalTracks) {
       relativeLevel = "Growth Area";
-      color = "text-amber-700";
-      bgColor = "bg-amber-100";
+      color = "text-[#2B3E4E]";
+      bgColor = "bg-[#2B3E4E]/20";
       description = "Area for potential development";
     } else if (rank === totalTracks - 1 && totalTracks > 3) {
       relativeLevel = "Developing Area";
-      color = "text-orange-700";
-      bgColor = "bg-orange-100";
+      color = "text-[#2B3E4E]";
+      bgColor = "bg-[#2B3E4E]/15";
       description = "Area with room for growth";
     } else {
       relativeLevel = "Moderate Area";
-      color = "text-blue-700";
-      bgColor = "bg-blue-100";
+      color = "text-[#2B3E4E]";
+      bgColor = "bg-[#2B3E4E]/10";
       description = "Balanced performance area";
     }
     
@@ -122,40 +122,40 @@ const getGSAInsights = (result, allStudents = []) => {
     if (percentageDiff >= 20) {
       return { 
         level: "Well Above School Avg", 
-        color: "text-emerald-700", 
-        bgColor: "bg-emerald-100",
+        color: "text-[#FFB71B]", 
+        bgColor: "bg-[#FFB71B]/20",
         percentile: "Top 15%",
         description: "Significantly higher than classmates' average"
       };
     } else if (percentageDiff >= 10) {
       return { 
         level: "Above School Avg", 
-        color: "text-green-700", 
-        bgColor: "bg-green-100",
+        color: "text-[#FFB71B]", 
+        bgColor: "bg-[#FFB71B]/10",
         percentile: "Top 30%",
         description: "Above classmates' average"
       };
     } else if (percentageDiff >= -10) {
       return { 
         level: "Similar to School Avg", 
-        color: "text-blue-700", 
-        bgColor: "bg-blue-100",
+        color: "text-[#2B3E4E]", 
+        bgColor: "bg-[#2B3E4E]/10",
         percentile: "Average Range",
         description: "Within normal range for school"
       };
     } else if (percentageDiff >= -20) {
       return { 
         level: "Below School Avg", 
-        color: "text-orange-700", 
-        bgColor: "bg-orange-100",
+        color: "text-[#2B3E4E]", 
+        bgColor: "bg-[#2B3E4E]/20",
         percentile: "Lower 30%",
         description: "Below classmates' average"
       };
     } else {
       return { 
         level: "Well Below School Avg", 
-        color: "text-red-700", 
-        bgColor: "bg-red-100",
+        color: "text-gray-600", 
+        bgColor: "bg-gray-100",
         percentile: "Lower 15%",
         description: "Significantly below classmates' average"
       };
@@ -418,11 +418,11 @@ const StudentReportPage = () => {
             result.logicalReasoningScore,
           ],
           backgroundColor: [
-            "#1D63A1",
+            "#2B3E4E",
             "#FFB71B",
-            "#1D63A1",
+            "#2B3E4E",
             "#FFB71B",
-            "#1D63A1",
+            "#2B3E4E",
           ],
           borderRadius: 8,
           barPercentage: 0.6,
@@ -458,7 +458,7 @@ const StudentReportPage = () => {
           data: riasecValues,
           backgroundColor: "rgba(255,183,27,0.2)",
           borderColor: "#FFB71B",
-          pointBackgroundColor: "#1D63A1",
+          pointBackgroundColor: "#2B3E4E",
           pointBorderColor: "#FFB71B",
           borderWidth: 2,
         },
@@ -543,17 +543,17 @@ const StudentReportPage = () => {
       </div>
       <div className="bg-white rounded-3xl shadow-2xl w-full border border-[#FFB71B]/30 overflow-y-auto animate-fade-in">
         {/* Header with Overall & RIASEC */}
-        <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#1D63A1]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
+        <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#2B3E4E]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
           {/* Decorative playful icon */}
           <div className="flex flex-col items-center md:items-start z-10 w-full relative">
             {/* Mascot image, top right, overlapping avatar */}
             <img
               src="/src/assets/characters/quirky.svg"
               alt="Mascot"
-              className="absolute right-157 -top-10 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
+              className="absolute right-168 -top-10 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
               style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}
             />
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-5xl font-extrabold shadow-lg mb-2 animate-bounce-in border-4 border-[#2B3E4E] relative z-10">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2B3E4E] to-[#FFB71B] flex items-center justify-center text-white text-5xl font-extrabold shadow-lg mb-2 animate-bounce-in border-4 border-[#2B3E4E] relative z-10">
               {user.firstName?.[0]}
               {user.lastName?.[0]}
             </div>
@@ -564,18 +564,19 @@ const StudentReportPage = () => {
               {user.email}
             </div>
           </div>
+          <div className="flex flex-grow"></div>
           {/* Overall & RIASEC summary */}
-          <div className="flex flex-row gap-8 items-end mt-4 md:mt-0 z-10 h-full">
-            <div className="absolute right-25 top-5">
+          <div className="flex flex-row gap-8 items-stretch mt-4 md:mt-0 z-10">
+            <div className="absolute right-25 top-5 ">
               <div className="text-2xl text-[#2B3E4E] font-bold rounded-lg py-2">
                 {assessment.title} |{" "}
                 {result.userAssessment?.dateCompleted?.split("T")[0]}
               </div>
             </div>
-            <div className="flex flex-col items-center bg-emerald-50 rounded-2xl p-6 border-2 border-emerald-100 min-w-[140px] shadow-md hover:scale-105 transition-transform">
-              <span className="text-xs text-emerald-700 font-semibold mb-1 flex items-center gap-1">
+            <div className="flex flex-col items-center justify-center bg-[#FFB71B]/20 rounded-2xl p-6 border-2 border-[#FFB71B]/40 min-w-[140px] shadow-md hover:scale-105 transition-transform">
+              <span className="text-xs text-[#2B3E4E] font-semibold mb-1 flex items-center gap-1">
                 <svg
-                  className="w-5 h-5 text-emerald-400"
+                  className="w-5 h-5 text-[#FFB71B]"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -594,16 +595,16 @@ const StudentReportPage = () => {
                 </svg>
                 Overall
               </span>
-              <span className="text-3xl font-extrabold text-emerald-700 text-right">
+              <span className="text-3xl font-extrabold text-[#2B3E4E] text-right">
                 {typeof result.overallScore === "number"
                   ? result.overallScore.toFixed(2)
                   : result.overallScore}
               </span>
             </div>
-            <div className="flex flex-col items-center bg-yellow-50 rounded-2xl p-6 border-2 border-yellow-100 min-w-[140px] shadow-md hover:scale-105 transition-transform">
-              <span className="text-xs text-yellow-700 font-semibold mb-1 flex items-center gap-1">
+            <div className="flex flex-col items-center justify-center bg-[#2B3E4E]/10 rounded-2xl p-6 border-2 border-[#2B3E4E]/30 min-w-[140px] shadow-md hover:scale-105 transition-transform">
+              <span className="text-xs text-[#2B3E4E] font-semibold mb-1 flex items-center gap-1">
                 <svg
-                  className="w-5 h-5 text-yellow-400"
+                  className="w-5 h-5 text-[#FFB71B]"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -618,7 +619,7 @@ const StudentReportPage = () => {
                 </svg>
                 RIASEC
               </span>
-              <span className="font-bold text-yellow-700 text-right text-2xl tracking-widest">
+              <span className="font-bold text-[#2B3E4E] text-right text-2xl tracking-widest">
                 {riasecTop3}
               </span>
               <span className="text-xs text-gray-500 text-right">
@@ -718,7 +719,7 @@ const StudentReportPage = () => {
 
                 {/* RIASEC Radar Chart */}
                 <motion.div
-                  className="w-full bg-gradient-to-br from-[#F8F9FA] to-[#1D63A1]/10 rounded-2xl shadow-xl p-6 border-2 border-[#1D63A1]/10 mt-8"
+                  className="w-full bg-gradient-to-br from-[#F8F9FA] to-[#2B3E4E]/10 rounded-2xl shadow-xl p-6 border-2 border-[#2B3E4E]/10 mt-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
@@ -756,16 +757,16 @@ const StudentReportPage = () => {
                       <h5 className="text-sm font-semibold text-[#2B3E4E] mb-3 text-center">Student's Top Personality Types:</h5>
                       <div className="space-y-2">
                         {getRIASECInsights(result).map((insight, index) => (
-                          <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-white/70 border border-blue-100 hover:bg-white/90 transition-colors">
+                          <div key={index} className="flex justify-between items-center p-3 rounded-lg bg-white/70 border border-[#2B3E4E]/20 hover:bg-white/90 transition-colors">
                             <div className="flex-1">
                               <div className="flex items-center mb-1">
-                                <div className="text-sm font-bold text-[#1D63A1] mr-2">#{index + 1}</div>
+                                <div className="text-sm font-bold text-[#FFB71B] mr-2">#{index + 1}</div>
                                 <div className="text-sm text-left font-semibold text-[#2B3E4E]">{insight.name}</div>
                               </div>
                               <div className="text-xs text-left text-gray-600 ml-6">{insight.description}</div>
                             </div>
                             <div className="text-right ml-3">
-                              <div className="text-lg font-bold text-[#1D63A1]">
+                              <div className="text-lg font-bold text-[#FFB71B]">
                                 {insight.score/40*100}%
                               </div>
                               <div className="text-xs text-gray-500">
@@ -775,8 +776,8 @@ const StudentReportPage = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-xs text-blue-700 text-center">
+                      <div className="mt-3 p-2 bg-[#2B3E4E]/10 rounded-lg border border-[#2B3E4E]/20">
+                        <p className="text-xs text-[#2B3E4E] text-center">
                           These personality traits help identify suitable career environments and work styles.
                         </p>
                       </div>
@@ -786,7 +787,7 @@ const StudentReportPage = () => {
                 
                 {/* Track Scores Bar Chart - styled like AcademicTab */}
                 <motion.div
-                  className="w-full bg-white rounded-3xl shadow-xl p-6 border-2 border-[#1D63A1]/10 mt-8 animate-card-pop"
+                  className="w-full bg-white rounded-3xl shadow-xl p-6 border-2 border-[#2B3E4E]/10 mt-8 animate-card-pop"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: 0.05 }}
@@ -819,11 +820,11 @@ const StudentReportPage = () => {
                               result.artsDesignTrackScore,
                             ],
                             backgroundColor: [
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
                             ],
                             borderRadius: 12,
@@ -831,11 +832,11 @@ const StudentReportPage = () => {
                             categoryPercentage: 0.7,
                             borderWidth: 2,
                             borderColor: [
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
-                              "#1D63A1",
+                              "#2B3E4E",
                               "#FFB71B",
                             ],
                           },
@@ -854,7 +855,7 @@ const StudentReportPage = () => {
                             title: {
                               display: true,
                               text: "Score (%)",
-                              color: "#1D63A1",
+                              color: "#2B3E4E",
                               font: { weight: "bold" },
                             },
                             ticks: { color: "#232D35" },
@@ -864,7 +865,7 @@ const StudentReportPage = () => {
                             title: {
                               display: true,
                               text: "All Tracks",
-                              color: "#1D63A1",
+                              color: "#2B3E4E",
                               font: { weight: "bold" },
                             },
                             ticks: { color: "#232D35" },
@@ -924,7 +925,7 @@ const StudentReportPage = () => {
             {activeTab === 1 && (
               <>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-yellow-500 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
                     </svg>
@@ -958,7 +959,7 @@ const StudentReportPage = () => {
                         >
                           {/* Header with Icon and Title */}
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-[#FFB71B] to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-[#FFB71B] to-[#FFB71B]/80 rounded-xl flex items-center justify-center shadow-lg">
                               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
                               </svg>
@@ -986,37 +987,37 @@ const StudentReportPage = () => {
                           <div className="space-y-3">
                             {rec.careerPath?.jobTrend && (
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#FFB71B]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#FFB71B]" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Job Outlook: <span className="font-semibold text-blue-600">{rec.careerPath.jobTrend}</span></span>
+                                <span className="text-gray-600">Job Outlook: <span className="font-semibold text-[#FFB71B]">{rec.careerPath.jobTrend}</span></span>
                               </div>
                             )}
 
                             {rec.careerPath?.requiredSkills && (
                               <div className="flex items-start gap-2 text-sm">
-                                <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center mt-0.5">
-                                  <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#2B3E4E]/20 rounded-full flex items-center justify-center mt-0.5">
+                                  <svg className="w-3 h-3 text-[#2B3E4E]" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                                   </svg>
                                 </div>
                                 <div>
                                   <span className="text-gray-600">Key Skills: </span>
-                                  <span className="font-semibold text-purple-600">{rec.careerPath.requiredSkills}</span>
+                                  <span className="font-semibold text-[#2B3E4E]">{rec.careerPath.requiredSkills}</span>
                                 </div>
                               </div>
                             )}
 
                             {rec.careerPath?.educationLevel && (
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#FFB71B]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#FFB71B]" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Education: <span className="font-semibold text-emerald-600">{rec.careerPath.educationLevel}</span></span>
+                                <span className="text-gray-600">Education: <span className="font-semibold text-[#FFB71B]">{rec.careerPath.educationLevel}</span></span>
                               </div>
                             )}
                           </div>
@@ -1029,7 +1030,7 @@ const StudentReportPage = () => {
                                 <div className="flex items-center gap-2">
                                   <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div 
-                                      className="h-full bg-gradient-to-r from-[#FFB71B] to-orange-500 rounded-full transition-all duration-1000"
+                                      className="h-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 rounded-full transition-all duration-1000"
                                       style={{ width: `${rec.matchPercentage}%` }}
                                     ></div>
                                   </div>
@@ -1058,20 +1059,20 @@ const StudentReportPage = () => {
             {activeTab === 2 && (
               <>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/80 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-left font-bold text-blue-600 text-2xl">Program Options</h3>
+                    <h3 className="text-left font-bold text-[#2B3E4E] text-2xl">Program Options</h3>
                     <p className="text-gray-600 text-sm">Academic programs that align with your career goals</p>
                   </div>
                 </div>
                 {programRecsLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2B3E4E] mx-auto mb-4"></div>
                       <div className="text-gray-500">Loading your program options...</div>
                     </div>
                   </div>
@@ -1088,17 +1089,17 @@ const StudentReportPage = () => {
                       programRecs.map((rec, idx) => (
                         <div
                           key={idx}
-                          className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-500/50 hover:-translate-y-1"
+                          className="group bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#2B3E4E]/50 hover:-translate-y-1"
                         >
                           {/* Header with Icon and Title */}
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-[#2B3E4E] to-[#2B3E4E]/80 rounded-xl flex items-center justify-center shadow-lg">
                               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                               </svg>
                             </div>
                             <div className="text-left flex-1 min-w-0">
-                              <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-blue-600 transition-colors">
+                              <h4 className="font-bold text-[#2B3E4E] text-lg mb-1 group-hover:text-[#FFB71B] transition-colors">
                                 {rec.programName || "Program Match"}
                               </h4>
                               {rec.pathName && (
@@ -1118,14 +1119,14 @@ const StudentReportPage = () => {
 
                           {/* Related Career */}
                           {rec.careerPath?.careerTitle && (
-                            <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-xl">
+                            <div className="mb-4 p-3 bg-[#FFB71B]/10 border border-[#FFB71B]/30 rounded-xl">
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-orange-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#FFB71B]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#FFB71B]" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 10.414l1.293 1.293a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Related Career: <span className="font-semibold text-orange-600">{rec.careerPath.careerTitle}</span></span>
+                                <span className="text-gray-600">Related Career: <span className="font-semibold text-[#FFB71B]">{rec.careerPath.careerTitle}</span></span>
                               </div>
                             </div>
                           )}
@@ -1134,34 +1135,34 @@ const StudentReportPage = () => {
                           <div className="space-y-3 mb-4">
                             {rec.program?.duration && (
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#2B3E4E]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#2B3E4E]" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Duration: <span className="font-semibold text-purple-600">{rec.program.duration}</span></span>
+                                <span className="text-gray-600">Duration: <span className="font-semibold text-[#2B3E4E]">{rec.program.duration}</span></span>
                               </div>
                             )}
 
                             {rec.program?.field && (
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#FFB71B]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#FFB71B]" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Field: <span className="font-semibold text-emerald-600">{rec.program.field}</span></span>
+                                <span className="text-gray-600">Field: <span className="font-semibold text-[#FFB71B]">{rec.program.field}</span></span>
                               </div>
                             )}
 
                             {rec.program?.degreeType && (
                               <div className="flex items-center gap-2 text-sm">
-                                <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center">
-                                  <svg className="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="w-5 h-5 bg-[#2B3E4E]/20 rounded-full flex items-center justify-center">
+                                  <svg className="w-3 h-3 text-[#2B3E4E]" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 </div>
-                                <span className="text-gray-600">Degree: <span className="font-semibold text-amber-600">{rec.program.degreeType}</span></span>
+                                <span className="text-gray-600">Degree: <span className="font-semibold text-[#2B3E4E]">{rec.program.degreeType}</span></span>
                               </div>
                             )}
                           </div>
@@ -1174,11 +1175,11 @@ const StudentReportPage = () => {
                                 <div className="flex items-center gap-2">
                                   <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
                                     <div 
-                                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000"
+                                      className="h-full bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/80 rounded-full transition-all duration-1000"
                                       style={{ width: `${rec.matchPercentage}%` }}
                                     ></div>
                                   </div>
-                                  <span className="font-bold text-blue-600 text-sm">{rec.matchPercentage.toFixed(0)}%</span>
+                                  <span className="font-bold text-[#FFB71B] text-sm">{rec.matchPercentage.toFixed(0)}%</span>
                                 </div>
                               </div>
                             </div>
