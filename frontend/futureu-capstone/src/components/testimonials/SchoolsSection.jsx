@@ -57,29 +57,29 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
   // Global event listener that works even when component is not mounted
   useEffect(() => {
     const globalEventHandler = (event) => {
-      console.log('GLOBAL EVENT HANDLER: Full Event Object:', event);
-      console.log('GLOBAL EVENT HANDLER: Event Detail:', event.detail);
+      // console.log('GLOBAL EVENT HANDLER: Full Event Object:', event);
+      // console.log('GLOBAL EVENT HANDLER: Event Detail:', event.detail);
       const { action, schoolId, deletedRating } = event.detail || {};
-      console.log('GLOBAL EVENT HANDLER: Destructured Action:', action);
+      // console.log('GLOBAL EVENT HANDLER: Destructured Action:', action);
 
       // Handle deletion events
       if (action === 'delete') {
-        console.log('GLOBAL EVENT HANDLER: Processing deletion for school:', schoolId, 'rating:', deletedRating);
+        // console.log('GLOBAL EVENT HANDLER: Processing deletion for school:', schoolId, 'rating:', deletedRating);
 
         // Process deletion immediately if SchoolsSection is mounted
         if (schools && schools.length > 0) {
-          console.log('GLOBAL EVENT HANDLER: SchoolsSection is mounted, processing deletion immediately');
+          // console.log('GLOBAL EVENT HANDLER: SchoolsSection is mounted, processing deletion immediately');
 
           setSchoolRatings(currentRatings => {
             const currentRating = currentRatings[schoolId] || { averageRating: '0.0', ratingCount: 0 };
             const currentCount = currentRating.ratingCount || 0;
             const currentAverage = parseFloat(currentRating.averageRating) || 0;
 
-            console.log(`GLOBAL DELETE: School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, Deleted rating: ${deletedRating}`);
+            // console.log(`GLOBAL DELETE: School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, Deleted rating: ${deletedRating}`);
 
             if (currentCount <= 1) {
               // No reviews left, reset to 0
-              console.log(`GLOBAL DELETE CALC: Resetting school ${schoolId} to 0.0 stars`);
+              // console.log(`GLOBAL DELETE CALC: Resetting school ${schoolId} to 0.0 stars`);
               return {
                 ...currentRatings,
                 [schoolId]: { averageRating: '0.0', ratingCount: 0 }
@@ -90,7 +90,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
               const newCount = currentCount - 1;
               const newAverage = newTotal / newCount;
 
-              console.log(`GLOBAL DELETE CALC: School ${schoolId} new average: ${newAverage.toFixed(1)}`);
+              // console.log(`GLOBAL DELETE CALC: School ${schoolId} new average: ${newAverage.toFixed(1)}`);
               return {
                 ...currentRatings,
                 [schoolId]: { averageRating: newAverage.toFixed(1), ratingCount: newCount }
@@ -98,62 +98,135 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
             }
           });
 
+          // Also refetch from backend to ensure accuracy after deletion
+          const refetchAfterDeletion = async () => {
+            try {
+              const response = await getSchoolAverageRating(schoolId);
+              if (response) {
+                setSchoolRatings(currentRatings => ({
+                  ...currentRatings,
+                  [schoolId]: {
+                    averageRating: response.averageRating.toFixed(1),
+                    ratingCount: response.totalReviews
+                  }
+                }));
+              }
+            } catch (error) {
+              console.error(`Error refetching rating after deletion for school ID ${schoolId}:`, error);
+            }
+          };
+
+          // Refetch after a short delay to ensure backend is updated
+          setTimeout(refetchAfterDeletion, 300);
+
           // Clear cache and mark instant update
           dataCacheService.clear('school_ratings_full');
           setLastInstantUpdate(Date.now());
         } else {
           // SchoolsSection not mounted, store for later
-          console.log('GLOBAL EVENT HANDLER: SchoolsSection not mounted, storing for later');
+          // console.log('GLOBAL EVENT HANDLER: SchoolsSection not mounted, storing for later');
           try {
             localStorage.setItem('futureu_pending_deletion', JSON.stringify({
               schoolId: schoolId,
               deletedRating: deletedRating,
               timestamp: Date.now()
             }));
-            console.log('GLOBAL EVENT HANDLER: Stored pending deletion in localStorage');
+            // console.log('GLOBAL EVENT HANDLER: Stored pending deletion in localStorage');
           } catch (e) {
-            console.error('GLOBAL EVENT HANDLER: Error storing pending deletion:', e);
+            // console.error('GLOBAL EVENT HANDLER: Error storing pending deletion:', e);
           }
         }
       }
 
-      // This block will now only handle actual 'add' or 'update' events, or if no action is specified (which we'll assume is an add/update)
+      // Handle update events - refetch ratings for the affected school
+      if (action === 'update' && schoolId) {
+        // console.log('GLOBAL EVENT HANDLER: Processing update for school:', schoolId);
+
+        // Process update immediately if SchoolsSection is mounted
+        if (schools && schools.length > 0) {
+          // console.log('GLOBAL EVENT HANDLER: SchoolsSection is mounted, refetching ratings for school:', schoolId);
+          
+          // Refetch rating for this specific school
+          const refetchSchoolRating = async () => {
+            try {
+              const response = await getSchoolAverageRating(schoolId);
+              if (response) {
+                setSchoolRatings(currentRatings => ({
+                  ...currentRatings,
+                  [schoolId]: {
+                    averageRating: response.averageRating.toFixed(1),
+                    ratingCount: response.totalReviews
+                  }
+                }));
+              }
+            } catch (error) {
+              console.error(`Error refetching rating for school ID ${schoolId}:`, error);
+            }
+          };
+
+          refetchSchoolRating();
+
+          // Clear cache and mark instant update
+          dataCacheService.clear('school_ratings_full');
+          setLastInstantUpdate(Date.now());
+        }
+      }
+
+      // This block will now only handle actual 'add' events, or if no action is specified (which we'll assume is an add)
       if (action === 'add' || !action) { // Removed 'event.detail &&' as it's already destructured
-        console.log('GLOBAL EVENT HANDLER: Received add/update event:', event.detail);
+        // console.log('GLOBAL EVENT HANDLER: Received add event:', event.detail);
       }
     };
     
     window.addEventListener('futureu_testimonials_updated', globalEventHandler);
     
+    // Add listener for refresh events (when going back to schools)
+    const refreshHandler = (event) => {
+      const { action } = event.detail || {};
+      if (action === 'refresh_all') {
+        // Force refresh all ratings without showing loading, bypassing cache and recent update checks
+        fetchRatings(false, true);
+      }
+    };
+    window.addEventListener('futureu_refresh_school_ratings', refreshHandler);
+    
     // Test listener to catch ALL events
     const testListener = (event) => {
-      console.log('TEST LISTENER: Event received:', event.type, event.detail);
+      // console.log('TEST LISTENER: Event received:', event.type, event.detail);
     };
     window.addEventListener('futureu_testimonials_updated', testListener);
     
     return () => {
       window.removeEventListener('futureu_testimonials_updated', globalEventHandler);
+      window.removeEventListener('futureu_refresh_school_ratings', refreshHandler);
       window.removeEventListener('futureu_testimonials_updated', testListener);
     };
   }, [schools]); // Add schools as dependency so it can access current state
 
   // Fetch all school ratings - define function outside useEffect for reuse
-  const fetchRatings = async (showLoading = true) => {
+  const fetchRatings = async (showLoading = true, forceRefresh = false) => {
       try {
-        // Skip fetching if we have recent instant updates (within last 5 seconds)
-        if (lastInstantUpdate && (Date.now() - lastInstantUpdate) < 5000) {
-          console.log('Skipping fetchRatings - recent instant updates detected');
+        // Skip fetching if we have recent instant updates (within last 5 seconds) unless forced
+        if (!forceRefresh && lastInstantUpdate && (Date.now() - lastInstantUpdate) < 5000) {
+          // console.log('Skipping fetchRatings - recent instant updates detected');
           return;
         }
         
-        // Check cache first for instant display
+        // Check cache first for instant display (unless forced refresh)
         const cacheKey = `school_ratings_full`;
-        const cachedRatings = dataCacheService.get(cacheKey);
-        if (cachedRatings && schools.length === cachedRatings.schoolCount) {
-          setSchoolRatings(cachedRatings.ratings || {});
-          setLoadingRatings(false);
-          // console.log('Using cached school ratings for instant display');
-          return;
+        if (!forceRefresh) {
+          const cachedRatings = dataCacheService.get(cacheKey);
+          if (cachedRatings && schools.length === cachedRatings.schoolCount) {
+            setSchoolRatings(cachedRatings.ratings || {});
+            setLoadingRatings(false);
+            // // console.log('Using cached school ratings for instant display');
+            return;
+          }
+        }
+
+        // Clear cache if forcing refresh
+        if (forceRefresh) {
+          dataCacheService.clear(cacheKey);
         }
 
         if (showLoading) setLoadingRatings(true);
@@ -172,7 +245,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
               };
             }
           } catch (error) {
-            console.error(`Error fetching rating for school ID ${school.schoolId}:`, error);
+            // console.error(`Error fetching rating for school ID ${school.schoolId}:`, error);
             // Set default values if error occurs
             ratingsData[school.schoolId] = {
               averageRating: '0.0',
@@ -190,7 +263,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
           timestamp: Date.now()
         });
       } catch (error) {
-        console.error('Error fetching school ratings:', error);
+        // console.error('Error fetching school ratings:', error);
       } finally {
         if (showLoading) setLoadingRatings(false);
       }
@@ -209,7 +282,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
 
           // Only process if deletion happened within last 10 seconds
           if (Date.now() - timestamp < 10000) {
-            console.log('Processing pending deletion:', { schoolId, deletedRating });
+            // console.log('Processing pending deletion:', { schoolId, deletedRating });
 
             setSchoolRatings(currentRatings => {
               const currentRating = currentRatings[schoolId] || { averageRating: '0.0', ratingCount: 0 };
@@ -217,7 +290,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
               const currentAverage = parseFloat(currentRating.averageRating) || 0;
 
               if (currentCount <= 1) {
-                console.log(`PENDING DELETE: Resetting school ${schoolId} to 0.0 stars`);
+                // console.log(`PENDING DELETE: Resetting school ${schoolId} to 0.0 stars`);
                 return {
                   ...currentRatings,
                   [schoolId]: { averageRating: '0.0', ratingCount: 0 }
@@ -227,7 +300,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
                 const newCount = currentCount - 1;
                 const newAverage = newTotal / newCount;
 
-                console.log(`PENDING DELETE: School ${schoolId} new average: ${newAverage.toFixed(1)}`);
+                // console.log(`PENDING DELETE: School ${schoolId} new average: ${newAverage.toFixed(1)}`);
                 return {
                   ...currentRatings,
                   [schoolId]: { averageRating: newAverage.toFixed(1), ratingCount: newCount }
@@ -245,7 +318,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
           localStorage.removeItem('futureu_pending_deletion');
         }
       } catch (e) {
-        console.error('Error processing pending deletion:', e);
+        // console.error('Error processing pending deletion:', e);
         localStorage.removeItem('futureu_pending_deletion'); // Ensure it's cleared on error
       }
 
@@ -269,33 +342,33 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
     
     // Also listen for custom events (for same-tab updates)
     const handleCustomRefresh = (event) => {
-      console.log('SchoolsSection: Event received (Custom Refresh):', event.type, event.detail);
+      // console.log('SchoolsSection: Event received (Custom Refresh):', event.type, event.detail);
       
       // Always process events, even if schools not loaded yet
       const { newTestimonial, schoolId, rating, action, deletedRating } = event.detail || {};
       
-      console.log('SchoolsSection: Processing event:', { schoolId, rating, action, deletedRating });
+      // console.log('SchoolsSection: Processing event:', { schoolId, rating, action, deletedRating });
       
       // Handle DELETION
       if (action === 'delete' && schoolId && deletedRating) {
-        console.log('SchoolsSection: DELETION EVENT DETECTED - Processing...');
+        // console.log('SchoolsSection: DELETION EVENT DETECTED - Processing...');
           
           // Use callback to get fresh state
           setSchoolRatings(currentRatings => {
             // Debug log to track the issue
-            console.log(`DELETE EVENT RECEIVED (Custom Refresh):`, { schoolId, deletedRating, currentRatings });
+            // console.log(`DELETE EVENT RECEIVED (Custom Refresh):`, { schoolId, deletedRating, currentRatings });
             
             // Get current rating or use defaults
             const currentRating = currentRatings[schoolId] || { averageRating: '0.0', ratingCount: 0 };
             const currentCount = currentRating.ratingCount || 0;
             const currentAverage = parseFloat(currentRating.averageRating) || 0;
             
-            console.log(`INSTANT DELETE (Custom Refresh): School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, Deleted rating: ${deletedRating}`);
+            // console.log(`INSTANT DELETE (Custom Refresh): School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, Deleted rating: ${deletedRating}`);
             
             // Calculate new average after deletion
             if (currentCount <= 1) {
               // No reviews left, reset to 0
-              console.log(`INSTANT DELETE CALC (Custom Refresh): Resetting to 0.0 stars (0 reviews)`);
+              // console.log(`INSTANT DELETE CALC (Custom Refresh): Resetting to 0.0 stars (0 reviews)`);
               
               // Return updated state (still within callback)
               const newState = {
@@ -319,7 +392,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
               const newCount = currentCount - 1;
               const newAverage = newTotal / newCount;
                 
-              console.log(`INSTANT DELETE CALC (Custom Refresh): ${newAverage.toFixed(1)} stars (${newCount} reviews)`);
+              // console.log(`INSTANT DELETE CALC (Custom Refresh): ${newAverage.toFixed(1)} stars (${newCount} reviews)`);
               
               // Return updated state (still within callback)
               const newState = {
@@ -350,21 +423,21 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
           // Use callback to get fresh state
           setSchoolRatings(currentRatings => {
             // Debug log to track the issue
-            console.log(`ADD EVENT RECEIVED:`, { schoolId, rating, currentRatings });
+            // console.log(`ADD EVENT RECEIVED:`, { schoolId, rating, currentRatings });
             
             // Get current rating or use defaults
             const currentRating = currentRatings[schoolId] || { averageRating: '0.0', ratingCount: 0 };
             const currentCount = currentRating.ratingCount || 0;
             const currentAverage = parseFloat(currentRating.averageRating) || 0;
             
-            console.log(`INSTANT ADD: School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, New rating: ${rating}`);
+            // console.log(`INSTANT ADD: School ${schoolId}, Current: ${currentAverage}, Count: ${currentCount}, New rating: ${rating}`);
             
             // Calculate new average: (oldTotal + newRating) / (oldCount + 1)
             const newTotal = (currentAverage * currentCount) + rating;
             const newCount = currentCount + 1;
             const newAverage = newTotal / newCount;
             
-            console.log(`INSTANT ADD CALC: ${newAverage.toFixed(1)} stars (${newCount} reviews)`);
+            // console.log(`INSTANT ADD CALC: ${newAverage.toFixed(1)} stars (${newCount} reviews)`);
             
             // Return updated state (still within callback)
             const newState = {
@@ -400,7 +473,7 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
     
     // Add a simple test listener to verify events are being received
     const testListener = (event) => {
-      console.log('TEST LISTENER: Event received:', event.type, event.detail);
+      // console.log('TEST LISTENER: Event received:', event.type, event.detail);
     };
     window.addEventListener('futureu_testimonials_updated', testListener);
 
