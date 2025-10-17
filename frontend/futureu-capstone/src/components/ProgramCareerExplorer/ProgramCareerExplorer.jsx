@@ -1280,7 +1280,7 @@ const ProgramCareerExplorer = () => {
                                 
                                 {/* Career Description Preview */}
                                 {career.careerDescription && (
-                                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                  <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed whitespace-pre-line">
                                     {career.careerDescription}
                                   </p>
                                 )}
@@ -1673,7 +1673,7 @@ const ProgramCareerExplorer = () => {
                               </span>
                             </div>
                             
-                            <p className="text-sm text-gray-700 leading-relaxed text-justify line-clamp-4">
+                            <p className="text-sm text-gray-700 leading-relaxed text-justify line-clamp-4 whitespace-pre-line">
                               {career.careerDescription}
                             </p>
                           </div>
@@ -2019,11 +2019,12 @@ const ProgramCareerExplorer = () => {
               </div>
                     </div>
                     <div className="prose prose-lg max-w-none">
-                      <div className="text-gray-700 leading-relaxed text-justify whitespace-pre-line text-base">
-                        {selectedCareer.careerDescription?.split('\n\n').map((paragraph, index) => (
-                          <p key={index} className="mb-2 last:mb-0">
-                            {paragraph}
-                          </p>
+                      <div className="text-gray-700 leading-relaxed text-justify text-base">
+                        {selectedCareer.careerDescription?.split('\n').map((line, index) => (
+                          <span key={index}>
+                            {line}
+                            {index < selectedCareer.careerDescription.split('\n').length - 1 && <br />}
+                          </span>
                         ))}
                       </div>
                     </div>

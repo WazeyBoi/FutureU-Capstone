@@ -41,7 +41,6 @@ const CRUD_Career = () => {
     industry: '',
     salary: '',
     jobTrend: '',
-    programId: '',
     careerDescription: ''
   });
   const [error, setError] = useState(null);
@@ -164,7 +163,6 @@ const CRUD_Career = () => {
       industry: '',
       salary: '',
       jobTrend: '',
-      programId: '',
       careerDescription: ''
     });
     setIsEditing(false);
@@ -179,7 +177,6 @@ const CRUD_Career = () => {
       industry: career.industry || '',
       salary: career.salary || '',
       jobTrend: career.jobTrend || '',
-      programId: career.program ? career.program.programId : '',
       careerDescription: career.careerDescription || ''
     });
     setIsEditing(true);
@@ -235,9 +232,6 @@ const CRUD_Career = () => {
         careerDescription: formData.careerDescription || ''
       };
       
-      // Get program ID if one is selected
-      const programId = formData.programId ? parseInt(formData.programId) : null;
-      
       if (isEditing) {
         // Update existing career
         await adminCareerService.updateCareer(
@@ -246,12 +240,12 @@ const CRUD_Career = () => {
             ...careerData,
             careerId: selectedCareer.careerId
           },
-          programId
+          null
         );
         setSuccess('Career updated successfully');
       } else {
         // Create new career
-        await adminCareerService.createCareer(careerData, programId);
+        await adminCareerService.createCareer(careerData, null);
         setSuccess('Career created successfully');
       }
       fetchCareers(); // Refresh the list
@@ -613,7 +607,7 @@ const CRUD_Career = () => {
       {/* Add/Edit Career Dialog */}
       {isModalVisible && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl animate-fadeIn">
             <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 flex justify-between items-center">
               <div className="flex items-center">
                 <div className="p-2 rounded-lg bg-[#FFB71B]/20 mr-3">
@@ -632,125 +626,106 @@ const CRUD_Career = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Briefcase className="h-5 w-5 text-gray-400" />
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-8">
+                {/* Left Column - Form Fields */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Briefcase className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        name="careerTitle"
+                        value={formData.careerTitle}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                        required
+                        placeholder="Enter career title"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    name="careerTitle"
-                    value={formData.careerTitle}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
-                    required
-                    placeholder="Enter career title"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Building className="h-5 w-5 text-gray-400" />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        name="industry"
+                        value={formData.industry}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                        required
+                        placeholder="Enter industry"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    name="industry"
-                    value={formData.industry}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
-                    required
-                    placeholder="Enter industry"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <DollarSign className="h-5 w-5 text-gray-400" />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <DollarSign className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="number"
+                        name="salary"
+                        value={formData.salary}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="1000"
+                        className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                        placeholder="Enter salary"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    name="salary"
-                    value={formData.salary}
-                    onChange={handleInputChange}
-                    min="0"
-                    step="1000"
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
-                    placeholder="Enter salary"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Job Trend *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <TrendingUp className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <select
-                    name="jobTrend"
-                    value={formData.jobTrend}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
-                    required
-                  >
-                    <option value="">Select job trend</option>
-                    <option value="Growing">Growing</option>
-                    <option value="Stable">Stable</option>
-                    <option value="Declining">Declining</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Associated Program</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <BookOpen className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <select
-                    name="programId"
-                    value={formData.programId}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
-                  >
-                    <option value="">None</option>
-                    {programs.map(program => (
-                      <option key={program.programId} value={program.programId}>
-                        {program.programName}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Job Trend *</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <TrendingUp className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <select
+                        name="jobTrend"
+                        value={formData.jobTrend}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                        required
+                      >
+                        <option value="">Select job trend</option>
+                        <option value="Growing">Growing</option>
+                        <option value="Stable">Stable</option>
+                        <option value="Declining">Declining</option>
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <ChevronRight className="h-4 w-4 text-gray-400 rotate-90" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Career Description</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FileText className="h-5 w-5 text-gray-400" />
+
+                {/* Right Column - Career Description */}
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Career Description</label>
+                  <div className="relative flex-1">
+                    <div className="absolute top-3 left-3 pointer-events-none">
+                      <FileText className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <textarea
+                      name="careerDescription"
+                      value={formData.careerDescription || ""}
+                      onChange={handleInputChange}
+                      className="w-full h-full min-h-[280px] pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors resize-none"
+                      placeholder="Enter career description&#10;&#10;Use Shift+Enter for new lines&#10;Separate paragraphs with double line breaks"
+                      style={{ whiteSpace: 'pre-wrap' }}
+                    ></textarea>
                   </div>
-                  <textarea
-                    name="careerDescription"
-                    value={formData.careerDescription || ""}
-                    onChange={handleInputChange}
-                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
-                    placeholder="Enter career description"
-                    rows="3"
-                  ></textarea>
                 </div>
               </div>
             </div>
