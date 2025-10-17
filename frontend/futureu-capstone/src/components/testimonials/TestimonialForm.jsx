@@ -218,11 +218,11 @@ const TestimonialForm = ({ isOpen, onClose, schools, testimonialToEdit, onSubmit
         
       } catch (apiError) {
         // We might get API errors but the data might still be saved
-        console.error('API error during testimonial submission:', apiError);
+        // console.error('API error during testimonial submission:', apiError);
         setError('There was a problem completing your request. Please check if your review was saved.');
       }
     } catch (err) {
-      console.error('Error submitting testimonial:', err);
+      // console.error('Error submitting testimonial:', err);
       setError(err.message || 'Failed to submit your testimonial. Please try again later.');
     } finally {
       setLoading(false);

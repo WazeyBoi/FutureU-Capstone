@@ -30,7 +30,7 @@ const TestimonialCard = ({ testimonial, onEdit, onDelete, isUserOwned = false })
 
   useEffect(() => {
     // Log the entire structure for debugging
-    console.log('Testimonial data:', JSON.stringify(testimonial, null, 2));
+    // console.log('Testimonial data:', JSON.stringify(testimonial, null, 2));
     
     // With the direct mapping approach, we can access properties directly
     const firstName = testimonial.studentFirstName || '';
