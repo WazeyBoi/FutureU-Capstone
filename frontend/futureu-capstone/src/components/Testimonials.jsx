@@ -374,7 +374,7 @@ const Testimonials = () => {
                          (deletedTestimonial.school && deletedTestimonial.school.schoolId);
           const deletedRating = deletedTestimonial.rating;
                          
-          console.log('Testimonials: Dispatching deletion event:', { schoolId, deletedRating, testimonialId });
+          // console.log('Testimonials: Dispatching deletion event:', { schoolId, deletedRating, testimonialId });
                          
           if (schoolId && deletedRating) {
             const eventDetail = { 
@@ -384,13 +384,13 @@ const Testimonials = () => {
               deletedTestimonialId: testimonialId
             };
             
-            console.log('Testimonials: About to dispatch event with detail:', eventDetail);
+            // console.log('Testimonials: About to dispatch event with detail:', eventDetail);
             
             window.dispatchEvent(new CustomEvent('futureu_testimonials_updated', { 
               detail: eventDetail
             }));
             
-            console.log('Testimonials: Deletion event dispatched successfully');
+            // console.log('Testimonials: Deletion event dispatched successfully');
           
           // Also trigger a cache refresh to ensure SchoolSection updates
           try { localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); } catch {}
@@ -456,17 +456,46 @@ const Testimonials = () => {
     setView('schools');
     setSelectedSchool('all');
     
-    // Refresh all testimonials when going back to schools view
-    getAllTestimonials()
+    // Clear the selected school name
+    setSelectedSchoolName('');
+    
+    // Refresh testimonial counts silently in background
+    getAllTestimonials(true) // Force refresh
       .then(response => {
         if (response && response.data) {
-          setTestimonials(response.data);
-          setFilteredTestimonials(response.data);
+          const testimonialsData = response.data;
+          setTestimonials(testimonialsData);
+          setFilteredTestimonials(testimonialsData);
+          
+          // Recalculate testimonial counts per school
+          const counts = {};
+          testimonialsData.forEach(testimonial => {
+            const schoolId = testimonial.schoolId || 
+                           (testimonial.school && testimonial.school.schoolId);
+            
+            if (schoolId) {
+              counts[schoolId] = (counts[schoolId] || 0) + 1;
+            }
+          });
+          setSchoolTestimonialCounts(counts);
         }
       })
       .catch(error => {
         console.error('Error refreshing testimonials:', error);
       });
+    
+    // Dispatch an event to trigger school ratings refresh without causing loading state
+    window.dispatchEvent(new CustomEvent('futureu_refresh_school_ratings', { 
+      detail: { 
+        action: 'refresh_all',
+        timestamp: Date.now()
+      }
+    }));
+    
+    // Also trigger a cache refresh
+    try { 
+      localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); 
+    } catch {}
   };
 
   const handleSubmitTestimonial = async (formData) => {
@@ -489,6 +518,35 @@ const Testimonials = () => {
               return dateB.getTime() - dateA.getTime();
             });
           });
+
+          // Also update filtered testimonials immediately if we're viewing this school's testimonials
+          setFilteredTestimonials(prev => {
+            const updated = prev.map(t => 
+              (t.testimonyId === updatedTestimonial.testimonyId) ? updatedTestimonial : t
+            );
+            return updated.sort((a, b) => {
+              const dateA = new Date(a.createdAt || a.created_at || a.timestamp || a.date || a.testimonyId || Date.now());
+              const dateB = new Date(b.createdAt || b.created_at || b.timestamp || b.date || b.testimonyId || Date.now());
+              return dateB.getTime() - dateA.getTime();
+            });
+          });
+
+          // Dispatch event to notify SchoolsSection about the update for real-time rating update
+          const schoolId = formData.schoolId || updatedTestimonial.schoolId;
+          if (schoolId) {
+            const eventDetail = { 
+              action: 'update',
+              schoolId: schoolId,
+              updatedTestimonialId: formData.testimonyId
+            };
+            
+            window.dispatchEvent(new CustomEvent('futureu_testimonials_updated', { 
+              detail: eventDetail
+            }));
+            
+            // Also trigger a cache refresh to ensure SchoolSection updates
+            try { localStorage.setItem('futureu_refresh_testimonials', String(Date.now())); } catch {}
+          }
         } catch (error) {
           console.error('Error updating testimonial:', error);
           alert(error.message || 'Failed to update your review. Please try again.');
