@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH || "/FutureU-Capstone",
+  // Keep base to "/" for Vercel unless overridden explicitly
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [
     tailwindcss(),
     react()
@@ -18,7 +19,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://ec2-18-139-117-208.ap-southeast-1.compute.amazonaws.com:8080', // Replace with your backend URL
+        // Use env override for local dev proxy target; default to localhost backend
+        target: process.env.VITE_DEV_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },
