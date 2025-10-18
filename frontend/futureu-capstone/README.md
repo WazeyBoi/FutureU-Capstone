@@ -1,12 +1,42 @@
-# React + Vite
+# FutureU Frontend (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## API configuration (no more Mixed Content)
 
-Currently, two official plugins are available:
+- The app now uses a relative base path for API calls: `/api`.
+- In development, Vite proxies `/api` to your backend (default `http://localhost:8080`).
+- In production on Vercel, `vercel.json` rewrites `/api/*` to the EC2 backend.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This keeps the browser on HTTPS and avoids errors like: "Mixed Content: page loaded over HTTPS but requested insecure HTTP".
 
-## Expanding the ESLint configuration
+### Env variables
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `VITE_DEV_API_TARGET` (dev only): URL of your local backend. Default: `http://localhost:8080`.
+- `VITE_API_BASE` (optional): Override API base. Default: `/api`. You generally shouldn’t set this in production on Vercel.
+- `VITE_BASE_PATH` (optional): Base path for the app. Default: `/`.
+
+Create a `.env.local` in this folder for dev:
+
+```
+VITE_DEV_API_TARGET=http://localhost:8080
+```
+
+### Cookie-based auth through proxy
+
+Because `/api` is same-origin for the browser, no CORS preflight is needed. If the backend sets cookies, prefer omitting the `Domain` attribute so the cookie is set for the Vercel domain in production (and for `localhost` during dev). The proxy forwards cookies to the backend.
+
+Ensure cookies are set with `Secure; SameSite=None` when needed.
+
+## Vercel config
+
+`vercel.json` is included and rewrites `/api/:path*` to the EC2 backend. If your backend host changes, update it there.
+
+## Scripts
+
+- `npm run dev` – start Vite dev server with API proxy
+- `npm run build` – production build
+- `npm run preview` – preview the production build locally
+
+## Notes
+
+- Large bundles are expected due to assets; consider code-splitting to optimize.
+
