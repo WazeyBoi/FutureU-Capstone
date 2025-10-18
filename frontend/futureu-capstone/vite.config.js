@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // Replace with your backend URL
+        target: 'http://ec2-18-139-117-208.ap-southeast-1.compute.amazonaws.com:8080', // Replace with your backend URL
         changeOrigin: true,
         secure: false,
       },
