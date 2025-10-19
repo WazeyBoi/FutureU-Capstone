@@ -14,6 +14,8 @@ import accreditationService from "../services/accreditationService";
 import { Link } from 'react-router-dom';
 import authService from "../services/authService";
 
+import quirkyMascot from "../assets/characters/quirky.svg";
+
 const AccreditationRatings = () => {
   // State declarations
   const [selectedSchool, setSelectedSchool] = useState(null);
