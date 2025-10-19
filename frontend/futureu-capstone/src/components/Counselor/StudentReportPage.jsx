@@ -6,6 +6,8 @@ import { Radar, Bar } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import CounselorTabs from "./CounselorTabs";
 
+import quirkyMascot from "../../assets/characters/quirky.svg";
+
 const highlightScore = (score, max = 100) => {
   if (score >= 0.85 * max) return "text-[#FFB71B] font-bold";
   if (score >= 0.7 * max) return "text-[#2B3E4E] font-semibold";
@@ -548,7 +550,7 @@ const StudentReportPage = () => {
           <div className="flex flex-col items-center md:items-start z-10 w-full relative">
             {/* Mascot image, top right, overlapping avatar */}
             <img
-              src="/src/assets/characters/quirky.svg"
+              src={quirkyMascot}
               alt="Mascot"
               className="absolute right-168 -top-10 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
               style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}

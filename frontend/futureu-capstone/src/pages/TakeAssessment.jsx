@@ -14,6 +14,7 @@ import SaveExitConfirmationModal from '../components/Assessment/SaveExitConfirma
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
 import lazySVG from '../assets/characters/lazy.svg';
+import quirkyMascot from "../assets/characters/quirky.svg";
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {
@@ -1071,19 +1072,19 @@ const TakeAssessment = () => {
       <div className='flex flex-col items-center justify-center min-h-screen h-full'>
         <div className="relative flex items-center justify-center">
           <img 
-            src="/src/assets/characters/quirky.svg" 
+            src={quirkyMascot} 
             alt="Quirky mascot" 
             className="quirky-bounce h-50 mx-auto animate-bounce-slow"
             style={{ zIndex: 2, position: 'relative' }}
           />
           {/* <img
-            src="/src/assets/characters/ohmy.svg"
+            src={ohmyMascot}
             alt="OhMy mascot"
             className="animate-bounce-updown absolute left-[290px] bottom-[-70px] h-20 w-20"
             style={{ zIndex: 1 }}
           /> */}
           {/* <img
-            src="/src/assets/characters/lazy.svg"
+            src={lazyMascot}
             alt="Lazy mascot"
             className="absolute right-[120px] bottom-[-85px] h-32 w-32"
             style={{ zIndex: 1 }}

@@ -10,6 +10,8 @@ import sherween from '../assets/FutureU_Team/Sherween Perolino.png';
 import christianHans from '../assets/FutureU_Team/Christian Hans Paras.png';
 import aeronRaye from '../assets/FutureU_Team/Aeron Raye Tigley.png';
 
+import headerLogoNormal from "../assets/header_logo_normal.svg";
+
 const AboutUsPage = () => {
   const navigate = useNavigate();
 
@@ -178,7 +180,7 @@ const AboutUsPage = () => {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <motion.img 
-                  src="/src/assets/header_logo_normal.svg" 
+                  src={headerLogoNormal} 
                   alt="FutureU Logo" 
                   className="h-64 w-auto max-w-full object-contain transition-all duration-500 ease-in-out transform group-hover:rotate-6 group-hover:drop-shadow-2xl"
                   animate={{ 

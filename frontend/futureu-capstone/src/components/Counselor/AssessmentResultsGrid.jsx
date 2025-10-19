@@ -1,4 +1,5 @@
 import React from "react";
+import lazySVG from '../../assets/characters/lazy.svg';
 
 const getInitials = (user) => {
   if (!user) return "?";
@@ -13,7 +14,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
   if (!results || results.length === 0) {
     return (
       <div className="flex flex-col items-center py-12">
-        <img src="/src/assets/characters/lazy.svg" alt="No results" className="w-50 mb-4 animate-fade-in" />
+        <img src={lazySVG} alt="No results" className="w-50 mb-4 animate-fade-in" />
         <div className="text-gray-500 text-center text-lg font-semibold">No Users found.<br/>No User Assessments Found!</div>
       </div>
     );
