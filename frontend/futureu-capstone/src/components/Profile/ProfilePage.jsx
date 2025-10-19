@@ -269,41 +269,106 @@ const ProfilePage = () => {
     }
   };
 
-  const handleFileChange = async (event) => {
+  // Profile picture upload with enhanced feedback
+  const handleProfilePictureUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should be less than 5MB');
+    // Validate file size (10MB limit to match backend)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be less than 10MB');
       return;
     }
 
+    // Create blob URL for instant preview
+    const blobUrl = URL.createObjectURL(file);
+    setProfilePictureBlob(blobUrl);
+
     setUploading(true);
     setError(null);
+    setSuccess(null);
 
     try {
-      const currentUser = authService.getCurrentUser();
-      const result = await updateProfilePicture(currentUser.id, file);
+      console.log('Starting profile picture upload...');
       
-      setUser(prev => ({
-        ...prev,
-        profilePictureUrl: result.profilePictureUrl
-      }));
-      setEditData(prev => ({
-        ...prev,
-        profilePictureUrl: result.profilePictureUrl
-      }));
+      // Upload to Cloudinary via backend
+      const imageUrl = await profileService.uploadProfilePicture(file);
+      console.log('Upload successful! Cloudinary URL:', imageUrl);
+
+      // Update context with Cloudinary URL
+      setProfilePicture(imageUrl);
       
+      // Clean up blob URL since we now have the permanent URL
+      URL.revokeObjectURL(blobUrl);
+      setProfilePictureBlob(null);
+
+      // Update local user state
+      setUser(prev => ({ ...prev, profilePictureUrl: imageUrl }));
+
       setSuccess('Profile picture updated successfully!');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      console.error('Full error object:', error);
-      setError(typeof error === 'string' ? error : error.message || 'Failed to upload profile picture');
+      
+      // Trigger mascot animation
+      setMascotWiggle(true);
+      setTimeout(() => setMascotWiggle(false), 1000);
+
+    } catch (err) {
+      console.error('Profile picture upload failed:', err);
+      
+      // Clean up blob URL on error
+      URL.revokeObjectURL(blobUrl);
+      setProfilePictureBlob(null);
+
+      // Set appropriate error message
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to upload profile picture. Please try again.');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Delete profile picture with Cloudinary cleanup
+  const handleDeleteProfilePicture = async () => {
+    if (!user?.profilePictureUrl) return;
+
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      console.log('Deleting profile picture from Cloudinary...');
+      
+      // Delete from Cloudinary via backend
+      await profileService.deleteProfilePicture();
+      console.log('Profile picture deleted successfully');
+
+      // Update context
+      setProfilePicture(null);
+      setProfilePictureBlob(null);
+
+      // Update local user state
+      setUser(prev => ({ ...prev, profilePictureUrl: null }));
+
+      setSuccess('Profile picture deleted successfully!');
+
+    } catch (err) {
+      console.error('Failed to delete profile picture:', err);
+      
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to delete profile picture. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
