@@ -106,7 +106,7 @@ const AccreditationRatings = () => {
       <div className='flex flex-col items-center justify-center min-h-screen h-full'>
         <div>
           <img 
-            src="/src/assets/characters/quirky.svg" 
+            src={quirkyMascot}
             alt="Quirky mascot" 
             className="quirky-bounce h-50 mx-auto"
           />
