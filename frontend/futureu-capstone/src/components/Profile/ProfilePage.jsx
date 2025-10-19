@@ -120,7 +120,15 @@ const LoadingScreen = () => {
 
 const ProfilePage = () => {
   // Use profile context instead of local state for user profile
-  const { userProfile, profilePicture, updateProfilePicture, updateProfile, refreshProfile } = useProfile();
+  const { 
+    userProfile, 
+    profilePicture, 
+    profilePictureBlob,
+    setProfilePictureBlob, // ADD this line
+    updateProfilePicture, 
+    updateProfile, 
+    refreshProfile 
+  } = useProfile();
   
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -194,7 +202,9 @@ const ProfilePage = () => {
       }
 
       if (!userProfile) {
-        const profileData = await profileService.getUserProfile(currentUser.id);
+        // Use profileService.getUserProfile() without passing userId
+        // since it now gets the userId internally
+        const profileData = await profileService.getUserProfile();
         setUser(profileData);
         setEditData(profileData);
       }
@@ -240,8 +250,8 @@ const ProfilePage = () => {
         }
       }
 
-      const currentUser = authService.getCurrentUser();
-      const updatedUser = await updateProfile(currentUser.id, editData);
+      // Use profileService.updateUserProfile() without passing userId
+      const updatedUser = await profileService.updateUserProfile(editData);
       
       setUser(updatedUser);
       setEditMode(false);
@@ -288,7 +298,7 @@ const ProfilePage = () => {
 
     // Create blob URL for instant preview
     const blobUrl = URL.createObjectURL(file);
-    setProfilePictureBlob(blobUrl);
+    setProfilePictureBlob(blobUrl); // Now this should work
 
     setUploading(true);
     setError(null);
@@ -301,8 +311,8 @@ const ProfilePage = () => {
       const imageUrl = await profileService.uploadProfilePicture(file);
       console.log('Upload successful! Cloudinary URL:', imageUrl);
 
-      // Update context with Cloudinary URL
-      setProfilePicture(imageUrl);
+      // Update context with Cloudinary URL - use setProfilePicture from context
+      // Remove the direct setProfilePicture call since it should be handled by the context
       
       // Clean up blob URL since we now have the permanent URL
       URL.revokeObjectURL(blobUrl);
@@ -310,6 +320,9 @@ const ProfilePage = () => {
 
       // Update local user state
       setUser(prev => ({ ...prev, profilePictureUrl: imageUrl }));
+
+      // Refresh the profile context to get the updated data
+      await refreshProfile(true);
 
       setSuccess('Profile picture updated successfully!');
       
@@ -352,12 +365,14 @@ const ProfilePage = () => {
       await profileService.deleteProfilePicture();
       console.log('Profile picture deleted successfully');
 
-      // Update context
-      setProfilePicture(null);
+      // Clear context picture states
       setProfilePictureBlob(null);
 
       // Update local user state
       setUser(prev => ({ ...prev, profilePictureUrl: null }));
+
+      // Refresh the profile context to get the updated data
+      await refreshProfile(true);
 
       setSuccess('Profile picture deleted successfully!');
 
@@ -391,6 +406,11 @@ const ProfilePage = () => {
       case 'excited': return "You're doing great! Keep building your profile!";
       default: return "Welcome to your profile dashboard!";
     }
+  };
+
+  // Add this missing function after handleProfilePictureUpload
+  const handleFileChange = async (event) => {
+    await handleProfilePictureUpload(event);
   };
 
   if (loading) {
