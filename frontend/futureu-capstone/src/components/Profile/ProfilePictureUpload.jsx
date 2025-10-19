@@ -52,7 +52,14 @@ const ProfilePictureUpload = ({ userId, currentImageUrl, onImageUpdate, editMode
       >
         {currentImageUrl ? (
           <img
-            src={`http://localhost:8080${currentImageUrl}`}
+            src={(() => {
+              // Check if it's already a full URL (Cloudinary)
+              if (currentImageUrl.startsWith('http://') || currentImageUrl.startsWith('https://')) {
+                return currentImageUrl;
+              }
+              // Fallback for old local URLs
+              return `http://localhost:8080${currentImageUrl}`;
+            })()}
             alt="Profile"
             className="w-full h-full object-cover"
           />
