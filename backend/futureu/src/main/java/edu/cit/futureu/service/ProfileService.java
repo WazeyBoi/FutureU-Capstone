@@ -1,10 +1,6 @@
 package edu.cit.futureu.service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,225 +23,171 @@ public class ProfileService {
     @Autowired
     private InstitutionService institutionService;
     
-    private final String uploadDir = "uploads/profile-pictures/";
+    @Autowired
+    private CloudinaryService cloudinaryService; // NEW: Inject Cloudinary service
+    
+    // REMOVED: private final String uploadDir = "uploads/profile-pictures/";
     
     public UserEntity getUserProfile(int userId) {
-        System.out.println("ProfileService: getUserProfile called with userId: " + userId);
-        
-        Optional<UserEntity> user = userRepository.findById(userId);
-        if (user.isPresent()) {
-            UserEntity userEntity = user.get();
-            // Don't return password for security
-            userEntity.setPassword(null);
-            System.out.println("User found: " + userEntity.getEmail());
-            return userEntity;
-        }
-        System.err.println("User not found with ID: " + userId);
-        throw new RuntimeException("User not found");
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
     }
     
     public UserEntity updateUserProfile(int userId, UserEntity profileData) {
         try {
-            System.out.println("=== ProfileService: updateUserProfile START ===");
-            System.out.println("UserId: " + userId);
-            System.out.println("ProfileData received: " + profileData);
+            System.out.println("=== UPDATE USER PROFILE ===");
+            System.out.println("Updating user with ID: " + userId);
             
-            // Check if userRepository is available
-            if (userRepository == null) {
-                System.err.println("UserRepository is null!");
-                throw new RuntimeException("UserRepository is not available");
-            }
-            
-            System.out.println("Looking for user with ID: " + userId);
-        Optional<UserEntity> existingUser = userRepository.findById(userId);
-            
-            if (!existingUser.isPresent()) {
-                System.err.println("User not found with ID: " + userId);
+            Optional<UserEntity> userOpt = userRepository.findById(userId);
+            if (!userOpt.isPresent()) {
                 throw new RuntimeException("User not found with ID: " + userId);
             }
             
-            UserEntity user = existingUser.get();
-            System.out.println("Found existing user: " + user.getEmail());
+            UserEntity existingUser = userOpt.get();
+            System.out.println("Found existing user: " + existingUser.getEmail());
             
-            // Update ALL profile fields (not just firstName)
+            // Update fields
             if (profileData.getFirstName() != null) {
-                System.out.println("Updating firstName from '" + user.getFirstName() + "' to '" + profileData.getFirstName() + "'");
-                if (!profileData.getFirstName().trim().isEmpty()) {
-                    user.setFirstName(profileData.getFirstName().trim());
-                    System.out.println("FirstName updated successfully");
-                }
+                existingUser.setFirstName(profileData.getFirstName());
             }
-            
-            if (profileData.getLastname() != null) {
-                System.out.println("Updating lastname from '" + user.getLastname() + "' to '" + profileData.getLastname() + "'");
-                if (!profileData.getLastname().trim().isEmpty()) {
-                    user.setLastname(profileData.getLastname().trim());
-                    System.out.println("Lastname updated successfully");
-                }
-            }
-            
             if (profileData.getMiddleName() != null) {
-                System.out.println("Updating middleName from '" + user.getMiddleName() + "' to '" + profileData.getMiddleName() + "'");
-                user.setMiddleName(profileData.getMiddleName().trim().isEmpty() ? null : profileData.getMiddleName().trim());
-                System.out.println("MiddleName updated successfully");
+                existingUser.setMiddleName(profileData.getMiddleName());
             }
-            
+            if (profileData.getLastname() != null) {
+                existingUser.setLastname(profileData.getLastname());
+            }
             if (profileData.getEmail() != null) {
-                System.out.println("Updating email from '" + user.getEmail() + "' to '" + profileData.getEmail() + "'");
-                if (!profileData.getEmail().trim().isEmpty()) {
-                    user.setEmail(profileData.getEmail().trim());
-                    System.out.println("Email updated successfully");
-                }
+                existingUser.setEmail(profileData.getEmail());
             }
-            
+            if (profileData.getAge() > 0) {
+                existingUser.setAge(profileData.getAge());
+            }
             if (profileData.getAddress() != null) {
-                System.out.println("Updating address from '" + user.getAddress() + "' to '" + profileData.getAddress() + "'");
-                user.setAddress(profileData.getAddress().trim().isEmpty() ? null : profileData.getAddress().trim());
-                System.out.println("Address updated successfully");
+                existingUser.setAddress(profileData.getAddress());
             }
-            
             if (profileData.getContactNumber() != null) {
-                System.out.println("Updating contactNumber from '" + user.getContactNumber() + "' to '" + profileData.getContactNumber() + "'");
-                user.setContactNumber(profileData.getContactNumber().trim().isEmpty() ? null : profileData.getContactNumber().trim());
-                System.out.println("ContactNumber updated successfully");
+                existingUser.setContactNumber(profileData.getContactNumber());
             }
             
-            if (profileData.getAge() != 0) { // Note: int primitive, so check for 0 instead of null
-                System.out.println("Updating age from " + user.getAge() + " to " + profileData.getAge());
-                if (profileData.getAge() > 0) {
-                user.setAge(profileData.getAge());
-                    System.out.println("Age updated successfully");
-                }
-            }
-
-            // Validate and set school code for counselors only
+            // Handle school code for counselors
             if (profileData.getSchoolCode() != null) {
-                String role = user.getRole() != null ? user.getRole().name() : "";
-                if ("GUIDANCE_COUNSELOR".equals(role) || "CAREER_COUNSELOR".equals(role)) {
-                    String schoolCode = profileData.getSchoolCode().trim();
-                    if (!schoolCode.isEmpty()) {
-                        if (!institutionService.isValidSchoolCode(schoolCode)) {
-                            throw new RuntimeException("Invalid school code. Please verify with your institution.");
-                        }
+                String schoolCode = profileData.getSchoolCode().trim();
+                if (!schoolCode.isEmpty()) {
+                    // FIXED: Change validateSchoolCode to isValidSchoolCode
+                    boolean isValid = institutionService.isValidSchoolCode(schoolCode);
+                    if (!isValid) {
+                        throw new RuntimeException("Invalid school code provided");
                     }
+                    existingUser.setSchoolCode(schoolCode);
+                } else {
+                    existingUser.setSchoolCode(null);
                 }
-                user.setSchoolCode(profileData.getSchoolCode());
             }
             
-            System.out.println("About to save user to database...");
-            System.out.println("User before save - firstName: " + user.getFirstName() + ", lastname: " + user.getLastname());
-            
-            UserEntity savedUser = userRepository.save(user);
-            System.out.println("User saved successfully!");
-            System.out.println("Saved user - firstName: " + savedUser.getFirstName() + ", lastname: " + savedUser.getLastname());
-            
-            savedUser.setPassword(null); // Don't return password
-            
-            System.out.println("ProfileService: updateUserProfile completed successfully");
-            System.out.println("=== ProfileService: updateUserProfile END ===");
+            UserEntity savedUser = userRepository.save(existingUser);
+            System.out.println("User profile updated successfully");
             return savedUser;
             
+        } catch (RuntimeException e) {
+            System.err.println("=== RUNTIME ERROR ===");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            System.err.println("=== END RUNTIME ERROR ===");
+            throw e;
         } catch (Exception e) {
-            System.err.println("=== CRITICAL ERROR in ProfileService.updateUserProfile ===");
-            System.err.println("Error type: " + e.getClass().getSimpleName());
-            System.err.println("Error message: " + e.getMessage());
-            System.err.println("Stack trace:");
+            System.err.println("=== CRITICAL ERROR ===");
+            System.err.println("Unexpected error: " + e.getMessage());
             e.printStackTrace();
             System.err.println("=== END CRITICAL ERROR ===");
             throw e;
         }
     }
     
+    /**
+     * Upload profile picture to Cloudinary
+     */
     public String uploadProfilePicture(int userId, MultipartFile file) throws IOException {
-        // Validate file
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("File is empty");
+        try {
+            System.out.println("=== UPLOAD PROFILE PICTURE ===");
+            System.out.println("Uploading for user ID: " + userId);
+            
+            // Get existing user
+            Optional<UserEntity> userOpt = userRepository.findById(userId);
+            if (!userOpt.isPresent()) {
+                throw new RuntimeException("User not found with ID: " + userId);
+            }
+            
+            UserEntity user = userOpt.get();
+            String oldProfilePictureUrl = user.getProfilePictureUrl();
+            
+            // Delete old image from Cloudinary if exists
+            if (oldProfilePictureUrl != null && !oldProfilePictureUrl.isEmpty()) {
+                try {
+                    cloudinaryService.deleteProfilePicture(oldProfilePictureUrl);
+                    System.out.println("Deleted old profile picture from Cloudinary");
+                } catch (IOException e) {
+                    System.err.println("Failed to delete old image: " + e.getMessage());
+                    // Continue with upload even if deletion fails
+                }
+            }
+            
+            // Upload new image to Cloudinary
+            String imageUrl = cloudinaryService.uploadProfilePicture(file, userId);
+            System.out.println("Uploaded new profile picture to Cloudinary: " + imageUrl);
+            
+            // Update user's profile picture URL in database
+            user.setProfilePictureUrl(imageUrl);
+            userRepository.save(user);
+            
+            System.out.println("Profile picture URL updated in database");
+            return imageUrl;
+            
+        } catch (IOException e) {
+            System.err.println("Error uploading profile picture: " + e.getMessage());
+            throw e;
         }
-        
-        if (!file.getContentType().startsWith("image/")) {
-            throw new IllegalArgumentException("File must be an image");
-        }
-        
-        if (file.getSize() > 5 * 1024 * 1024) { // 5MB limit
-            throw new IllegalArgumentException("File size exceeds 5MB limit");
-        }
-        
-        // Create upload directory if it doesn't exist
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        
-        // Generate unique filename
-        String originalFilename = file.getOriginalFilename();
-        String fileExtension = originalFilename != null ? 
-            originalFilename.substring(originalFilename.lastIndexOf(".")) : ".jpg";
-        String fileName = userId + "_" + System.currentTimeMillis() + fileExtension;
-        Path filePath = uploadPath.resolve(fileName);
-        
-        // Save file
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-        
-        // Update user's profile picture URL
-        String profilePictureUrl = "/uploads/profile-pictures/" + fileName;
-        Optional<UserEntity> user = userRepository.findById(userId);
-        if (user.isPresent()) {
-            UserEntity userEntity = user.get();
-            userEntity.setProfilePictureUrl(profilePictureUrl);
-            userRepository.save(userEntity);
-        }
-        
-        return profilePictureUrl;
     }
     
+    /**
+     * Delete profile picture from Cloudinary
+     */
     public void deleteProfilePicture(int userId) {
-        Optional<UserEntity> user = userRepository.findById(userId);
-        if (user.isPresent()) {
-            UserEntity userEntity = user.get();
-            String currentPictureUrl = userEntity.getProfilePictureUrl();
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if (userOpt.isPresent()) {
+            UserEntity user = userOpt.get();
+            String profilePictureUrl = user.getProfilePictureUrl();
             
-            // Delete file if exists
-            if (currentPictureUrl != null && !currentPictureUrl.isEmpty()) {
+            // Delete from Cloudinary
+            if (profilePictureUrl != null && !profilePictureUrl.isEmpty()) {
                 try {
-                    String fileName = currentPictureUrl.substring(currentPictureUrl.lastIndexOf("/") + 1);
-                    Path filePath = Paths.get(uploadDir + fileName);
-                    Files.deleteIfExists(filePath);
+                    cloudinaryService.deleteProfilePicture(profilePictureUrl);
+                    System.out.println("Deleted profile picture from Cloudinary");
                 } catch (IOException e) {
-                    // Log error but don't throw exception
-                    System.err.println("Could not delete file: " + e.getMessage());
+                    System.err.println("Failed to delete image from Cloudinary: " + e.getMessage());
+                    // Continue to remove URL from database even if Cloudinary delete fails
                 }
             }
             
             // Remove URL from database
-            userEntity.setProfilePictureUrl(null);
-            userRepository.save(userEntity);
+            user.setProfilePictureUrl(null);
+            userRepository.save(user);
         }
     }
 
     public void changePassword(int userId, String currentPassword, String newPassword) {
-        Optional<UserEntity> userOptional = userRepository.findById(userId);
-        if (!userOptional.isPresent()) {
+        Optional<UserEntity> userOpt = userRepository.findById(userId);
+        if (!userOpt.isPresent()) {
             throw new RuntimeException("User not found");
         }
-
-        UserEntity user = userOptional.get();
+        
+        UserEntity user = userOpt.get();
         
         // Verify current password
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
         }
         
-        // Validate new password
-        if (newPassword == null || newPassword.trim().length() < 8) {
-            throw new RuntimeException("New password must be at least 8 characters long");
-        }
-        
-        // Check if new password is different from current
-        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new RuntimeException("New password must be different from current password");
-        }
-        
-        // Update password
+        // Update to new password
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
