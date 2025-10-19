@@ -97,12 +97,12 @@ export const ProfileProvider = ({ children }) => {
           
           setIsProfileLoaded(true);
           
-          console.log('Profile loaded from cache');
+          // console.log('Profile loaded from cache');
           return true;
         } else {
           // Cache expired, clear it
           clearCache(userId);
-          console.log('Profile cache expired, clearing...');
+          // console.log('Profile cache expired, clearing...');
         }
       }
     } catch (error) {
@@ -136,7 +136,7 @@ export const ProfileProvider = ({ children }) => {
         };
         reader.readAsDataURL(blob);
         
-        console.log('Profile picture cached as blob');
+        // console.log('Profile picture cached as blob');
       }
     } catch (error) {
       console.error('Failed to cache profile picture blob:', error);
@@ -160,7 +160,7 @@ export const ProfileProvider = ({ children }) => {
         fetchAndCacheImageBlob(pictureUrl, userId);
       }
       
-      console.log('Profile saved to cache');
+      // console.log('Profile saved to cache');
     } catch (error) {
       console.error('Failed to save profile to cache:', error);
     }
@@ -189,13 +189,13 @@ export const ProfileProvider = ({ children }) => {
   const fetchUserProfile = async (userId, forceRefresh = false) => {
     // Prevent multiple simultaneous requests
     if (fetchingProfile && !forceRefresh) {
-      console.log('Profile fetch already in progress, skipping...');
+      // console.log('Profile fetch already in progress, skipping...');
       return;
     }
     
     // If we already have profile data for this user and it's not a forced refresh, don't fetch again
     if (userProfile && userProfile.userId === userId && isProfileLoaded && !forceRefresh) {
-      console.log('Profile already loaded for this user, skipping fetch...');
+      // console.log('Profile already loaded for this user, skipping fetch...');
       return;
     }
 
@@ -211,7 +211,7 @@ export const ProfileProvider = ({ children }) => {
         }
       }
 
-      console.log('Fetching fresh profile data...');
+      // console.log('Fetching fresh profile data...');
       // Use profileService.getUserProfile() without passing userId
       const profile = await profileService.getUserProfile();
       
@@ -221,7 +221,7 @@ export const ProfileProvider = ({ children }) => {
       
       saveToCache(userId, profile, profile?.profilePictureUrl);
       
-      console.log('Profile fetched from API and cached');
+      // console.log('Profile fetched from API and cached');
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
     } finally {
@@ -290,7 +290,7 @@ export const ProfileProvider = ({ children }) => {
         try {
           await careerInterestProfileService.refreshUserProfileCaches(currentUser.id);
         } catch (error) {
-          console.log('Career interest profile cache refresh failed (user may not have profile)');
+          // console.log('Career interest profile cache refresh failed (user may not have profile)');
         }
       }
     }

@@ -31,7 +31,7 @@ import { schoolLogos } from '../AcademicExplorer/constants';
 const formatSalary = (salary) => {
   if (!salary) return 'Not specified';
   
-  console.log('formatSalary input:', salary); // Debug log
+  // console.log('formatSalary input:', salary); // Debug log
   
   // Handle salary ranges - check for different "to" patterns
   const toPatterns = [' to ', 'to', ' to', 'to '];
@@ -45,7 +45,7 @@ const formatSalary = (salary) => {
   }
   
   if (foundPattern) {
-    console.log('Found pattern:', foundPattern); // Debug log
+    // console.log('Found pattern:', foundPattern); // Debug log
     // Split the range
     const parts = salary.split(foundPattern);
     if (parts.length === 2) {

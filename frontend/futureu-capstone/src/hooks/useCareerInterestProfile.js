@@ -12,7 +12,7 @@ export const useCareerInterestProfile = () => {
   const checkUserProfile = useCallback(async () => {
     // Prevent multiple simultaneous checks
     if (isChecking) {
-      console.log('Profile check already in progress, skipping...');
+      // console.log('Profile check already in progress, skipping...');
       return;
     }
 

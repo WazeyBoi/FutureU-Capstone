@@ -49,7 +49,7 @@ class ProfileService {
    */
   async uploadProfilePicture(file) {
     try {
-      console.log('ProfileService: Uploading profile picture...');
+      // console.log('ProfileService: Uploading profile picture...');
       
       // Use authService to get current user ID
       const userId = authService.getCurrentUserId();
@@ -71,7 +71,7 @@ class ProfileService {
         timeout: 60000, // 60 seconds
       });
 
-      console.log('ProfileService: Upload response:', response.data);
+      // console.log('ProfileService: Upload response:', response.data);
 
       // Backend should return the Cloudinary URL in profilePictureUrl field
       const imageUrl = response.data.profilePictureUrl || response.data.imageUrl || response.data;
@@ -102,7 +102,7 @@ class ProfileService {
    */
   async deleteProfilePicture() {
     try {
-      console.log('ProfileService: Deleting profile picture...');
+      // console.log('ProfileService: Deleting profile picture...');
       
       // Use authService to get current user ID
       const userId = authService.getCurrentUserId();
@@ -113,7 +113,7 @@ class ProfileService {
 
       const response = await apiClient.delete(`/profile/${userId}/profile-picture`);
       
-      console.log('ProfileService: Delete response:', response.data);
+      // console.log('ProfileService: Delete response:', response.data);
       return response.data;
     } catch (error) {
       console.error('ProfileService: Delete error:', error);

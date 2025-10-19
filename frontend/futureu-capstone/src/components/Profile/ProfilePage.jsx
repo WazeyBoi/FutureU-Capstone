@@ -305,11 +305,11 @@ const ProfilePage = () => {
     setSuccess(null);
 
     try {
-      console.log('Starting profile picture upload...');
+      // console.log('Starting profile picture upload...');
       
       // Upload to Cloudinary via backend
       const imageUrl = await profileService.uploadProfilePicture(file);
-      console.log('Upload successful! Cloudinary URL:', imageUrl);
+      // console.log('Upload successful! Cloudinary URL:', imageUrl);
 
       // Update context with Cloudinary URL - use setProfilePicture from context
       // Remove the direct setProfilePicture call since it should be handled by the context
@@ -359,11 +359,11 @@ const ProfilePage = () => {
     setSuccess(null);
 
     try {
-      console.log('Deleting profile picture from Cloudinary...');
+      // console.log('Deleting profile picture from Cloudinary...');
       
       // Delete from Cloudinary via backend
       await profileService.deleteProfilePicture();
-      console.log('Profile picture deleted successfully');
+      // console.log('Profile picture deleted successfully');
 
       // Clear context picture states
       setProfilePictureBlob(null);

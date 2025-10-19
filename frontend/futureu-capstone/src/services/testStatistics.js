@@ -2,11 +2,11 @@
 import statisticsService from './statisticsService.js';
 
 const testStatistics = async () => {
-  console.log('Testing statistics service...');
+  // console.log('Testing statistics service...');
   
   try {
     const stats = await statisticsService.getAllStatistics();
-    console.log('Statistics:', stats);
+    // console.log('Statistics:', stats);
   } catch (error) {
     console.error('Error testing statistics:', error);
   }
