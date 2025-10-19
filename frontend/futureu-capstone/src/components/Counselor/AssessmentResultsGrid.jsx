@@ -1,5 +1,5 @@
 import React from "react";
-import lazySVG from '../assets/characters/lazy.svg';
+import lazySVG from '../../assets/characters/lazy.svg';
 
 const getInitials = (user) => {
   if (!user) return "?";
