@@ -321,7 +321,21 @@ export const ProfileProvider = ({ children }) => {
 
   // Get the best available profile picture URL (prioritize blob for instant loading)
   const getProfilePictureUrl = () => {
-    return profilePictureBlob || (profilePicture ? `http://localhost:8080${profilePicture}` : null);
+    // If we have a blob URL (for instant loading), use it
+    if (profilePictureBlob) return profilePictureBlob;
+    
+    // Otherwise, use the profile picture URL directly (Cloudinary URLs are already full)
+    // No need to prepend localhost anymore since Cloudinary provides full URLs
+    if (profilePicture) {
+      // Check if it's already a full URL (Cloudinary)
+      if (profilePicture.startsWith('http://') || profilePicture.startsWith('https://')) {
+        return profilePicture;
+      }
+      // Fallback for old local URLs (during migration)
+      return `http://localhost:8080${profilePicture}`;
+    }
+    
+    return null;
   };
 
   const value = {
