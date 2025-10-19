@@ -10,7 +10,7 @@ import sherween from '../assets/FutureU_Team/Sherween Perolino.png';
 import christianHans from '../assets/FutureU_Team/Christian Hans Paras.png';
 import aeronRaye from '../assets/FutureU_Team/Aeron Raye Tigley.png';
 
-import headerLogoNormal from "../../assets/characters/header_logo_normal.svg";
+import headerLogoNormal from "../../assets/header_logo_normal.svg";
 
 const AboutUsPage = () => {
   const navigate = useNavigate();
