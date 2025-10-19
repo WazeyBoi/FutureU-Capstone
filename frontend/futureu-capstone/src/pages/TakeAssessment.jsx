@@ -14,7 +14,7 @@ import SaveExitConfirmationModal from '../components/Assessment/SaveExitConfirma
 import ohMySVG from '../assets/characters/ohMy.svg';
 import diplomaSVG from '../assets/characters/diploma.svg';
 import lazySVG from '../assets/characters/lazy.svg';
-import quirkyMascot from "../../assets/characters/quirky.svg";
+import quirkyMascot from "../assets/characters/quirky.svg";
 
 // Replace the getCurrentUserId function
 const getCurrentUserId = () => {

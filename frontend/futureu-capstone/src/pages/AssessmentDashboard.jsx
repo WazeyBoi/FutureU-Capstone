@@ -7,9 +7,9 @@ import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
 // Import mascot
 import raiseHandMascot from '../assets/characters/raiseHand.svg';
-import quirkyMascot from "../../assets/characters/quirky.svg";
-import ohMyLeftMascot from "../../assets/characters/ohMyLeft.svg";
-import ohMyMascot from "../../assets/characters/ohMy.svg";
+import quirkyMascot from "../assets/characters/quirky.svg";
+import ohMyLeftMascot from "../assets/characters/ohMyLeft.svg";
+import ohMyMascot from "../assets/characters/ohMy.svg";
 
 // Import Chart.js components at the top of the file
 import {

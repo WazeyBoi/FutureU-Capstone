@@ -9,7 +9,7 @@ import AptitudeTab from '../components/tabs/AptitudeTab';
 import RecommendationsTab from '../components/tabs/RecommendationsTab';
 import DreamCareerAnalysisTab from '../components/tabs/DreamCareerAnalysisTab';
 
-import quirkyMascot from "../../assets/characters/quirky.svg";
+import quirkyMascot from "../assets/characters/quirky.svg";
 
 // Import Chart.js components separately
 import {

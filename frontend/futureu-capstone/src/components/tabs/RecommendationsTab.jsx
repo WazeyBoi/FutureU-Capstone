@@ -1188,7 +1188,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.3 }}
-                src="/src/assets/characters/raiseHand.svg"
+                src={raiseHandMascot}
                 alt="Raise hand mascot"
                 className="absolute -top-67 left-1/2 -translate-x-1/2 w-100 h-100 drop-shadow-xl z-50 pointer-events-none"
                 style={{ zIndex: 60 }}
