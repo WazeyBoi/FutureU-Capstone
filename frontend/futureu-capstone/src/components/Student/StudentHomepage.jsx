@@ -14,6 +14,7 @@ import CareerInterestProfileWizard from "../CareerInterestProfile/CareerInterest
 import ProfilePrompt from "../CareerInterestProfile/ProfilePrompt";
 // Import mascot
 import raiseHandMascot from "../../assets/characters/raiseHand.svg";
+import quirkyMascot from "../../assets/characters/quirky.svg";
 import {
   BookOpen,
   User,
@@ -426,7 +427,7 @@ const StudentHomepage = () => {
         <div className="flex flex-col items-center justify-center min-h-screen h-full">
           <div>
             <img
-              src="/src/assets/characters/quirky.svg"
+              src={quirkyMascot}
               alt="FutureU mascot"
               className="quirky-bounce h-50 mx-auto"
             />
