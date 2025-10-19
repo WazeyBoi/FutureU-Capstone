@@ -54,7 +54,7 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
   const formatSalary = (salary) => {
     if (!salary) return 'Not specified';
     
-    console.log('CareerPathCard formatSalary input:', salary); // Debug log
+    //console.log('CareerPathCard formatSalary input:', salary); // Debug log
     
     // Handle salary ranges - check for different "to" patterns
     const toPatterns = [' to ', 'to', ' to', 'to '];
@@ -68,26 +68,26 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
     }
     
     if (foundPattern) {
-      console.log('CareerPathCard found pattern:', foundPattern); // Debug log
+      //console.log('CareerPathCard found pattern:', foundPattern); // Debug log
       // Split the range
       const parts = salary.split(foundPattern);
       if (parts.length === 2) {
         let lowerBound = parts[0].trim();
         let upperBound = parts[1].trim();
         
-        console.log('CareerPathCard lower bound before clean:', lowerBound); // Debug log
-        console.log('CareerPathCard upper bound before clean:', upperBound); // Debug log
+        //console.log('CareerPathCard lower bound before clean:', lowerBound); // Debug log
+        //console.log('CareerPathCard upper bound before clean:', upperBound); // Debug log
         
         // Remove existing P or ₱ signs to clean them up
         lowerBound = lowerBound.replace(/^[P₱]\s*/, '');
         upperBound = upperBound.replace(/^[P₱]\s*/, '');
         
-        console.log('CareerPathCard lower bound after clean:', lowerBound); // Debug log
-        console.log('CareerPathCard upper bound after clean:', upperBound); // Debug log
+        //console.log('CareerPathCard lower bound after clean:', lowerBound); // Debug log
+        //console.log('CareerPathCard upper bound after clean:', upperBound); // Debug log
         
         // Add ₱ to both bounds
         const result = `₱ ${lowerBound} - ₱ ${upperBound}`;
-        console.log('CareerPathCard final result:', result); // Debug log
+        //console.log('CareerPathCard final result:', result); // Debug log
         return result;
       }
     }
