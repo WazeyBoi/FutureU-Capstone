@@ -31,6 +31,9 @@ import uc_school_image from '../../assets/school_images/uc_school_image.jpg';
 import uv_school_image from '../../assets/school_images/uv_school_image.jpg';
 import iau_school_image from '../../assets/school_images/iau_school_image.jpg';
 
+import raiseHandMascot from "../../assets/characters/raiseHand.svg";
+import quirkyMascot from "../../assets/characters/quirky.svg";
+
 // School logo and background mappings (copied from AcademicExplorer)
 const schoolLogos = {
   1: cdu_school_logo,
@@ -609,7 +612,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
 
         {/* Decorative raise-hand graphic placed outside of card to avoid clipping */}
         <img
-          src="/src/assets/characters/raiseHand.svg"
+          src={raiseHandMascot}
           alt="raise hand"
           className="hidden md:block absolute top-2 -right-20 h-[180px] w-auto z-50 drop-shadow-xl animate-float pointer-events-none"
           style={{ maxWidth: '28vw', minWidth: '100px' }}
@@ -620,7 +623,7 @@ const RecommendationsTab = ({ getTopRecommendations, userAssessmentId }) => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="bg-white rounded-3xl shadow-xl p-6 text-center border-2 border-[#FFB71B]/10 animate-card-pop">
             <div>
               <img 
-                src="/src/assets/characters/quirky.svg" 
+                src={quirkyMascot} 
                 alt="Quirky mascot" 
                 className="quirky-bounce h-32 mx-auto"
               />

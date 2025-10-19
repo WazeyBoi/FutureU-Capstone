@@ -15,6 +15,13 @@ import ProfilePrompt from "../CareerInterestProfile/ProfilePrompt";
 // Import mascot
 import raiseHandMascot from "../../assets/characters/raiseHand.svg";
 import quirkyMascot from "../../assets/characters/quirky.svg";
+// Import RIASEC character images
+import realisticImage from "../../assets/characters/Realistic.png";
+import investigativeImage from "../../assets/characters/Investigative.png";
+import artisticImage from "../../assets/characters/Artistic.png";
+import socialImage from "../../assets/characters/Social.png";
+import enterprisingImage from "../../assets/characters/Enterprising.png";
+import conventionalImage from "../../assets/characters/Conventional.png";
 import {
   BookOpen,
   User,
@@ -781,41 +788,41 @@ const StudentHomepage = () => {
                                     {
                                       key: "realisticScore",
                                       name: "Realistic",
-                                      image: "Realistic.png",
+                                      image: realisticImage,
                                       score:
                                         latestAssessmentResult.realisticScore,
                                     },
                                     {
                                       key: "investigativeScore",
                                       name: "Investigative",
-                                      image: "Investigative.png",
+                                      image: investigativeImage,
                                       score:
                                         latestAssessmentResult.investigativeScore,
                                     },
                                     {
                                       key: "artisticScore",
                                       name: "Artistic",
-                                      image: "Artistic.png",
+                                      image: artisticImage,
                                       score:
                                         latestAssessmentResult.artisticScore,
                                     },
                                     {
                                       key: "socialScore",
                                       name: "Social",
-                                      image: "Social.png",
+                                      image: socialImage,
                                       score: latestAssessmentResult.socialScore,
                                     },
                                     {
                                       key: "enterprisingScore",
                                       name: "Enterprising",
-                                      image: "Enterprising.png",
+                                      image: enterprisingImage,
                                       score:
                                         latestAssessmentResult.enterprisingScore,
                                     },
                                     {
                                       key: "conventionalScore",
                                       name: "Conventional",
-                                      image: "Conventional.png",
+                                      image: conventionalImage,
                                       score:
                                         latestAssessmentResult.conventionalScore,
                                     },
@@ -845,7 +852,7 @@ const StudentHomepage = () => {
                                       <div className="relative bg-white/80 backdrop-blur-sm rounded-xl p-5 border border-[#FFB71B]/20 hover:shadow-lg transition-all duration-300">
                                         <div className="flex flex-col items-center text-center">
                                           <img
-                                            src={`/src/assets/characters/${type.image}`}
+                                            src={type.image}
                                             alt={type.name}
                                             className="w-28 h-28 object-contain mb-3 group-hover:scale-110 transition-transform duration-300"
                                           />

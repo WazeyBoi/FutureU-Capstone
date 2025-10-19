@@ -7,6 +7,9 @@ import userAssessmentService from '../services/userAssessmentService';
 import authService from '../services/authService';
 // Import mascot
 import raiseHandMascot from '../assets/characters/raiseHand.svg';
+import quirkyMascot from "../../assets/characters/quirky.svg";
+import ohMyLeftMascot from "../../assets/characters/ohMyLeft.svg";
+import ohMyMascot from "../../assets/characters/ohMy.svg";
 
 // Import Chart.js components at the top of the file
 import {
@@ -486,7 +489,7 @@ const AssessmentDashboard = () => {
       <div className='flex flex-col items-center justify-center min-h-screen h-full'>
         <div>
           <img 
-            src="/src/assets/characters/quirky.svg" 
+            src={quirkyMascot} 
             alt="Quirky mascot" 
             className="quirky-bounce h-50 mx-auto"
           />
@@ -537,15 +540,15 @@ const AssessmentDashboard = () => {
         {/* Playful mascot image, overlapping container on the right */}
         <div className="relative">
           <img 
-            src="/src/assets/characters/ohMyLeft.svg" 
-            alt="Oh My Charcter" 
+            src={ohMyLeftMascot} 
+            alt="Oh My Character"
             className="hidden md:block absolute -top-10 -right-30 h-[320px] w-auto z-20 drop-shadow-xl animate-float pointer-events-none"
             style={{ maxWidth: '40vw', minWidth: '220px' }}
           />
           {/* For mobile, show at the bottom, centered */}
           <img 
-            src="/src/assets/characters/ohMy.svg" 
-            alt="Oh My Charcter" 
+            src={ohMyMascot} 
+            alt="Oh My Character" 
             className="block md:hidden mx-auto mb-4 h-40 w-auto z-10 animate-float"
           />
         </div>
