@@ -62,8 +62,8 @@ class AuthService {
     // Post-clear to ensure nothing was re-written by teardown effects
     this.clearClientData();
     
-    // Redirect to login page
-    window.location.replace('/login');
+    // Redirect to deployed frontend home
+    window.location.replace('https://futureucapstone.vercel.app/');
   }
 
   /**
