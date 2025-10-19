@@ -384,7 +384,7 @@ const ProfilePage = () => {
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
-        {/* Profile Header */}
+        {/* Profile Header test */}
         <ProfileHeader getMascotMessage={getMascotMessage} />
 
         {/* Enhanced Alert Messages - Responsive design */}
