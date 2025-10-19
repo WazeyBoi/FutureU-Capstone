@@ -1,4 +1,5 @@
 import apiClient from './api';
+import authService from './authService';
 
 class ProfileService {
   /**
@@ -6,7 +7,14 @@ class ProfileService {
    */
   async getUserProfile() {
     try {
-      const response = await apiClient.get('/profile');
+      // Use authService to get current user ID
+      const userId = authService.getCurrentUserId();
+      
+      if (!userId) {
+        throw new Error('User not authenticated or user ID not found');
+      }
+
+      const response = await apiClient.get(`/profile/${userId}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -19,7 +27,14 @@ class ProfileService {
    */
   async updateUserProfile(profileData) {
     try {
-      const response = await apiClient.put('/profile', profileData);
+      // Use authService to get current user ID
+      const userId = authService.getCurrentUserId();
+      
+      if (!userId) {
+        throw new Error('User not authenticated or user ID not found');
+      }
+
+      const response = await apiClient.put(`/profile/${userId}`, profileData);
       return response.data;
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -36,12 +51,19 @@ class ProfileService {
     try {
       console.log('ProfileService: Uploading profile picture...');
       
+      // Use authService to get current user ID
+      const userId = authService.getCurrentUserId();
+      
+      if (!userId) {
+        throw new Error('User not authenticated or user ID not found');
+      }
+
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('file', file);
 
       // Upload to backend (which will upload to Cloudinary)
-      const response = await apiClient.post('/profile/upload-picture', formData, {
+      const response = await apiClient.post(`/profile/${userId}/upload-picture`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -51,8 +73,8 @@ class ProfileService {
 
       console.log('ProfileService: Upload response:', response.data);
 
-      // Backend should return the Cloudinary URL
-      const imageUrl = response.data.imageUrl || response.data;
+      // Backend should return the Cloudinary URL in profilePictureUrl field
+      const imageUrl = response.data.profilePictureUrl || response.data.imageUrl || response.data;
       
       if (!imageUrl) {
         throw new Error('No image URL returned from server');
@@ -82,7 +104,14 @@ class ProfileService {
     try {
       console.log('ProfileService: Deleting profile picture...');
       
-      const response = await apiClient.delete('/profile/delete-picture');
+      // Use authService to get current user ID
+      const userId = authService.getCurrentUserId();
+      
+      if (!userId) {
+        throw new Error('User not authenticated or user ID not found');
+      }
+
+      const response = await apiClient.delete(`/profile/${userId}/profile-picture`);
       
       console.log('ProfileService: Delete response:', response.data);
       return response.data;
@@ -97,7 +126,14 @@ class ProfileService {
    */
   async changePassword(currentPassword, newPassword) {
     try {
-      const response = await apiClient.post('/profile/change-password', {
+      // Use authService to get current user ID
+      const userId = authService.getCurrentUserId();
+      
+      if (!userId) {
+        throw new Error('User not authenticated or user ID not found');
+      }
+
+      const response = await apiClient.put(`/profile/${userId}/change-password`, {
         currentPassword,
         newPassword
       });

@@ -212,7 +212,8 @@ export const ProfileProvider = ({ children }) => {
       }
 
       console.log('Fetching fresh profile data...');
-      const profile = await profileService.getUserProfile(userId);
+      // Use profileService.getUserProfile() without passing userId
+      const profile = await profileService.getUserProfile();
       
       setUserProfile(profile);
       setProfilePicture(profile?.profilePictureUrl);
@@ -261,7 +262,8 @@ export const ProfileProvider = ({ children }) => {
   const updateProfile = async (userId, profileData) => {
     try {
       setLoading(true);
-      const updatedProfile = await profileService.updateUserProfile(userId, profileData);
+      // Use profileService.updateUserProfile() without passing userId
+      const updatedProfile = await profileService.updateUserProfile(profileData);
       
       setUserProfile(updatedProfile);
       setProfilePicture(updatedProfile?.profilePictureUrl);
@@ -342,6 +344,7 @@ export const ProfileProvider = ({ children }) => {
     userProfile,
     profilePicture,
     profilePictureBlob,
+    setProfilePictureBlob, // ADD this line
     isProfileLoaded,
     loading,
     fetchUserProfile,
