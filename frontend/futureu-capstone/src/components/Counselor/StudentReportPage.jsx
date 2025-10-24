@@ -581,16 +581,19 @@ const StudentReportPage = () => {
         {/* Header with Overall & RIASEC */}
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#2B3E4E]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
           {/* Decorative playful icon */}
-          <div className="flex flex-col items-center md:items-start z-10 w-full relative">
-            {/* Mascot image, top right, overlapping avatar */}
-            <img
-              src={quirkyMascot}
-              alt="Mascot"
-              className="absolute right-168 -top-10 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
-              style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}
-            />
-            <UserAvatar user={user} size="w-24 h-24" textSize="text-5xl" borderWidth="border-4" />
-            <h2 className="text-left font-bold text-3xl text-[#2B3E4E] mb-1 text-center md:text-left tracking-tight drop-shadow-sm mt-2">
+          <div className="flex flex-col items-center md:items-start z-10 w-full">
+            {/* Avatar with mascot overlay - wrapped in relative container */}
+            <div className="relative mb-2">
+              <UserAvatar user={user} size="w-24 h-24" textSize="text-5xl" borderWidth="border-4" />
+              {/* Mascot image, positioned relative to avatar */}
+              <img
+                src={quirkyMascot}
+                alt="Mascot"
+                className="absolute -right-5 -top-11 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
+                style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}
+              />
+            </div>
+            <h2 className="text-left font-bold text-3xl text-[#2B3E4E] mb-1 text-center md:text-left tracking-tight drop-shadow-sm">
               {user.firstName} {user.lastName}
             </h2>
             <div className="flex items-center gap-2 text-sm text-[#FFB71B] mb-1">
