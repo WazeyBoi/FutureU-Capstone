@@ -33,7 +33,7 @@ const SearchFilterBar = ({ searchTerm, onSearchChange, filterOptions, selectedFi
           </button>
         )}
       </div>
-      <div className="relative w-full md:w-64">
+      {/* <div className="relative w-full md:w-64">
         <select
           className="appearance-none pl-4 pr-10 py-3 rounded-xl border border-gray-200 bg-white text-gray-900 shadow focus:ring-2 focus:ring-[#1D63A1] focus:border-[#1D63A1] transition-all w-full text-sm outline-none hover:border-[#FFB71B] cursor-pointer"
           value={selectedFilter}
@@ -44,13 +44,13 @@ const SearchFilterBar = ({ searchTerm, onSearchChange, filterOptions, selectedFi
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
-        {/* Custom arrow icon */}
+        Custom arrow icon
         <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
           <svg className="w-3 h-3 text-[#1D63A1]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

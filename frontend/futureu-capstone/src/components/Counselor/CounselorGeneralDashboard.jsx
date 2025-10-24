@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
 import profileService from '../../services/profileService';
 import institutionService from '../../services/institutionService';
+import adminUserService from '../../services/adminServices/adminUserService';
 import { fetchRecommendations } from '../../services/recommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
@@ -29,6 +30,7 @@ const CounselorrGeneralDashboard = () => {
   const [error, setError] = useState(null);
   const [institutionInfo, setInstitutionInfo] = useState(null);
   const [institutionStudents, setInstitutionStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]); // NEW: All students in the system
   
   // Affiliation filter state (NEW for General Dashboard)
   const [affiliationFilter, setAffiliationFilter] = useState("unaffiliated"); // "all" or "unaffiliated"
@@ -70,7 +72,7 @@ const CounselorrGeneralDashboard = () => {
   const [schoolCodeLoading, setSchoolCodeLoading] = useState(false);
   const [schoolCodeError, setSchoolCodeError] = useState(null);
 
-  // Fetch ALL assessment data (not institution-specific)
+  // Fetch ALL assessment data AND all students (not institution-specific)
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -82,6 +84,17 @@ const CounselorrGeneralDashboard = () => {
         setAllAssessmentResults(allResults);
         setInstitutionAssessmentResults(allResults); // Keep for compatibility
         setTotalResults(allResults.length);
+
+        // Fetch ALL students in the system (NEW)
+        try {
+          const studentsResponse = await adminUserService.getAllUsers();
+          // Filter to only include students (role: STUDENT)
+          const students = studentsResponse.filter(user => user.role === 'STUDENT');
+          setAllStudents(students);
+        } catch (studentErr) {
+          console.error('Error fetching all students:', studentErr);
+          setAllStudents([]);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -667,14 +680,41 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
 
   const averageTimeSpent = getAverageTimeSpent(filteredAssessmentResults);
 
-  // Assessment completion tracking - use filtered results
+  // Calculate student counts based on affiliation filter
   const getUserId = user => user?.id || user?.userId;
   
-  const uniqueStudentCount = new Set(
+  // Helper function to check if a student is affiliated
+  const isStudentAffiliated = (user) => {
+    if (!user) return false;
+    
+    const email = user.email || '';
+    const schoolCode = user.schoolCode || '';
+    
+    // Check if email is institutional (.edu, school, university, etc.)
+    const hasInstitutionalEmail = email.includes('@') && 
+      (email.endsWith('.edu') || 
+       email.includes('school') || 
+       email.includes('university') ||
+       email.includes('college') ||
+       email.includes('.edu.'));
+    
+    // Affiliated = has school code OR institutional email
+    return schoolCode || hasInstitutionalEmail;
+  };
+  
+  // Calculate total students based on filter
+  const totalStudentsInFilter = affiliationFilter === "all" 
+    ? allStudents.length 
+    : allStudents.filter(student => !isStudentAffiliated(student)).length;
+  
+  // Calculate students who have taken assessments (from filteredAssessmentResults)
+  const studentsWithAssessments = new Set(
     filteredAssessmentResults.map(r => getUserId(r.userAssessment?.user)).filter(Boolean)
   ).size;
   
-  const completionRate = '100.0'; // All filtered results are completed
+  const completionRate = totalStudentsInFilter > 0 
+    ? ((studentsWithAssessments / totalStudentsInFilter) * 100).toFixed(1)
+    : '0.0';
 
   // Get unique assessment titles for filter dropdown - use filtered results
   const assessmentTitles = Array.from(
@@ -1006,7 +1046,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   const quickStats = [
     {
       name: "Students",
-      value: uniqueStudentCount.toString(),
+      value: totalStudentsInFilter.toString(),
       icon: <Users className="h-6 w-6" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
     },
@@ -1577,12 +1617,12 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       <header className="relative z-10">
         <div className="px-15 py-4">
           <div className="flex items-center justify-between pt6 rounded-xl">
-            <div className="text-left my-5">
+            {/* <div className="text-left my-5">
               <h2 className="text-1xl font-medium text-[#2B3E4E]">
                 Institution assessment results for: <br/>
                 <span className="text-[#FFB71B] text-3xl font-bold">{selectedAssessmentLabel}</span>
               </h2>
-            </div>
+            </div> */}
 
             <SearchFilterBar
               searchTerm={searchStudent}
@@ -1618,7 +1658,10 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             <h3 className="text-base font-bold text-[#2B3E4E] mb-1 relative z-10">Completion Status</h3>
             <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent mb-1 relative z-10">{completionRate}%</div>
             <div className="text-xs text-[#2B3E4E]/70 mb-2 relative z-10">
-              {filteredAssessmentResults.length} completed assessments
+              {studentsWithAssessments} of {totalStudentsInFilter} students completed
+            </div>
+            <div className="text-xs text-[#2B3E4E]/60 relative z-10">
+              {filteredAssessmentResults.length} total assessments
             </div>
             <div className="text-xs text-[#2B3E4E]/60 relative z-10">
               Showing {affiliationFilter === "all" ? "all students" : "unaffiliated students only"}
@@ -1635,18 +1678,27 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                   {affiliationFilter === "all" ? "All Students" : "Unaffiliated Only"}
                 </span>
                 <span className="text-sm font-semibold">
-                  {uniqueStudentCount} students
+                  {totalStudentsInFilter} students
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2 text-sm">
                   <FileText className="h-4 w-4 text-[#FFB71B]" />
-                  Assessments
+                  With Assessments
+                </span>
+                <span className="text-sm font-semibold">
+                  {studentsWithAssessments}
+                </span>
+              </div>
+              {/* <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2 text-sm">
+                  <FileText className="h-4 w-4 text-green-500" />
+                  Total Assessments
                 </span>
                 <span className="text-sm font-semibold">
                   {filteredAssessmentResults.length}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
