@@ -1296,7 +1296,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
 
             {/* Three Charts Horizontally Aligned - GSA gets more space */}
-            <div className="flex flex-row gap-4 w-full">
+            <div className="flex flex-row w-full">
               {/* General Scholastic Aptitude Chart - Takes more space due to more fields */}
               <div className="flex-2" style={{ flex: '1.5' }}>
                 <ResponsiveContainer width="100%" height={300}>
@@ -1314,7 +1314,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/70 bg-clip-text text-transparent text-center">General Scholastic Aptitude</h3>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">General Scholastic Aptitude</h3>
               </div>
 
               {/* Academic Tracks Chart - Standard size */}
@@ -1354,7 +1354,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] bg-clip-text text-transparent text-center">Non-Academic Track Performance</h3>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">Non-Academic Track Performance</h3>
               </div>
             </div>
           </div>
@@ -1384,10 +1384,9 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#FFB71B] mb-2 shadow-lg relative z-10 group-hover:scale-110 transition-transform">
                 <School className="w-6 h-6 text-white" />
               </div>
-              <div className="text-xs uppercase text-[#2B3E4E]/60 font-semibold mb-0.5 tracking-wider text-center relative z-10">Institution Personality</div>
-              <div className="text-2xl font-bold text-[#FFB71B] mb-0.5 text-center relative z-10">{institutionInsights.mostCommonRiasec}</div>
-              <div className="text-xs text-[#2B3E4E]/60 mb-0.5 text-center relative z-10">(Top 3 RIASEC codes)</div>
-              <div className="text-xs text-[#2B3E4E]/70 text-center mb-0.5 relative z-10">
+              <div className="text-xs uppercase text-[#2B3E4E]/60 font-semibold mb-2 tracking-wider text-center relative z-10">Institution Personality</div>
+              {/* Display personality types as highlighted badges */}
+              <div className="space-y-1 w-full relative z-10 mb-2">
                 {institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.map((code, idx) => {
                   const descMap = {
                     R: 'Realistic',
@@ -1397,31 +1396,26 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     E: 'Enterprising',
                     C: 'Conventional',
                   };
-                  return <span key={code}>{descMap[code]}{idx < institutionInsights.mostCommonCodes.length - 1 ? ', ' : ''}</span>;
+                  const colorMap = {
+                    R: { bg: 'bg-blue-50', text: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
+                    I: { bg: 'bg-purple-50', text: 'text-purple-600', badge: 'bg-purple-100 text-purple-700' },
+                    A: { bg: 'bg-pink-50', text: 'text-pink-600', badge: 'bg-pink-100 text-pink-700' },
+                    S: { bg: 'bg-green-50', text: 'text-green-600', badge: 'bg-green-100 text-green-700' },
+                    E: { bg: 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
+                    C: { bg: 'bg-gray-50', text: 'text-gray-600', badge: 'bg-gray-100 text-gray-700' },
+                  };
+                  const colors = colorMap[code];
+                  return (
+                    <div key={code} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors.bg} shadow-sm transition-transform hover:scale-105`}>
+                      <span className={`text-xs font-bold ${colors.text}`}>#{idx + 1}</span>
+                      <span className={`text-sm font-bold ${colors.text} flex-1 text-left`}>{descMap[code]}</span>
+                      <span className={`text-xs ${colors.badge} px-2 py-0.5 rounded-lg font-medium`}>({code})</span>
+                    </div>
+                  );
                 })}
               </div>
-              <div className="text-xs text-[#FFB71B] font-semibold text-center relative z-10">
-                {(() => {
-                  const total = filteredAssessmentResults.length;
-                  // Count students whose top RIASEC code matches any of the top 3 codes - use filtered results
-                  const codeCount = filteredAssessmentResults.reduce((acc, r) => {
-                    const scores = [
-                      { code: 'R', value: r.realisticScore },
-                      { code: 'I', value: r.investigativeScore },
-                      { code: 'A', value: r.artisticScore },
-                      { code: 'S', value: r.socialScore },
-                      { code: 'E', value: r.enterprisingScore },
-                      { code: 'C', value: r.conventionalScore },
-                    ];
-                    const max = Math.max(...scores.map(s => s.value));
-                    const topCodes = scores.filter(s => s.value === max).map(s => s.code);
-                    if (institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.some(code => topCodes.includes(code))) {
-                      return acc + 1;
-                    }
-                    return acc;
-                  }, 0);
-                  // return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
-                })()}
+              <div className="text-xs text-[#2B3E4E]/50 text-center relative z-10 italic">
+                Top 3 personality types
               </div>
             </div>
           </div>

@@ -72,11 +72,11 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                 <div className="flex-1 flex flex-col justify-between px-6 py-4 gap-2 items-start text-left">
                   {/* Assessment Title & Date */}
                   <div className="flex flex-wrap gap-2 mb-1 justify-start w-full">
-                    <span className="px-3 py-1 rounded-full bg-[#2B3E4E]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#2B3E4E]/30 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
                       <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 0 1 8 0v2"/><circle cx="12" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M6 21v-2a4 4 0 0 1 8 0v2"/></svg>
                       {assessment.title}
                     </span>
-                    <span className="px-3 py-1 rounded-full bg-[#FFB71B]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#FFB71B]/30 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                       <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
                       {result.userAssessment?.dateCompleted?.split('T')[0]}
                     </span>
@@ -86,7 +86,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                     {/* Time Spent Row */}
                     {typeof result.userAssessment?.timeSpentSeconds === 'number' && (
                       <div className="flex items-center w-full justify-between">
-                        <span className="px-3 py-1 rounded-full bg-[#FFB71B]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#FFB71B]/30 flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                           <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
                           Time Spent:
                         </span>
@@ -95,7 +95,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                     )}
                     {/* Overall Row */}
                     <div className="flex items-center w-full justify-between">
-                      <span className="px-3 py-1 rounded-full bg-[#FFB71B]/20 text-[#2B3E4E] text-sm font-bold shadow-sm border border-[#FFB71B]/40 flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-bold shadow-sm flex items-center gap-2">
                         <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 12V4"/></svg>
                         Overall:
                       </span>
@@ -118,15 +118,15 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                         .join('');
                       return (
                         <div className="flex items-center w-full justify-between">
-                          <span className="px-3 py-1 rounded-full bg-[#2B3E4E]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#2B3E4E]/30 flex items-center gap-2">
+                          <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                             <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 15h8M8 11h8M8 7h8"/></svg>
                             RIASEC:
                           </span>
                           <span className="font-bold text-[#2B3E4E] flex items-center gap-1">
                             {top3}
-                            <span className="text-xs text-gray-500 ml-1">(
+                            {/* <span className="text-xs text-gray-500 ml-1">(
                               {result.realisticScore}/{result.investigativeScore}/{result.artisticScore}/{result.socialScore}/{result.enterprisingScore}/{result.conventionalScore}
-                            )</span>
+                            )</span> */}
                           </span>
                         </div>
                       );
