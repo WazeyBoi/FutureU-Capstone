@@ -8,6 +8,33 @@ const getInitials = (user) => {
   return (first + last).toUpperCase() || "?";
 };
 
+// Component to display user avatar with fallback to initials
+const UserAvatar = ({ user, size = "w-16 h-16", textSize = "text-3xl" }) => {
+  const [imageError, setImageError] = React.useState(false);
+  const profilePictureUrl = user?.profilePictureUrl;
+
+  // If profile picture exists and hasn't errored, show it
+  if (profilePictureUrl && !imageError) {
+    return (
+      <div className={`${size} rounded-full overflow-hidden shadow-lg border-2 border-[#FFB71B] animate-bounce-in`}>
+        <img
+          src={profilePictureUrl}
+          alt={`${user.firstName} ${user.lastName}`}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback to initials
+  return (
+    <div className={`${size} rounded-full bg-[#FFB71B] flex items-center justify-center text-[#2B3E4E] ${textSize} font-extrabold shadow animate-bounce-in`}>
+      {getInitials(user)}
+    </div>
+  );
+};
+
 const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16, totalResults = 0, onPageChange, onPageSizeChange }) => {
   // Pagination controls
   const totalPages = Math.ceil(totalResults / pageSize);
@@ -34,10 +61,8 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
               >
                 {/* Header: Avatar and Name */}
                 <div className="flex flex-col items-center pt-6 pb-3 px-6 bg-[#2B3E4E] border-b border-[#FFB71B]/20">
-                  <div className="w-16 h-16 rounded-full bg-[#FFB71B] flex items-center justify-center text-text-[#2B3E4E] text-3xl font-extrabold shadow mb-2 animate-bounce-in">
-                    {getInitials(user)}
-                  </div>
-                  <h3 className="font-bold text-xl text-white mb-0.5 text-center tracking-tight">{user.firstName} {user.lastName}</h3>
+                  <UserAvatar user={user} size="w-16 h-16" textSize="text-3xl" />
+                  <h3 className="font-bold text-xl text-white mb-0.5 text-center tracking-tight mt-2">{user.firstName} {user.lastName}</h3>
                   <div className="flex items-center gap-1 text-xs text-white mb-1">
                     <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 12A4 4 0 1 1 8 12a4 4 0 0 1 8 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 16v2m0 4h.01"/></svg>
                     {user.email}

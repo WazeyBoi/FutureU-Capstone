@@ -1716,9 +1716,24 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 const assessment = activity.userAssessment?.assessment || {};
                 return (
                   <div key={idx} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors animate-pop-in" style={{ animationDelay: `${idx * 60}ms` }}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">
-                      {user.firstName?.[0]}{user.lastName?.[0]}
-                    </div>
+                    {/* User Avatar with Profile Picture */}
+                    {user.profilePictureUrl ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#FFB71B]/50 flex-shrink-0">
+                        <img
+                          src={user.profilePictureUrl}
+                          alt={`${user.firstName} ${user.lastName}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to initials if image fails to load
+                            e.target.parentElement.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">${user.firstName?.[0]}${user.lastName?.[0]}</div>`;
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
+                      </div>
+                    )}
                     <div className="flex-start flex-1 min-w-0">
                       <div className="text-left truncate font-medium text-xs text-gray-800 flex items-center gap-1">
                         {user.firstName} {user.lastName}
