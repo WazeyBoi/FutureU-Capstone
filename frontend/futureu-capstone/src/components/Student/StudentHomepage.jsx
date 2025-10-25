@@ -460,13 +460,234 @@ const StudentHomepage = () => {
               <div className="relative px-8 overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
                 {/* Mascot Logo on the right side */}
                 <motion.div 
-                  className="absolute right-40 top-1/2 -translate-y-1/2 hidden lg:block pointer-events-auto z-10"
+                  className="absolute right-20 top-80 -translate-y-1/2 hidden lg:block pointer-events-auto z-10"
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                   onMouseEnter={() => setIsMascotHovered(true)}
                   onMouseLeave={() => setIsMascotHovered(false)}
                 >
+                  {/* Speech Bubble */}
+                  <AnimatePresence>
+                    {isMascotHovered && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 30, scale: 0.7, rotate: -10 }}
+                        animate={{ 
+                          opacity: 1, 
+                          x: 0, 
+                          scale: 1, 
+                          rotate: [0, -2, 1, -1, 0]
+                        }}
+                        exit={{ opacity: 0, x: 30, scale: 0.7, rotate: -10 }}
+                        transition={{ 
+                          duration: 0.5, 
+                          ease: [0.68, -0.55, 0.265, 1.55],
+                          rotate: {
+                            duration: 3,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }
+                        }}
+                        className="absolute right-80 mr-10 top-5 -translate-y-1/2 w-80"
+                      >
+                        {/* Super Fun Organic Speech Bubble */}
+                        <motion.div 
+                          className="relative"
+                          animate={{ 
+                            y: [0, -8, 0, -4, 0],
+                          }}
+                          transition={{ 
+                            duration: 4,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          {/* Main bubble with crazy organic shape */}
+                          <div 
+                            className="relative bg-gradient-to-br from-[#FFB71B] via-[#FFD166] to-[#FF9800] p-1 transform rotate-1 shadow-[0_20px_60px_rgba(255,183,27,0.4)]"
+                            style={{
+                              borderRadius: "60% 40% 55% 45% / 50% 60% 40% 50%",
+                            }}
+                          >
+                            {/* Inner white content with wavy edge */}
+                            <motion.div 
+                              className="bg-white p-5 relative"
+                              style={{
+                                borderRadius: "58% 42% 53% 47% / 48% 58% 42% 52%",
+                              }}
+                              animate={{
+                                borderRadius: [
+                                  "58% 42% 53% 47% / 48% 58% 42% 52%",
+                                  "45% 55% 48% 52% / 55% 45% 55% 45%",
+                                  "52% 48% 58% 42% / 50% 50% 50% 50%",
+                                  "58% 42% 53% 47% / 48% 58% 42% 52%",
+                                ]
+                              }}
+                              transition={{
+                                duration: 6,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              {/* Decorative sparkles - overflow outside */}
+                              <motion.div
+                                className="absolute -top-4 -right-4 text-3xl z-20"
+                                animate={{ 
+                                  rotate: [0, 360],
+                                  scale: [1, 1.4, 1]
+                                }}
+                                transition={{ 
+                                  duration: 3,
+                                  repeat: Infinity
+                                }}
+                              >
+                                ✨
+                              </motion.div>
+                              <motion.div
+                                className="absolute -bottom-3 -left-3 text-2xl z-20"
+                                animate={{ 
+                                  rotate: [0, -360],
+                                  scale: [1, 1.3, 1]
+                                }}
+                                transition={{ 
+                                  duration: 4,
+                                  repeat: Infinity,
+                                  delay: 0.5
+                                }}
+                              >
+                                💫
+                              </motion.div>
+                              
+                              <div className="flex items-start gap-3 relative z-10">
+                                {/* Lightbulb - positioned to overflow */}
+                                <motion.div 
+                                  className="absolute -left-8 -top-6 w-16 h-16 rounded-full bg-gradient-to-br from-[#FFB71B] via-[#FFD166] to-[#FF9800] flex items-center justify-center flex-shrink-0 shadow-2xl border-4 border-white z-30"
+                                  animate={{ 
+                                    rotate: [0, -15, 15, -10, 0],
+                                    scale: [1, 1.2, 0.9, 1.15, 1],
+                                    y: [0, -5, 0]
+                                  }}
+                                  transition={{ 
+                                    duration: 2.5,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                  }}
+                                >
+                                  <Lightbulb className="w-8 h-8 text-white drop-shadow-lg" />
+                                </motion.div>
+                                
+                                <div className="text-left flex-1 ml-10">
+                                  <motion.h4 
+                                    className="font-black text-[#2B3E4E] text-lg mb-2 flex items-center gap-2"
+                                    animate={{ 
+                                      y: [0, -2, 0]
+                                    }}
+                                    transition={{ 
+                                      duration: 2,
+                                      repeat: Infinity
+                                    }}
+                                  >
+                                    <span>Heyyy! </span>
+                                    <motion.span
+                                      animate={{ 
+                                        rotate: [0, 20, -10, 20, 0],
+                                        scale: [1, 1.3, 0.9, 1.2, 1]
+                                      }}
+                                      transition={{ 
+                                        duration: 0.8,
+                                        repeat: Infinity,
+                                        repeatDelay: 1.5
+                                      }}
+                                      className="inline-block text-2xl"
+                                    >
+                                      👋
+                                    </motion.span>
+                                  </motion.h4>
+                                  <p className="text-sm text-gray-700 leading-relaxed font-semibold">
+                                    I'm your <span className="font-black text-transparent bg-clip-text bg-gradient-to-r from-[#FFB71B] to-[#FF9800]">FutureU</span> pal! 
+                                    <br/>
+                                    Let's discover some <span className="italic text-[#FF9800]">awesome</span> careers! 
+                                    {/* <motion.span 
+                                      className="inline-block ml-1 text-lg"
+                                      animate={{ 
+                                        scale: [1, 1.4, 1],
+                                        rotate: [0, 10, -10, 0]
+                                      }}
+                                      transition={{ 
+                                        duration: 1,
+                                        repeat: Infinity,
+                                        repeatDelay: 2
+                                      }}
+                                    >
+                                      🚀
+                                    </motion.span> */}
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </div>
+                          
+                          {/* Super Fun Comic-Style Tail with Bouncing Bubbles */}
+                          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[75%] z-0">
+                            <motion.div
+                              className="relative"
+                              animate={{ 
+                                x: [0, 3, 0, -2, 0],
+                                y: [0, -5, 0, 3, 0]
+                              }}
+                              transition={{ 
+                                duration: 3,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            >
+                              {/* Large bubble */}
+                              <motion.div 
+                                className="w-10 h-10 bg-gradient-to-br from-[#FFB71B] to-[#FFD166] rounded-full shadow-xl border-2 border-white"
+                                animate={{ 
+                                  scale: [1, 1.15, 1],
+                                }}
+                                transition={{ 
+                                  duration: 1.5,
+                                  repeat: Infinity,
+                                  ease: "easeInOut"
+                                }}
+                              />
+                              {/* Medium bubble */}
+                              <motion.div 
+                                className="w-6 h-6 bg-gradient-to-br from-[#FFD166] to-[#FF9800] rounded-full absolute top-8 right-3 shadow-lg border-2 border-white"
+                                animate={{ 
+                                  scale: [1, 1.2, 1],
+                                  y: [0, -3, 0]
+                                }}
+                                transition={{ 
+                                  duration: 1.8,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                  delay: 0.2
+                                }}
+                              />
+                              {/* Small bubble */}
+                              <motion.div 
+                                className="w-4 h-4 bg-gradient-to-br from-[#FF9800] to-[#FFB71B] rounded-full absolute top-12 right-1 shadow-md border border-white"
+                                animate={{ 
+                                  scale: [1, 1.3, 1],
+                                  y: [0, -5, 0]
+                                }}
+                                transition={{ 
+                                  duration: 2,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                  delay: 0.4
+                                }}
+                              />
+                            </motion.div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <motion.div 
                     className="relative group cursor-pointer"
                   >
@@ -496,8 +717,14 @@ const StudentHomepage = () => {
                     className="flex items-center mb-4"
                     variants={itemFade}
                   >
-                    <Navigation className="w-5 h-5 mr-2 text-[#FFB71B]" />
-                    <span className="text-[#FFB71B] font-semibold text-sm">
+                    <motion.div
+                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFB71B] to-[#FF9800] flex items-center justify-center mr-3 shadow-lg"
+                      animate={{ rotate: [0, 5, 0, -5, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <Navigation className="w-5 h-5 text-white" />
+                    </motion.div>
+                    <span className="text-[#FFB71B] font-bold text-base tracking-wide">
                       Your Path to Purpose
                     </span>
                   </motion.div>
@@ -506,30 +733,36 @@ const StudentHomepage = () => {
                     className="text-5xl md:text-6xl font-bold mb-8 leading-tight tracking-tight"
                     variants={itemFade}
                   >
-                    {getGreeting()}, {currentUser?.firstName || "Future Leader"}
-                    !
+                    {getGreeting()}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFB71B] via-[#FFD166] to-white">{currentUser?.firstName || "Future Leader"}</span>
+                    {/* <motion.span
+                      className="inline-block ml-2"
+                      animate={{ rotate: [0, 20, 0] }}
+                      transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+                    >
+                      👋
+                    </motion.span> */}
                   </motion.h1>
                   {/* Status card (glassy) */}
                   <motion.div
-                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-2xl"
+                    className="bg-white/10 backdrop-blur-md border-2 border-[#FFB71B]/30 rounded-2xl p-5 md:p-6 mb-6 text-left max-w-2xl shadow-[0_0_30px_rgba(255,183,27,0.2)]"
                     variants={scaleIn}
                   >
                     {!hasCompletedAssessment ? (
                       <div className="flex items-center">
-                        {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
-                          <BookOpen className="w-5 h-5" />
+                        {/* <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FFB71B] to-[#FF9800] text-white mr-4 shadow-lg flex-shrink-0">
+                          <Play className="w-7 h-7" />
                         </div> */}
                         <div className="flex-1">
-                          <div className="font-semibold mb-1">
+                          <div className="font-bold text-lg mb-1 text-white">
                             Ready to Discover Your Future?
                           </div>
-                          <div className="text-sm text-blue-100/90 mb-4">
+                          <div className="text-sm text-white/80 mb-4">
                             Take our comprehensive "Discover the FutureU"
                             assessment to unlock your potential.
                           </div>
                           <button
                             onClick={handleTakeAssessmentClick}
-                            className="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 hover:text-[#FFB71B] transition-colors"
+                            className="cursor-pointer inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-white hover:shadow-[0_0_20px_rgba(255,183,27,0.5)] hover:scale-105 transition-all"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Take Assessment Now
@@ -538,20 +771,20 @@ const StudentHomepage = () => {
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
-                          <CheckCircle className="w-5 h-5" />
+                        {/* <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FFB71B] to-[#FF9800] text-white mr-4 shadow-lg flex-shrink-0">
+                          <BarChart3 className="w-7 h-7" />
                         </div> */}
                         <div className="flex-1">
-                          <div className="font-semibold mb-1">
+                          <div className="font-bold text-lg mb-1 text-white">
                             Assessment Completed!
                           </div>
-                          <div className="text-sm text-blue-100/90 mb-4">
+                          <div className="text-sm text-white/80 mb-4">
                             Great job! You've completed the FutureU assessment.
                             View your results below.
                           </div>
                           <button
                             onClick={handleViewResults}
-                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:text-[#FFB71B] hover:bg-white/10 transition-colors"
+                            className="cursor-pointer inline-flex items-center px-5 py-2.5 text-sm font-bold rounded-xl bg-gradient-to-r from-[#FFB71B] to-[#FF9800] text-white hover:shadow-[0_0_20px_rgba(255,183,27,0.5)] hover:scale-105 transition-all"
                           >
                             <BarChart3 className="w-4 h-4 mr-2" />
                             View My Results
@@ -583,16 +816,20 @@ const StudentHomepage = () => {
 
                   {/* Date row */}
                   <motion.div
-                    className="flex items-center text-blue-100/80 text-sm mt-4"
+                    className="flex items-center text-white/80 text-sm mt-4 bg-white/5 rounded-xl px-4 py-3 border border-[#FFB71B]/20 max-w-fit"
                     variants={itemFade}
                   >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {currentTime.toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FFB71B] to-[#FF9800] flex items-center justify-center mr-3">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-medium">
+                      {currentTime.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
                   </motion.div>
                 </div>
               </div>
@@ -667,7 +904,7 @@ const StudentHomepage = () => {
                         </h3>
                         <button
                           onClick={handleViewResults}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-white bg-[#FFB71B] hover:bg-[#2B3E4E]"
+                          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg text-white bg-[#FFB71B] hover:bg-[#2B3E4E]"
                         >
                           View Full Report
                           <ArrowRight className="w-4 h-4" />
