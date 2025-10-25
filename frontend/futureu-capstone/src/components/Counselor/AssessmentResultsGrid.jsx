@@ -136,7 +136,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 8, 
                 {/* Action Button */}
                 <div className="px-6 pb-5 pt-2 flex justify-center">
                   <button
-                    className="w-full py-2 rounded-lg bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white font-bold hover:bg-[#FFB71B] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
+                    className="cursor-pointer w-full py-2 rounded-lg bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white font-bold hover:bg-[#FFB71B] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
                     onClick={() => onViewReport(result)}
                   >
                     View Summary

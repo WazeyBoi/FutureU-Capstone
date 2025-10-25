@@ -1201,14 +1201,14 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleExportResults('csv')}
-                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
+                    className="cursor-pointer bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
                   >
                     <Download className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
                     CSV
                   </button>
                   <button
                     onClick={() => handleExportResults('pdf')}
-                    className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
+                    className="cursor-pointer bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 text-white py-2 px-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group/btn"
                   >
                     <FileText className="h-4 w-4 group-hover/btn:scale-110 transition-transform" />
                     PDF
@@ -1430,7 +1430,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 {institutionInsights.topCareerPaths.length > 3 && (
                   <button
                     onClick={() => setShowCareerPathsModal(true)}
-                    className="w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
+                    className="cursor-pointer w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
                   >
                     View All ({institutionInsights.topCareerPaths.length}) →
                   </button>
@@ -1478,7 +1478,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 {institutionInsights.topCareers.length > 3 && (
                   <button
                     onClick={() => setShowCareersModal(true)}
-                    className="w-full text-xs text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
+                    className="cursor-pointer w-full text-xs text-white bg-gradient-to-r from-[#FFB71B] to-[#FFB71B]/90 hover:from-[#2B3E4E] hover:to-[#2B3E4E]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
                   >
                     View All ({institutionInsights.topCareers.length}) →
                   </button>
@@ -1527,7 +1527,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 {institutionInsights.topPrograms.length > 3 && (
                   <button
                     onClick={() => setShowProgramsModal(true)}
-                    className="w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
+                    className="cursor-pointer w-full text-xs text-white bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 hover:from-[#FFB71B] hover:to-[#FFB71B]/90 py-1 px-2 rounded mt-2 font-medium transition-all duration-200 shadow-md hover:shadow-lg relative z-10"
                   >
                     View All ({institutionInsights.topPrograms.length}) →
                   </button>

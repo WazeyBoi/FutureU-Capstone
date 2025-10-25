@@ -15,6 +15,8 @@ import ProfilePrompt from "../CareerInterestProfile/ProfilePrompt";
 // Import mascot
 import raiseHandMascot from "../../assets/characters/raiseHand.svg";
 import quirkyMascot from "../../assets/characters/quirky.svg";
+import quirkyYellowMascot from "../../assets/characters/quirkyYellow.svg";
+import headerLogoNormal from "../../assets/header_logo_normal.svg";
 // Import RIASEC character images
 import realisticImage from "../../assets/characters/Realistic.png";
 import investigativeImage from "../../assets/characters/Investigative.png";
@@ -134,6 +136,9 @@ const StudentHomepage = () => {
   // Take Assessment Confirmation
   const [showTakeAssessmentConfirmation, setShowTakeAssessmentConfirmation] =
     useState(false);
+  
+  // Mascot hover state
+  const [isMascotHovered, setIsMascotHovered] = useState(false);
 
   const getCurrentUserId = () => {
     return authService.getCurrentUserId() || 1;
@@ -453,6 +458,38 @@ const StudentHomepage = () => {
               animate="visible"
             >
               <div className="relative px-8 overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
+                {/* Mascot Logo on the right side */}
+                <motion.div 
+                  className="absolute right-40 top-1/2 -translate-y-1/2 hidden lg:block pointer-events-auto z-10"
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  onMouseEnter={() => setIsMascotHovered(true)}
+                  onMouseLeave={() => setIsMascotHovered(false)}
+                >
+                  <motion.div 
+                    className="relative group cursor-pointer"
+                  >
+                    <motion.img 
+                      src={isMascotHovered ? quirkyYellowMascot : headerLogoNormal} 
+                      alt="FutureU Logo" 
+                      className="h-64 w-auto max-w-full object-contain drop-shadow-2xl transition-all duration-300"
+                      animate={{ 
+                        y: [0, -20, 0, -10, 0],
+                        rotate: [0, 5, 0, -3, 0],
+                        scale: [1, 1.05, 1, 1.03, 1]
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: [0.4, 0, 0.2, 1],
+                        times: [0, 0.3, 0.6, 0.8, 1]
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#FFB71B]/20 to-[#FF9800]/20 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300 -z-10"></div>
+                  </motion.div>
+                </motion.div>
+
                 <div className="w-full px-6 py-14 md:py-20 lg:py-24 text-white text-left">
                   {/* Eyebrow label */}
                   <motion.div
@@ -474,7 +511,7 @@ const StudentHomepage = () => {
                   </motion.h1>
                   {/* Status card (glassy) */}
                   <motion.div
-                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl"
+                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-2xl"
                     variants={scaleIn}
                   >
                     {!hasCompletedAssessment ? (
@@ -492,7 +529,7 @@ const StudentHomepage = () => {
                           </div>
                           <button
                             onClick={handleTakeAssessmentClick}
-                            className="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
+                            className="cursor-pointer inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 hover:text-[#FFB71B] transition-colors"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Take Assessment Now
@@ -514,7 +551,7 @@ const StudentHomepage = () => {
                           </div>
                           <button
                             onClick={handleViewResults}
-                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:bg-white/10 transition-colors"
+                            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg border border-white/30 text-white/90 hover:text-[#FFB71B] hover:bg-white/10 transition-colors"
                           >
                             <BarChart3 className="w-4 h-4 mr-2" />
                             View My Results
@@ -610,7 +647,7 @@ const StudentHomepage = () => {
                         </p>
                         <button
                           onClick={handleTakeAssessmentClick}
-                          className="bg-[#FFB71B] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#2B3E4E] transition-opacity flex items-center justify-center mx-auto"
+                          className="cursor-pointer bg-[#FFB71B] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#2B3E4E] transition-opacity flex items-center justify-center mx-auto"
                         >
                           <Play className="w-5 h-5 mr-2" />
                           Take Assessment Now

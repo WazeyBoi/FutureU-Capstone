@@ -550,11 +550,11 @@ const StudentReportPage = () => {
     .join("");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] px-13 py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-13 py-10">
       {/* Back Button */}
       <div className="mb-8 flex justify-start w-full max-w-8xl">
         <button
-          className="flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
+          className="cursor-pointer flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
           onClick={() =>
             window.history.length > 1
               ? window.history.back()
