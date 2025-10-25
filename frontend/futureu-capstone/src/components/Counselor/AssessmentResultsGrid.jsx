@@ -35,7 +35,7 @@ const UserAvatar = ({ user, size = "w-16 h-16", textSize = "text-3xl" }) => {
   );
 };
 
-const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16, totalResults = 0, onPageChange, onPageSizeChange }) => {
+const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 8, totalResults = 0, onPageChange, onPageSizeChange }) => {
   // Pagination controls
   const totalPages = Math.ceil(totalResults / pageSize);
   if (!results || results.length === 0) {
@@ -147,7 +147,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
           })}
       </div>
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {/* {totalResults > 0 && (
         <div className="flex flex-col md:flex-row items-center justify-between mt-8 gap-4">
           <div className="text-sm text-[#2B3E4E] font-semibold">
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalResults)} of {totalResults} results
@@ -187,13 +187,13 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
               value={pageSize}
               onChange={onPageSizeChange}
             >
-              {[8, 16, 32, 64].map(size => (
+              {[4, 8, 12, 16, 24].map(size => (
                 <option key={size} value={size}>{size} / page</option>
               ))}
             </select>
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 };
