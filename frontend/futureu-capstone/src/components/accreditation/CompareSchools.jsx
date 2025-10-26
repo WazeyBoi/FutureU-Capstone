@@ -188,7 +188,7 @@ const CompareSchools = ({ schools, onClose }) => {
                             alt={`${school.name} logo`}
                             className="w-[130%] h-[130%] object-cover absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"
                             style={{ objectFit: 'cover', objectPosition: 'center' }}
-                            onError={(e) => console.error('Logo load error:', e)}
+                            // onError={(e) => console.error('Logo load error:', e)}
                           />
                         </div>
                       ) : (
