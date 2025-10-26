@@ -162,9 +162,9 @@ const ProgramsTab = ({ filteredPrograms, contentAnimated }) => {
                       transition: `opacity 500ms ease-out ${100 + index * 30}ms`
                     }}
                   >
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{program.name}</div>
-                      <div className="text-xs text-gray-500">{program.schoolName}</div>
+                    <td className="px-6 py-4 text-left">
+                      <div className="text-sm font-medium text-gray-900 text-left">{program.name}</div>
+                      <div className="text-xs text-gray-500 text-left">{program.schoolName}</div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {program.recognition ? (
