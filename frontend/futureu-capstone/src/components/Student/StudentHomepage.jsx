@@ -453,7 +453,10 @@ const StudentHomepage = () => {
               animate="visible"
             >
               <div className="relative px-8 overflow-hidden bg-[radial-gradient(1200px_600px_at_100%_-20%,#2B3E4E_0%,#1D3A53_45%,#1B3348_70%,#1B3448_100%)]">
-                <div className="w-full px-6 py-14 md:py-20 lg:py-24 text-white text-left">
+                <div className="w-full px-6 py-14 md:py-20 lg:py-24">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    {/* Left Column - Content */}
+                    <div className="text-white text-left">
                   {/* Eyebrow label */}
                   <motion.div
                     className="flex items-center mb-4"
@@ -474,14 +477,11 @@ const StudentHomepage = () => {
                   </motion.h1>
                   {/* Status card (glassy) */}
                   <motion.div
-                    className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left max-w-5xl"
+                        className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 md:p-6 mb-6 text-left"
                     variants={scaleIn}
                   >
                     {!hasCompletedAssessment ? (
                       <div className="flex items-center">
-                        {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
-                          <BookOpen className="w-5 h-5" />
-                        </div> */}
                         <div className="flex-1">
                           <div className="font-semibold mb-1">
                             Ready to Discover Your Future?
@@ -501,9 +501,6 @@ const StudentHomepage = () => {
                       </div>
                     ) : (
                       <div className="flex items-center">
-                        {/* <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[#FFB71B] text-[#2B3E4E] mr-4">
-                          <CheckCircle className="w-5 h-5" />
-                        </div> */}
                         <div className="flex-1">
                           <div className="font-semibold mb-1">
                             Assessment Completed!
@@ -557,6 +554,116 @@ const StudentHomepage = () => {
                       day: "numeric",
                     })}
                   </motion.div>
+                    </div>
+
+                    {/* Right Column - Mascot */}
+                    <motion.div
+                      className="hidden lg:flex items-center justify-center relative"
+                      variants={itemFade}
+                    >
+                      <motion.div
+                        className="relative"
+                        animate={{
+                          y: [0, -10, 0],
+                          rotate: [0, 2, -2, 0],
+                        }}
+                        transition={{
+                          duration: 4,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        {/* Floating particles around mascot */}
+                        <motion.div
+                          className="absolute -top-4 -left-4 w-2 h-2 bg-[#FFB71B] rounded-full opacity-60"
+                          animate={{
+                            y: [0, -20, 0],
+                            opacity: [0.6, 1, 0.6],
+                          }}
+                          transition={{
+                            duration: 3,
+                            repeat: Infinity,
+                            delay: 0.5,
+                          }}
+                        />
+                        <motion.div
+                          className="absolute -top-2 -right-6 w-1.5 h-1.5 bg-[#FFB71B] rounded-full opacity-40"
+                          animate={{
+                            y: [0, -15, 0],
+                            opacity: [0.4, 0.8, 0.4],
+                          }}
+                          transition={{
+                            duration: 2.5,
+                            repeat: Infinity,
+                            delay: 1,
+                          }}
+                        />
+                        <motion.div
+                          className="absolute -bottom-2 -left-2 w-1 h-1 bg-[#FFB71B] rounded-full opacity-50"
+                          animate={{
+                            y: [0, -12, 0],
+                            opacity: [0.5, 0.9, 0.5],
+                          }}
+                          transition={{
+                            duration: 3.5,
+                            repeat: Infinity,
+                            delay: 1.5,
+                          }}
+                        />
+                        
+                        {/* Main mascot with enhanced animations */}
+                        <motion.img
+                          src={raiseHandMascot}
+                          alt="FutureU mascot"
+                          className="w-full max-w-md h-auto relative z-10"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ 
+                            opacity: 1, 
+                            scale: [1, 1.05, 1],
+                          }}
+                          transition={{ 
+                            opacity: { duration: 0.6, ease: "easeOut" },
+                            scale: {
+                              duration: 2,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }
+                          }}
+                          whileHover={{
+                            scale: 1.1,
+                            rotate: [0, -5, 5, 0],
+                            transition: { duration: 0.3 }
+                          }}
+                        />
+                        
+                        {/* Interactive sparkles on hover */}
+                        <motion.div
+                          className="absolute top-1/4 left-1/4 w-1 h-1 bg-white rounded-full opacity-0"
+                          whileHover={{
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.5, 0],
+                            transition: { duration: 0.6, repeat: 2 }
+                          }}
+                        />
+                        <motion.div
+                          className="absolute top-1/3 right-1/3 w-1 h-1 bg-white rounded-full opacity-0"
+                          whileHover={{
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.5, 0],
+                            transition: { duration: 0.6, repeat: 2, delay: 0.2 }
+                          }}
+                        />
+                        <motion.div
+                          className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white rounded-full opacity-0"
+                          whileHover={{
+                            opacity: [0, 1, 0],
+                            scale: [0, 1.5, 0],
+                            transition: { duration: 0.6, repeat: 2, delay: 0.4 }
+                          }}
+                        />
+                      </motion.div>
+                    </motion.div>
+                  </div>
                 </div>
               </div>
             </motion.div>
