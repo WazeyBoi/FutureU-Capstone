@@ -8,7 +8,34 @@ const getInitials = (user) => {
   return (first + last).toUpperCase() || "?";
 };
 
-const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16, totalResults = 0, onPageChange, onPageSizeChange }) => {
+// Component to display user avatar with fallback to initials
+const UserAvatar = ({ user, size = "w-16 h-16", textSize = "text-3xl" }) => {
+  const [imageError, setImageError] = React.useState(false);
+  const profilePictureUrl = user?.profilePictureUrl;
+
+  // If profile picture exists and hasn't errored, show it
+  if (profilePictureUrl && !imageError) {
+    return (
+      <div className={`${size} rounded-full overflow-hidden shadow-lg border-2 border-[#FFB71B] animate-bounce-in`}>
+        <img
+          src={profilePictureUrl}
+          alt={`${user.firstName} ${user.lastName}`}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback to initials
+  return (
+    <div className={`${size} rounded-full bg-[#FFB71B] flex items-center justify-center text-[#2B3E4E] ${textSize} font-extrabold shadow animate-bounce-in`}>
+      {getInitials(user)}
+    </div>
+  );
+};
+
+const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 8, totalResults = 0, onPageChange, onPageSizeChange }) => {
   // Pagination controls
   const totalPages = Math.ceil(totalResults / pageSize);
   if (!results || results.length === 0) {
@@ -34,10 +61,8 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
               >
                 {/* Header: Avatar and Name */}
                 <div className="flex flex-col items-center pt-6 pb-3 px-6 bg-[#2B3E4E] border-b border-[#FFB71B]/20">
-                  <div className="w-16 h-16 rounded-full bg-[#FFB71B] flex items-center justify-center text-text-[#2B3E4E] text-3xl font-extrabold shadow mb-2 animate-bounce-in">
-                    {getInitials(user)}
-                  </div>
-                  <h3 className="font-bold text-xl text-white mb-0.5 text-center tracking-tight">{user.firstName} {user.lastName}</h3>
+                  <UserAvatar user={user} size="w-16 h-16" textSize="text-3xl" />
+                  <h3 className="font-bold text-xl text-white mb-0.5 text-center tracking-tight mt-2">{user.firstName} {user.lastName}</h3>
                   <div className="flex items-center gap-1 text-xs text-white mb-1">
                     <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 12A4 4 0 1 1 8 12a4 4 0 0 1 8 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 16v2m0 4h.01"/></svg>
                     {user.email}
@@ -47,11 +72,11 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                 <div className="flex-1 flex flex-col justify-between px-6 py-4 gap-2 items-start text-left">
                   {/* Assessment Title & Date */}
                   <div className="flex flex-wrap gap-2 mb-1 justify-start w-full">
-                    <span className="px-3 py-1 rounded-full bg-[#2B3E4E]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#2B3E4E]/30 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2">
                       <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 0 1 8 0v2"/><circle cx="12" cy="7" r="4"/><path strokeLinecap="round" strokeLinejoin="round" d="M6 21v-2a4 4 0 0 1 8 0v2"/></svg>
                       {assessment.title}
                     </span>
-                    <span className="px-3 py-1 rounded-full bg-[#FFB71B]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#FFB71B]/30 flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                       <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
                       {result.userAssessment?.dateCompleted?.split('T')[0]}
                     </span>
@@ -61,7 +86,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                     {/* Time Spent Row */}
                     {typeof result.userAssessment?.timeSpentSeconds === 'number' && (
                       <div className="flex items-center w-full justify-between">
-                        <span className="px-3 py-1 rounded-full bg-[#FFB71B]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#FFB71B]/30 flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                           <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2"/></svg>
                           Time Spent:
                         </span>
@@ -70,7 +95,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                     )}
                     {/* Overall Row */}
                     <div className="flex items-center w-full justify-between">
-                      <span className="px-3 py-1 rounded-full bg-[#FFB71B]/20 text-[#2B3E4E] text-sm font-bold shadow-sm border border-[#FFB71B]/40 flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-bold shadow-sm flex items-center gap-2">
                         <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20l9-5-9-5-9 5 9 5z"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 12V4"/></svg>
                         Overall:
                       </span>
@@ -93,15 +118,15 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                         .join('');
                       return (
                         <div className="flex items-center w-full justify-between">
-                          <span className="px-3 py-1 rounded-full bg-[#2B3E4E]/10 text-[#2B3E4E] text-sm font-semibold shadow-sm border border-[#2B3E4E]/30 flex items-center gap-2">
+                          <span className="px-3 py-1 rounded-lg text-[#2B3E4E] text-sm font-semibold shadow-sm flex items-center gap-2">
                             <svg className="w-4 h-4 text-[#FFB71B]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 15h8M8 11h8M8 7h8"/></svg>
                             RIASEC:
                           </span>
                           <span className="font-bold text-[#2B3E4E] flex items-center gap-1">
                             {top3}
-                            <span className="text-xs text-gray-500 ml-1">(
+                            {/* <span className="text-xs text-gray-500 ml-1">(
                               {result.realisticScore}/{result.investigativeScore}/{result.artisticScore}/{result.socialScore}/{result.enterprisingScore}/{result.conventionalScore}
-                            )</span>
+                            )</span> */}
                           </span>
                         </div>
                       );
@@ -111,7 +136,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
                 {/* Action Button */}
                 <div className="px-6 pb-5 pt-2 flex justify-center">
                   <button
-                    className="w-full py-2 rounded-lg bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white font-bold hover:bg-[#FFB71B] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
+                    className="cursor-pointer w-full py-2 rounded-lg bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] text-white font-bold hover:bg-[#FFB71B] transition-colors shadow group-hover:scale-105 group-hover:shadow-xl text-sm tracking-wide"
                     onClick={() => onViewReport(result)}
                   >
                     View Summary
@@ -122,7 +147,7 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
           })}
       </div>
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {/* {totalResults > 0 && (
         <div className="flex flex-col md:flex-row items-center justify-between mt-8 gap-4">
           <div className="text-sm text-[#2B3E4E] font-semibold">
             Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalResults)} of {totalResults} results
@@ -162,13 +187,13 @@ const AssessmentResultsGrid = ({ results, onViewReport, page = 1, pageSize = 16,
               value={pageSize}
               onChange={onPageSizeChange}
             >
-              {[8, 16, 32, 64].map(size => (
+              {[4, 8, 12, 16, 24].map(size => (
                 <option key={size} value={size}>{size} / page</option>
               ))}
             </select>
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 };

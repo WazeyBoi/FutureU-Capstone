@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Need to install: npm install framer-motion
-import { BarChart2, Info, AlertTriangle } from 'lucide-react';
+import { BarChart2, Info, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 import assessmentTakingService from '../services/assessmentTakingService';
 import assessmentService from '../services/assessmentService';
@@ -1255,8 +1255,19 @@ const TakeAssessment = () => {
   
   return (
     <div className="max-w-8xl mx-auto py-6 px-2 sm:px-6 lg:px-8 min-h-screen flex flex-col">
-      {/* Toggle button for progress header */}
-      <div className="flex justify-end mb-3">
+      {/* Back button and Toggle button for progress header */}
+      <div className="flex justify-between items-center mb-3">
+        {/* Back button on the left */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E] hover:from-[#FFB71B] hover:to-[#FFB71B] border border-gray-300 rounded-lg shadow-sm transition-colors"
+          title="Go back"
+        >
+          <ArrowLeft className="w-5 h-5 text-white" />
+          <span className="text-sm font-medium text-white">Back</span>
+        </button>
+
+        {/* Toggle button for progress header on the right */}
         <button
           onClick={() => setShowProgressHeader(!showProgressHeader)}
           className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 transition-colors"
@@ -1531,14 +1542,14 @@ const TakeAssessment = () => {
                 <ul className="text-start text-xs text-gray-700 space-y-1 pl-6 list-disc mb-6">
                   <li>Answer all questions honestly with the best of your ability.</li>
                   <li>You can navigate between sections using the panel on the left.</li>
-                  <li>Use the "Save & Exit" button to save your progress and return later.</li>
+                  <li>You can not save your progress for integrity purposes.</li>
                   <li>Click "Complete Assessment" on the final question to submit all your answers.</li>
                   <li><strong>Quiz sections have a 90-minute time limit</strong> - manage your time wisely!</li>
                   <li>Interest Assessment section is untimed - take your time to reflect on your preferences.</li>
                 </ul>
                 <button
                   onClick={() => setShowAssessmentTips(false)}
-                  className="text-center sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-full flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors block mx-auto mt-6"
+                  className="text-center sm:mt-0 px-4 py-2 bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-white rounded-lg flex items-center font-medium shadow-sm hover:bg-[#FFB71B]/90 transition-colors block mx-auto mt-6"
                 >
                   Got it!
                 </button>
