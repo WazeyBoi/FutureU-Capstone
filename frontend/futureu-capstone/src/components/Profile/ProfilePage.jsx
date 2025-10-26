@@ -472,43 +472,6 @@ const ProfilePage = () => {
         {/* Profile Header test */}
         <ProfileHeader getMascotMessage={getMascotMessage} />
 
-        {/* Enhanced Alert Messages - Responsive design */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-red-50/80 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
-            >
-              <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
-                <X className="w-4 sm:w-5 h-4 sm:h-5 text-red-600" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-1 text-sm sm:text-base">Error</h4>
-                <p className="font-medium text-sm sm:text-base">{error}</p>
-              </div>
-            </motion.div>
-          )}
-
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-green-50/80 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
-            >
-              <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
-                <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-1 text-sm sm:text-base">Success</h4>
-                <p className="font-medium text-sm sm:text-base">{success}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Main Profile Grid - Enhanced responsive grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
           {/* Left Column - Profile Overview & Actions */}
@@ -585,6 +548,43 @@ const ProfilePage = () => {
             }}
             onSkip={() => setShowInterestWizard(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Floating Alert Messages - Bottom Right */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 50, scale: 0.95 }}
+            className="fixed bottom-6 right-6 bg-red-50/90 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-2xl inline-flex flex-col sm:flex-row items-start max-w-max z-50"
+          >
+            <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+              <X className="w-4 sm:w-5 h-4 sm:h-5 text-red-600" />
+            </div>
+            <div className="whitespace-nowrap text-left">
+              <h4 className="font-bold mb-1 text-sm sm:text-base text-left">Error</h4>
+              <p className="font-medium text-sm sm:text-base text-left">{error}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 50, scale: 0.95 }}
+            className="fixed bottom-6 right-6 bg-green-50/90 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-2xl inline-flex flex-col sm:flex-row items-start max-w-max z-50"
+          >
+            <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+              <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
+            </div>
+            <div className="whitespace-nowrap text-left">
+              <h4 className="font-bold mb-1 text-sm sm:text-base text-left">Success</h4>
+              <p className="font-medium text-sm sm:text-base text-left">{success}</p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
