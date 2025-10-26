@@ -1,9 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SchoolCard from "./SchoolCard";
 import { Award } from 'lucide-react';
 
 const SchoolsList = ({ schools, selectedSchool, setSelectedSchool, contentAnimated, onViewPrograms, onCompare }) => {
   const [selectedForComparison, setSelectedForComparison] = useState([]);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position to show/hide floating button
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsScrolled(scrollTop > 100); // Show floating button after scrolling 100px
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleSchoolSelection = (school) => {
     setSelectedForComparison(prev => {
@@ -76,6 +88,25 @@ const SchoolsList = ({ schools, selectedSchool, setSelectedSchool, contentAnimat
           ))}
         </div>
       </div>
+
+      {/* Floating Compare Button - Only show when scrolled and schools selected */}
+      {selectedForComparison.length >= 2 && isScrolled && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-in-out">
+          <button
+            onClick={() => {
+              onCompare(selectedForComparison);
+              setSelectedForComparison([]);
+            }}
+            className="flex items-center px-8 py-4 bg-[#FFB71B] hover:bg-[#E6A519] text-white rounded-full transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 font-bold text-lg animate-pulse hover:animate-none"
+            style={{ 
+              boxShadow: '0 10px 25px -5px rgba(255, 183, 27, 0.4), 0 10px 10px -5px rgba(255, 183, 27, 0.1)'
+            }}
+          >
+            <Award className="w-6 h-6 mr-3 text-white" />
+            Compare Schools ({selectedForComparison.length})
+          </button>
+        </div>
+      )}
     </div>
   );
 };
