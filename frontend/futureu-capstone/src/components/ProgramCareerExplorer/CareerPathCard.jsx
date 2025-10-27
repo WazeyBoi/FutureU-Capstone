@@ -330,7 +330,6 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
           <div className="flex gap-4 bg-white pt-8 pb-4 border-t border-gray-200 z-20 relative flex-shrink-0 justify-end px-6">
             <button
               onClick={() => {
-                console.log('Explore Career clicked for:', career.careerTitle);
 
                 // Close the modal first
                 setShowCareersModal(false);
@@ -354,7 +353,6 @@ const CareerPathCard = ({ careerPath, index, onCareerSelect }) => {
             </button>
             <button
               onClick={() => {
-                console.log('View Related Programs clicked for:', career.careerTitle);
 
                 // Close the modal first
                 setShowCareersModal(false);
