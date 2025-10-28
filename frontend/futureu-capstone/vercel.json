@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://ec2-18-139-117-208.ap-southeast-1.compute.amazonaws.com:8080/api/:path*"
+      "destination": "http://ec2-13-215-46-99.ap-southeast-1.compute.amazonaws.com:8080/api/:path*"
     }
   ],
   "headers": [
