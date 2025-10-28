@@ -31,8 +31,6 @@ import { schoolLogos } from '../AcademicExplorer/constants';
 const formatSalary = (salary) => {
   if (!salary) return 'Not specified';
   
-  console.log('formatSalary input:', salary); // Debug log
-  
   // Handle salary ranges - check for different "to" patterns
   const toPatterns = [' to ', 'to', ' to', 'to '];
   let foundPattern = null;
@@ -45,26 +43,18 @@ const formatSalary = (salary) => {
   }
   
   if (foundPattern) {
-    console.log('Found pattern:', foundPattern); // Debug log
     // Split the range
     const parts = salary.split(foundPattern);
     if (parts.length === 2) {
       let lowerBound = parts[0].trim();
       let upperBound = parts[1].trim();
       
-      console.log('Lower bound before clean:', lowerBound); // Debug log
-      console.log('Upper bound before clean:', upperBound); // Debug log
-      
       // Remove existing P or ₱ signs to clean them up
       lowerBound = lowerBound.replace(/^[P₱]\s*/, '');
       upperBound = upperBound.replace(/^[P₱]\s*/, '');
       
-      console.log('Lower bound after clean:', lowerBound); // Debug log
-      console.log('Upper bound after clean:', upperBound); // Debug log
-      
       // Add ₱ to both bounds
       const result = `₱ ${lowerBound} - ₱ ${upperBound}`;
-      console.log('Final result:', result); // Debug log
       return result;
     }
   }
@@ -761,9 +751,7 @@ const ProgramCareerExplorer = () => {
   };
 
   // Update the handleCareerSelect function to handle scroll offset
-  const handleCareerSelect = useCallback(async (career, scrollTarget = 'hero') => {
-    console.log('Selecting career:', career.careerTitle, 'Scroll target:', scrollTarget);
-    
+  const handleCareerSelect = useCallback(async (career, scrollTarget = 'hero') => { 
     setSelectedCareer(career);
     setSearchTerm(career.careerTitle);
     setShowDropdown(false);
@@ -776,7 +764,6 @@ const ProgramCareerExplorer = () => {
         `/careerprogram/getProgramsByCareer/${career.careerId}`
       );
 
-      console.log('Programs found:', programsResponse.length);
 
       // Get additional program details and school information
       const programsWithDetails = await Promise.all(

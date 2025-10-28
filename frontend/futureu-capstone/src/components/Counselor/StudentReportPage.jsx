@@ -6,6 +6,42 @@ import { Radar, Bar } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import CounselorTabs from "./CounselorTabs";
 
+import quirkyMascot from "../../assets/characters/quirky.svg";
+
+// Component to display user avatar with fallback to initials
+const UserAvatar = ({ user, size = "w-24 h-24", textSize = "text-5xl", borderWidth = "border-4" }) => {
+  const [imageError, setImageError] = React.useState(false);
+  const profilePictureUrl = user?.profilePictureUrl;
+
+  const getInitials = () => {
+    if (!user) return "?";
+    const first = user.firstName?.[0] || "";
+    const last = user.lastName?.[0] || "";
+    return (first + last).toUpperCase() || "?";
+  };
+
+  // If profile picture exists and hasn't errored, show it
+  if (profilePictureUrl && !imageError) {
+    return (
+      <div className={`${size} rounded-full overflow-hidden shadow-lg ${borderWidth} border-[#2B3E4E] animate-bounce-in relative z-10`}>
+        <img
+          src={profilePictureUrl}
+          alt={`${user.firstName} ${user.lastName}`}
+          className="w-full h-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback to initials
+  return (
+    <div className={`${size} rounded-full bg-gradient-to-br from-[#2B3E4E] to-[#FFB71B] flex items-center justify-center text-white ${textSize} font-extrabold shadow-lg animate-bounce-in ${borderWidth} border-[#2B3E4E] relative z-10`}>
+      {getInitials()}
+    </div>
+  );
+};
+
 const highlightScore = (score, max = 100) => {
   if (score >= 0.85 * max) return "text-[#FFB71B] font-bold";
   if (score >= 0.7 * max) return "text-[#2B3E4E] font-semibold";
@@ -514,11 +550,11 @@ const StudentReportPage = () => {
     .join("");
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#f8fafc] to-[#e8f1fa] px-13 py-10">
+    <div className="min-h-screen flex flex-col items-center justify-center px-13 py-10">
       {/* Back Button */}
       <div className="mb-8 flex justify-start w-full max-w-8xl">
         <button
-          className="flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
+          className="cursor-pointer flex items-center gap-2 text-[#2B3E4E] hover:text-white font-semibold px-4 py-2 rounded-lg transition-colors bg-gradient-to-r from-white to-white hover:from-[#FFB71B] hover:to-[#FFB71B]"
           onClick={() =>
             window.history.length > 1
               ? window.history.back()
@@ -545,17 +581,17 @@ const StudentReportPage = () => {
         {/* Header with Overall & RIASEC */}
         <div className="flex flex-col md:flex-row items-center md:items-end justify-between pt-10 pb-6 px-25 bg-gradient-to-r from-[#FFB71B]/10 to-[#2B3E4E]/10 border-b-2 border-[#FFB71B]/20 rounded-t-3xl gap-6 relative">
           {/* Decorative playful icon */}
-          <div className="flex flex-col items-center md:items-start z-10 w-full relative">
-            {/* Mascot image, top right, overlapping avatar */}
-            <img
-              src="/src/assets/characters/quirky.svg"
-              alt="Mascot"
-              className="absolute right-168 -top-10 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
-              style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}
-            />
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2B3E4E] to-[#FFB71B] flex items-center justify-center text-white text-5xl font-extrabold shadow-lg mb-2 animate-bounce-in border-4 border-[#2B3E4E] relative z-10">
-              {user.firstName?.[0]}
-              {user.lastName?.[0]}
+          <div className="flex flex-col items-center md:items-start z-10 w-full">
+            {/* Avatar with mascot overlay - wrapped in relative container */}
+            <div className="relative mb-2">
+              <UserAvatar user={user} size="w-24 h-24" textSize="text-5xl" borderWidth="border-4" />
+              {/* Mascot image, positioned relative to avatar */}
+              <img
+                src={quirkyMascot}
+                alt="Mascot"
+                className="absolute -right-5 -top-11 w-20 h-20 pointer-events-none select-none z-20 rotate-[25deg]"
+                style={{ filter: 'drop-shadow(0 2px 8px #FFB71B33)' }}
+              />
             </div>
             <h2 className="text-left font-bold text-3xl text-[#2B3E4E] mb-1 text-center md:text-left tracking-tight drop-shadow-sm">
               {user.firstName} {user.lastName}

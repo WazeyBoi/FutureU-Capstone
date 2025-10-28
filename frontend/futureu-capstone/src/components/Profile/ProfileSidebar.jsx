@@ -93,7 +93,9 @@ const ProfileSidebar = ({
               {(() => {
                 const resolveSrc = (url) => {
                   if (!url) return null;
+                  // Check if it's already a full URL (Cloudinary URLs start with https://)
                   if (/^https?:\/\//i.test(url) || /^blob:|^data:/i.test(url)) return url;
+                  // Fallback for old local URLs (during migration)
                   return `http://localhost:8080${url}`;
                 };
                 const raw = profilePicture || user?.profilePictureUrl;

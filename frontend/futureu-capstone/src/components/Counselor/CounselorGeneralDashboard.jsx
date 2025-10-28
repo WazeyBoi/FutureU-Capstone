@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import userAssessmentService from '../../services/userAssessmentService';
 import profileService from '../../services/profileService';
 import institutionService from '../../services/institutionService';
+import adminUserService from '../../services/adminServices/adminUserService';
 import { fetchRecommendations } from '../../services/recommendationService';
 import {
   Heart, Users, FileText, Search, Clock,
@@ -29,6 +30,7 @@ const CounselorrGeneralDashboard = () => {
   const [error, setError] = useState(null);
   const [institutionInfo, setInstitutionInfo] = useState(null);
   const [institutionStudents, setInstitutionStudents] = useState([]);
+  const [allStudents, setAllStudents] = useState([]); // NEW: All students in the system
   
   // Affiliation filter state (NEW for General Dashboard)
   const [affiliationFilter, setAffiliationFilter] = useState("unaffiliated"); // "all" or "unaffiliated"
@@ -57,7 +59,7 @@ const CounselorrGeneralDashboard = () => {
   
   // Pagination state
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(16);
+  const [pageSize, setPageSize] = useState(8);
   const [totalResults, setTotalResults] = useState(0);
   
   // Time and stats
@@ -70,7 +72,7 @@ const CounselorrGeneralDashboard = () => {
   const [schoolCodeLoading, setSchoolCodeLoading] = useState(false);
   const [schoolCodeError, setSchoolCodeError] = useState(null);
 
-  // Fetch ALL assessment data (not institution-specific)
+  // Fetch ALL assessment data AND all students (not institution-specific)
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -82,6 +84,17 @@ const CounselorrGeneralDashboard = () => {
         setAllAssessmentResults(allResults);
         setInstitutionAssessmentResults(allResults); // Keep for compatibility
         setTotalResults(allResults.length);
+
+        // Fetch ALL students in the system (NEW)
+        try {
+          const studentsResponse = await adminUserService.getAllUsers();
+          // Filter to only include students (role: STUDENT)
+          const students = studentsResponse.filter(user => user.role === 'STUDENT');
+          setAllStudents(students);
+        } catch (studentErr) {
+          console.error('Error fetching all students:', studentErr);
+          setAllStudents([]);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -667,14 +680,41 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
 
   const averageTimeSpent = getAverageTimeSpent(filteredAssessmentResults);
 
-  // Assessment completion tracking - use filtered results
+  // Calculate student counts based on affiliation filter
   const getUserId = user => user?.id || user?.userId;
   
-  const uniqueStudentCount = new Set(
+  // Helper function to check if a student is affiliated
+  const isStudentAffiliated = (user) => {
+    if (!user) return false;
+    
+    const email = user.email || '';
+    const schoolCode = user.schoolCode || '';
+    
+    // Check if email is institutional (.edu, school, university, etc.)
+    const hasInstitutionalEmail = email.includes('@') && 
+      (email.endsWith('.edu') || 
+       email.includes('school') || 
+       email.includes('university') ||
+       email.includes('college') ||
+       email.includes('.edu.'));
+    
+    // Affiliated = has school code OR institutional email
+    return schoolCode || hasInstitutionalEmail;
+  };
+  
+  // Calculate total students based on filter
+  const totalStudentsInFilter = affiliationFilter === "all" 
+    ? allStudents.length 
+    : allStudents.filter(student => !isStudentAffiliated(student)).length;
+  
+  // Calculate students who have taken assessments (from filteredAssessmentResults)
+  const studentsWithAssessments = new Set(
     filteredAssessmentResults.map(r => getUserId(r.userAssessment?.user)).filter(Boolean)
   ).size;
   
-  const completionRate = '100.0'; // All filtered results are completed
+  const completionRate = totalStudentsInFilter > 0 
+    ? ((studentsWithAssessments / totalStudentsInFilter) * 100).toFixed(1)
+    : '0.0';
 
   // Get unique assessment titles for filter dropdown - use filtered results
   const assessmentTitles = Array.from(
@@ -844,15 +884,18 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       });
     });
 
-    // Get top 3 RIASEC codes by count
+    // Get all 6 RIASEC codes sorted by count (show all with percentages)
+    const totalStudents = results.length;
     const topRiasecCodes = Object.entries(riasecCodeCounts)
       .sort((a, b) => b[1] - a[1]) // Sort by count (highest first)
-      .slice(0, 3) // Take top 3
-      .filter(([code, count]) => count > 0) // Only include codes with at least 1 student
-      .map(([code]) => code);
+      .map(([code, count]) => ({
+        code,
+        count,
+        percent: totalStudents > 0 ? ((count / totalStudents) * 100).toFixed(1) : '0.0'
+      }));
     
-    const mostCommonRiasec = topRiasecCodes.length > 0 ? topRiasecCodes.join(', ') : 'N/A';
-    const mostCommonCodes = topRiasecCodes;
+    const mostCommonRiasec = topRiasecCodes.filter(r => r.count > 0).map(r => r.code).join(', ') || 'N/A';
+    const mostCommonCodes = topRiasecCodes; // Now includes count and percent
 
     // Performance distribution analysis for each field
     const performanceAnalysis = {};
@@ -1006,20 +1049,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
   const quickStats = [
     {
       name: "Students",
-      value: uniqueStudentCount.toString(),
-      icon: <Users className="h-6 w-6" />,
+      value: totalStudentsInFilter.toString(),
+      icon: <Users className="h-4 w-4" />,
       color: "bg-gradient-to-br from-blue-500 to-blue-600",
     },
     {
       name: "Assessments",
       value: filteredAssessmentResults.length.toString(),
-      icon: <FileText className="h-6 w-6" />,
+      icon: <FileText className="h-4 w-4" />,
       color: "bg-gradient-to-br from-emerald-500 to-emerald-600",
     },
     {
       name: "Avg Time",
       value: <>{averageTimeSpent.toFixed(1)}<span className="text-xs front-light ml-1">min</span></>,
-      icon: <Clock className="h-6 w-6" />,
+      icon: <Clock className="h-4 w-4" />,
       color: "bg-gradient-to-br from-green-400 to-green-600",
     },
   ];
@@ -1256,7 +1299,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
 
             {/* Three Charts Horizontally Aligned - GSA gets more space */}
-            <div className="flex flex-row gap-4 w-full">
+            <div className="flex flex-row w-full">
               {/* General Scholastic Aptitude Chart - Takes more space due to more fields */}
               <div className="flex-2" style={{ flex: '1.5' }}>
                 <ResponsiveContainer width="100%" height={300}>
@@ -1274,7 +1317,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/70 bg-clip-text text-transparent text-center">General Scholastic Aptitude</h3>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">General Scholastic Aptitude</h3>
               </div>
 
               {/* Academic Tracks Chart - Standard size */}
@@ -1314,41 +1357,43 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     <Bar dataKey="distribution.wellBelowPeer.percent" fill="#EF4444" name="Well Below School Avg" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-                <h3 className="text-lg font-bold bg-gradient-to-r from-[#2B3E4E] to-[#FFB71B] bg-clip-text text-transparent text-center">Non-Academic Track Performance</h3>
+                <h3 className="text-lg font-bold text-[#FFB71B] text-center">Non-Academic Track Performance</h3>
               </div>
             </div>
           </div>
+          <div className='flex flex-grow'></div>
 
           {/* Quick Stats Sidebar */}
-          <div className='flex flex-col gap-2 w-[235px]'>
-            <div className="flex flex-wrap gap-2 w-[248px] h-auto self-start" style={{ minWidth: '240px' }}>
+          <div className='flex flex-col gap-2 w-[260px]'>
+            <div className="flex gap-2 w-full">
               {quickStats.map((stat, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl p-4 flex flex-col items-center border-2 border-[#FFB71B]/20 w-28 h-28 justify-center transition-all duration-200 relative overflow-hidden group"
-                  style={{ aspectRatio: '1 / 1' }}
+                  className="bg-white rounded-lg shadow-lg hover:shadow-xl p-2 flex flex-col items-center border-2 border-[#FFB71B]/20 flex-1 transition-all duration-200 relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-[#FFB71B]/5 to-[#2B3E4E]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className={`p-2 rounded-lg ${stat.color} mb-1 shadow-md group-hover:scale-110 transition-transform relative z-10`}>
+                  <div className={`p-1.5 rounded-lg ${stat.color} mb-1 shadow-md group-hover:scale-110 transition-transform relative z-10`}>
                     <div className="text-white">{stat.icon}</div>
                   </div>
-                  <div className="text-xs text-[#2B3E4E]/70 text-center relative z-10">{stat.name}</div>
-                  <div className="text-lg font-bold text-[#2B3E4E] text-center relative z-10">{stat.value}</div>
+                  <div className="text-[10px] text-[#2B3E4E]/70 text-center relative z-10 leading-tight">{stat.name}</div>
+                  <div className="text-sm font-bold text-[#2B3E4E] text-center relative z-10">{stat.value}</div>
                 </div>
               ))}
             </div>
             
             {/* Most Common RIASEC for Institution */}
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl flex flex-col items-center py-4 px-4 min-h-0 transition-all duration-200 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-[#FFB71B]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#FFB71B] mb-2 shadow-lg relative z-10 group-hover:scale-110 transition-transform">
-                <School className="w-6 h-6 text-white" />
+            <div className="rounded-xl flex flex-col gap-3 py-4 min-h-0 transition-all duration-200 relative overflow-visible group">
+              {/* <div className="absolute inset-0 bg-gradient-to-br from-[#2B3E4E]/5 to-[#FFB71B]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div> */}
+              
+              <div className="flex-1 flex flex-row gap-3 items-center">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#FFB71B] mb-2 shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+                  <School className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-xs uppercase text-[#2B3E4E]/60 font-semibold mb-2 tracking-wider text-left relative z-10">Institution Personality</div>
               </div>
-              <div className="text-xs uppercase text-[#2B3E4E]/60 font-semibold mb-0.5 tracking-wider text-center relative z-10">Institution Personality</div>
-              <div className="text-2xl font-bold text-[#FFB71B] mb-0.5 text-center relative z-10">{institutionInsights.mostCommonRiasec}</div>
-              <div className="text-xs text-[#2B3E4E]/60 mb-0.5 text-center relative z-10">(Top 3 RIASEC codes)</div>
-              <div className="text-xs text-[#2B3E4E]/70 text-center mb-0.5 relative z-10">
-                {institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.map((code, idx) => {
+              {/* Display all 6 personality types with percentages */}
+              <div className="space-y-1 w-full relative z-10 mb-2">
+                {institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.map((item, idx) => {
                   const descMap = {
                     R: 'Realistic',
                     I: 'Investigative',
@@ -1357,32 +1402,28 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                     E: 'Enterprising',
                     C: 'Conventional',
                   };
-                  return <span key={code}>{descMap[code]}{idx < institutionInsights.mostCommonCodes.length - 1 ? ', ' : ''}</span>;
+                  const colorMap = {
+                    R: { bg: 'bg-blue-50', text: 'text-blue-600', badge: 'bg-blue-100 text-blue-700' },
+                    I: { bg: 'bg-purple-50', text: 'text-purple-600', badge: 'bg-purple-100 text-purple-700' },
+                    A: { bg: 'bg-pink-50', text: 'text-pink-600', badge: 'bg-pink-100 text-pink-700' },
+                    S: { bg: 'bg-green-50', text: 'text-green-600', badge: 'bg-green-100 text-green-700' },
+                    E: { bg: 'bg-orange-50', text: 'text-orange-600', badge: 'bg-orange-100 text-orange-700' },
+                    C: { bg: 'bg-gray-50', text: 'text-gray-600', badge: 'bg-gray-100 text-gray-700' },
+                  };
+                  const colors = colorMap[item.code];
+                  return (
+                    <div key={item.code} className={`flex items-center gap-2 px-3 py-2 rounded-lg ${colors.bg} shadow-sm transition-transform hover:shadow-md`}>
+                      <span className={`text-xs font-bold ${colors.text}`}>#{idx + 1}</span>
+                      <span className={`text-sm font-bold ${colors.text} flex-1 text-left`}>{descMap[item.code]}</span>
+                      <span className={`text-xs ${colors.badge} px-2 py-0.5 rounded-lg font-medium`}>({item.code})</span>
+                      <span className={`text-xs font-bold ${colors.text}`}>{item.percent}%</span>
+                    </div>
+                  );
                 })}
               </div>
-              <div className="text-xs text-[#FFB71B] font-semibold text-center relative z-10">
-                {(() => {
-                  const total = filteredAssessmentResults.length;
-                  // Count students whose top RIASEC code matches any of the top 3 codes - use filtered results
-                  const codeCount = filteredAssessmentResults.reduce((acc, r) => {
-                    const scores = [
-                      { code: 'R', value: r.realisticScore },
-                      { code: 'I', value: r.investigativeScore },
-                      { code: 'A', value: r.artisticScore },
-                      { code: 'S', value: r.socialScore },
-                      { code: 'E', value: r.enterprisingScore },
-                      { code: 'C', value: r.conventionalScore },
-                    ];
-                    const max = Math.max(...scores.map(s => s.value));
-                    const topCodes = scores.filter(s => s.value === max).map(s => s.code);
-                    if (institutionInsights.mostCommonCodes && institutionInsights.mostCommonCodes.some(code => topCodes.includes(code))) {
-                      return acc + 1;
-                    }
-                    return acc;
-                  }, 0);
-                  // return total > 0 ? `${codeCount} students • ${(codeCount / total * 100).toFixed(1)}%` : '';
-                })()}
-              </div>
+              {/* <div className="text-xs text-[#2B3E4E]/50 text-center relative z-10 italic">
+                Top 3 personality types
+              </div> */}
             </div>
           </div>
         </div>
@@ -1439,7 +1480,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
             <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Career Paths</div>
             {institutionInsights.topCareerPaths.length === 0 ? (
-              <div className="text-center py-2 relative z-10">
+              <div className="text-center py-2 relative z-10 flex-1">
                 {filteredAssessmentResults.length === 0 ? (
                   <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
@@ -1453,18 +1494,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               </div>
             ) : (
               <>
-                {institutionInsights.topCareerPaths
-                  .slice(0, 3)
-                  .map((cp, i) => {
-                    const total = institutionCareerRecommendations.length;
-                    const percent = total > 0 ? ((cp.count / total) * 100).toFixed(0) : '0';
-                    return (
-                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
-                        <span className="truncate pr-2 text-[#2B3E4E] font-medium">{i + 1}. {cp.name}</span>
-                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex-1">
+                  {institutionInsights.topCareerPaths
+                    .slice(0, 3)
+                    .map((cp, i) => {
+                      const total = institutionCareerRecommendations.length;
+                      const percent = total > 0 ? ((cp.count / total) * 100).toFixed(0) : '0';
+                      return (
+                        <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                          <span className="truncate pr-2 text-[#2B3E4E] font-medium">{i + 1}. {cp.name}</span>
+                          <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
+                        </div>
+                      );
+                    })}
+                </div>
                 {/* Show button if more than 3 items exist */}
                 {institutionInsights.topCareerPaths.length > 3 && (
                   <button
@@ -1485,7 +1528,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
             <div className="text-xl font-bold text-gray-700 text-center mb-2">Top Careers</div>
             {institutionInsights.topCareers.length === 0 ? (
-              <div className="text-center py-2 relative z-10">
+              <div className="text-center py-2 relative z-10 flex-1">
                 {filteredAssessmentResults.length === 0 ? (
                   <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
@@ -1499,18 +1542,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               </div>
             ) : (
               <>
-                {institutionInsights.topCareers
-                  .slice(0, 3)
-                  .map((c, i) => {
-                    const total = institutionCareerRecommendations.length;
-                    const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
-                    return (
-                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
-                        <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {c.title}</span>
-                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex-1">
+                  {institutionInsights.topCareers
+                    .slice(0, 3)
+                    .map((c, i) => {
+                      const total = institutionCareerRecommendations.length;
+                      const percent = total > 0 ? ((c.count / total) * 100).toFixed(0) : '0';
+                      return (
+                        <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                          <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {c.title}</span>
+                          <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
+                        </div>
+                      );
+                    })}
+                </div>
                 {/* Show button if more than 3 items exist */}
                 {institutionInsights.topCareers.length > 3 && (
                   <button
@@ -1532,7 +1577,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
             </div>
             <div className="text-xl font-bold text-[#2B3E4E] text-center mb-2 relative z-10">Top Programs</div>
             {institutionInsights.topPrograms.length === 0 ? (
-              <div className="text-center py-2 relative z-10">
+              <div className="text-center py-2 relative z-10 flex-1">
                 {filteredAssessmentResults.length === 0 ? (
                   <div className="text-[#2B3E4E]/40 text-xs">No assessment results found</div>
                 ) : (
@@ -1546,18 +1591,20 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
               </div>
             ) : (
               <>
-                {institutionInsights.topPrograms
-                  .slice(0, 3)
-                  .map((p, i) => {
-                    const total = institutionProgramRecommendations.length;
-                    const percent = total > 0 ? ((p.count / total) * 100).toFixed(0) : '0';
-                    return (
-                      <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
-                        <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {p.name}</span>
-                        <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
-                      </div>
-                    );
-                  })}
+                <div className="flex-1">
+                  {institutionInsights.topPrograms
+                    .slice(0, 3)
+                    .map((p, i) => {
+                      const total = institutionProgramRecommendations.length;
+                      const percent = total > 0 ? ((p.count / total) * 100).toFixed(0) : '0';
+                      return (
+                        <div key={i} className="flex justify-between items-center text-xs mb-1 relative z-10">
+                          <span className="truncate pr-2 text-[#2B3E4E]">{i + 1}. {p.name}</span>
+                          <span className="text-[#FFB71B] font-semibold text-right">{percent}%</span>
+                        </div>
+                      );
+                    })}
+                </div>
                 {/* Show button if more than 3 items exist */}
                 {institutionInsights.topPrograms.length > 3 && (
                   <button
@@ -1576,14 +1623,38 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       {/* Search and Filter Header */}
       <header className="relative z-10">
         <div className="px-15 py-4">
-          <div className="flex items-center justify-between pt6 rounded-xl">
-            <div className="text-left my-5">
-              <h2 className="text-1xl font-medium text-[#2B3E4E]">
-                Institution assessment results for: <br/>
-                <span className="text-[#FFB71B] text-3xl font-bold">{selectedAssessmentLabel}</span>
-              </h2>
+          <div className="flex items-center justify-between gap-4 pt6 rounded-xl">
+            {/* Pagination Controls on Left */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                className="px-2 py-1 rounded bg-[#2B3E4E]/10 text-[#2B3E4E] text-xs font-semibold disabled:opacity-50 hover:bg-[#FFB71B] hover:text-white transition-colors border border-[#2B3E4E]/20"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+              >
+                ←
+              </button>
+              <span className="text-xs font-bold text-[#2B3E4E] whitespace-nowrap">
+                Page {page} of {Math.ceil(totalResults / pageSize)}
+              </span>
+              <button
+                className="px-2 py-1 rounded bg-[#2B3E4E]/10 text-[#2B3E4E] text-xs font-semibold disabled:opacity-50 hover:bg-[#FFB71B] hover:text-white transition-colors border border-[#2B3E4E]/20"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === Math.ceil(totalResults / pageSize)}
+              >
+                →
+              </button>
+              <select
+                className="px-2 py-1 rounded border-2 border-[#2B3E4E]/30 text-[#2B3E4E] text-xs font-semibold focus:border-[#FFB71B] focus:outline-none"
+                value={pageSize}
+                onChange={handlePageSizeChange}
+              >
+                {[4, 8, 12, 16, 24].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
             </div>
 
+            {/* Search and Filter Bar on Right */}
             <SearchFilterBar
               searchTerm={searchStudent}
               onSearchChange={setSearchStudent}
@@ -1596,7 +1667,7 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
       </header>
 
       {/* Main Content */}
-      <main className="w-full flex flex-col lg:flex-row gap-8 px-15 relative z-10">
+      <main className="w-full flex flex-col lg:flex-row px-15 relative z-10">
         {/* Main Content Column */}
         <div className="flex-1 min-w-0">
           <AssessmentResultsGrid
@@ -1611,14 +1682,17 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
         </div>
 
         {/* Sidebar: Institution Stats + Recent Activity */}
-        <aside className="w-full lg:w-72 flex-shrink-0">
+        <aside className="w-full lg:w-80 flex-shrink-0">
           {/* Completion Rate */}
           <div className="bg-white rounded-xl shadow-lg hover:shadow-xl border-2 border-[#FFB71B]/20 hover:border-[#2B3E4E]/40 p-4 mb-4 animate-fade-in transition-all duration-200 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#FFB71B]/5 to-[#2B3E4E]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <h3 className="text-base font-bold text-[#2B3E4E] mb-1 relative z-10">Completion Status</h3>
             <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-500 bg-clip-text text-transparent mb-1 relative z-10">{completionRate}%</div>
             <div className="text-xs text-[#2B3E4E]/70 mb-2 relative z-10">
-              {filteredAssessmentResults.length} completed assessments
+              {studentsWithAssessments} of {totalStudentsInFilter} students completed
+            </div>
+            <div className="text-xs text-[#2B3E4E]/60 relative z-10">
+              {filteredAssessmentResults.length} total assessments
             </div>
             <div className="text-xs text-[#2B3E4E]/60 relative z-10">
               Showing {affiliationFilter === "all" ? "all students" : "unaffiliated students only"}
@@ -1635,18 +1709,27 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                   {affiliationFilter === "all" ? "All Students" : "Unaffiliated Only"}
                 </span>
                 <span className="text-sm font-semibold">
-                  {uniqueStudentCount} students
+                  {totalStudentsInFilter} students
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2 text-sm">
                   <FileText className="h-4 w-4 text-[#FFB71B]" />
-                  Assessments
+                  With Assessments
+                </span>
+                <span className="text-sm font-semibold">
+                  {studentsWithAssessments}
+                </span>
+              </div>
+              {/* <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2 text-sm">
+                  <FileText className="h-4 w-4 text-green-500" />
+                  Total Assessments
                 </span>
                 <span className="text-sm font-semibold">
                   {filteredAssessmentResults.length}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -1664,9 +1747,24 @@ ${institutionInsights.topPrograms?.slice(0, 10).map((p, i) => `${i+1}. ${p.name}
                 const assessment = activity.userAssessment?.assessment || {};
                 return (
                   <div key={idx} className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors animate-pop-in" style={{ animationDelay: `${idx * 60}ms` }}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">
-                      {user.firstName?.[0]}{user.lastName?.[0]}
-                    </div>
+                    {/* User Avatar with Profile Picture */}
+                    {user.profilePictureUrl ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-[#FFB71B]/50 flex-shrink-0">
+                        <img
+                          src={user.profilePictureUrl}
+                          alt={`${user.firstName} ${user.lastName}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Fallback to initials if image fails to load
+                            e.target.parentElement.innerHTML = `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold">${user.firstName?.[0]}${user.lastName?.[0]}</div>`;
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D63A1] to-[#FFB71B] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
+                      </div>
+                    )}
                     <div className="flex-start flex-1 min-w-0">
                       <div className="text-left truncate font-medium text-xs text-gray-800 flex items-center gap-1">
                         {user.firstName} {user.lastName}

@@ -77,10 +77,7 @@ const swiperStyles = `
   }
 `;
 
-// Add the styles to the document
-const styleSheet = document.createElement("style");
-styleSheet.innerText = swiperStyles;
-document.head.appendChild(styleSheet);
+// This will be added to the document in a useEffect to avoid SSR issues
 
 // Animation variants
 const fadeIn = {
@@ -122,6 +119,25 @@ const Testimonials = () => {
     // Get the authenticated user
     const user = authService.getCurrentUser();
     setCurrentUser(user);
+  }, []);
+
+  // Add Swiper styles to the document (only in browser)
+  useEffect(() => {
+    // Check if styles already exist to avoid duplicates
+    if (!document.getElementById('swiper-custom-styles')) {
+      const styleSheet = document.createElement('style');
+      styleSheet.id = 'swiper-custom-styles';
+      styleSheet.innerText = swiperStyles;
+      document.head.appendChild(styleSheet);
+    }
+
+    // Cleanup function to remove styles when component unmounts
+    return () => {
+      const existingStyle = document.getElementById('swiper-custom-styles');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+    };
   }, []);
 
   // Fetch schools from the API with caching
@@ -813,11 +829,12 @@ const Testimonials = () => {
                           
                           if (logoImage) {
                             return (
-                              <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center">
+                              <div className="w-24 h-24 rounded-full bg-white shadow-lg overflow-hidden relative flex-shrink-0">
                                 <img 
                                   src={logoImage}
                                   alt={`${schoolName} logo`}
-                                  className="w-[200%] h-[300%] object-scale-down transform scale-[2.1]"
+                                  className="w-[150%] h-[140%] object-cover absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"
+                                  style={{ objectFit: 'cover', objectPosition: 'center' }}
                                 />
                               </div>
                             );

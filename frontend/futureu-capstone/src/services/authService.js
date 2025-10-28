@@ -191,7 +191,7 @@ class AuthService {
       if (this.isAuthenticated()) {
         try {
           await this.refreshToken();
-          console.log('Token refreshed successfully');
+          // console.log('Token refreshed successfully');
         } catch (error) {
           console.error('Token refresh failed:', error);
           // If refresh fails, user needs to log in again

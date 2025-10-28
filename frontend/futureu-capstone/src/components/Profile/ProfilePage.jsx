@@ -120,7 +120,15 @@ const LoadingScreen = () => {
 
 const ProfilePage = () => {
   // Use profile context instead of local state for user profile
-  const { userProfile, profilePicture, updateProfilePicture, updateProfile, refreshProfile } = useProfile();
+  const { 
+    userProfile, 
+    profilePicture, 
+    profilePictureBlob,
+    setProfilePictureBlob, // ADD this line
+    updateProfilePicture, 
+    updateProfile, 
+    refreshProfile 
+  } = useProfile();
   
   const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -194,7 +202,9 @@ const ProfilePage = () => {
       }
 
       if (!userProfile) {
-        const profileData = await profileService.getUserProfile(currentUser.id);
+        // Use profileService.getUserProfile() without passing userId
+        // since it now gets the userId internally
+        const profileData = await profileService.getUserProfile();
         setUser(profileData);
         setEditData(profileData);
       }
@@ -240,8 +250,8 @@ const ProfilePage = () => {
         }
       }
 
-      const currentUser = authService.getCurrentUser();
-      const updatedUser = await updateProfile(currentUser.id, editData);
+      // Use profileService.updateUserProfile() without passing userId
+      const updatedUser = await profileService.updateUserProfile(editData);
       
       setUser(updatedUser);
       setEditMode(false);
@@ -269,41 +279,111 @@ const ProfilePage = () => {
     }
   };
 
-  const handleFileChange = async (event) => {
+  // Profile picture upload with enhanced feedback
+  const handleProfilePictureUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    // Validate file type
     if (!file.type.startsWith('image/')) {
       setError('Please select an image file');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size should be less than 5MB');
+    // Validate file size (10MB limit to match backend)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be less than 10MB');
       return;
     }
 
+    // Create blob URL for instant preview
+    const blobUrl = URL.createObjectURL(file);
+    setProfilePictureBlob(blobUrl); // Now this should work
+
     setUploading(true);
     setError(null);
+    setSuccess(null);
 
     try {
-      const currentUser = authService.getCurrentUser();
-      const result = await updateProfilePicture(currentUser.id, file);
+      // console.log('Starting profile picture upload...');
       
-      setUser(prev => ({
-        ...prev,
-        profilePictureUrl: result.profilePictureUrl
-      }));
-      setEditData(prev => ({
-        ...prev,
-        profilePictureUrl: result.profilePictureUrl
-      }));
+      // Upload to Cloudinary via backend
+      const imageUrl = await profileService.uploadProfilePicture(file);
+      // console.log('Upload successful! Cloudinary URL:', imageUrl);
+
+      // Update context with Cloudinary URL - use setProfilePicture from context
+      // Remove the direct setProfilePicture call since it should be handled by the context
       
+      // Clean up blob URL since we now have the permanent URL
+      URL.revokeObjectURL(blobUrl);
+      setProfilePictureBlob(null);
+
+      // Update local user state
+      setUser(prev => ({ ...prev, profilePictureUrl: imageUrl }));
+
+      // Refresh the profile context to get the updated data
+      await refreshProfile(true);
+
       setSuccess('Profile picture updated successfully!');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (error) {
-      console.error('Full error object:', error);
-      setError(typeof error === 'string' ? error : error.message || 'Failed to upload profile picture');
+      
+      // Trigger mascot animation
+      setMascotWiggle(true);
+      setTimeout(() => setMascotWiggle(false), 1000);
+
+    } catch (err) {
+      console.error('Profile picture upload failed:', err);
+      
+      // Clean up blob URL on error
+      URL.revokeObjectURL(blobUrl);
+      setProfilePictureBlob(null);
+
+      // Set appropriate error message
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError('Failed to upload profile picture. Please try again.');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Delete profile picture with Cloudinary cleanup
+  const handleDeleteProfilePicture = async () => {
+    if (!user?.profilePictureUrl) return;
+
+    setUploading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // console.log('Deleting profile picture from Cloudinary...');
+      
+      // Delete from Cloudinary via backend
+      await profileService.deleteProfilePicture();
+      // console.log('Profile picture deleted successfully');
+
+      // Clear context picture states
+      setProfilePictureBlob(null);
+
+      // Update local user state
+      setUser(prev => ({ ...prev, profilePictureUrl: null }));
+
+      // Refresh the profile context to get the updated data
+      await refreshProfile(true);
+
+      setSuccess('Profile picture deleted successfully!');
+
+    } catch (err) {
+      console.error('Failed to delete profile picture:', err);
+      
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Failed to delete profile picture. Please try again.');
+      }
     } finally {
       setUploading(false);
     }
@@ -326,6 +406,11 @@ const ProfilePage = () => {
       case 'excited': return "You're doing great! Keep building your profile!";
       default: return "Welcome to your profile dashboard!";
     }
+  };
+
+  // Add this missing function after handleProfilePictureUpload
+  const handleFileChange = async (event) => {
+    await handleProfilePictureUpload(event);
   };
 
   if (loading) {
@@ -386,43 +471,6 @@ const ProfilePage = () => {
       <div className="container mx-auto px-4 sm:px-6 max-w-7xl relative z-10">
         {/* Profile Header test */}
         <ProfileHeader getMascotMessage={getMascotMessage} />
-
-        {/* Enhanced Alert Messages - Responsive design */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-red-50/80 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
-            >
-              <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
-                <X className="w-4 sm:w-5 h-4 sm:h-5 text-red-600" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-1 text-sm sm:text-base">Error</h4>
-                <p className="font-medium text-sm sm:text-base">{error}</p>
-              </div>
-            </motion.div>
-          )}
-
-          {success && (
-            <motion.div
-              initial={{ opacity: 0, y: -10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.95 }}
-              className="bg-green-50/80 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl mb-6 sm:mb-8 shadow-lg flex flex-col sm:flex-row items-start max-w-4xl mx-auto"
-            >
-              <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
-                <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-bold mb-1 text-sm sm:text-base">Success</h4>
-                <p className="font-medium text-sm sm:text-base">{success}</p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Main Profile Grid - Enhanced responsive grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
@@ -500,6 +548,43 @@ const ProfilePage = () => {
             }}
             onSkip={() => setShowInterestWizard(false)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Floating Alert Messages - Bottom Right */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 50, scale: 0.95 }}
+            className="fixed bottom-6 right-6 bg-red-50/90 backdrop-blur-sm border-l-4 border-red-500 text-red-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-2xl inline-flex flex-col sm:flex-row items-start max-w-max z-50"
+          >
+            <div className="flex-shrink-0 bg-red-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+              <X className="w-4 sm:w-5 h-4 sm:h-5 text-red-600" />
+            </div>
+            <div className="whitespace-nowrap text-left">
+              <h4 className="font-bold mb-1 text-sm sm:text-base text-left">Error</h4>
+              <p className="font-medium text-sm sm:text-base text-left">{error}</p>
+            </div>
+          </motion.div>
+        )}
+
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, x: 50, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 50, scale: 0.95 }}
+            className="fixed bottom-6 right-6 bg-green-50/90 backdrop-blur-sm border-l-4 border-green-500 text-green-700 px-4 sm:px-6 py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-2xl inline-flex flex-col sm:flex-row items-start max-w-max z-50"
+          >
+            <div className="flex-shrink-0 bg-green-100 p-2 rounded-lg mr-0 sm:mr-4 mb-3 sm:mb-0">
+              <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-green-600" />
+            </div>
+            <div className="whitespace-nowrap text-left">
+              <h4 className="font-bold mb-1 text-sm sm:text-base text-left">Success</h4>
+              <p className="font-medium text-sm sm:text-base text-left">{success}</p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

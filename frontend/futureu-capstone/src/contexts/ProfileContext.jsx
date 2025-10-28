@@ -97,12 +97,12 @@ export const ProfileProvider = ({ children }) => {
           
           setIsProfileLoaded(true);
           
-          console.log('Profile loaded from cache');
+          // console.log('Profile loaded from cache');
           return true;
         } else {
           // Cache expired, clear it
           clearCache(userId);
-          console.log('Profile cache expired, clearing...');
+          // console.log('Profile cache expired, clearing...');
         }
       }
     } catch (error) {
@@ -136,7 +136,7 @@ export const ProfileProvider = ({ children }) => {
         };
         reader.readAsDataURL(blob);
         
-        console.log('Profile picture cached as blob');
+        // console.log('Profile picture cached as blob');
       }
     } catch (error) {
       console.error('Failed to cache profile picture blob:', error);
@@ -160,7 +160,7 @@ export const ProfileProvider = ({ children }) => {
         fetchAndCacheImageBlob(pictureUrl, userId);
       }
       
-      console.log('Profile saved to cache');
+      // console.log('Profile saved to cache');
     } catch (error) {
       console.error('Failed to save profile to cache:', error);
     }
@@ -189,13 +189,13 @@ export const ProfileProvider = ({ children }) => {
   const fetchUserProfile = async (userId, forceRefresh = false) => {
     // Prevent multiple simultaneous requests
     if (fetchingProfile && !forceRefresh) {
-      console.log('Profile fetch already in progress, skipping...');
+      // console.log('Profile fetch already in progress, skipping...');
       return;
     }
     
     // If we already have profile data for this user and it's not a forced refresh, don't fetch again
     if (userProfile && userProfile.userId === userId && isProfileLoaded && !forceRefresh) {
-      console.log('Profile already loaded for this user, skipping fetch...');
+      // console.log('Profile already loaded for this user, skipping fetch...');
       return;
     }
 
@@ -211,8 +211,9 @@ export const ProfileProvider = ({ children }) => {
         }
       }
 
-      console.log('Fetching fresh profile data...');
-      const profile = await profileService.getUserProfile(userId);
+      // console.log('Fetching fresh profile data...');
+      // Use profileService.getUserProfile() without passing userId
+      const profile = await profileService.getUserProfile();
       
       setUserProfile(profile);
       setProfilePicture(profile?.profilePictureUrl);
@@ -220,7 +221,7 @@ export const ProfileProvider = ({ children }) => {
       
       saveToCache(userId, profile, profile?.profilePictureUrl);
       
-      console.log('Profile fetched from API and cached');
+      // console.log('Profile fetched from API and cached');
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
     } finally {
@@ -261,7 +262,8 @@ export const ProfileProvider = ({ children }) => {
   const updateProfile = async (userId, profileData) => {
     try {
       setLoading(true);
-      const updatedProfile = await profileService.updateUserProfile(userId, profileData);
+      // Use profileService.updateUserProfile() without passing userId
+      const updatedProfile = await profileService.updateUserProfile(profileData);
       
       setUserProfile(updatedProfile);
       setProfilePicture(updatedProfile?.profilePictureUrl);
@@ -288,7 +290,7 @@ export const ProfileProvider = ({ children }) => {
         try {
           await careerInterestProfileService.refreshUserProfileCaches(currentUser.id);
         } catch (error) {
-          console.log('Career interest profile cache refresh failed (user may not have profile)');
+          // console.log('Career interest profile cache refresh failed (user may not have profile)');
         }
       }
     }
@@ -321,13 +323,28 @@ export const ProfileProvider = ({ children }) => {
 
   // Get the best available profile picture URL (prioritize blob for instant loading)
   const getProfilePictureUrl = () => {
-    return profilePictureBlob || (profilePicture ? `http://localhost:8080${profilePicture}` : null);
+    // If we have a blob URL (for instant loading), use it
+    if (profilePictureBlob) return profilePictureBlob;
+    
+    // Otherwise, use the profile picture URL directly (Cloudinary URLs are already full)
+    // No need to prepend localhost anymore since Cloudinary provides full URLs
+    if (profilePicture) {
+      // Check if it's already a full URL (Cloudinary)
+      if (profilePicture.startsWith('http://') || profilePicture.startsWith('https://')) {
+        return profilePicture;
+      }
+      // Fallback for old local URLs (during migration)
+      return `http://localhost:8080${profilePicture}`;
+    }
+    
+    return null;
   };
 
   const value = {
     userProfile,
     profilePicture,
     profilePictureBlob,
+    setProfilePictureBlob, // ADD this line
     isProfileLoaded,
     loading,
     fetchUserProfile,

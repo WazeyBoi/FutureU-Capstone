@@ -224,7 +224,7 @@ const LandingPage = () => {
     const playVideo = () => {
       if (videoRef.current) {
         videoRef.current.play().catch(error => {
-          console.log('Autoplay prevented:', error);
+          // console.log('Autoplay prevented:', error);
         });
       }
     };
@@ -375,7 +375,7 @@ const LandingPage = () => {
               <motion.div className="mt-10" variants={fadeIn}>
             <Link to="/register">
                   <motion.button
-                    className="bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-[#2B3E4E] py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
+                    className="cursor-pointer bg-gradient-to-r from-[#FFB71B] to-[#FFB71B] hover:from-[#2B3E4E] hover:to-[#2B3E4E] hover:text-white text-[#2B3E4E] py-2.5 px-4 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2 animate-bounce-short"
                     style={{ backgroundColor: '#ffc107' }} 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

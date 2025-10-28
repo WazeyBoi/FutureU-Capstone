@@ -10,6 +10,8 @@ import sherween from '../assets/FutureU_Team/Sherween Perolino.png';
 import christianHans from '../assets/FutureU_Team/Christian Hans Paras.png';
 import aeronRaye from '../assets/FutureU_Team/Aeron Raye Tigley.png';
 
+import headerLogoNormal from "../assets/header_logo_normal.svg";
+
 const AboutUsPage = () => {
   const navigate = useNavigate();
 
@@ -112,6 +114,54 @@ const AboutUsPage = () => {
     }
   ];
 
+  // Function to get individual image styling for each team member
+  const getImageStyle = (memberName) => {
+    const baseStyle = {
+      objectFit: 'cover',
+      width: '100%',
+      height: '100%'
+    };
+
+    switch (memberName) {
+      case "Bacarisas, John Clyde ":
+        return {
+          ...baseStyle,
+          objectPosition: '47% center',
+          transform: 'scale(2.0)'
+        };
+      case "Ligan,Michael Andre":
+        return {
+          ...baseStyle,
+          objectPosition: '44% center',
+          transform: 'scale(3.1)'
+        };
+      case "Perolino, Sherween ":
+        return {
+          ...baseStyle,
+           objectPosition: '46% center',
+           transform: 'scale(3.4)'
+        };
+      case "Paras, Christian Hans":
+        return {
+          ...baseStyle,
+         objectPosition: '53% center',
+         transform: 'scale(2.6)'
+        };
+      case "Tigley, Aeron Raye":
+        return {
+          ...baseStyle,
+        objectPosition: '57% center',
+         transform: 'scale(1.9)'
+        };
+      default:
+        return {
+          ...baseStyle,
+          objectPosition: 'center center',
+          transform: 'scale(2.1)'
+        };
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -178,7 +228,7 @@ const AboutUsPage = () => {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <motion.img 
-                  src="/src/assets/header_logo_normal.svg" 
+                  src={headerLogoNormal} 
                   alt="FutureU Logo" 
                   className="h-64 w-auto max-w-full object-contain transition-all duration-500 ease-in-out transform group-hover:rotate-6 group-hover:drop-shadow-2xl"
                   animate={{ 
@@ -758,28 +808,23 @@ const AboutUsPage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-50 justify-items-start -ml-45">
-            {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-300 min-w-[280px]">
-                <div className="w-28 h-28 rounded-full mx-auto mb-4 overflow-hidden border-4 border-[#FFB71B]">
-                  <img 
-                    src={member.image} 
-                    alt={member.name}
-                    className="w-full h-full object-cover"
-                    style={{ 
-                      objectPosition: member.name === 'Michael Andre Ligan' || member.name === 'Sherween Perolino' ? 'center center' : 'center 15%',
-                      transform: member.name === 'Michael Andre Ligan' || member.name === 'Sherween Perolino' || member.name === 'Christian Hans Paras' ? 'scale(2.5)' : 'scale(2.0)',
-                      width: '100%',
-                      height: '100%'
-                    }}
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">{member.name}</h3>
-                <p className="text-[#FFB71B] font-medium mb-2 text-base whitespace-nowrap">{member.role}</p>
-                <p className="text-white/80 text-sm leading-relaxed">{member.description}</p>
-              </div>
-            ))}
-          </div>
+           <div className="flex justify-center gap-7">
+             {teamMembers.map((member, index) => (
+                <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center hover:bg-white/20 transition-all duration-300 w-[290px] flex-shrink-0">
+                 <div className="w-40 h-40 rounded-lg mx-auto mb-6 overflow-hidden border-4 border-[#FFB71B] bg-white">
+                   <img 
+                     src={member.image} 
+                     alt={member.name}
+                     className="w-full h-full object-cover"
+                     style={getImageStyle(member.name)}
+                   />
+                 </div>
+                 <h3 className="text-2xl font-bold text-white mb-3 leading-tight">{member.name}</h3>
+                 <p className="text-[#FFB71B] font-semibold mb-4 text-lg whitespace-nowrap">{member.role}</p>
+                 <p className="text-white/80 text-base leading-relaxed">{member.description}</p>
+               </div>
+             ))}
+           </div>
         </div>
       </section>
 

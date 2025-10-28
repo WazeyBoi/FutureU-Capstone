@@ -149,7 +149,7 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
     }
 
     // Fallback for other schools
-    console.log('No mapping found for:', school.name, 'using fallback');
+    // console.log('No mapping found for:', school.name, 'using fallback');
     return {
       sourceName: "Official Records",
       sourceUrl: "https://www.ched.gov.ph/"
@@ -207,7 +207,7 @@ const SchoolCard = ({ school, onViewPrograms, isSelected, onSelect }) => {
                     alt={`${school.name} logo`} 
                     className="w-[130%] h-[130%] object-cover absolute transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2"
                     style={{ objectFit: 'cover', objectPosition: 'center' }}
-                    onError={(e) => console.error('Logo load error:', e)}
+                    // onError={(e) => console.error('Logo load error:', e)}
                   />
                 </div>
               ) : (
