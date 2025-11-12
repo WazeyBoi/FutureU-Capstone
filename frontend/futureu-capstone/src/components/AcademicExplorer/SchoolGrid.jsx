@@ -311,23 +311,13 @@ const SchoolGrid = ({
                           </div>
                           
                           {/* Right: Accreditation Status */}
-                          <div className="flex items-start space-x-2">
-                            <Award className={`w-3 h-3 flex-shrink-0 mt-1 ${
-                              accreditationInfo.hasAccreditation 
-                                ? 'text-green-500' 
-                                : 'text-gray-400'
-                            }`} />
-                            <div className="flex-1">
-                              <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Accreditation Status</div>
-                              <div className={`text-xs font-bold leading-tight ${
-                                accreditationInfo.hasAccreditation 
-                                  ? 'text-green-600 dark:text-green-400' 
-                                  : 'text-gray-600 dark:text-gray-400'
-                              }`}>
-                                {accreditationInfo.hasAccreditation ? 'Accredited' : 'No Accreditation Status Available'}
+                          {accreditationInfo.hasAccreditation && (
+                            <div className="flex items-center justify-center">
+                              <div className="inline-flex px-2 py-1 rounded-full text-xs font-bold shadow-sm cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-green-400 to-emerald-500 text-white">
+                                🥇 Accredited
                               </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                       
@@ -358,7 +348,7 @@ const SchoolGrid = ({
                                 title="Center of Excellence (COE)"
                                 position="left"
                               >
-                                <div className="inline-flex px-2 py-1 rounded-full text-xs font-semibold cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-green-400 to-emerald-500 text-white">
+                                <div className="inline-flex px-2 py-1 rounded-full text-xs font-bold cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-green-400 to-emerald-500 text-white">
                                   🏆 Center of Excellence
                                 </div>
                               </Tooltip>
@@ -368,7 +358,7 @@ const SchoolGrid = ({
                                 title="Center of Development (COD)"
                                 position="left"
                               >
-                                <div className="inline-flex px-2 py-1 rounded-full text-xs font-semibold cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-blue-400 to-indigo-500 text-white">
+                                <div className="inline-flex px-2 py-1 rounded-full text-xs font-bold cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-blue-400 to-indigo-500 text-white">
                                   ⭐ Center of Development
                                 </div>
                               </Tooltip>
@@ -412,8 +402,8 @@ const SchoolGrid = ({
                                   title={accreditationInfo.accreditingBody}
                                   position="left"
                                 >
-                                  <div className="text-xs font-semibold text-blue-600 cursor-pointer hover:text-blue-800 transition-colors">
-                                    {accreditationInfo.accreditingBody}
+                                  <div className="inline-flex px-2 py-1 rounded-full text-xs font-bold shadow-sm cursor-pointer hover:scale-105 transition-transform bg-gradient-to-r from-blue-400 to-indigo-500 text-white">
+                                    🏛️ {accreditationInfo.accreditingBody}
                                   </div>
                                 </Tooltip>
                               ) : (
@@ -432,7 +422,7 @@ const SchoolGrid = ({
                                   title={accreditationInfo.highestLevel}
                                   position="left"
                                 >
-                                  <div className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold cursor-pointer hover:scale-105 transition-transform ${
+                                  <div className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold cursor-pointer hover:scale-105 transition-transform ${
                                     accreditationInfo.highestLevel.includes('III') || accreditationInfo.highestLevel.includes('IV')
                                       ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white' 
                                       : accreditationInfo.highestLevel.includes('II')
@@ -456,9 +446,8 @@ const SchoolGrid = ({
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                         <div className="flex items-center justify-center">
                           <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
-                            Data from Accreditation Records
+                            Data from School - Program, & Accreditation Records
                           </span>
-                          <ExternalLink className="w-3 h-3 text-gray-400" />
                         </div>
                       </div>
                     </div>
