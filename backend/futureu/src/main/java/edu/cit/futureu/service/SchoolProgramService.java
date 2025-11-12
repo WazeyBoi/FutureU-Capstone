@@ -59,4 +59,21 @@ public class SchoolProgramService {
         }
         return false; // SchoolProgram not found
     }
+    
+    // Department-based operations
+    public List<SchoolProgramEntity> getSchoolProgramsByDepartment(String department) {
+        return schoolProgramRepository.findByDepartment(department);
+    }
+    
+    public List<SchoolProgramEntity> searchSchoolProgramsByDepartment(String departmentKeyword) {
+        return schoolProgramRepository.findByDepartmentContainingIgnoreCase(departmentKeyword);
+    }
+    
+    public List<SchoolProgramEntity> getSchoolProgramsBySchoolAndDepartment(SchoolEntity school, String department) {
+        return schoolProgramRepository.findBySchoolAndDepartment(school, department);
+    }
+    
+    public List<SchoolProgramEntity> getSchoolProgramsByProgramAndDepartment(ProgramEntity program, String department) {
+        return schoolProgramRepository.findByProgramAndDepartment(program, department);
+    }
 }

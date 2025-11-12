@@ -27,4 +27,16 @@ public interface SchoolProgramRepository extends JpaRepository<SchoolProgramEnti
     
     // Find school programs by accreditation ID
     List<SchoolProgramEntity> findByAccreditation_AccredId(Integer accredId);
+    
+    // Find school programs by department
+    List<SchoolProgramEntity> findByDepartment(String department);
+    
+    // Find school programs by department containing (case-insensitive search)
+    List<SchoolProgramEntity> findByDepartmentContainingIgnoreCase(String department);
+    
+    // Find school programs by school and department
+    List<SchoolProgramEntity> findBySchoolAndDepartment(SchoolEntity school, String department);
+    
+    // Find school programs by program and department
+    List<SchoolProgramEntity> findByProgramAndDepartment(ProgramEntity program, String department);
 }

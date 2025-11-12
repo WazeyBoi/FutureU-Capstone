@@ -2,7 +2,7 @@ import React from 'react';
 import { School, BookOpen, ChevronRight } from 'lucide-react';
 import { schoolLogos } from './constants';
 
-const SchoolTooltip = ({ visible, school, position, onViewDetails }) => {
+const SchoolTooltip = ({ visible, school, position }) => {
   if (!visible || !school) return null;
 
   const schoolLogo = schoolLogos[school.schoolId];
@@ -59,16 +59,20 @@ const SchoolTooltip = ({ visible, school, position, onViewDetails }) => {
             </div>
           )}
         </div>
-        <button
-          className="flex items-center justify-center w-full bg-[#2B3E4E]/10 dark:bg-[#2B3E4E]/30 text-[#2B3E4E] dark:text-[#FFB71B] hover:bg-[#2B3E4E]/20 dark:hover:bg-[#2B3E4E]/40 py-3 px-4 rounded-lg transition-colors font-medium"
-          onClick={(e) => {
-            e.stopPropagation();
-            onViewDetails(school);
-          }}
-        >
-          <ChevronRight className="w-5 h-5 mr-2" />
-          View More Details
-        </button>
+        <div className="bg-gradient-to-r from-[#2B3E4E]/5 to-[#FFB71B]/5 p-3 rounded-lg border border-[#FFB71B]/20">
+          <div className="text-center">
+            <span className="text-sm font-medium text-[#2B3E4E] dark:text-gray-300 block mb-1">
+              🎓 Explore Available Programs
+            </span>
+            <div className="flex items-center justify-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
+              <span>Virtual Tour</span>
+              <span>•</span>
+              <span>Program Guide</span>
+              <span>•</span>
+              <span>Contact Info</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

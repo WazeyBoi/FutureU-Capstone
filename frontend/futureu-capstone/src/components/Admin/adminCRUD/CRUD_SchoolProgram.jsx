@@ -23,6 +23,8 @@ import {
   ChevronsRight,
   ChevronDown,
   Filter,
+  Link,
+  Globe,
 } from 'lucide-react';
 
 const CRUD_SchoolProgram = () => {
@@ -39,7 +41,10 @@ const CRUD_SchoolProgram = () => {
   const [formData, setFormData] = useState({
     schoolId: '',
     programId: '',
-    accredId: ''
+    accredId: '',
+    department: '',
+    schoolProgramURL: '',
+    schoolProgramURLType: ''
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -71,7 +76,8 @@ const CRUD_SchoolProgram = () => {
       if (searchQuery.trim() !== '') {
         filtered = filtered.filter(sp => 
           (sp.school && sp.school.name && sp.school.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (sp.program && sp.program.programName && sp.program.programName.toLowerCase().includes(searchQuery.toLowerCase()))
+          (sp.program && sp.program.programName && sp.program.programName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (sp.department && sp.department.toLowerCase().includes(searchQuery.toLowerCase()))
         );
       }
       
@@ -167,7 +173,10 @@ const CRUD_SchoolProgram = () => {
     setFormData({
       schoolId: '',
       programId: '',
-      accredId: ''
+      accredId: '',
+      department: '',
+      schoolProgramURL: '',
+      schoolProgramURLType: ''
     });
     setIsEditing(false);
     setSelectedSchoolProgram(null);
@@ -179,7 +188,10 @@ const CRUD_SchoolProgram = () => {
     setFormData({
       schoolId: schoolProgram.school ? schoolProgram.school.schoolId : '',
       programId: schoolProgram.program ? schoolProgram.program.programId : '',
-      accredId: schoolProgram.accreditation ? schoolProgram.accreditation.accredId : ''
+      accredId: schoolProgram.accreditation ? schoolProgram.accreditation.accredId : '',
+      department: schoolProgram.department || '',
+      schoolProgramURL: schoolProgram.schoolProgramURL || '',
+      schoolProgramURLType: schoolProgram.schoolProgramURLType || ''
     });
     setIsEditing(true);
     setIsModalVisible(true);
@@ -235,7 +247,10 @@ const CRUD_SchoolProgram = () => {
         },
         accreditation: formData.accredId ? {
           accredId: parseInt(formData.accredId)
-        } : null
+        } : null,
+        department: formData.department || null,
+        schoolProgramURL: formData.schoolProgramURL || null,
+        schoolProgramURLType: formData.schoolProgramURLType || null
       };
       
       if (isEditing) {
@@ -419,17 +434,20 @@ const CRUD_SchoolProgram = () => {
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gradient-to-r from-[#2B3E4E] to-[#2B3E4E]/90 text-white text-left">
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">ID</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">School</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-left">Program</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Accreditation</th>
-                <th className="px-6 py-4 font-semibold text-sm uppercase tracking-wider text-center">Actions</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">ID</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">School</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">Program</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">Department</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">Program URL</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-left">URL Type</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center">Accreditation</th>
+                <th className="px-4 py-3 font-semibold text-xs uppercase tracking-wider text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading && !filteredSchoolPrograms.length ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center">
+                  <td colSpan={8} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader className="h-8 w-8 text-[#FFB71B] animate-spin mb-2" />
                       <p className="text-gray-500">Loading school programs...</p>
@@ -438,7 +456,7 @@ const CRUD_SchoolProgram = () => {
                 </tr>
               ) : filteredSchoolPrograms.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center">
+                  <td colSpan={8} className="px-6 py-8 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <BookOpen className="h-12 w-12 text-gray-300 mb-2" />
                       <p className="text-gray-500 font-medium">No school programs found</p>
@@ -449,46 +467,82 @@ const CRUD_SchoolProgram = () => {
               ) : (
                 paginatedSchoolPrograms.map((schoolProgram) => (
                   <tr key={schoolProgram.schoolProgramId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-gray-500 font-mono text-left">{schoolProgram.schoolProgramId}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 text-gray-500 font-mono text-xs text-left">{schoolProgram.schoolProgramId}</td>
+                    <td className="px-4 py-3">
                       <div className="flex items-start">
-                        <Building className="h-4 w-4 text-gray-400 mt-1 mr-2 flex-shrink-0" />
-                        <div className="font-medium text-[#2B3E4E] text-left">{schoolProgram.school?.name || 'N/A'}</div>
+                        <Building className="h-3 w-3 text-gray-400 mt-0.5 mr-1.5 flex-shrink-0" />
+                        <div className="font-medium text-[#2B3E4E] text-xs text-left">{schoolProgram.school?.name || 'N/A'}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-start">
-                        <BookOpen className="h-4 w-4 text-gray-400 mt-1 mr-2 flex-shrink-0" />
-                        <div className="text-gray-600">{schoolProgram.program?.programName || 'N/A'}</div>
+                        <BookOpen className="h-3 w-3 text-gray-400 mt-0.5 mr-1.5 flex-shrink-0" />
+                        <div className="text-gray-600 text-xs">{schoolProgram.program?.programName || 'N/A'}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 py-3">
+                      <div className="text-gray-600 text-xs text-left">{schoolProgram.department || 'N/A'}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-left">
+                        {schoolProgram.schoolProgramURL ? (
+                          <a
+                            href={schoolProgram.schoolProgramURL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#2B3E4E] hover:text-[#FFB71B] text-xs font-medium flex items-center truncate max-w-32"
+                            title={schoolProgram.schoolProgramURL}
+                          >
+                            <Link className="h-3 w-3 mr-1 flex-shrink-0" />
+                            {schoolProgram.schoolProgramURL.length > 25 
+                              ? `${schoolProgram.schoolProgramURL.substring(0, 25)}...`
+                              : schoolProgram.schoolProgramURL
+                            }
+                          </a>
+                        ) : (
+                          <span className="text-gray-400 text-xs">No URL</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-left">
+                        {schoolProgram.schoolProgramURLType ? (
+                          <div className="text-xs text-gray-600 flex items-center">
+                            <Globe className="h-3 w-3 mr-1 flex-shrink-0" />
+                            {schoolProgram.schoolProgramURLType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
                       {schoolProgram.accreditation ? (
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getAccreditationBadgeColor(schoolProgram.accreditation)}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getAccreditationBadgeColor(schoolProgram.accreditation)}`}
                         >
                           <Award className="h-3 w-3 mr-1" />
                           {schoolProgram.accreditation?.title}
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-sm">None</span>
+                        <span className="text-gray-400 text-xs">None</span>
                       )}
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center space-x-3">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleEditClick(schoolProgram)}
-                          className="p-2 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
+                          className="p-1.5 text-[#2B3E4E] hover:bg-[#2B3E4E]/10 rounded-lg transition-colors"
                           title="Edit School Program"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(schoolProgram)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Delete School Program"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>
@@ -657,6 +711,65 @@ const CRUD_SchoolProgram = () => {
                         {program.programName}
                       </option>
                     ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  </div>
+                </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Building className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleInputChange}
+                    placeholder="Enter department name"
+                    maxLength="128"
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                  />
+                </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Program URL</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Link className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="url"
+                    name="schoolProgramURL"
+                    value={formData.schoolProgramURL}
+                    onChange={handleInputChange}
+                    placeholder="https://example.com/program-page"
+                    maxLength="512"
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors"
+                  />
+                </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">URL Type</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Globe className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <select
+                    name="schoolProgramURLType"
+                    value={formData.schoolProgramURLType}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#FFB71B] focus:border-[#FFB71B] transition-colors appearance-none"
+                  >
+                    <option value="">Select URL Type</option>
+                    <option value="program_page">Program Page</option>
+                    <option value="department_page">Department Page</option>
+                    <option value="general_academic_page">General Academics Page</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                     <ChevronDown className="h-5 w-5 text-gray-400" />

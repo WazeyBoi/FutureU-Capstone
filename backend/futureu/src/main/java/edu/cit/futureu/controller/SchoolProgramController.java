@@ -128,4 +128,42 @@ public class SchoolProgramController {
                 "School Program with ID " + schoolProgramId + " successfully deleted" : 
                 "School Program with ID " + schoolProgramId + " not found";
     }
+    
+    // DEPARTMENT-BASED OPERATIONS
+    
+    // Get school programs by exact department name
+    @GetMapping("/getSchoolProgramsByDepartment")
+    public List<SchoolProgramEntity> getSchoolProgramsByDepartment(@RequestParam String department) {
+        return schoolProgramService.getSchoolProgramsByDepartment(department);
+    }
+    
+    // Search school programs by department keyword (case-insensitive)
+    @GetMapping("/searchSchoolProgramsByDepartment")
+    public List<SchoolProgramEntity> searchSchoolProgramsByDepartment(@RequestParam String departmentKeyword) {
+        return schoolProgramService.searchSchoolProgramsByDepartment(departmentKeyword);
+    }
+    
+    // Get school programs by school ID and department
+    @GetMapping("/getSchoolProgramsBySchoolAndDepartment")
+    public List<SchoolProgramEntity> getSchoolProgramsBySchoolAndDepartment(
+            @RequestParam int schoolId, 
+            @RequestParam String department) {
+        SchoolEntity school = schoolService.getSchoolById(schoolId).orElse(null);
+        if (school != null) {
+            return schoolProgramService.getSchoolProgramsBySchoolAndDepartment(school, department);
+        }
+        return List.of(); // Return empty list if school not found
+    }
+    
+    // Get school programs by program ID and department
+    @GetMapping("/getSchoolProgramsByProgramAndDepartment")
+    public List<SchoolProgramEntity> getSchoolProgramsByProgramAndDepartment(
+            @RequestParam int programId, 
+            @RequestParam String department) {
+        ProgramEntity program = programService.getProgramById(programId).orElse(null);
+        if (program != null) {
+            return schoolProgramService.getSchoolProgramsByProgramAndDepartment(program, department);
+        }
+        return List.of(); // Return empty list if program not found
+    }
 }

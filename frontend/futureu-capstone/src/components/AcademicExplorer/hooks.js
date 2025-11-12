@@ -145,7 +145,7 @@ export const useSchoolSearch = (schools, navigate, location) => {
     
     try {
       setIsSearchingSchool(true);
-      setShowSchoolSearchResults(false);
+      // Don't set showSchoolSearchResults to false initially to prevent flash of "No schools found"
       
       const matchingSchool = schools.find(school =>
         school.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -158,18 +158,22 @@ export const useSchoolSearch = (schools, navigate, location) => {
             ...sp.program,
             schoolProgramURL: sp.schoolProgramURL,
             schoolProgramURLType: sp.schoolProgramURLType,
+            department: sp.department, // Include department from SchoolProgramEntity
           }));
           setSchoolPrograms(programsData);
           setSearchedSchool(matchingSchool);
           setShowSchoolSearchResults(true);
           return { success: true, school: matchingSchool };
         } else {
+          setShowSchoolSearchResults(false);
           return { success: false, error: `No programs found for "${searchTerm}". Please try another school name.` };
         }
       } else {
+        setShowSchoolSearchResults(false);
         return { success: false, error: `School "${searchTerm}" not found. Please check the spelling and try again.` };
       }
     } catch (error) {
+      setShowSchoolSearchResults(false);
       return { success: false, error: "Failed to search for school programs. Please try again later." };
     } finally {
       setIsSearchingSchool(false);
