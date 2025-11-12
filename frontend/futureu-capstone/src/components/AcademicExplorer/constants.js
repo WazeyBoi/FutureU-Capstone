@@ -11,6 +11,19 @@ import usjr_school_logo from '../../assets/school_logos/usjr_school_logo.png';
 import up_school_logo from '../../assets/school_logos/up_school_logo.png';
 import uv_school_logo from '../../assets/school_logos/uv_school_logo.png';
 
+// School building images import
+import cduBuilding from '../../assets/school_buildings/CDU school building.png';
+import cituBuilding from '../../assets/school_buildings/CITU school building.png';
+import cnuBuilding from '../../assets/school_buildings/CNU school building.png';
+import ctuBuilding from '../../assets/school_buildings/CTU school building.png';
+import iauBuilding from '../../assets/school_buildings/IAU school building.png';
+import swuBuilding from '../../assets/school_buildings/SWU school building.png';
+import ucBuilding from '../../assets/school_buildings/UC school building.png';
+import upCebuBuilding from '../../assets/school_buildings/UP Cebu school building.png';
+import uscBuilding from '../../assets/school_buildings/USC school building.png';
+import usjrBuilding from '../../assets/school_buildings/USJR school building.png';
+import uvBuilding from '../../assets/school_buildings/UV school building.png';
+
 // School background images
 import citu_school_image from '../../assets/school_images/citu_school_image.jpg';
 import cdu_school_image from '../../assets/school_images/cdu_school_image.jpg';
@@ -37,6 +50,35 @@ export const schoolLogos = {
   9: usjr_school_logo,
   10: up_school_logo,
   11: uv_school_logo,
+};
+
+// School building images mapping by school ID or name
+export const schoolBuildings = {
+  // You can map by school ID or name - adjust these keys based on your school data structure
+  1: cduBuilding, // CDU
+  2: cituBuilding, // CITU
+  3: cnuBuilding, // CNU
+  4: ctuBuilding, // CTU
+  5: iauBuilding, // IAU
+  6: swuBuilding, // SWU
+  7: ucBuilding, // UC
+  8: usjrBuilding, // UP Cebu (corrected)
+  9: upCebuBuilding, // USC (corrected)
+  10: uscBuilding, // USJR (corrected)
+  11: uvBuilding, // UV
+  
+  // Alternative mapping by school name (case-insensitive matching)
+  'CDU': cduBuilding,
+  'CITU': cituBuilding,
+  'CNU': cnuBuilding,
+  'CTU': ctuBuilding,
+  'IAU': iauBuilding,
+  'SWU': swuBuilding,
+  'UC': ucBuilding,
+  'UP CEBU': usjrBuilding, // UP Cebu (corrected)
+  'USC': upCebuBuilding, // USC (corrected)
+  'USJR': uscBuilding, // USJR (corrected)
+  'UV': uvBuilding
 };
 
 // Create a mapping for school name detection to their background images

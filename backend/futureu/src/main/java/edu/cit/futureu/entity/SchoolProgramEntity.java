@@ -25,6 +25,9 @@ public class SchoolProgramEntity {
     @Column(name = "school_program_url_type", length = 32)
     private String schoolProgramURLType;
 
+    @Column(name = "department", length = 128)
+    private String department;
+
     // Many-to-one relationship with School
     @ManyToOne
     @JoinColumn(name = "schoolId", nullable = false)
@@ -90,5 +93,13 @@ public class SchoolProgramEntity {
 
     public void setSchoolProgramURLType(String schoolProgramURLType) {
         this.schoolProgramURLType = schoolProgramURLType;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
     }
 }
