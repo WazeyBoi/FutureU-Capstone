@@ -169,11 +169,29 @@ const SchoolSearchResults = ({
   const groupProgramsByDepartments = (programs) => {
     const departmentGroups = {};
     
-    programs.forEach(program => {
-      // Use department from the program if available, otherwise use 'Department Not Specified'
-      const department = program.department && program.department.trim() 
-        ? program.department.trim()
-        : 'Department Not Specified';
+    // Debug: Check if programs have department data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Programs with departments:', programs.map(p => ({ 
+        name: p.programName, 
+        department: p.department,
+        hasDepField: 'department' in p,
+        depType: typeof p.department
+      })));
+    }
+    
+    programs.forEach((program, index) => {
+      // Enhanced validation for department field
+      let department = 'Department Not Specified';
+      
+      if (program && typeof program === 'object') {
+        if (program.department && 
+            typeof program.department === 'string' && 
+            program.department.trim() !== '' &&
+            program.department.trim().toLowerCase() !== 'null' &&
+            program.department.trim().toLowerCase() !== 'undefined') {
+          department = program.department.trim();
+        }
+      }
       
       if (!departmentGroups[department]) {
         departmentGroups[department] = [];
