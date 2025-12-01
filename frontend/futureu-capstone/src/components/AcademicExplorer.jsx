@@ -185,8 +185,12 @@ const AcademicExplorer = () => {
           
           // Use cached service method
           const response = await schoolProgramService.getSchoolProgramsByProgram(selectedProgram);
-          if (Array.isArray(response)) {
-            const filtered = response.map((schoolProgram) => schoolProgram.school);
+          
+          if (Array.isArray(response) && response.length > 0) {
+            const filtered = response
+              .filter(schoolProgram => schoolProgram && schoolProgram.school) // Filter out invalid entries
+              .map((schoolProgram) => schoolProgram.school);
+            
             setFilteredSchools(filtered);
             // Store the complete school-program data for department info
             setSchoolProgramData(response);
@@ -204,12 +208,14 @@ const AcademicExplorer = () => {
       };
       fetchSchoolPrograms();
     } else {
+      // Clear school program data when no program is selected
+      setSchoolProgramData([]);
+      
       if (filterOptions.locationSearch) {
         setFilteredSchools(schools);
       } else {
         setFilteredSchools([]);
       }
-      setSchoolProgramData([]);
     }
   }, [selectedProgram, schools, filterOptions.locationSearch, setFilteredSchools, setShowSchoolSearchResults, setSearchedSchool]);
 

@@ -101,15 +101,21 @@ const SchoolGrid = ({
 
   // Get department information for a school and selected program
   const getSchoolDepartmentInfo = (school) => {
-    if (!selectedProgram || !schoolProgramData.length) {
+    if (!selectedProgram || !schoolProgramData || !Array.isArray(schoolProgramData) || schoolProgramData.length === 0) {
       return null;
     }
     
-    const schoolProgramRelation = schoolProgramData.find(
-      sp => sp.school && sp.school.schoolId === school.schoolId
-    );
-    
-    return schoolProgramRelation?.department || null;
+    try {
+      const schoolProgramRelation = schoolProgramData.find(
+        sp => sp && sp.school && sp.school.schoolId === school.schoolId
+      );
+      
+      // Return department if it exists and is not empty
+      const department = schoolProgramRelation?.department;
+      return (department && department.trim() !== '') ? department.trim() : null;
+    } catch (error) {
+      return null;
+    }
   };
 
   // Get accreditation info for a school
@@ -286,6 +292,7 @@ const SchoolGrid = ({
                         {/* Full Width Second Row: Department (if available) */}
                         {(() => {
                           const department = getSchoolDepartmentInfo(school);
+                          
                           return department ? (
                             <div className="flex items-start space-x-2">
                               <Building className="w-3 h-3 text-[#2B3E4E] flex-shrink-0 mt-1" />
