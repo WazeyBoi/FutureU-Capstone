@@ -37,6 +37,9 @@ import uc_school_image from '../../assets/school_images/uc_school_image.jpg';
 import uv_school_image from '../../assets/school_images/uv_school_image.jpg';
 import iau_school_image from '../../assets/school_images/iau_school_image.jpg';
 
+// Academic Explorer hero background
+import academicExplorerHeroBackground from '../../assets/Academic_Explorer_Hero_Section_Background.png';
+
 // Create a mapping of school IDs to logos
 export const schoolLogos = {
   1: cdu_school_logo,
@@ -273,3 +276,6 @@ export const fadeAnimationStyle = `
     animation: float 3s ease-in-out infinite;
   }
 `;
+
+// Export hero background image
+export { academicExplorerHeroBackground };

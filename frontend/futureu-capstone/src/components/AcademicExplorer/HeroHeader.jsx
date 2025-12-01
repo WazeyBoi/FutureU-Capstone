@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, School, Play, Info } from 'lucide-react';
+import { academicExplorerHeroBackground } from './constants';
 
 // Float from left animation variants
 const slideInLeft = {
@@ -78,7 +79,7 @@ const HeroHeader = ({ totalPrograms, totalSchools }) => {
       {/* Background Image with Netflix-style gradient overlay */}
       <div className="absolute inset-0">
         <img 
-          src="/src/assets/Academic Explorer Hero Section Background.png" 
+          src={academicExplorerHeroBackground} 
           alt="Academic Explorer Background"
           className="w-full h-full object-cover"
         />
