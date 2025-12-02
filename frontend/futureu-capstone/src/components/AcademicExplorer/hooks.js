@@ -154,38 +154,13 @@ export const useSchoolSearch = (schools, navigate, location) => {
       if (matchingSchool) {
         const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
         if (Array.isArray(schoolProgramsResponse)) {
-          const programsData = schoolProgramsResponse.map((sp, index) => {
-            // Enhanced validation and mapping for department field
-            // Try multiple ways to extract department field for compatibility
-            let departmentValue = null;
-            
-            // Try direct property access
-            if (sp && typeof sp.department === 'string' && sp.department.trim() !== '') {
-              departmentValue = sp.department.trim();
-            }
-            // Try nested in program object (fallback)
-            else if (sp?.program && typeof sp.program.department === 'string' && sp.program.department.trim() !== '') {
-              departmentValue = sp.program.department.trim();
-            }
-            
-            // Always log in all environments to debug production issues
-            console.log(`[SchoolSearch] Program ${index}:`, {
-              programName: sp?.program?.programName || 'Unknown',
-              department: departmentValue,
-              hasDepField: 'department' in (sp || {}),
-              hasDeptInProgram: sp?.program ? ('department' in sp.program) : false,
-              spKeys: sp ? Object.keys(sp) : [],
-              rawDepartment: sp?.department,
-              rawProgramDept: sp?.program?.department
-            });
-            
-            return {
-              ...sp.program,
-              schoolProgramURL: sp.schoolProgramURL,
-              schoolProgramURLType: sp.schoolProgramURLType,
-              department: departmentValue, // Include department from SchoolProgramEntity
-            };
-          });
+          // Simply map the API response - department field comes directly from SchoolProgramEntity
+          const programsData = schoolProgramsResponse.map((sp) => ({
+            ...sp.program,
+            schoolProgramURL: sp.schoolProgramURL,
+            schoolProgramURLType: sp.schoolProgramURLType,
+            department: sp.department, // Department from school_program table
+          }));
           setSchoolPrograms(programsData);
           setSearchedSchool(matchingSchool);
           setShowSchoolSearchResults(true);
