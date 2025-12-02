@@ -154,12 +154,27 @@ export const useSchoolSearch = (schools, navigate, location) => {
       if (matchingSchool) {
         const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
         if (Array.isArray(schoolProgramsResponse)) {
-          const programsData = schoolProgramsResponse.map(sp => ({
-            ...sp.program,
-            schoolProgramURL: sp.schoolProgramURL,
-            schoolProgramURLType: sp.schoolProgramURLType,
-            department: sp.department, // Include department from SchoolProgramEntity
-          }));
+          const programsData = schoolProgramsResponse.map((sp, index) => {
+            // Enhanced validation and mapping for department field
+            const departmentValue = sp?.department || null;
+            
+            // Debug in development
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Program ${index}:`, {
+                programName: sp?.program?.programName || 'Unknown',
+                department: departmentValue,
+                hasDepField: 'department' in (sp || {}),
+                spStructure: Object.keys(sp || {})
+              });
+            }
+            
+            return {
+              ...sp.program,
+              schoolProgramURL: sp.schoolProgramURL,
+              schoolProgramURLType: sp.schoolProgramURLType,
+              department: departmentValue, // Include department from SchoolProgramEntity
+            };
+          });
           setSchoolPrograms(programsData);
           setSearchedSchool(matchingSchool);
           setShowSchoolSearchResults(true);
