@@ -156,17 +156,28 @@ export const useSchoolSearch = (schools, navigate, location) => {
         if (Array.isArray(schoolProgramsResponse)) {
           const programsData = schoolProgramsResponse.map((sp, index) => {
             // Enhanced validation and mapping for department field
-            const departmentValue = sp?.department || null;
+            // Try multiple ways to extract department field for compatibility
+            let departmentValue = null;
             
-            // Debug in development
-            if (process.env.NODE_ENV === 'development') {
-              console.log(`Program ${index}:`, {
-                programName: sp?.program?.programName || 'Unknown',
-                department: departmentValue,
-                hasDepField: 'department' in (sp || {}),
-                spStructure: Object.keys(sp || {})
-              });
+            // Try direct property access
+            if (sp && typeof sp.department === 'string' && sp.department.trim() !== '') {
+              departmentValue = sp.department.trim();
             }
+            // Try nested in program object (fallback)
+            else if (sp?.program && typeof sp.program.department === 'string' && sp.program.department.trim() !== '') {
+              departmentValue = sp.program.department.trim();
+            }
+            
+            // Always log in all environments to debug production issues
+            console.log(`[SchoolSearch] Program ${index}:`, {
+              programName: sp?.program?.programName || 'Unknown',
+              department: departmentValue,
+              hasDepField: 'department' in (sp || {}),
+              hasDeptInProgram: sp?.program ? ('department' in sp.program) : false,
+              spKeys: sp ? Object.keys(sp) : [],
+              rawDepartment: sp?.department,
+              rawProgramDept: sp?.program?.department
+            });
             
             return {
               ...sp.program,

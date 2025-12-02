@@ -169,27 +169,30 @@ const SchoolSearchResults = ({
   const groupProgramsByDepartments = (programs) => {
     const departmentGroups = {};
     
-    // Debug: Check if programs have department data
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Programs with departments:', programs.map(p => ({ 
-        name: p.programName, 
-        department: p.department,
-        hasDepField: 'department' in p,
-        depType: typeof p.department
-      })));
-    }
+    // Always log for debugging production issues
+    console.log('[SchoolSearchResults] Grouping programs:', programs.map(p => ({ 
+      name: p.programName, 
+      department: p.department,
+      hasDepField: 'department' in p,
+      depType: typeof p.department,
+      depValue: p.department
+    })));
     
     programs.forEach((program, index) => {
       // Enhanced validation for department field
       let department = 'Department Not Specified';
       
       if (program && typeof program === 'object') {
-        if (program.department && 
-            typeof program.department === 'string' && 
-            program.department.trim() !== '' &&
-            program.department.trim().toLowerCase() !== 'null' &&
-            program.department.trim().toLowerCase() !== 'undefined') {
-          department = program.department.trim();
+        // Try to get department value with multiple approaches
+        const deptValue = program.department;
+        
+        if (deptValue && 
+            typeof deptValue === 'string' && 
+            deptValue.trim() !== '' &&
+            deptValue.trim().toLowerCase() !== 'null' &&
+            deptValue.trim().toLowerCase() !== 'undefined' &&
+            deptValue.trim().toLowerCase() !== 'none') {
+          department = deptValue.trim();
         }
       }
       
@@ -205,6 +208,11 @@ const SchoolSearchResults = ({
       if (b === 'Department Not Specified') return -1;
       return a.localeCompare(b);
     });
+    
+    console.log('[SchoolSearchResults] Department groups created:', sortedDepartments.map(dept => ({
+      department: dept,
+      count: departmentGroups[dept].length
+    })));
     
     return sortedDepartments.map(department => ({
       department,
