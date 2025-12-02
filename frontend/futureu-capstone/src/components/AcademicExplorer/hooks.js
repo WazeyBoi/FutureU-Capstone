@@ -154,6 +154,9 @@ export const useSchoolSearch = (schools, navigate, location) => {
       if (matchingSchool) {
         const schoolProgramsResponse = await schoolProgramService.getSchoolProgramsBySchool(matchingSchool.schoolId);
         if (Array.isArray(schoolProgramsResponse)) {
+          // Debug: Log raw API response to verify department field
+          console.log('🔍 Raw API Response:', schoolProgramsResponse.slice(0, 3));
+          
           // Simply map the API response - department field comes directly from SchoolProgramEntity
           const programsData = schoolProgramsResponse.map((sp) => ({
             ...sp.program,
@@ -161,6 +164,10 @@ export const useSchoolSearch = (schools, navigate, location) => {
             schoolProgramURLType: sp.schoolProgramURLType,
             department: sp.department, // Department from school_program table
           }));
+          
+          // Debug: Log mapped data to verify department is passed through
+          console.log('✅ Mapped Programs with Departments:', programsData.slice(0, 3));
+          
           setSchoolPrograms(programsData);
           setSearchedSchool(matchingSchool);
           setShowSchoolSearchResults(true);
