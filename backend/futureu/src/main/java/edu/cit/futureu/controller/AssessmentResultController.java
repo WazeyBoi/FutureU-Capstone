@@ -29,8 +29,24 @@ public class AssessmentResultController {
 
 
     @GetMapping("/getAllAssessmentResults")
-    public List<AssessmentResultEntity> getAllAssessmentResults() {
+    public List<AssessmentResultEntity> getAllAssessmentResults(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        
+        // If pagination parameters are provided, use paginated version
+        if (page != null && size != null && page > 0 && size > 0) {
+            return assessmentResultService.getAssessmentResultsPaginated(page, size).getContent();
+        }
+        
+        // Default: return limited results (max 1000) to prevent memory issues
         return assessmentResultService.getAllAssessmentResults();
+    }
+    
+    @GetMapping("/getAllAssessmentResults/paginated")
+    public org.springframework.data.domain.Page<AssessmentResultEntity> getAllAssessmentResultsPaginated(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        return assessmentResultService.getAssessmentResultsPaginated(page, size);
     }
     
     /**
