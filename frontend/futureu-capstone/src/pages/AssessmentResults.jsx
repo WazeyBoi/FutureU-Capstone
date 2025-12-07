@@ -330,8 +330,8 @@ const AssessmentResults = () => {
             </div>
           </div>
         </motion.div>
-        {/* Sticky Tab Navigation */}
-        <div className="sticky top-0 z-20 pb-4 mb-8 border-b-2 border-[#2B3E4E]/20">
+        {/* Static Tab Navigation - Stays in place, doesn't follow scroll */}
+        <div className="relative z-20 bg-white pb-4 mb-8 border-b-2 border-[#2B3E4E]/20">
           <nav className="flex space-x-4">
             {['overview', 'interests', 'aptitude', 'academic', 'recommendations', 'dream-career'].map(tab => (
               <button 
@@ -358,9 +358,9 @@ const AssessmentResults = () => {
           </nav>
         </div>
         
-        {/* Tab Content Container */}
+        {/* Tab Content Container - Added proper top padding to prevent content hiding */}
         {results ? (
-          <div className="min-h-[600px] overflow-visible">
+          <div className="min-h-[600px] overflow-visible pt-4">
             <div className="relative">
               {activeTab === 'overview' && (
                 <div className="animate-fade-in">

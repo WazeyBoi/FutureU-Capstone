@@ -10,6 +10,61 @@ import { FaSearch, FaFilter, FaArrowLeft, FaPlus, FaTimes, FaStar, FaChevronLeft
 import { getAllTestimonials, getTestimonialsBySchool, deleteTestimonial, createTestimonial, updateTestimonial } from '../services/testimonialService';
 import authService from '../services/authService';
 import dataCacheService from '../services/dataCache';
+
+// Import school images
+import citu_school_image from '../assets/school_images/citu_school_image.jpg';
+import cdu_school_image from '../assets/school_images/cdu_school_image.jpg';
+import cnu_school_image from '../assets/school_images/cnu_school_image.jpg';
+import ctu_school_image from '../assets/school_images/ctu_school_image.jpg';
+import swu_school_image from '../assets/school_images/swu_school_image.jpg';
+import usc_school_image from '../assets/school_images/usc_school_image.jpg';
+import usjr_school_image from '../assets/school_images/usjr_school_image.jpg';
+import up_school_image from '../assets/school_images/up_school_image.jpg';
+import uc_school_image from '../assets/school_images/uc_school_image.jpg';
+import uv_school_image from '../assets/school_images/uv_school_image.jpg';
+import iau_school_image from '../assets/school_images/iau_school_image.jpg';
+
+// Import school logos
+import citu_school_logo from '../assets/school_logos/citu_school_logo.png';
+import cdu_school_logo from '../assets/school_logos/cdu_school_logo.png';
+import cnu_school_logo from '../assets/school_logos/cnu_school_logo.png';
+import ctu_school_logo from '../assets/school_logos/ctu_school_logo.png';
+import swu_school_logo from '../assets/school_logos/swu_school_logo.png';
+import usc_school_logo from '../assets/school_logos/usc_school_logo.png';
+import usjr_school_logo from '../assets/school_logos/usjr_school_logo.png';
+import up_school_logo from '../assets/school_logos/up_school_logo.png';
+import uc_school_logo from '../assets/school_logos/uc_school_logo.png';
+import uv_school_logo from '../assets/school_logos/uv_school_logo.png';
+import iau_school_logo from '../assets/school_logos/iau_school_logo.png';
+
+// Create mappings for school images and logos
+const schoolBackgroundMap = {
+  "cebu institute of technology": citu_school_image,
+  "cebu doctors": cdu_school_image,
+  "cebu normal university": cnu_school_image,
+  "cebu technological university": ctu_school_image,
+  "southwestern university": swu_school_image,
+  "university of san carlos": usc_school_image,
+  "university of san jose": usjr_school_image,
+  "university of the philippines": up_school_image,
+  "university of cebu": uc_school_image,
+  "university of the visayas": uv_school_image,
+  "indiana aerospace university": iau_school_image
+};
+
+const schoolLogoMap = {
+  "cebu institute of technology": citu_school_logo,
+  "cebu doctors": cdu_school_logo,
+  "cebu normal university": cnu_school_logo,
+  "cebu technological university": ctu_school_logo,
+  "southwestern university": swu_school_logo,
+  "university of san carlos": usc_school_logo,
+  "university of san jose": usjr_school_logo,
+  "university of the philippines": up_school_logo,
+  "university of cebu": uc_school_logo,
+  "university of the visayas": uv_school_logo,
+  "indiana aerospace university": iau_school_logo
+};
 // Import Swiper and required modules
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Navigation } from 'swiper/modules';
@@ -743,26 +798,13 @@ const Testimonials = () => {
                     const school = schools.find(s => s.schoolId.toString() === selectedSchool);
                     const schoolName = school ? (school.schoolName || school.name) : '';
                     
-                    // Get school background using the function from SchoolsSection
+                    // Get school background using imported images
                     const getSchoolBackground = (name) => {
                       if (!name) return null;
                       
                       const normalizedName = name.toLowerCase();
-                      const schoolMappings = {
-                        "cebu institute of technology": "/src/assets/school_images/citu_school_image.jpg",
-                        "cebu doctors": "/src/assets/school_images/cdu_school_image.jpg",
-                        "cebu normal university": "/src/assets/school_images/cnu_school_image.jpg",
-                        "cebu technological university": "/src/assets/school_images/ctu_school_image.jpg",
-                        "southwestern university": "/src/assets/school_images/swu_school_image.jpg",
-                        "university of san carlos": "/src/assets/school_images/usc_school_image.jpg",
-                        "university of san jose": "/src/assets/school_images/usjr_school_image.jpg",
-                        "university of the philippines": "/src/assets/school_images/up_school_image.jpg",
-                        "university of cebu": "/src/assets/school_images/uc_school_image.jpg",
-                        "university of the visayas": "/src/assets/school_images/uv_school_image.jpg",
-                        "indiana aerospace university": "/src/assets/school_images/iau_school_image.jpg"
-                      };
                       
-                      for (const [key, bgImage] of Object.entries(schoolMappings)) {
+                      for (const [key, bgImage] of Object.entries(schoolBackgroundMap)) {
                         if (normalizedName.includes(key)) {
                           return bgImage;
                         }
@@ -797,28 +839,15 @@ const Testimonials = () => {
                           const school = schools.find(s => s.schoolId.toString() === selectedSchool);
                           const schoolName = school ? (school.schoolName || school.name) : '';
                           
-                          // Get school logo using school name
+                          // Get school logo using imported images
                           const getSchoolLogo = (name) => {
                             if (!name) return null;
                             
                             const normalizedName = name.toLowerCase();
-                            const logoMappings = {
-                              "cebu institute of technology": "citu_school_logo",
-                              "cebu doctors": "cdu_school_logo",
-                              "cebu normal university": "cnu_school_logo",
-                              "cebu technological university": "ctu_school_logo",
-                              "southwestern university": "swu_school_logo",
-                              "university of san carlos": "usc_school_logo",
-                              "university of san jose": "usjr_school_logo",
-                              "university of the philippines": "up_school_logo",
-                              "university of cebu": "uc_school_logo",
-                              "university of the visayas": "uv_school_logo",
-                              "indiana aerospace university": "iau_school_logo"
-                            };
                             
-                            for (const [key, logoName] of Object.entries(logoMappings)) {
+                            for (const [key, logoImage] of Object.entries(schoolLogoMap)) {
                               if (normalizedName.includes(key)) {
-                                return `/src/assets/school_logos/${logoName}.png`;
+                                return logoImage;
                               }
                             }
                             
