@@ -605,15 +605,16 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
                   className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col h-full"
                 >
                   <div className="h-48 relative">
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ 
+                        backgroundImage: schoolBackground ? `url(${schoolBackground})` : 'none',
+                        backgroundColor: !schoolBackground ? '#2B3E4E' : 'transparent'
+                      }}
+                    />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70"></div>
-                    {schoolBackground ? (
-                      <img 
-                        src={schoolBackground} 
-                        alt={`${schoolName} campus`}
-                        className="w-full h-full object-cover object-center"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-r from-[#2B3E4E] to-[#1b2d3d] flex items-center justify-center">
+                    {!schoolBackground && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#2B3E4E] to-[#1b2d3d] flex items-center justify-center">
                         <h3 className="text-xl font-bold text-white text-center px-4">
                           {schoolName}
                         </h3>
@@ -621,13 +622,11 @@ const SchoolsSection = ({ schools, onSelectSchool, onAddReview, searchQuery, sch
                     )}
                     
                     {/* Overlay school name on image */}
-                    {schoolBackground && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <h3 className="text-2xl font-bold text-white text-center px-4 text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}>
-                          {schoolName}
-                        </h3>
-                      </div>
-                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <h3 className="text-2xl font-bold text-white text-center px-4 text-shadow-lg" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.4)' }}>
+                        {schoolName}
+                      </h3>
+                    </div>
                   </div>
                   
                   <div className="p-6 flex flex-col flex-grow">
