@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import edu.cit.futureu.entity.InstitutionEntity;
@@ -51,8 +52,32 @@ public class InstitutionController {
     }
     
     @GetMapping("/counselor/{counselorId}/students")
-    public ResponseEntity<List<Map<String, Object>>> getInstitutionStudentResults(@PathVariable int counselorId) {
+    public ResponseEntity<List<Map<String, Object>>> getInstitutionStudentResults(
+            @PathVariable int counselorId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        
+        // If pagination parameters are provided, use paginated version
+        if (page != null && size != null && page > 0 && size > 0) {
+            Map<String, Object> paginatedResults = counselorService.getInstitutionStudentResultsPaginated(
+                counselorId, page, size);
+            // Return as list for backward compatibility, but consider changing to return paginated response
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> students = (List<Map<String, Object>>) paginatedResults.get("students");
+            return ResponseEntity.ok(students);
+        }
+        
+        // Default: use optimized non-paginated version (still more efficient than before)
         List<Map<String, Object>> results = counselorService.getInstitutionStudentResults(counselorId);
+        return ResponseEntity.ok(results);
+    }
+    
+    @GetMapping("/counselor/{counselorId}/students/paginated")
+    public ResponseEntity<Map<String, Object>> getInstitutionStudentResultsPaginated(
+            @PathVariable int counselorId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Map<String, Object> results = counselorService.getInstitutionStudentResultsPaginated(counselorId, page, size);
         return ResponseEntity.ok(results);
     }
     
